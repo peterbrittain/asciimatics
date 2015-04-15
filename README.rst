@@ -33,16 +33,18 @@ Effects and then get the Screen to play it.
 
 .. code-block:: python
 
-curses.wrapper(demo)
-def demo(win):
-    screen = Screen(win)
-    effects = [
-        Cycle(screen,
-              FigletText("ASCIIMATICS", font='big'),
-              screen.height / 2 - 8),
-        Cycle(screen,
-              FigletText("ROCKS!", font='big'),
-              screen.height / 2 + 3),
+    curses.wrapper(demo)
+    def demo(win):
+        screen = Screen(win)
+        effects = [
+            Cycle(
+                screen,
+                FigletText("ASCIIMATICS", font='big'),
+                screen.height / 2 - 8),
+            Cycle(
+                screen,
+                FigletText("ROCKS!", font='big'),
+                screen.height / 2 + 3),
         Stars(screen, 200)
     ]
     screen.play([Scene(effects, 500)])
