@@ -146,7 +146,7 @@ class SpeechBubble(Renderer):
 
         :param text: The text to be put into a speech bubble.
         :param tail: Where to put the bubble callout tail, specifying "L" or
-        "R" for left or right tails.  Can be None for no tail.
+                     "R" for left or right tails.  Can be None for no tail.
         """
         super(SpeechBubble, self).__init__()
         max_len = max([len(x) for x in text.split("\n")])

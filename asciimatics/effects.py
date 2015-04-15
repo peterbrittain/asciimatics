@@ -509,7 +509,7 @@ class Sprite(Effect):
 
         :param screen: The Screen being used for the Scene.
         :param renderer_dict: A dictionary of Renderers to use for displaying
-        the Sprite.
+                              the Sprite.
         :param path: The Path for the Sprite to follow.
         :param colour: The colour to use to render the Sprite.
         :param start_frame: Start index for the effect.
