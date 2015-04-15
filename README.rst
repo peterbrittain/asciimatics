@@ -51,7 +51,9 @@ Effects and then get the Screen to play it.
 
 And you should see something like this:
 
-[![asciicast](https://asciinema.org/a/18756.png)](https://asciinema.org/a/18756?autoplay=1)
+.. image:: https://asciinema.org/a/18756.png
+   :alt: asciicast
+   :target: https://asciinema.org/a/18756?autoplay=1
 
 Documentation
 -------------
