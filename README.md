@@ -51,7 +51,7 @@ Effects and then get the Screen to play it.
 
 And you should see something like this:
 
-!["ASCII cast"](https://asciinema.org/a/18756.png "ASCIIMATICS ROCKS!")
+[![asciicast](https://asciinema.org/a/18756.png)](https://asciinema.org/a/18756?autoplay=1)
 
 Documentation
 -------------
