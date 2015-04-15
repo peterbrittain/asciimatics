@@ -48,3 +48,8 @@ Effects and then get the Screen to play it.
         Stars(screen, 200)
     ]
     screen.play([Scene(effects, 500)])
+
+Documentation
+-------------
+
+Documentation is available at http://asciimatics.readthedocs.org/en/latest/
