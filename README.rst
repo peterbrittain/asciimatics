@@ -50,7 +50,7 @@ Effects and then get the Screen to play it.
     screen.play([Scene(effects, 500)])
 
 And you should see something like this:
-[<img src="https://asciinema.org/a/18756.png">](https://asciinema.org/a/18756)
+![ASCII cast](https://asciinema.org/a/18756.png)
 
 Documentation
 -------------
