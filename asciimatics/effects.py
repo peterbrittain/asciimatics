@@ -26,8 +26,6 @@ class Effect(object):
 
     def __init__(self, start_frame=0, stop_frame=0):
         """
-        Constructor for the effect.
-
         :param start_frame: Start index for the effect.
         :param stop_frame: Stop index for the effect.
         """
@@ -74,8 +72,6 @@ class Scroll(Effect):
 
     def __init__(self, screen, rate, start_frame=0):
         """
-        Constructor.
-
         :param screen: The Screen being used for the Scene.
         :param rate: How many frames to wait between scrolling the screen.
         :param start_frame: Start index for the effect.
@@ -106,8 +102,6 @@ class Cycle(Effect):
 
     def __init__(self, screen, renderer, y, start_frame=0):
         """
-        Constructor.
-
         :param screen: The Screen being used for the Scene.
         :param renderer: The Renderer which is to be cycled.
         :param y: The line (y coordinate) for the start of the text.
@@ -147,8 +141,6 @@ class BannerText(Effect):
     def __init__(self, screen, renderer, y, colour, start_frame=0,
                  stop_frame=0):
         """
-        Constructor.
-
         :param screen: The Screen being used for the Scene.
         :param renderer: The renderer to be scrolled
         :param y: The line (y coordinate) for the start of the text.
@@ -200,8 +192,6 @@ class Print(Effect):
     def __init__(self, screen, renderer, y, x=None, colour=curses.COLOR_BLACK,
                  clear=False, transparent=True, start_frame=0, stop_frame=0):
         """
-        Constructor.
-
         :param screen: The Screen being used for the Scene.
         :param renderer: The renderer to be printed.
         :param x: The column (x coordinate) for the start of the text.
@@ -250,8 +240,6 @@ class Mirage(Effect):
     def __init__(self, screen, renderer, y, colour, start_frame=0,
                  stop_frame=0):
         """
-        Constructor.
-
         :param screen: The Screen being used for the Scene.
         :param renderer: The renderer to be displayed.
         :param y: The line (y coordinate) for the start of the text.
@@ -296,8 +284,6 @@ class _Star(object):
 
     def __init__(self, screen):
         """
-        Constructor.
-
         :param screen: The Screen being used for the Scene.
         """
         self._screen = screen
@@ -349,8 +335,6 @@ class Stars(Effect):
 
     def __init__(self, screen, count, start_frame=0):
         """
-        Constructor.  Create the required number of stars.
-
         :param screen: The Screen being used for the Scene.
         :param count: The number of starts to create.
         :param start_frame: Start index for the effect.
@@ -379,8 +363,6 @@ class _Trail(object):
 
     def __init__(self, screen, x):
         """
-        Constructor.  Create tral for  column (x) on the screen.
-
         :param screen: The Screen being used for the Scene.
         :param x: The column (y coordinate) for this trail to use.
         """
@@ -441,8 +423,6 @@ class Matrix(Effect):
 
     def __init__(self, screen, start_frame=0, stop_frame=0):
         """
-        Constructor.
-
         :param screen: The Screen being used for the Scene.
         :param start_frame: Start index for the effect.
         :param stop_frame: Stop index for the effect.
@@ -473,8 +453,6 @@ class Wipe(Effect):
 
     def __init__(self, screen, start_frame=0, stop_frame=0):
         """
-        Constructor.  
-
         :param screen: The Screen being used for the Scene.
         :param start_frame: Start index for the effect.
         :param stop_frame: Stop index for the effect.
@@ -505,8 +483,6 @@ class Sprite(Effect):
     def __init__(self, screen, renderer_dict, path, colour=0, start_frame=0,
                  stop_frame=0):
         """
-        Constructor.
-
         :param screen: The Screen being used for the Scene.
         :param renderer_dict: A dictionary of Renderers to use for displaying
                               the Sprite.
