@@ -7,8 +7,6 @@ class Scene(object):
 
     def __init__(self, effects, duration=0, clear=True):
         """
-        Constructor.
-
         :param effects: The list of effects to apply to this scene.
         :param duration: The number of frames in this Scene.  A value of 0
                          means that the Scene should query the Effects to find

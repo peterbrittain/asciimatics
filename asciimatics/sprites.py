@@ -116,7 +116,7 @@ class Sam(Sprite):
 
     def __init__(self, screen, path, start_frame=0, stop_frame=0):
         """
-        Constructor.
+        See :py:obj:`.Sprite` for details.
         """
         super(Sam, self).__init__(
             screen,
@@ -139,7 +139,7 @@ class Arrow(Sprite):
 
     def __init__(self, screen, path, colour=0, start_frame=0, stop_frame=0):
         """
-        Constructor.
+        See :py:obj:`.Sprite` for details.
         """
         super(Arrow, self).__init__(
             screen,
@@ -164,7 +164,7 @@ class Plot(Sprite):
 
     def __init__(self, screen, path, colour=0, start_frame=0, stop_frame=0):
         """
-        Constructor.
+        See :py:obj:`.Sprite` for details.
         """
         super(Plot, self).__init__(
             screen,

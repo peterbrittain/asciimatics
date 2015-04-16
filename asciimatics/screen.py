@@ -17,8 +17,6 @@ class Screen(object):
 
     def __init__(self, win, height=200):
         """
-        Constructor.
-
         :param win: The window object as returned by the curses wrapper method.
         :param height: The height of the screen buffer to be used.
         """

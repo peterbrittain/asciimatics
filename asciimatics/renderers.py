@@ -17,7 +17,9 @@ class Renderer(object):
 
     def __init__(self, images=None, animation=None):
         """
-        Constructor.
+        :param images: An optional set of ascii images to be rendered.
+        :param animation: A function to pick the image (from images) to be
+                          rendered for any given frame.
         """
         self._images = images if images is not None else []
         self._index = 0
@@ -70,10 +72,8 @@ class FigletText(Renderer):
 
     def __init__(self, text, font=DEFAULT_FONT):
         """
-        Constructor.
-
         :param text: The text string to convert with Figlet.
-        :param font: The Figlet font to use.
+        :param font: The Figlet font to use (optional).
         """
         super(FigletText, self).__init__()
         self._images = [Figlet(font=font).renderText(text)]
@@ -107,8 +107,6 @@ class ImageFile(Renderer):
 
     def __init__(self, filename, height=30):
         """
-        Constructor.
-
         :param filename: The name of the file to render.
         :param height: The height of the text rendered image.
         """
@@ -142,8 +140,6 @@ class SpeechBubble(Renderer):
 
     def __init__(self, text, tail=None):
         """
-        Constructor.
-
         :param text: The text to be put into a speech bubble.
         :param tail: Where to put the bubble callout tail, specifying "L" or
                      "R" for left or right tails.  Can be None for no tail.
@@ -173,8 +169,6 @@ class Box(Renderer):
 
     def __init__(self, width, height):
         """
-        Constructor.
-
         :param width: The desired width of the box.
         :param height: The desired height of the box.
         """

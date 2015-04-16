@@ -22,7 +22,8 @@ class Path(object):
 
     def __init__(self):
         """
-        Constructor.
+        No specific parameters.  To define a Path, use the methods to jump to
+        a location, wait or move between points.
         """
         self._steps = []
         self._index = None
