@@ -84,8 +84,8 @@ class Path(object):
 
     def move_straight_to(self, x, y, steps):
         """
-        Jump straight to the newly specified location - i.e. teleport there and
-        don't create a path to get there.
+        Move straight to the newly specified location - i.e. create a straight line
+        Path from the current location to the specified point.
 
         :param x:  X coord for the end position.
         :param y: Y coord for the end position.
@@ -101,7 +101,7 @@ class Path(object):
     def move_round_to(self, points, steps):
         """
         Follow a path pre-defined by a set of at least 4 points.  This Path will
-        interpolate the points into a curve and follw that curve.
+        interpolate the points into a curve and follow that curve.
 
         :param points: The list of points that defines the path.
         :param steps: The number of steps to take to follow the path.
