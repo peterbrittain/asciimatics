@@ -24,7 +24,7 @@ sam_default = [
 """
 ]
 sam_left = """
-    ______
+    ______Ŷ
   .`      `.
  / o        \\
 |            |
@@ -111,7 +111,7 @@ def _blink():
 
 class Sam(Sprite):
     """
-    Sam-ple sprite - an simple animdated character.
+    Sam Paul sprite - an simple sample animated character.
     """
 
     def __init__(self, screen, path, start_frame=0, stop_frame=0):
