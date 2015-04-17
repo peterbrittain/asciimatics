@@ -1,4 +1,4 @@
-ASCIIMATICS
+Introduction
 ===========
 
 Asciimatics is a package to help people create simple ASCII animations using
@@ -29,11 +29,12 @@ How to use it?
 --------------
 
 Create a curses window, create a :py:obj:`.Screen`, put together a :py:obj:`.Scene`
-using some :py:obj:`.Effect` objects and then get the Screen to play it.
+using some :py:obj:`.Effect` objects and then get the Screen to play it.  An Effect
+Will typically need to display some text.  This is provided by a
+:py:obj:`.Renderer`.  For example:
 
 .. code-block:: python
 
-    curses.wrapper(demo)
     def demo(win):
         screen = Screen(win)
         effects = [
@@ -48,3 +49,5 @@ using some :py:obj:`.Effect` objects and then get the Screen to play it.
             Stars(screen, 200)
         ]
         screen.play([Scene(effects, 500)])
+
+    curses.wrapper(demo)
