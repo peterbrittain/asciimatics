@@ -18,12 +18,15 @@ def _spline(t, p0, p1, p2, p3):
 class Path(object):
     """
     Class to record and play back the motion of a Sprite.
+    
+    The Screen will reset() the Path before iterating through each position usin
+    next_pos() and checking whether it has reached the end using is_finished().
     """
 
     def __init__(self):
         """
-        No specific parameters.  To define a Path, use the methods to jump to
-        a location, wait or move between points.
+        To define a Path, use the methods to jump to a location, wait or move 
+        between points.
         """
         self._steps = []
         self._index = None
