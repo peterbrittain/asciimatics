@@ -93,9 +93,11 @@ class Screen(object):
         :param x: The column (x coord) of the character.
         :param y: The row (y coord) of the character.
 
-        :return: The ASCII code of the character at the location.
+        :return: A tuple of the ASCII code of the character at the location
+                 and the attributes for that character.
         """
-        return self._pad.inch(y, x)
+        curses_rc = self._pad.inch(y, x)
+        return curses_rc & 0xff, curses_rc & 0xff >> 8
 
     def putch(self, text, x, y, colour=0, attr=0, transparent=False):
         """
@@ -184,7 +186,7 @@ class Screen(object):
                 if scene.clear:
                     self.clear()
                 scene.reset()
-                while frame < scene.duration:
+                while scene.duration < 0 or frame < scene.duration:
                     # self.putch(
                     #    str(scene.duration - frame) + " ", 0, self._start_line)
                     frame += 1
