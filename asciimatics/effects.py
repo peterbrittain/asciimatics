@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from random import randint, random
+from random import randint, random, choice
 import curses
 
 
@@ -301,7 +301,7 @@ class _Star(object):
         while True:
             self._x = randint(0, width - 1)
             self._y = randint(0, height - 1)
-            if self._screen.getch(self._x, self._y) == 32:
+            if self._screen.getch(self._x, self._y)[0] == 32:
                 break
         self._old_char = " "
 
@@ -312,7 +312,7 @@ class _Star(object):
         if not self._screen.is_visible(self._x, self._y):
             return
 
-        cur_char = self._screen.getch(self._x, self._y)
+        cur_char, _ = self._screen.getch(self._x, self._y)
         if cur_char not in (ord(self._old_char), 32):
             self._respawn()
 
@@ -345,7 +345,7 @@ class Stars(Effect):
         self._stars = []
 
     def reset(self):
-        self._stars = [_Star(self._screen) for x in range(self._max)]
+        self._stars = [_Star(self._screen) for _ in range(self._max)]
 
     def _update(self, frame_no):
         for star in self._stars:
@@ -570,3 +570,95 @@ class Sprite(Effect):
     @property
     def stop_frame(self):
         return self._stop_frame
+
+
+class _Flake(object):
+    """
+    Track a single snow flake.
+    """
+
+    _snow_chars = ".+*"
+    _drift_chars = " ,;#@"
+
+    def __init__(self, screen):
+        """
+        :param screen: The Screen being used for the Scene.
+        """
+        self._screen = screen
+        self._x = 0
+        self._y = 0
+        self._rate = 0
+        self._char = None
+        self._reseed()
+
+    def _reseed(self):
+        """
+        Randomnly create a new snowflake once this one is finished.
+        """
+        self._char = choice(self._snow_chars)
+        self._rate = randint(1, 3)
+        self._x = randint(0, self._screen.width - 1)
+        self._y = self._screen.start_line + randint(0, self._rate)
+
+    def update(self, reseed):
+        """
+        Update that snowflake!
+        """
+        self._screen.putch(" ", self._x, self._y)
+        for _ in range(self._rate):
+            self._y += 1
+            current_char, _ = self._screen.getch(self._x, self._y)
+            if current_char != 32:
+                break
+
+        if ((current_char in [ord(x) for x in self._snow_chars + " "]) and
+                (self._y < self._screen.start_line + self._screen.height)):
+            self._screen.putch(self._char,
+                               self._x,
+                               self._y)
+        else:
+            if self._y >= self._screen.start_line + self._screen.height:
+                self._y = self._screen.start_line + self._screen.height - 1
+
+            drift_index = self._drift_chars.find(chr(current_char))
+            if 0 <= drift_index < len(self._drift_chars) - 1:
+                drift_char = self._drift_chars[drift_index + 1]
+                self._screen.putch(drift_char, self._x, self._y)
+            else:
+                self._screen.putch(",", self._x, self._y - 1)
+            if reseed:
+                self._reseed()
+
+
+class Snow(Effect):
+    """
+    Snow effect.
+    """
+
+    def __init__(self, screen, start_frame=0, stop_frame=0):
+        """
+        :param screen: The Screen being used for the Scene.
+        :param start_frame: Start index for the effect.
+        :param stop_frame: Stop index for the effect.
+        """
+        super(Snow, self).__init__(start_frame, stop_frame)
+        self._screen = screen
+        self._chars = None
+
+    def reset(self):
+        # Make the snow start falling one flake at a time.
+        self._chars = []
+
+    def _update(self, frame_no):
+        if frame_no % 3 == 0:
+            if len(self._chars) < self._screen.width / 3:
+                self._chars.append(_Flake(self._screen))
+
+            for char in self._chars:
+                char.update((self._stop_frame == 0) or (
+                    self._stop_frame - frame_no > 100))
+
+    @property
+    def stop_frame(self):
+        return self._stop_frame
+

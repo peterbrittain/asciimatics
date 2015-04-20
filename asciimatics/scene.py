@@ -10,7 +10,7 @@ class Scene(object):
         :param effects: The list of effects to apply to this scene.
         :param duration: The number of frames in this Scene.  A value of 0
                          means that the Scene should query the Effects to find
-                         the duration.
+                         the duration.  A value of -1 means don't stop.
         :param clear: Whether to clear the Screen at the start of the Scene.
         """
         self._effects = effects
