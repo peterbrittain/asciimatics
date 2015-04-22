@@ -173,5 +173,6 @@ class Plot(Sprite):
             },
             path=path,
             colour=colour,
+            clear=False,
             start_frame=start_frame,
             stop_frame=stop_frame)

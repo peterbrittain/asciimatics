@@ -120,11 +120,11 @@ def _credits(win):
                podium, 10),
         Cycle(screen,
               FigletText("Colour cycling"),
-              centre[1] - 8,
+              centre[1] - 5,
               start_frame=100),
         Cycle(screen,
               FigletText("using Figlet"),
-              centre[1] + 3,
+              centre[1] + 1,
               start_frame=100),
         _speak(screen, "Look in the effects module for more...",
                podium, 290),
@@ -152,8 +152,8 @@ def _credits(win):
         Plot(screen, path2, colour=curses.COLOR_BLUE, start_frame=160,
              stop_frame=300),
         _speak(screen, "My friend Sam will now follow it...", podium, 320),
-        Sam(screen, copy.copy(path2), start_frame=340),
-        _speak(screen, "Please press <SPACE> now.", podium, 480),
+        Sam(screen, copy.copy(path2), start_frame=380),
+        _speak(screen, "Please press <SPACE> now.", podium, 420),
     ]
     scenes.append(Scene(effects, -1))
 
@@ -171,6 +171,8 @@ def _credits(win):
               FigletText("THE END!"),
               centre[1] - 4,
               start_frame=100),
+        Print(screen, SpeechBubble("Press X to exit"), centre[1] + 6,
+              start_frame=150)
     ]
     scenes.append(Scene(effects, 500))
 
