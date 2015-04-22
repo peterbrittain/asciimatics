@@ -66,3 +66,8 @@ Documentation
 -------------
 
 Documentation is available at http://asciimatics.readthedocs.org/en/latest/
+
+More Examples
+-------------
+
+More examples of what you can do are available in the project samples directory, hosted on GitHub.  See https://github.com/peterbrittain/asciimatics/tree/master/samples.
