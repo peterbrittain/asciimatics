@@ -6,27 +6,42 @@ from asciimatics.screen import Screen
 
 # Tree definition
 tree = """
-       *
+       ${3,1}*
       / \\
-     /o  \\
+     /${1}o${2}  \\
     /_   _\\
-     /   \o
+     /   \${4}b
     /     \\
-   /   o   \\
+   /   ${1}o${2}   \\
   /__     __\\
-  o / o   \\
+  ${1}d${2} / ${4}o${2}   \\
    /       \\
-  / o     o \\
+  / ${4}o     ${1}o${2}.\\
  /___________\\
-      |||
-      |||
+      ${3}|||
+      ${3}|||
+""", """
+       ${3}*
+      / \\
+     /${1}o${2}  \\
+    /_   _\\
+     /   \${4}b
+    /     \\
+   /   ${1}o${2}   \\
+  /__     __\\
+  ${1}d${2} / ${4}o${2}   \\
+   /       \\
+  / ${4}o     ${1}o${2} \\
+ /___________\\
+      ${3}|||
+      ${3}|||
 """
 
 
 def demo(win):
     screen = Screen(win)
     effects = [
-        Print(screen, Renderer(images=[tree]),
+        Print(screen, Renderer(images=tree),
               x=screen.width - 15,
               y=screen.height - 15,
               colour=curses.COLOR_GREEN),

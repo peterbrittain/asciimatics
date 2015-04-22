@@ -15,6 +15,22 @@ class Screen(object):
     selected Effect.
     """
 
+    # Regular expression for use to find colour sequences in multi-colour text.
+    # It should match ${n} or ${m,n}
+    _colour_esc_code = r"(.*?)\$\{((\d+),(\d+)|(\d+))\}"
+    _colour_sequence = re.compile(_colour_esc_code)
+
+    ATTRIBUTES = {
+        "1": curses.A_BOLD,
+        "2": curses.A_NORMAL,
+        "3": curses.A_REVERSE,
+        "4": curses.A_UNDERLINE,
+    }
+    """
+    Attribute conversion table for the ${c,a} form of attributes for
+    :py:obj:`.paint`.
+    """
+
     def __init__(self, win, height=200):
         """
         :param win: The window object as returned by the curses wrapper method.
@@ -142,24 +158,51 @@ class Screen(object):
 
         See curses for definitions of the colour and attribute values.
 
-        This function will also convert ${n} into colour attribute n for any
-        subseqent text in the line, thus allowing multi-coloured text.
+        This function will also convert ${c,a} sequences as defined in
+        :py:obj:`.paint`.
         """
-        segments = [["", colour]]
+        total_width = len(re.sub(self._colour_esc_code, "", text))
+        x = (self.width - total_width)/2
+        self.paint(text, x, y, colour, attr)
+
+    def paint(self, text, x, y, colour=0, attr=0, transparent=False):
+        """
+        Paint multi-colour text at the defined location.
+
+        :param text: The (single line) text to be printed.
+        :param x: The column (x coord) for the start of the text.
+        :param y: The line (y coord) for the start of the text.
+        :param colour: The default colour of the text to be displayed.
+        :param attr: The default cell attribute of the text to be displayed.
+        :param transparent: Whether to print spaces or not, thus giving a
+            transparent effect.
+
+        See curses for definitions of the colour and attribute values.
+
+        This function will convert ${c,a} into colour c, attribute a for any
+        subseqent text in the line, thus allowing multi-coloured text.  The
+        attribute is optional.
+        """
+        segments = [["", colour, 0]]
         line = text
         while True:
-            match = re.match(r"(.*?)\$[{](\d+)[}]", line)
+            match = self._colour_sequence.match(line)
             if match is None:
                 break
             segments[-1][0] = match.group(1)
-            segments.append(["", int(match.group(2))])
+
+            # The regexp either matches ${c,a} for group 3,4 or ${c} for
+            # group 2.
+            if match.group(3) is None:
+                segments.append(["", int(match.group(2)), 0])
+            else:
+                segments.append(
+                    ["", int(match.group(3)), self.ATTRIBUTES[match.group(4)]])
             line = line[len(match.group(0)):]
         segments[-1][0] = line
-        total_width = sum([len(x[0]) for x in segments])
 
-        x = (self.width - total_width)/2
-        for (text, style) in segments:
-            self.putch(text, x, y, style, attr)
+        for (text, colour, attr) in segments:
+            self.putch(text, x, y, colour, attr, transparent)
             x += len(text)
 
     def is_visible(self, x, y):

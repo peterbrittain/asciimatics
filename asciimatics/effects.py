@@ -223,7 +223,7 @@ class Print(Effect):
         elif frame_no % 4 == 0:
             for (i, line) in enumerate(
                     self._renderer.rendered_text.split("\n")):
-                self._screen.putch(line, self._x, self._y + i, self._colour,
+                self._screen.paint(line, self._x, self._y + i, self._colour,
                                    transparent=self._transparent)
 
     @property
