@@ -72,7 +72,7 @@ def _credits(win):
         _speak(screen, "Please press <SPACE> now.", podium, 570),
         Stars(screen, 200, 360)
     ]
-    scenes.append(Scene(effects, 10000))
+    scenes.append(Scene(effects, -1))
 
     # Scene 3.
     path = Path()
@@ -89,7 +89,7 @@ def _credits(win):
                200),
         _speak(screen, "Please press <SPACE> now.", podium, 270),
     ]
-    scenes.append(Scene(effects, 10000))
+    scenes.append(Scene(effects, -1))
 
     # Scene 4.
     path = Path()
@@ -107,7 +107,7 @@ def _credits(win):
         _speak(screen, "Just look at this sample code.", podium, 360),
         _speak(screen, "Please press <SPACE> now.", podium, 430),
     ]
-    scenes.append(Scene(effects, 10000))
+    scenes.append(Scene(effects, -1))
 
     # Scene 5.
     path = Path()
@@ -130,7 +130,7 @@ def _credits(win):
                podium, 290),
         _speak(screen, "Please press <SPACE> now.", podium, 360),
     ]
-    scenes.append(Scene(effects, 10000))
+    scenes.append(Scene(effects, -1))
 
     # Scene 6.
     path = Path()
@@ -155,7 +155,7 @@ def _credits(win):
         Sam(screen, copy.copy(path2), start_frame=340),
         _speak(screen, "Please press <SPACE> now.", podium, 480),
     ]
-    scenes.append(Scene(effects, 10000))
+    scenes.append(Scene(effects, -1))
 
     # Scene 7.
     path = Path()
