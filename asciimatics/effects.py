@@ -480,14 +480,15 @@ class Sprite(Effect):
     An animated character capable of following a path around the screen.
     """
 
-    def __init__(self, screen, renderer_dict, path, colour=0, start_frame=0,
-                 stop_frame=0):
+    def __init__(self, screen, renderer_dict, path, colour=0,
+                 clear=True, start_frame=0, stop_frame=0):
         """
         :param screen: The Screen being used for the Scene.
         :param renderer_dict: A dictionary of Renderers to use for displaying
                               the Sprite.
         :param path: The Path for the Sprite to follow.
         :param colour: The colour to use to render the Sprite.
+        :param clear: Whether to clear out old images or leave a trail.
         :param start_frame: Start index for the effect.
         :param stop_frame: Stop index for the effect.
         """
@@ -497,6 +498,7 @@ class Sprite(Effect):
         self._path = path
         self._index = None
         self._colour = colour
+        self._clear = clear
         self._old_height = None
         self._old_width = None
         self._old_x = None
@@ -517,8 +519,9 @@ class Sprite(Effect):
     def _update(self, frame_no):
         if frame_no % 2 == 0:
             # Blank out the old sprite if moved.
-            if self._old_x is not None and self._old_y is not None:
-                for i in range(0, self._old_height - 1):
+            if self._clear and \
+                    self._old_x is not None and self._old_y is not None:
+                for i in range(0, self._old_height):
                     self._screen.putch(
                         " " * self._old_width, self._old_x, self._old_y + i, 0)
 
