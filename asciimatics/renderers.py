@@ -76,7 +76,7 @@ class FigletText(Renderer):
         :param font: The Figlet font to use (optional).
         """
         super(FigletText, self).__init__()
-        self._images = [Figlet(font=font).renderText(text)]
+        self._images = [Figlet(font=font, width=200).renderText(text)]
 
 
 class _ImageSequence(object):
