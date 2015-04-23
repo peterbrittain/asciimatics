@@ -18,7 +18,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='asciimatics',
-    version='0.2.0',
+    version='0.3.0',
     description='An ASCII art and text cinematic storyboard/demo library',
     long_description=long_description,
     url='https://github.com/peterbrittain/asciimatics.git',
