@@ -1,6 +1,6 @@
 from asciimatics.effects import Scroll, Mirage, Wipe, Cycle, Matrix, \
     BannerText, Stars, Print
-from asciimatics.renderers import FigletText, ImageFile, SpeechBubble
+from asciimatics.renderers import FigletText, ImageFile, SpeechBubble, Rainbow
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.sprites import Sam
@@ -84,8 +84,8 @@ def _credits(win):
     effects = [
         BannerText(
             screen,
-            FigletText(
-                "Reliving the 80s in glorious ASCII text...", font='slant'),
+            Rainbow(screen, FigletText(
+                "Reliving the 80s in glorious ASCII text...", font='slant')),
             screen.height / 2 - 3,
             curses.COLOR_GREEN)
     ]
