@@ -98,6 +98,7 @@ class Cycle(Effect):
     """
     Special effect to cycle the colours on some specified text from a
     Renderer.  The text is automatically centred to the width of the Screen.
+    This effect is not compatible with multi-colour rendered text.
     """
 
     def __init__(self, screen, renderer, y, start_frame=0):
@@ -121,7 +122,8 @@ class Cycle(Effect):
             return
 
         y = self._y
-        for line in self._renderer.rendered_text.split("\n"):
+        image, _ = self._renderer.rendered_text
+        for line in image:
             if self._screen.is_visible(0, y):
                 self._screen.centre(line, y, self._colour)
             y += 1
@@ -167,16 +169,18 @@ class BannerText(Effect):
         if self._scr_pos > 0:
             self._scr_pos -= 1
 
-        for (offset, line) in enumerate(
-                self._renderer.rendered_text.split("\n")):
+        image, colours = self._renderer.rendered_text
+        for (i, line) in enumerate(image):
             line += " "
+            colours[i].append((None, None))
             end_pos = min(
                 len(line),
                 self._text_pos + self._screen.width - self._scr_pos - 1)
-            self._screen.putch(line[self._text_pos:end_pos],
+            self._screen.paint(line[self._text_pos:end_pos],
                                self._scr_pos,
-                               self._y + offset,
-                               self._colour)
+                               self._y + i,
+                               self._colour,
+                               colour_map=colours[i][self._text_pos:end_pos])
 
     @property
     def stop_frame(self):
@@ -221,10 +225,11 @@ class Print(Effect):
                 self._screen.putch(
                     " " * self._renderer.max_width, self._x, self._y + i)
         elif frame_no % 4 == 0:
-            for (i, line) in enumerate(
-                    self._renderer.rendered_text.split("\n")):
+            image, colours = self._renderer.rendered_text
+            for (i, line) in enumerate(image):
                 self._screen.paint(line, self._x, self._y + i, self._colour,
-                                   transparent=self._transparent)
+                                   transparent=self._transparent,
+                                   colour_map=colours[i])
 
     @property
     def stop_frame(self):
@@ -261,12 +266,18 @@ class Mirage(Effect):
             return
 
         y = self._y
-        for line in self._renderer.rendered_text.split("\n"):
+        image, colours = self._renderer.rendered_text
+        for i, line in enumerate(image):
             if self._screen.is_visible(0, y):
                 x = (self._screen.width - len(line)) / 2
-                for c in line:
+                for j, c in enumerate(line):
                     if c != " " and random() > 0.85:
-                        self._screen.putch(c, x, y, self._colour)
+                        if colours[i][j][0] is not None:
+                            self._screen.putch(c, x, y,
+                                               colours[i][j][0],
+                                               colours[i][j][1])
+                        else:
+                            self._screen.putch(c, x, y, self._colour)
                     x += 1
             y += 1
 
@@ -559,9 +570,10 @@ class Sprite(Effect):
 
             # Draw the new sprite.
             # self._screen.putch(str(x)+","+str(y)+" ", 0, 0)
-            for (i, line) in enumerate(
-                    self._renderer_dict[direction].rendered_text.split("\n")):
-                    self._screen.putch(line, x, y + i, self._colour)
+            image, colours = self._renderer_dict[direction].rendered_text
+            for (i, line) in enumerate(image):
+                self._screen.paint(line, x, y + i, self._colour,
+                                   colour_map=colours[i])
 
             # Remember what we need to clear up next frame.
             self._old_width = self._renderer_dict[direction].max_width
@@ -608,6 +620,7 @@ class _Flake(object):
         Update that snowflake!
         """
         self._screen.putch(" ", self._x, self._y)
+        current_char = None
         for _ in range(self._rate):
             self._y += 1
             current_char, _ = self._screen.getch(self._x, self._y)
@@ -664,4 +677,3 @@ class Snow(Effect):
     @property
     def stop_frame(self):
         return self._stop_frame
-
