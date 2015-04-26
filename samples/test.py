@@ -4,6 +4,7 @@ from asciimatics.renderers import FigletText
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 
+
 def demo(win):
     screen = Screen(win)
     effects = [
