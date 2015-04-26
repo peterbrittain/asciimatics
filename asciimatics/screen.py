@@ -1,5 +1,5 @@
 import curses
-import re
+import os
 
 
 class Screen(object):
@@ -15,21 +15,264 @@ class Screen(object):
     selected Effect.
     """
 
-    # Regular expression for use to find colour sequences in multi-colour text.
-    # It should match ${n} or ${m,n}
-    _colour_esc_code = r"(.*?)\$\{((\d+),(\d+)|(\d+))\}"
-    _colour_sequence = re.compile(_colour_esc_code)
-
-    ATTRIBUTES = {
-        "1": curses.A_BOLD,
-        "2": curses.A_NORMAL,
-        "3": curses.A_REVERSE,
-        "4": curses.A_UNDERLINE,
-    }
-    """
-    Attribute conversion table for the ${c,a} form of attributes for
-    :py:obj:`.paint`.
-    """
+    _256_palette = [
+        '000000',
+        '800000',
+        '008000',
+        '808000',
+        '000080',
+        '800080',
+        '008080',
+        'c0c0c0',
+        '808080',
+        'ff0000',
+        '00ff00',
+        'ffff00',
+        '0000ff',
+        'ff00ff',
+        '00ffff',
+        'ffffff',
+        '000000',
+        '00005f',
+        '000087',
+        '0000af',
+        '0000d7',
+        '0000ff',
+        '005f00',
+        '005f5f',
+        '005f87',
+        '005faf',
+        '005fd7',
+        '005fff',
+        '008700',
+        '00875f',
+        '008787',
+        '0087af',
+        '0087d7',
+        '0087ff',
+        '00af00',
+        '00af5f',
+        '00af87',
+        '00afaf',
+        '00afd7',
+        '00afff',
+        '00d700',
+        '00d75f',
+        '00d787',
+        '00d7af',
+        '00d7d7',
+        '00d7ff',
+        '00ff00',
+        '00ff5f',
+        '00ff87',
+        '00ffaf',
+        '00ffd7',
+        '00ffff',
+        '5f0000',
+        '5f005f',
+        '5f0087',
+        '5f00af',
+        '5f00d7',
+        '5f00ff',
+        '5f5f00',
+        '5f5f5f',
+        '5f5f87',
+        '5f5faf',
+        '5f5fd7',
+        '5f5fff',
+        '5f8700',
+        '5f875f',
+        '5f8787',
+        '5f87af',
+        '5f87d7',
+        '5f87ff',
+        '5faf00',
+        '5faf5f',
+        '5faf87',
+        '5fafaf',
+        '5fafd7',
+        '5fafff',
+        '5fd700',
+        '5fd75f',
+        '5fd787',
+        '5fd7af',
+        '5fd7d7',
+        '5fd7ff',
+        '5fff00',
+        '5fff5f',
+        '5fff87',
+        '5fffaf',
+        '5fffd7',
+        '5fffff',
+        '870000',
+        '87005f',
+        '870087',
+        '8700af',
+        '8700d7',
+        '8700ff',
+        '875f00',
+        '875f5f',
+        '875f87',
+        '875faf',
+        '875fd7',
+        '875fff',
+        '878700',
+        '87875f',
+        '878787',
+        '8787af',
+        '8787d7',
+        '8787ff',
+        '87af00',
+        '87af5f',
+        '87af87',
+        '87afaf',
+        '87afd7',
+        '87afff',
+        '87d700',
+        '87d75f',
+        '87d787',
+        '87d7af',
+        '87d7d7',
+        '87d7ff',
+        '87ff00',
+        '87ff5f',
+        '87ff87',
+        '87ffaf',
+        '87ffd7',
+        '87ffff',
+        'af0000',
+        'af005f',
+        'af0087',
+        'af00af',
+        'af00d7',
+        'af00ff',
+        'af5f00',
+        'af5f5f',
+        'af5f87',
+        'af5faf',
+        'af5fd7',
+        'af5fff',
+        'af8700',
+        'af875f',
+        'af8787',
+        'af87af',
+        'af87d7',
+        'af87ff',
+        'afaf00',
+        'afaf5f',
+        'afaf87',
+        'afafaf',
+        'afafd7',
+        'afafff',
+        'afd700',
+        'afd75f',
+        'afd787',
+        'afd7af',
+        'afd7d7',
+        'afd7ff',
+        'afff00',
+        'afff5f',
+        'afff87',
+        'afffaf',
+        'afffd7',
+        'afffff',
+        'd70000',
+        'd7005f',
+        'd70087',
+        'd700af',
+        'd700d7',
+        'd700ff',
+        'd75f00',
+        'd75f5f',
+        'd75f87',
+        'd75faf',
+        'd75fd7',
+        'd75fff',
+        'd78700',
+        'd7875f',
+        'd78787',
+        'd787af',
+        'd787d7',
+        'd787ff',
+        'd7af00',
+        'd7af5f',
+        'd7af87',
+        'd7afaf',
+        'd7afd7',
+        'd7afff',
+        'd7d700',
+        'd7d75f',
+        'd7d787',
+        'd7d7af',
+        'd7d7d7',
+        'd7d7ff',
+        'd7ff00',
+        'd7ff5f',
+        'd7ff87',
+        'd7ffaf',
+        'd7ffd7',
+        'd7ffff',
+        'ff0000',
+        'ff005f',
+        'ff0087',
+        'ff00af',
+        'ff00d7',
+        'ff00ff',
+        'ff5f00',
+        'ff5f5f',
+        'ff5f87',
+        'ff5faf',
+        'ff5fd7',
+        'ff5fff',
+        'ff8700',
+        'ff875f',
+        'ff8787',
+        'ff87af',
+        'ff87d7',
+        'ff87ff',
+        'ffaf00',
+        'ffaf5f',
+        'ffaf87',
+        'ffafaf',
+        'ffafd7',
+        'ffafff',
+        'ffd700',
+        'ffd75f',
+        'ffd787',
+        'ffd7af',
+        'ffd7d7',
+        'ffd7ff',
+        'ffff00',
+        'ffff5f',
+        'ffff87',
+        'ffffaf',
+        'ffffd7',
+        'ffffff',
+        '080808',
+        '121212',
+        '1c1c1c',
+        '262626',
+        '303030',
+        '3a3a3a',
+        '444444',
+        '4e4e4e',
+        '585858',
+        '626262',
+        '6c6c6c',
+        '767676',
+        '808080',
+        '8a8a8a',
+        '949494',
+        '9e9e9e',
+        'a8a8a8',
+        'b2b2b2',
+        'bcbcbc',
+        'c6c6c6',
+        'd0d0d0',
+        'dadada',
+        'e4e4e4',
+        'eeeeee',
+    ]
 
     def __init__(self, win, height=200):
         """
@@ -43,7 +286,10 @@ class Screen(object):
         self._pad = curses.newpad(self.buffer_height, self.width)
 
         # Set up basic colour schemes.
-        for i in range(curses.COLOR_RED, curses.COLOR_WHITE):
+        self.colours = 8
+        if os.environ['TERM'] == 'xterm-256color':
+            self.colours = 256
+        for i in range(1, self.colours - 1):
             curses.init_pair(i, i, curses.COLOR_BLACK)
 
         # Disable the cursor.
@@ -141,12 +387,12 @@ class Screen(object):
             if transparent:
                 for i, c in enumerate(text):
                     if c != " ":
-                        self._pad.addch(
+                        self._pad.addstr(
                             y, x+i, c, curses.color_pair(colour) | attr)
             else:
                 self._pad.addstr(y, x, text, curses.color_pair(colour) | attr)
 
-    def centre(self, text, y, colour=0, attr=0):
+    def centre(self, text, y, colour=0, attr=0, colour_map=None):
         """
         Centre the text on the specified line (y) using the optional
         colour and attributes.
@@ -155,55 +401,38 @@ class Screen(object):
         :param y: The line (y coord) for the start of the text.
         :param colour: The colour of the text to be displayed.
         :param attr: The cell attribute of the text to be displayed.
+        :param colour_map: Colour/attribute list for multi-colour text.
 
         See curses for definitions of the colour and attribute values.
-
-        This function will also convert ${c,a} sequences as defined in
-        :py:obj:`.paint`.
         """
-        total_width = len(re.sub(self._colour_esc_code, "", text))
-        x = (self.width - total_width)/2
-        self.paint(text, x, y, colour, attr)
+        x = (self.width - len(text))/2
+        self.paint(text, x, y, colour, attr, colour_map=colour_map)
 
-    def paint(self, text, x, y, colour=0, attr=0, transparent=False):
+    def paint(self, text, x, y, colour=0, attr=0, transparent=False,
+              colour_map=None):
         """
         Paint multi-colour text at the defined location.
 
         :param text: The (single line) text to be printed.
-        :param x: The column (x coord) for the start of the text.
+        :param x: The columen (x coord) for the start of the text.
         :param y: The line (y coord) for the start of the text.
         :param colour: The default colour of the text to be displayed.
         :param attr: The default cell attribute of the text to be displayed.
         :param transparent: Whether to print spaces or not, thus giving a
             transparent effect.
+        :param colour_map: Colour/attribute list for multi-colour text.
 
         See curses for definitions of the colour and attribute values.
-
-        This function will convert ${c,a} into colour c, attribute a for any
-        subseqent text in the line, thus allowing multi-coloured text.  The
-        attribute is optional.
         """
-        segments = [["", colour, 0]]
-        line = text
-        while True:
-            match = self._colour_sequence.match(line)
-            if match is None:
-                break
-            segments[-1][0] = match.group(1)
-
-            # The regexp either matches ${c,a} for group 3,4 or ${c} for
-            # group 2.
-            if match.group(3) is None:
-                segments.append(["", int(match.group(2)), 0])
-            else:
-                segments.append(
-                    ["", int(match.group(3)), self.ATTRIBUTES[match.group(4)]])
-            line = line[len(match.group(0)):]
-        segments[-1][0] = line
-
-        for (text, colour, attr) in segments:
+        if colour_map is None:
             self.putch(text, x, y, colour, attr, transparent)
-            x += len(text)
+        else:
+            for i, c in enumerate(text):
+                if colour_map[i][0] is None:
+                    self.putch(c, x+i, y, colour, attr, transparent)
+                else:
+                    self.putch(c, x+i, y, colour_map[i][0], colour_map[i][1],
+                               transparent)
 
     def is_visible(self, x, y):
         """
