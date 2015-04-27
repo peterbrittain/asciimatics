@@ -5,6 +5,7 @@ CHANGE HISTORY
 -----
 - Added support for 256 colour terminals.
 - Moved ${c,a} syntax for inline colouring from Screen to Renderers
+- Created some samples for 256 colour mode and colour images.
 
 0.3.0
 -----
