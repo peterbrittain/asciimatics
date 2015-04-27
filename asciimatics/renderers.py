@@ -204,6 +204,10 @@ class ColourImageFile(Renderer):
     """
     Renderer to convert animage file (as supported by the Python Imaging
     Library) into an block image of available colours.
+
+    ..warning::
+
+        This is only compatble with 256-colour terminals.
     """
 
     def __init__(self, screen, filename, height=30):
@@ -308,6 +312,8 @@ class Box(Renderer):
 class Rainbow(Renderer):
     """
     Chained renderer to add rainbow colours to output of another renderer.
+    The embedded rendered must not use multi-colour mode (i.e. ${c,a} 
+    mark-ups) as these will be converted to explicit text by this renderer.
     """
 
     # Colour palette when limited to 16 colours (8 dim and 8 bright).

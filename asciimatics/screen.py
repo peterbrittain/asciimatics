@@ -424,7 +424,9 @@ class Screen(object):
             transparent effect.
         :param colour_map: Colour/attribute list for multi-colour text.
 
-        See curses for definitions of the colour and attribute values.
+        See curses for definitions of the colour and attribute values.  The
+        colour_map is a list of tuples (colour, attribute) that must be the
+        same length as the passed in text (or None if no mapping is required).
         """
         if colour_map is None:
             self.putch(text, x, y, colour, attr, transparent)
