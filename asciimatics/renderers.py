@@ -207,7 +207,7 @@ class ColourImageFile(Renderer):
 
     .. warning::
 
-        This is only compatble with 256-colour terminals.
+        This is only compatible with 256-colour terminals.
     """
 
     def __init__(self, screen, filename, height=30):
