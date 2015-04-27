@@ -1,5 +1,5 @@
 from asciimatics.effects import BannerText, Print, Scroll
-from asciimatics.renderers import ImageFile, ColourImageFile
+from asciimatics.renderers import ImageFile, ColourImageFile, Rainbow, FigletText
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 import curses
@@ -13,6 +13,9 @@ def demo(win):
         Print(screen, ColourImageFile(screen, "colour_globe.gif",
                                       screen.height-2), 0,
               stop_frame=200),
+        Print(screen,
+              FigletText(
+                  "ASCIIMATICS NEWS", font='banner3'), screen.height/2-3, colour=15),
     ]
     scenes.append(Scene(effects))
     effects = [
