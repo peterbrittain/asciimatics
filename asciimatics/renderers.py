@@ -59,9 +59,9 @@ class Renderer(object):
         for image in self._images:
             colour_map = []
             new_image = []
-            attrs = (None, None)
             for line in image.split("\n"):
                 new_line = ""
+                attrs = (None, None)
                 colours = []
                 while len(line) > 0:
                     match = self._colour_sequence.match(line)
