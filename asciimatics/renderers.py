@@ -205,7 +205,7 @@ class ColourImageFile(Renderer):
     Renderer to convert animage file (as supported by the Python Imaging
     Library) into an block image of available colours.
 
-    ..warning::
+    .. warning::
 
         This is only compatble with 256-colour terminals.
     """
