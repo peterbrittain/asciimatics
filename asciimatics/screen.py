@@ -274,6 +274,9 @@ class Screen(object):
         0xee, 0xee, 0xee,
     ]
 
+    # Characters for anti-aliasing line drawing.
+    _line_chars = " ''^.|/P.\\|YwbdX"
+
     def __init__(self, win, height=200):
         """
         :param win: The window object as returned by the curses wrapper method.
@@ -302,6 +305,8 @@ class Screen(object):
 
         # Ensure that the screen is clear and ready to go.
         self._start_line = None
+        self._x = 0
+        self._y = 0
         self.clear()
 
     @property
@@ -475,3 +480,75 @@ class Screen(object):
                     if c in (ord(" "), ord("\n")):
                         break
                     curses.napms(50)
+
+    def move(self, x, y):
+        """
+        Move the drawing cursor to the specified position.
+
+        :param x: The column (x coord) for the location to check.
+        :param y: The line (y coord) for the location to check.
+        """
+        self._x = int(x)
+        self._y = int(y)
+
+    def draw(self, x, y, char=None):
+        """
+        Draw a line from drawing cursor to the specified position.  This uses a
+        modified Bressenham algorithm, interpolating twice as many points to
+        render down to anti-aliased characters.
+
+        :param x: The column (x coord) for the location to check.
+        :param y: The line (y coord) for the location to check.
+        :param char: Optional character to use to draw the line.
+        """
+        x0 = self._x * 2
+        y0 = self._y * 2
+        x1 = int(x) * 2
+        y1 = int(y) * 2
+
+        dx = abs(x1-x0)
+        dy = abs(y1-y0)
+
+        sx = -1 if x0 > x1 else 1
+        sy = -1 if y0 > y1 else 1
+
+        x = x0
+        y = y0
+        if dx > dy:
+            err = dx
+            while x != x1:
+                # next_char1 |= 2 ^ (x % 2) * 4 ^ (y % 2)
+                # next_char1 |= 2 ^ (x % 2) * 4 ^ ((y-1) % 2)
+                if x % 2 == 1:
+                    if char is None:
+                        # self.putch(self._line_chars[next_char1], x/2, y/2)
+                        self.putch("X", x/2, y/2)
+                    else:
+                        self.putch(char, x/2, y/2)
+                err -= 2*dy
+                if err < 0:
+                    y += sy
+                    err += 2*dx
+                x += sx
+        else:
+            err = dy
+            while y != y1:
+                # next_char1 |= 2 ^ (x % 2) * 4 ^ (y % 2)
+                # next_char2 |= 2 ^ ((x+1) % 2) * 4 ^ (y % 2)
+                if y % 2 == 1:
+                    if char is None:
+                        # self.putch(self._line_chars[next_char1], x/2, y/2)
+                        self.putch("X", x/2, y/2)
+                    else:
+                        self.putch(char, x/2, y/2)
+                err -= 2*dx
+                if err < 0:
+                    x += sx
+                    err += 2*dy
+                y += sy
+        if char is None:
+            # self.putch(self._line_chars[next_char1], x/2, y/2)
+            # self.putch(self._line_chars[next_char2], x+1/2, y/2)
+            self.putch("X", x/2, y/2)
+        else:
+            self.putch(char, x/2, y/2)
