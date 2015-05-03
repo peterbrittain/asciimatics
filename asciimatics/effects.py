@@ -1,5 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from random import randint, random, choice
+from math import sin, cos, pi
+import datetime
 import curses
 
 
@@ -673,6 +675,64 @@ class Snow(Effect):
             for char in self._chars:
                 char.update((self._stop_frame == 0) or (
                     self._stop_frame - frame_no > 100))
+
+    @property
+    def stop_frame(self):
+        return self._stop_frame
+
+
+class Clock(Effect):
+    """
+    Clock effect.
+    """
+
+    def __init__(self, screen, x, y, r, start_frame=0, stop_frame=0):
+        """
+        :param screen: The Screen being used for the Scene.
+        :param x: X coordinate for the centre of the clock.
+        :param y: Y coordinate for the centre of the clock.
+        :param r: Radius of the clock.
+        :param start_frame: Start index for the effect.
+        :param stop_frame: Stop index for the effect.
+        """
+        super(Clock, self).__init__(start_frame, stop_frame)
+        self._screen = screen
+        self._x = x
+        self._y = y
+        self._r = r
+        self._old_time = None
+
+    def reset(self):
+        pass
+
+    def _update(self, frame_no):
+        # Clear old hands
+        if self._old_time is not None:
+            ot = self._old_time
+            self._screen.move(self._x, self._y)
+            self._screen.draw(self._x + (self._r*sin(ot.tm_hour*pi/30)),
+                              self._y - (self._r*cos(ot.tm_hour*pi/30)/2),
+                              char=" ")
+            self._screen.draw(self._x + (self._r*sin(ot.tm_min*pi/30)*4/3),
+                              self._y - (self._r*cos(ot.tm_min*pi/30)*2/3),
+                              char=" ")
+            self._screen.draw(self._x + (self._r*sin(ot.tm_sec*pi/30)*2),
+                              self._y - (self._r*cos(ot.tm_sec*pi/30)),
+                              char=" ")
+
+        # Draw new ones
+        new_time = datetime.datetime.now().timetuple()
+        self._screen.move(self._x, self._y)
+        self._screen.draw(self._x + (self._r*sin(new_time.tm_hour*pi/30)),
+                          self._y - (self._r*cos(new_time.tm_hour*pi/30)/2),
+                          char="H")
+        self._screen.draw(self._x + (self._r*sin(new_time.tm_min*pi/30)*4/3),
+                          self._y - (self._r*cos(new_time.tm_min*pi/30)*2/3),
+                          char="M")
+        self._screen.draw(self._x + (self._r*sin(new_time.tm_sec*pi/30)*2),
+                          self._y - (self._r*cos(new_time.tm_sec*pi/30)),
+                          char="S")
+        self._old_time = new_time
 
     @property
     def stop_frame(self):
