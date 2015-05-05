@@ -202,7 +202,7 @@ class ImageFile(Renderer):
 
 class ColourImageFile(Renderer):
     """
-    Renderer to convert animage file (as supported by the Python Imaging
+    Renderer to convert an image file (as supported by the Python Imaging
     Library) into an block image of available colours.
 
     .. warning::

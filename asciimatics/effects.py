@@ -15,14 +15,14 @@ class Effect(object):
 
     1.  The Scene will call :py:meth:`.Effect.reset` for all Effects when it
         starts.
-    2.  The Scene will determine the number of rames required (either through
-        explicit configuration) or querying :py:obj:`.stop_frame` for every
-        Effect.
+    2.  The Scene will determine the number of frames required (either through
+        explicit configuration or querying :py:obj:`.stop_frame` for every
+        Effect).
     3.  It will then run the scene, calling :py:meth:`.Effect.update` for
         each effect that is in the scene.
 
     New Effects, therefore need to implement the abstract methods on this
-    class to satisy the contract with Scene.
+    class to satisfy the contract with Scene.
     """
     __metaclass__ = ABCMeta
 
@@ -683,7 +683,7 @@ class Snow(Effect):
 
 class Clock(Effect):
     """
-    Clock effect.
+    An ASCII ticking clock (telling the correct local time).
     """
 
     def __init__(self, screen, x, y, r, start_frame=0, stop_frame=0):
@@ -713,9 +713,11 @@ class Clock(Effect):
             self._screen.draw(self._x + (self._r*sin(ot.tm_hour*pi/30)),
                               self._y - (self._r*cos(ot.tm_hour*pi/30)/2),
                               char=" ")
+            self._screen.move(self._x, self._y)
             self._screen.draw(self._x + (self._r*sin(ot.tm_min*pi/30)*4/3),
                               self._y - (self._r*cos(ot.tm_min*pi/30)*2/3),
                               char=" ")
+            self._screen.move(self._x, self._y)
             self._screen.draw(self._x + (self._r*sin(ot.tm_sec*pi/30)*2),
                               self._y - (self._r*cos(ot.tm_sec*pi/30)),
                               char=" ")
@@ -726,12 +728,15 @@ class Clock(Effect):
         self._screen.draw(self._x + (self._r*sin(new_time.tm_hour*pi/30)),
                           self._y - (self._r*cos(new_time.tm_hour*pi/30)/2),
                           char="H")
+        self._screen.move(self._x, self._y)
         self._screen.draw(self._x + (self._r*sin(new_time.tm_min*pi/30)*4/3),
                           self._y - (self._r*cos(new_time.tm_min*pi/30)*2/3),
                           char="M")
+        self._screen.move(self._x, self._y)
         self._screen.draw(self._x + (self._r*sin(new_time.tm_sec*pi/30)*2),
                           self._y - (self._r*cos(new_time.tm_sec*pi/30)),
-                          char="S")
+                          char=None)
+        self._screen.putch("O", self._x, self._y)
         self._old_time = new_time
 
     @property
