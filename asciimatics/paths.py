@@ -19,8 +19,9 @@ class Path(object):
     """
     Class to record and play back the motion of a Sprite.
     
-    The Screen will reset() the Path before iterating through each position usin
-    next_pos() and checking whether it has reached the end using is_finished().
+    The Screen will reset() the Path before iterating through each position
+    using next_pos() and checking whether it has reached the end using
+    is_finished().
     """
 
     def __init__(self):

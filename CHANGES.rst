@@ -1,6 +1,11 @@
 CHANGE HISTORY
 ==============
 
+0.5.0
+-----
+- Added Bressenham line drawing algorithm with anti-aliasing.
+- Fixed up some docs errors.
+
 0.4.0
 -----
 - Added support for 256 colour terminals.
