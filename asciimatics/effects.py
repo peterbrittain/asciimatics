@@ -727,16 +727,17 @@ class Clock(Effect):
         self._screen.move(self._x, self._y)
         self._screen.draw(self._x + (self._r*sin(new_time.tm_hour*pi/30)),
                           self._y - (self._r*cos(new_time.tm_hour*pi/30)/2),
-                          char="H")
+                          colour=7)
         self._screen.move(self._x, self._y)
         self._screen.draw(self._x + (self._r*sin(new_time.tm_min*pi/30)*4/3),
                           self._y - (self._r*cos(new_time.tm_min*pi/30)*2/3),
-                          char="M")
+                          colour=7)
         self._screen.move(self._x, self._y)
         self._screen.draw(self._x + (self._r*sin(new_time.tm_sec*pi/30)*2),
                           self._y - (self._r*cos(new_time.tm_sec*pi/30)),
-                          char=None)
-        self._screen.putch("O", self._x, self._y)
+                          colour=6, thin=True)
+        self._screen.putch("o", self._x, self._y, curses.COLOR_YELLOW,
+                           curses.A_BOLD)
         self._old_time = new_time
 
     @property
