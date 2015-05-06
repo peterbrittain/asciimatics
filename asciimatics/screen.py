@@ -275,7 +275,7 @@ class Screen(object):
     ]
 
     # Characters for anti-aliasing line drawing.
-    _line_chars = " ''^.|/P.\\|YwbdX"
+    _line_chars = " ''^.|/7.\\|Ywbd#"
 
     def __init__(self, win, height=200):
         """
@@ -488,10 +488,10 @@ class Screen(object):
         :param x: The column (x coord) for the location to check.
         :param y: The line (y coord) for the location to check.
         """
-        self._x = int(x)
-        self._y = int(y)
+        self._x = int(round(x, 1))
+        self._y = int(round(y, 1))
 
-    def draw(self, x, y, char=None, colour=None):
+    def draw(self, x, y, char=None, colour=None, thin=False):
         """
         Draw a line from drawing cursor to the specified position.  This uses a
         modified Bressenham algorithm, interpolating twice as many points to
@@ -502,11 +502,12 @@ class Screen(object):
         :param y: The line (y coord) for the location to check.
         :param char: Optional character to use to draw the line.
         :param colour: Optional colour for plotting the line.
+        :param thin: Optional width of anti-aliased line.
         """
         x0 = self._x * 2
         y0 = self._y * 2
-        x1 = int(x) * 2
-        y1 = int(y) * 2
+        x1 = int(round(x, 1)) * 2
+        y1 = int(round(y, 1)) * 2
 
         dx = abs(x1-x0)
         dy = abs(y1-y0)
@@ -522,7 +523,7 @@ class Screen(object):
 
         if dx > dy:
             err = dx
-            while x != x1:
+            while x != x1 + 2 * sx:
                 next_chars = [0, 0]
                 iy = y & ~1
                 for ix in x_range:
@@ -530,6 +531,11 @@ class Screen(object):
                         next_chars[0] |= 2 ** ix * 4 ** (y % 2)
                     else:
                         next_chars[1] |= 2 ** ix * 4 ** (y % 2)
+                    if not thin:
+                        if y + sy >= iy and y + sy - iy < 2:
+                            next_chars[0] |= 2 ** ix * 4 ** ((y+sy) % 2)
+                        else:
+                            next_chars[1] |= 2 ** ix * 4 ** ((y+sy) % 2)
                     err -= 2*dy
                     if err < 0:
                         y += sy
@@ -537,16 +543,19 @@ class Screen(object):
                     x += sx
 
                 if char is None:
-                    self.putch(self._line_chars[next_chars[0]], x/2, iy/2)
-                    self.putch(self._line_chars[next_chars[1]], x/2, iy/2+sy)
+                    self.putch(self._line_chars[next_chars[0]], x/2, iy/2,
+                               colour)
+                    if next_chars[1] != 0:
+                        self.putch(self._line_chars[next_chars[1]],
+                                   x/2, iy/2+sy, colour)
                 elif char == " ":
                     self.putch(char, x/2, iy/2)
                     self.putch(char, x/2, iy/2+sy)
                 else:
-                    self.putch(char, x/2, iy/2)
+                    self.putch(char, x/2, iy/2, colour)
         else:
             err = dy
-            while y != y1:
+            while y != y1 + 2 * sy:
                 next_chars = [0, 0]
                 ix = x & ~1
                 for iy in y_range:
@@ -554,6 +563,11 @@ class Screen(object):
                         next_chars[0] |= 2 ** (x % 2) * 4 ** iy
                     else:
                         next_chars[1] |= 2 ** (x % 2) * 4 ** iy
+                    if not thin:
+                        if x + sx >= ix and x + sx - ix < 2:
+                            next_chars[0] |= 2 ** ((x+sx) % 2) * 4 ** iy
+                        else:
+                            next_chars[1] |= 2 ** ((x+sx) % 2) * 4 ** iy
                     err -= 2*dx
                     if err < 0:
                         x += sx
@@ -561,17 +575,14 @@ class Screen(object):
                     y += sy
 
                 if char is None:
-                    self.putch(self._line_chars[next_chars[0]], ix/2, y/2)
-                    self.putch(self._line_chars[next_chars[1]], ix/2+sx, y/2)
+                    self.putch(self._line_chars[next_chars[0]], ix/2, y/2,
+                               colour)
+                    if next_chars[1] != 0:
+                        self.putch(
+                            self._line_chars[next_chars[1]], ix/2+sx, y/2,
+                            colour)
                 elif char == " ":
                     self.putch(char, ix/2, y/2)
                     self.putch(char, ix/2+sx, y/2)
                 else:
-                    self.putch(char, ix/2, y/2)
-
-        if char is None:
-            # self.putch(self._line_chars[next_char1], x/2, y/2)
-            # self.putch(self._line_chars[next_char2], x+1/2, y/2)
-            self.putch("X", x/2, y/2)
-        else:
-            self.putch(char, x/2, y/2)
+                    self.putch(char, ix/2, y/2, colour)
