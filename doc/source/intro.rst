@@ -1,5 +1,5 @@
 Introduction
-===========
+============
 
 Asciimatics is a package to help people create simple ASCII animations using
 curses.  It is licensed under the Apache Software Foundation License 2.0.

@@ -88,8 +88,8 @@ class Path(object):
 
     def move_straight_to(self, x, y, steps):
         """
-        Move straight to the newly specified location - i.e. create a straight line
-        Path from the current location to the specified point.
+        Move straight to the newly specified location - i.e. create a straight
+        line Path from the current location to the specified point.
 
         :param x:  X coord for the end position.
         :param y: Y coord for the end position.

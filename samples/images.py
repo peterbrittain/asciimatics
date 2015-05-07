@@ -1,5 +1,5 @@
 from asciimatics.effects import BannerText, Print, Scroll
-from asciimatics.renderers import ImageFile, ColourImageFile, Rainbow, FigletText
+from asciimatics.renderers import ColourImageFile, FigletText
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 import curses
@@ -14,8 +14,8 @@ def demo(win):
                                       screen.height-2), 0,
               stop_frame=200),
         Print(screen,
-              FigletText(
-                  "ASCIIMATICS NEWS", font='banner3'), screen.height/2-3, colour=15),
+              FigletText("ASCIIMATICS NEWS", font='banner3'),
+              screen.height/2-3, colour=15),
     ]
     scenes.append(Scene(effects))
     effects = [
@@ -36,4 +36,3 @@ def demo(win):
 
 if __name__ == "__main__":
     curses.wrapper(demo)
-
