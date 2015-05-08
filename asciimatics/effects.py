@@ -714,8 +714,8 @@ class Clock(Effect):
                               self._y - (self._r*cos(ot.tm_hour*pi/30)/2),
                               char=" ")
             self._screen.move(self._x, self._y)
-            self._screen.draw(self._x + (self._r*sin(ot.tm_min*pi/30)*4/3),
-                              self._y - (self._r*cos(ot.tm_min*pi/30)*2/3),
+            self._screen.draw(self._x + (self._r*sin(ot.tm_min*pi/30)*2),
+                              self._y - (self._r*cos(ot.tm_min*pi/30)),
                               char=" ")
             self._screen.move(self._x, self._y)
             self._screen.draw(self._x + (self._r*sin(ot.tm_sec*pi/30)*2),
@@ -729,8 +729,8 @@ class Clock(Effect):
                           self._y - (self._r*cos(new_time.tm_hour*pi/30)/2),
                           colour=7)
         self._screen.move(self._x, self._y)
-        self._screen.draw(self._x + (self._r*sin(new_time.tm_min*pi/30)*4/3),
-                          self._y - (self._r*cos(new_time.tm_min*pi/30)*2/3),
+        self._screen.draw(self._x + (self._r*sin(new_time.tm_min*pi/30)*2),
+                          self._y - (self._r*cos(new_time.tm_min*pi/30)),
                           colour=7)
         self._screen.move(self._x, self._y)
         self._screen.draw(self._x + (self._r*sin(new_time.tm_sec*pi/30)*2),
@@ -739,6 +739,62 @@ class Clock(Effect):
         self._screen.putch("o", self._x, self._y, curses.COLOR_YELLOW,
                            curses.A_BOLD)
         self._old_time = new_time
+
+    @property
+    def stop_frame(self):
+        return self._stop_frame
+
+
+class RandomNoise(Effect):
+    """
+    White noise effect - like an old analogue TV set that isn't quite tuned
+    right.  If desired, a signal image (as a renderer) can be specified that
+    will appear from the noise.
+    """
+
+    def __init__(self, screen, signal=None, start_frame=0, stop_frame=0):
+        """
+        :param screen: The Screen being used for the Scene.
+        :param signal: The renderer to use as the 'signal' in the white noise.
+        :param start_frame: Start index for the effect.
+        :param stop_frame: Stop index for the effect.
+        """
+        super(RandomNoise, self).__init__(start_frame, stop_frame)
+        self._screen = screen
+        self._signal = signal
+        self._strength = None
+        self._step = None
+
+    def reset(self):
+        self._strength = 0.0
+        self._step = 0.01
+
+    def _update(self, frame_no):
+        if self._signal:
+            start_x = int((self._screen.width - self._signal.max_width) / 2)
+            start_y = int((self._screen.height - self._signal.max_height) / 2)
+            text, colours = self._signal.rendered_text
+        else:
+            start_x = start_y = 0
+            text, colours = "", []
+
+        for x in range(self._screen.width):
+            for y in range(self._screen.height):
+                ix = x-start_x
+                iy = y-start_y
+                if (self._signal and random() <= self._strength and
+                        x >= start_x and y >= start_y and
+                        iy < len(text) and ix < len(text[iy])):
+                    self._screen.paint(text[iy][ix],
+                                       x, y,
+                                       colour_map=[colours[iy][ix]])
+                else:
+                    self._screen.putch(chr(randint(33, 128)), x, y)
+
+        # Tune the signal
+        self._strength += self._step
+        if self._strength >= 1.0 or self._strength <= 0.0:
+            self._step = -self._step
 
     @property
     def stop_frame(self):

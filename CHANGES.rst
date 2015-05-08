@@ -4,6 +4,7 @@ CHANGE HISTORY
 0.5.0
 -----
 - Added Bressenham line drawing algorithm with anti-aliasing.
+- Added Random Noise effect.
 - Fixed up some docs errors.
 
 0.4.0
