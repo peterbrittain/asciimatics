@@ -789,7 +789,8 @@ class RandomNoise(Effect):
                                        x, y,
                                        colour_map=[colours[iy][ix]])
                 else:
-                    self._screen.putch(chr(randint(33, 128)), x, y)
+                    if random() < 0.2:
+                        self._screen.putch(chr(randint(33, 128)), x, y)
 
         # Tune the signal
         self._strength += self._step
