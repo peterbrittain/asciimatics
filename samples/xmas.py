@@ -39,7 +39,7 @@ tree = """
 
 
 def demo(win):
-    screen = Screen(win)
+    screen = Screen.from_curses(win)
     effects = [
         Print(screen, Renderer(images=tree),
               x=screen.width - 15,

@@ -6,7 +6,7 @@ import curses
 
 
 def demo(win):
-    screen = Screen(win)
+    screen = Screen.from_curses(win)
 
     scenes = []
     effects = [

@@ -28,7 +28,7 @@ def _speak(screen, text, pos, start):
 
 
 def _credits(win):
-    screen = Screen(win)
+    screen = Screen.from_curses(win)
 
     scenes = []
     centre = (screen.width / 2, screen.height / 2)

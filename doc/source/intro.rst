@@ -36,7 +36,7 @@ Will typically need to display some text.  This is provided by a
 .. code-block:: python
 
     def demo(win):
-        screen = Screen(win)
+        screen = Screen.from_curses(win)
         effects = [
             Cycle(
                 screen,

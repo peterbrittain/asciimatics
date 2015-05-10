@@ -5,7 +5,8 @@ from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.sprites import Sam
 from asciimatics.paths import Path
-import curses
+from blessed import Terminal
+from asciimatics.screen import COLOUR_GREEN, COLOUR_CYAN
 import math
 
 
@@ -13,11 +14,15 @@ def ascii_credits():
     """
     Asciimatics credits!
     """
-    curses.wrapper(_credits)
+    term = Terminal()
+    with term.fullscreen():
+        with term.hidden_cursor():
+            with term.cbreak():
+                _credits(term)
 
 
-def _credits(win):
-    screen = Screen.from_curses(win)
+def _credits(term):
+    screen = Screen.from_blessed(term)
 
     scenes = []
     centre = (screen.width / 2, screen.height / 2)
@@ -40,21 +45,21 @@ def _credits(win):
         Print(screen,
               SpeechBubble("WELCOME TO ASCIIMATICS", "L"),
               x=centre[0] + 12, y=(centre[1] - screen.height / 3) - 4,
-              colour=curses.COLOR_CYAN,
+              colour=COLOUR_CYAN,
               clear=True,
               start_frame=20,
               stop_frame=50),
         Print(screen,
               SpeechBubble("Wheeeeeee!"),
               y=centre[1],
-              colour=curses.COLOR_CYAN,
+              colour=COLOUR_CYAN,
               clear=True,
               start_frame=100,
               stop_frame=250),
         Print(screen,
               SpeechBubble("A world of possibilities awaits you...", "L"),
               x=18, y=0,
-              colour=curses.COLOR_CYAN,
+              colour=COLOUR_CYAN,
               clear=True,
               start_frame=350,
               stop_frame=400),
@@ -69,7 +74,7 @@ def _credits(win):
             screen,
             FigletText("Asciimatics"),
             screen.height / 2 - 3,
-            curses.COLOR_GREEN,
+            COLOUR_GREEN,
             start_frame=100,
             stop_frame=200),
         Wipe(screen, start_frame=150),
@@ -87,7 +92,7 @@ def _credits(win):
             Rainbow(screen, FigletText(
                 "Reliving the 80s in glorious ASCII text...", font='slant')),
             screen.height / 2 - 3,
-            curses.COLOR_GREEN)
+            COLOUR_GREEN)
     ]
     scenes.append(Scene(effects))
 
@@ -96,17 +101,17 @@ def _credits(win):
             screen,
             FigletText("Conceived and"),
             screen.height,
-            curses.COLOR_GREEN),
+            COLOUR_GREEN),
         Mirage(
             screen,
             FigletText("written by:"),
             screen.height + 8,
-            curses.COLOR_GREEN),
+            COLOUR_GREEN),
         Mirage(
             screen,
             FigletText("Peter Brittain"),
             screen.height + 16,
-            curses.COLOR_GREEN),
+            COLOUR_GREEN),
         Scroll(screen, 3)
     ]
     scenes.append(Scene(effects, (screen.height + 24) * 3))
@@ -120,7 +125,7 @@ def _credits(win):
             screen,
             FigletText("ROCKS!", font='big'),
             screen.height / 2 + 3),
-        Stars(screen, (screen.width + screen.height) // 2)
+        Stars(screen, (screen.height + screen.width) / 2)
     ]
     scenes.append(Scene(effects, 200))
 

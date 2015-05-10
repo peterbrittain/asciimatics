@@ -1,20 +1,44 @@
 import curses
 import os
+import time
+from abc import ABCMeta, abstractmethod
+
+#: Attribute styles supported by Screen formatting functions
+A_BOLD = 1
+A_NORMAL = 2
+A_REVERSE = 3
+A_UNDERLINE = 4
+
+#: Standard colours cupported by Screen formatting functions
+COLOUR_BLACK = 0
+COLOUR_RED = 1
+COLOUR_GREEN = 2
+COLOUR_YELLOW = 3
+COLOUR_BLUE = 4
+COLOUR_MAGENTA = 5
+COLOUR_CYAN = 6
+COLOUR_WHITE = 7
 
 
 class Screen(object):
     """
     Class to track basic state of the screen.  This constructs the necessary
-    curses resources to allow us to do the ASCII animations.
+    resources to allow us to do the ASCII animations.
 
-    Note that all you really need to do with this class is instantiate it
-    with the window object returned by the curses wrapper() method and the
-    required height for your screen buffer.  This latter is important if you
-    plan on using any Effects that will scroll the screen vertically (e.g.
-    Scroll).  It must be big enough to handle the full scrolling of your
-    selected Effect.
+    This is an abstract class that will build the correct concrete class for
+    you when you call the class methods :py:obj:`.from_curses` or
+    :py:obj:`.from_blessed`.
+
+    Note that you need to define the required height for your screen buffer.
+    This is important if you plan on using any Effects that will scroll the
+    screen vertically (e.g. Scroll).  It must be big enough to handle the
+    full scrolling of your selected Effect.
     """
 
+    # This is an abstract class.
+    __metaclass__ = ABCMeta
+
+    # Colour palette for 256 colour xterm
     _256_palette = [
         0x00, 0x00, 0x00,
         0x80, 0x00, 0x00,
@@ -277,37 +301,35 @@ class Screen(object):
     # Characters for anti-aliasing line drawing.
     _line_chars = " ''^.|/7.\\|Ywbd#"
 
-    def __init__(self, win, height=200):
+    def __init__(self, height, width):
         """
-        :param win: The window object as returned by the curses wrapper method.
-        :param height: The height of the screen buffer to be used.
+        Don't call this constructor directly.
         """
-        # Save off the screen details and se up the scrolling pad.
-        self._screen = win
-        (self.height, self.width) = self._screen.getmaxyx()
-        self.buffer_height = height
-        self._pad = curses.newpad(self.buffer_height, self.width)
-
-        # Set up basic colour schemes.
-        self.colours = 8
-        if os.environ['TERM'] == 'xterm-256color':
-            self.colours = 256
-        for i in range(1, self.colours - 1):
-            curses.init_pair(i, i, curses.COLOR_BLACK)
-        for i in range(0, self.colours - 1):
-            curses.init_pair(i + self.colours, curses.COLOR_BLACK, i)
-
-        # Disable the cursor.
-        curses.curs_set(0)
-
-        # Non-blocking key checks.
-        self._pad.nodelay(1)
-
-        # Ensure that the screen is clear and ready to go.
+        # Iinitialize base class variables - e.g. those used for drawing.
+        self.height = height
+        self.width = width
         self._start_line = None
         self._x = 0
         self._y = 0
-        self.clear()
+
+    @classmethod
+    def from_curses(cls, win, height=200):
+        """
+        Construct a new Screen from a curses windows.
+
+        :param win: The curses window to use.
+        :param height: The buffer height for this window (if using scrolling).
+        """
+        return _CursesScreen(win, height)
+
+    @classmethod
+    def from_blessed(cls, terminal):
+        """
+        Construct a new Screen from a blessed terminal.
+
+        :param terminal: The blessed Terminal to use.
+        """
+        return _BlessedScreen(terminal)
 
     @property
     def start_line(self):
@@ -322,39 +344,33 @@ class Screen(object):
         :return: The full dimensions of the display buffer as a (height,
             width) tuple.
         """
-        return self._pad.getmaxyx()
+        return self.height, self.width
 
+    @abstractmethod
     def scroll(self):
         """
         Scroll the Screen up one line.
         """
-        self._start_line += 1
 
+    @abstractmethod
     def clear(self):
         """
         Clear the Screen of all content.
         """
-        self._pad.clear()
-        self._start_line = 0
 
+    @abstractmethod
     def refresh(self):
         """
         Refresh the screen.
         """
-        (self.height, self.width) = self._screen.getmaxyx()
-        self._pad.refresh(self._start_line,
-                          0,
-                          0,
-                          0,
-                          self.height - 1,
-                          self.width - 1)
 
+    @abstractmethod
     def get_key(self):
         """
         Check for a key without waiting.
         """
-        return self._pad.getch()
 
+    @abstractmethod
     def getch(self, x, y):
         """
         Get the character at the specified location.
@@ -365,10 +381,9 @@ class Screen(object):
         :return: A tuple of the ASCII code of the character at the location
                  and the attributes for that character.
         """
-        curses_rc = self._pad.inch(y, x)
-        return curses_rc & 0xff, curses_rc & 0xff >> 8
 
-    def putch(self, text, x, y, colour=0, attr=0, transparent=False):
+    @abstractmethod
+    def putch(self, text, x, y, colour=7, attr=0, transparent=False):
         """
         Print the text at the specified location using the
         specified colour and attributes.
@@ -383,23 +398,8 @@ class Screen(object):
 
         See curses for definitions of the colour and attribute values.
         """
-        if y < 0:
-            return
-        if x < 0:
-            text = text[-x:]
-            x = 0
-        if x + len(text) >= self.width:
-            text = text[:self.width - x]
-        if len(text) > 0:
-            if transparent:
-                for i, c in enumerate(text):
-                    if c != " ":
-                        self._pad.addstr(
-                            y, x+i, c, curses.color_pair(colour) | attr)
-            else:
-                self._pad.addstr(y, x, text, curses.color_pair(colour) | attr)
 
-    def centre(self, text, y, colour=0, attr=0, colour_map=None):
+    def centre(self, text, y, colour=7, attr=0, colour_map=None):
         """
         Centre the text on the specified line (y) using the optional
         colour and attributes.
@@ -415,7 +415,7 @@ class Screen(object):
         x = (self.width - len(text))/2
         self.paint(text, x, y, colour, attr, colour_map=colour_map)
 
-    def paint(self, text, x, y, colour=0, attr=0, transparent=False,
+    def paint(self, text, x, y, colour=7, attr=0, transparent=False,
               colour_map=None):
         """
         Paint multi-colour text at the defined location.
@@ -479,7 +479,8 @@ class Screen(object):
                         return
                     if c in (ord(" "), ord("\n")):
                         break
-                    curses.napms(50)
+                    # curses.napms(50)
+                    time.sleep(0.05)
 
     def move(self, x, y):
         """
@@ -586,3 +587,240 @@ class Screen(object):
                     self.putch(char, ix/2+sx, y/2)
                 else:
                     self.putch(char, ix/2, y/2, colour)
+
+
+class _CursesScreen(Screen):
+    """
+    Curses screen implementation.
+    """
+
+    #: Conversion from Screen attributes to curses equivalents.
+    ATTRIBUTES = {
+        A_BOLD: curses.A_BOLD,
+        A_NORMAL: curses.A_NORMAL,
+        A_REVERSE: curses.A_REVERSE,
+        A_UNDERLINE: curses.A_UNDERLINE
+    }
+
+    def __init__(self, win, height=200):
+        """
+        :param win: The window object as returned by the curses wrapper method.
+        :param height: The height of the screen buffer to be used.
+        """
+        # Save off the screen details and se up the scrolling pad.
+        super(_CursesScreen, self).__init__(
+            win.getmaxyx()[0], win.getmaxyx()[1])
+        self._screen = win
+        self.buffer_height = height
+        self._pad = curses.newpad(self.buffer_height, self.width)
+
+        # Set up basic colour schemes.
+        self.colours = 8
+        if os.environ['TERM'] == 'xterm-256color':
+            self.colours = 256
+        for i in range(1, self.colours):
+            curses.init_pair(i, i, curses.COLOR_BLACK)
+        for i in range(0, self.colours):
+            curses.init_pair(i + self.colours, curses.COLOR_BLACK, i)
+
+        # Disable the cursor.
+        curses.curs_set(0)
+
+        # Non-blocking key checks.
+        self._pad.nodelay(1)
+
+    def scroll(self):
+        """
+        Scroll the Screen up one line.
+        """
+        self._start_line += 1
+
+    def clear(self):
+        """
+        Clear the Screen of all content.
+        """
+        self._pad.clear()
+        self._start_line = 0
+
+    def refresh(self):
+        """
+        Refresh the screen.
+        """
+        (self.height, self.width) = self._screen.getmaxyx()
+        self._pad.refresh(self._start_line,
+                          0,
+                          0,
+                          0,
+                          self.height - 1,
+                          self.width - 1)
+
+    def get_key(self):
+        """
+        Check for a key without waiting.
+        """
+        return self._pad.getch()
+
+    def getch(self, x, y):
+        """
+        Get the character at the specified location.
+
+        :param x: The column (x coord) of the character.
+        :param y: The row (y coord) of the character.
+
+        :return: A tuple of the ASCII code of the character at the location
+                 and the attributes for that character.
+        """
+        curses_rc = self._pad.inch(y, x)
+        return curses_rc & 0xff, curses_rc & 0xff >> 8
+
+    def putch(self, text, x, y, colour=7, attr=0, transparent=False):
+        """
+        Print the text at the specified location using the
+        specified colour and attributes.
+
+        :param text: The (single line) text to be printed.
+        :param x: The column (x coord) for the start of the text.
+        :param y: The line (y coord) for the start of the text.
+        :param colour: The colour of the text to be displayed.
+        :param attr: The cell attribute of the text to be displayed.
+        :param transparent: Whether to print spaces or not, thus giving a
+            transparent effect.
+
+        See curses for definitions of the colour and attribute values.
+        """
+        # Crop to pad size
+        if y < 0:
+            return
+        if x < 0:
+            text = text[-x:]
+            x = 0
+        if x + len(text) >= self.width:
+            text = text[:self.width - x]
+
+        # Convert attribute to curses equivalent
+        attr = self.ATTRIBUTES[attr] if attr in self.ATTRIBUTES else 0
+
+        # Print whatever is left
+        if len(text) > 0:
+            if transparent:
+                for i, c in enumerate(text):
+                    if c != " ":
+                        self._pad.addstr(
+                            y, x+i, c, curses.color_pair(colour) | attr)
+            else:
+                self._pad.addstr(y, x, text, curses.color_pair(colour) | attr)
+
+
+class _BlessedScreen(Screen):
+    """
+    Blessed screen implementation.
+    """
+
+    #: Conversion from Screen attributes to curses equivalents.
+    ATTRIBUTES = {
+        A_BOLD: lambda term, text: term.bold(text),
+        A_NORMAL: lambda term, text: text,
+        A_REVERSE: lambda term, text: term.reverse(text),
+        A_UNDERLINE: lambda term, text: term.underline(text)
+    }
+
+    def __init__(self, terminal):
+        """
+        :param terminal: The blessed Terminal object.
+        """
+        # Save off the screen details and se up the scrolling pad.
+        super(_BlessedScreen, self).__init__(terminal.height, terminal.width)
+        self._terminal = terminal
+
+        # Set up basic colour schemes.
+        self.colours = terminal.number_of_colors
+
+    def scroll(self):
+        """
+        Scroll the Screen up one line.
+        """
+        self._start_line += 1
+        print self._terminal.move(self.height-1, 0)
+
+    def clear(self):
+        """
+        Clear the Screen of all content.
+        """
+        print self._terminal.on_color(0) + self._terminal.color(1) + \
+            self._terminal.clear()
+        self._start_line = 0
+
+    def refresh(self):
+        """
+        Refresh the screen.
+        """
+        # Blessed has no screen buffer - hence this is a NOOP.
+        pass
+
+    def get_key(self):
+        """
+        Check for a key without waiting.
+        """
+        key = self._terminal.inkey(timeout=0)
+        return ord(key) if key != "" else None
+
+    def getch(self, x, y):
+        """
+        Get the character at the specified location.
+
+        :param x: The column (x coord) of the character.
+        :param y: The row (y coord) of the character.
+
+        :return: A tuple of the ASCII code of the character at the location
+                 and the attributes for that character.
+        """
+        # TODO: Fix this!
+        return ord(" "), 0
+
+    def putch(self, text, x, y, colour=7, attr=0, transparent=False):
+        """
+        Print the text at the specified location using the
+        specified colour and attributes.
+
+        :param text: The (single line) text to be printed.
+        :param x: The column (x coord) for the start of the text.
+        :param y: The line (y coord) for the start of the text.
+        :param colour: The colour of the text to be displayed.
+        :param attr: The cell attribute of the text to be displayed.
+        :param transparent: Whether to print spaces or not, thus giving a
+            transparent effect.
+
+        See curses for definitions of the colour and attribute values.
+        """
+        # Trim text to the visible screen.
+        y -= self._start_line
+        if y < 0 or y >= self.height:
+            return
+        if x < 0:
+            text = text[-x:]
+            x = 0
+        if x + len(text) >= self.width:
+            text = text[:self.width - x]
+
+        # Convert attribute to blessed equivalent.
+        attr = self.ATTRIBUTES[attr] \
+            if attr in self.ATTRIBUTES else lambda p, q: q
+
+        if len(text) > 0:
+            if transparent:
+                for i, c in enumerate(text):
+                    if c != " ":
+                        print (self._terminal.move(y, x+i) +
+                               self._terminal.color(colour) +
+                               attr(self._terminal, c) +
+                               self._terminal.color(colour) +
+                               self._terminal.on_color(0) +
+                               self._terminal.move_up)
+            else:
+                print(self._terminal.move(y, x) +
+                      self._terminal.color(colour) +
+                      attr(self._terminal, text) +
+                      self._terminal.color(colour) +
+                      self._terminal.on_color(0) +
+                      self._terminal.move_up)
+                # self._pad.addstr(y, x, text, curses.color_pair(colour) | attr)
