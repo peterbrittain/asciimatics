@@ -1,10 +1,12 @@
 CHANGE HISTORY
 ==============
 
-0.5.0
+1.0.0
 -----
 - Added Bressenham line drawing algorithm with anti-aliasing.
 - Added Random Noise effect.
+- Added support for blessed as well as curses - if you want to continue to
+  use curses, construct the Screen using the from_curses() class method.
 - Fixed up some docs errors.
 
 0.4.0

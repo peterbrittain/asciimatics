@@ -6,7 +6,7 @@ from asciimatics.screen import Screen
 
 
 def demo(win):
-    screen = Screen(win)
+    screen = Screen.from_curses(win)
     effects = [
         Cycle(
             screen,
@@ -16,7 +16,7 @@ def demo(win):
             screen,
             FigletText("ROCKS!", font='big'),
             screen.height / 2 + 3),
-        Stars(screen, 200)
+        Stars(screen, (screen.width + screen.height) // 2)
     ]
     screen.play([Scene(effects, 500)])
 

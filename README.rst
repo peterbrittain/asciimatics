@@ -40,7 +40,7 @@ Effects and then get the Screen to play it.
     from asciimatics.screen import Screen
     
     def demo(win):
-        screen = Screen(win)
+        screen = Screen.from_curses(win)
         effects = [
             Cycle(
                 screen,
@@ -71,3 +71,8 @@ More Examples
 -------------
 
 More examples of what you can do are available in the project samples directory, hosted on GitHub.  See https://github.com/peterbrittain/asciimatics/tree/master/samples.
+
+Bugs
+----
+
+You can report bugs at https://github.com/peterbrittain/asciimatics/issues
