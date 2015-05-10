@@ -2,16 +2,16 @@
 from pyfiglet import Figlet, DEFAULT_FONT
 from PIL import Image
 import re
-import curses
+from screen import A_BOLD, A_NORMAL, A_REVERSE, A_UNDERLINE
 
 
 #: Attribute conversion table for the ${c,a} form of attributes for
 #: :py:obj:`.paint`.
 ATTRIBUTES = {
-    "1": curses.A_BOLD,
-    "2": curses.A_NORMAL,
-    "3": curses.A_REVERSE,
-    "4": curses.A_UNDERLINE,
+    "1": A_BOLD,
+    "2": A_NORMAL,
+    "3": A_REVERSE,
+    "4": A_UNDERLINE,
 }
 
 
