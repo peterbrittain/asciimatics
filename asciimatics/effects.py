@@ -767,7 +767,7 @@ class RandomNoise(Effect):
 
     def reset(self):
         self._strength = 0.0
-        self._step = 0.01
+        self._step = -0.01
 
     def _update(self, frame_no):
         if self._signal:
@@ -794,7 +794,7 @@ class RandomNoise(Effect):
 
         # Tune the signal
         self._strength += self._step
-        if self._strength >= 1.0 or self._strength <= 0.0:
+        if self._strength >= 1.25 or self._strength <= -0.5:
             self._step = -self._step
 
     @property
