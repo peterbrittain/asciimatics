@@ -1,8 +1,8 @@
 from abc import ABCMeta, abstractmethod
 from random import randint, random, choice
 from math import sin, cos, pi
+from screen import COLOUR_GREEN, COLOUR_YELLOW, A_BOLD, COLOUR_WHITE
 import datetime
-import curses
 
 
 class Effect(object):
@@ -148,7 +148,7 @@ class BannerText(Effect):
         :param screen: The Screen being used for the Scene.
         :param renderer: The renderer to be scrolled
         :param y: The line (y coordinate) for the start of the text.
-        :param colour: The curses colour attribute to use for the text.
+        :param colour: The colour attribute to use for the text.
         :param start_frame: Start index for the effect.
         :param stop_frame: Stop index for the effect.
         """
@@ -195,7 +195,7 @@ class Print(Effect):
     the required location.
     """
 
-    def __init__(self, screen, renderer, y, x=None, colour=curses.COLOR_BLACK,
+    def __init__(self, screen, renderer, y, x=None, colour=7,
                  clear=False, transparent=True, start_frame=0, stop_frame=0):
         """
         :param screen: The Screen being used for the Scene.
@@ -203,7 +203,7 @@ class Print(Effect):
         :param x: The column (x coordinate) for the start of the text.
                   If not specified, defaults to centring the text on screen.
         :param y: The line (y coordinate) for the start of the text.
-        :param colour: The curses colour attribute to use for the text.
+        :param colour: The colour attribute to use for the text.
         :param clear: Whether to clear the text before stopping.
         :param start_frame: Start index for the effect.
         :param stop_frame: Stop index for the effect.
@@ -250,7 +250,7 @@ class Mirage(Effect):
         :param screen: The Screen being used for the Scene.
         :param renderer: The renderer to be displayed.
         :param y: The line (y coordinate) for the start of the text.
-        :param colour: The curses colour attribute to use for the text.
+        :param colour: The colour attribute to use for the text.
         :param start_frame: Start index for the effect.
         :param stop_frame: Stop index for the effect.
         """
@@ -323,7 +323,7 @@ class _Star(object):
         Draw the star.
         """
         if not self._screen.is_visible(self._x, self._y):
-            return
+            self._respawn()
 
         cur_char, _ = self._screen.getch(self._x, self._y)
         if cur_char not in (ord(self._old_char), 32):
@@ -419,13 +419,13 @@ class _Trail(object):
                 self._screen.putch(chr(randint(32, 126)),
                                    self._x,
                                    self._screen.start_line + self._y + i,
-                                   curses.COLOR_GREEN)
+                                   COLOUR_GREEN)
             for i in range(4, 6):
                 self._screen.putch(chr(randint(32, 126)),
                                    self._x,
                                    self._screen.start_line + self._y + i,
-                                   curses.COLOR_GREEN,
-                                   curses.A_BOLD)
+                                   COLOUR_GREEN,
+                                   A_BOLD)
             self._maybe_reseed(reseed)
 
 
@@ -493,7 +493,7 @@ class Sprite(Effect):
     An animated character capable of following a path around the screen.
     """
 
-    def __init__(self, screen, renderer_dict, path, colour=0,
+    def __init__(self, screen, renderer_dict, path, colour=COLOUR_WHITE,
                  clear=True, start_frame=0, stop_frame=0):
         """
         :param screen: The Screen being used for the Scene.
@@ -710,8 +710,8 @@ class Clock(Effect):
         if self._old_time is not None:
             ot = self._old_time
             self._screen.move(self._x, self._y)
-            self._screen.draw(self._x + (self._r*sin(ot.tm_hour*pi/30)),
-                              self._y - (self._r*cos(ot.tm_hour*pi/30)/2),
+            self._screen.draw(self._x + (self._r*sin(ot.tm_hour*pi/6)),
+                              self._y - (self._r*cos(ot.tm_hour*pi/6)/2),
                               char=" ")
             self._screen.move(self._x, self._y)
             self._screen.draw(self._x + (self._r*sin(ot.tm_min*pi/30)*2),
@@ -725,8 +725,8 @@ class Clock(Effect):
         # Draw new ones
         new_time = datetime.datetime.now().timetuple()
         self._screen.move(self._x, self._y)
-        self._screen.draw(self._x + (self._r*sin(new_time.tm_hour*pi/30)),
-                          self._y - (self._r*cos(new_time.tm_hour*pi/30)/2),
+        self._screen.draw(self._x + (self._r*sin(new_time.tm_hour*pi/6)),
+                          self._y - (self._r*cos(new_time.tm_hour*pi/6)/2),
                           colour=7)
         self._screen.move(self._x, self._y)
         self._screen.draw(self._x + (self._r*sin(new_time.tm_min*pi/30)*2),
@@ -736,8 +736,8 @@ class Clock(Effect):
         self._screen.draw(self._x + (self._r*sin(new_time.tm_sec*pi/30)*2),
                           self._y - (self._r*cos(new_time.tm_sec*pi/30)),
                           colour=6, thin=True)
-        self._screen.putch("o", self._x, self._y, curses.COLOR_YELLOW,
-                           curses.A_BOLD)
+        self._screen.putch("o", self._x, self._y, COLOUR_YELLOW,
+                           A_BOLD)
         self._old_time = new_time
 
     @property
@@ -790,7 +790,7 @@ class RandomNoise(Effect):
                                        colour_map=[colours[iy][ix]])
                 else:
                     if random() < 0.2:
-                        self._screen.putch(chr(randint(33, 128)), x, y)
+                        self._screen.putch(chr(randint(33, 126)), x, y)
 
         # Tune the signal
         self._strength += self._step

@@ -6,7 +6,7 @@ from asciimatics.screen import Screen
 
 
 def demo(win):
-    screen = Screen(win)
+    screen = Screen.from_curses(win)
 
     effects = [
         Print(screen, Rainbow(screen, FigletText("256 colours")),
