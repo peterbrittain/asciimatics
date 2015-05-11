@@ -2,6 +2,8 @@ import curses
 import os
 import time
 from abc import ABCMeta, abstractmethod
+import copy
+import sys
 
 #: Attribute styles supported by Screen formatting functions
 A_BOLD = 1
@@ -323,13 +325,14 @@ class Screen(object):
         return _CursesScreen(win, height)
 
     @classmethod
-    def from_blessed(cls, terminal):
+    def from_blessed(cls, terminal, height=200):
         """
         Construct a new Screen from a blessed terminal.
 
         :param terminal: The blessed Terminal to use.
+        :param height: The buffer height for this window (if using scrolling).
         """
-        return _BlessedScreen(terminal)
+        return _BlessedScreen(terminal, height)
 
     @property
     def start_line(self):
@@ -724,13 +727,20 @@ class _BlessedScreen(Screen):
         A_UNDERLINE: lambda term: term.underline
     }
 
-    def __init__(self, terminal):
+    def __init__(self, terminal, height):
         """
         :param terminal: The blessed Terminal object.
+        :param height: The buffer height for this window (if using scrolling).
         """
         # Save off the screen details and se up the scrolling pad.
         super(_BlessedScreen, self).__init__(terminal.height, terminal.width)
+
+        # Save off terminal an create screen buffers (required to reduce
+        # flicker).
         self._terminal = terminal
+        self._screen_buffer = None
+        self._double_buffer = None
+        self._buffer_height = height
 
         # Set up basic colour schemes.
         self.colours = terminal.number_of_colors
@@ -741,29 +751,47 @@ class _BlessedScreen(Screen):
         self._attr = None
         self._x = None
         self._y = None
+        self._last_start_line = 0
 
     def scroll(self):
         """
         Scroll the Screen up one line.
         """
         self._start_line += 1
-        print self._terminal.move(self.height-1, 0)
 
     def clear(self):
         """
         Clear the Screen of all content.
         """
+        # Clear the actual terminal
         self._change_colours(7, 0)
-        print self._terminal.clear()
-        self._start_line = 0
+        sys.stdout.write(self._terminal.clear())
+        self._start_line = self._last_start_line = 0
         self._x = self._y = None
+
+        # Reset our screen buffer
+        line = [(" ", 7, 0) for _ in range(self.width)]
+        self._screen_buffer = [
+            copy.deepcopy(line) for _ in range(self._buffer_height)]
+        self._double_buffer = copy.deepcopy(self._screen_buffer)
 
     def refresh(self):
         """
         Refresh the screen.
         """
-        # Blessed has no screen buffer - hence this is a NOOP.
-        pass
+        # Scroll the screen as required to minimize redrawing.
+        for _ in range(self._start_line - self._last_start_line):
+            print self._terminal.move(self.height-1, 0)
+        self._last_start_line = self._start_line
+
+        # Now draw any deltas to the scrolled screen.
+        for y in range(self.height):
+            for x in range(self.width):
+                new_cell = self._double_buffer[y+self._start_line][x]
+                if self._screen_buffer[y+self._start_line][x] != new_cell:
+                    self._change_colours(new_cell[1], new_cell[2])
+                    self._print_at(new_cell[0], x, y)
+                    self._screen_buffer[y+self._start_line][x] = new_cell
 
     def get_key(self):
         """
@@ -782,8 +810,8 @@ class _BlessedScreen(Screen):
         :return: A tuple of the ASCII code of the character at the location
                  and the attributes for that character.
         """
-        # TODO: Fix this!
-        return ord(" "), 0
+        cell = self._screen_buffer[y][x]
+        return ord(cell[0]), cell[1] + cell[2] * 256
 
     def putch(self, text, x, y, colour=7, attr=0, transparent=False):
         """
@@ -800,9 +828,8 @@ class _BlessedScreen(Screen):
 
         See curses for definitions of the colour and attribute values.
         """
-        # Trim text to the visible screen.
-        y -= self._start_line
-        if y < 0 or y >= self.height:
+        # Trim text to the buffer.
+        if y < 0 or y >= self._buffer_height:
             return
         if x < 0:
             text = text[-x:]
@@ -811,14 +838,9 @@ class _BlessedScreen(Screen):
             text = text[:self.width - x]
 
         if len(text) > 0:
-            if transparent:
-                for i, c in enumerate(text):
-                    if c != " ":
-                        self._change_colours(colour, attr)
-                        self._print_at(c, x, y)
-            else:
-                self._change_colours(colour, attr)
-                self._print_at(text, x, y)
+            for i, c in enumerate(text):
+                if c != " " or not transparent:
+                    self._double_buffer[y][x+i] = (c, colour, attr)
 
     def _change_colours(self, colour, attr):
         """
@@ -829,15 +851,15 @@ class _BlessedScreen(Screen):
         """
         # Change attribute first as this will reset colours when swapping modes.
         if attr != self._attr:
-            print self._terminal.normal + self._terminal.on_color(0),
+            sys.stdout.write(self._terminal.normal + self._terminal.on_color(0))
             if attr != 0:
-                print self.ATTRIBUTES[attr](self._terminal),
+                sys.stdout.write(self.ATTRIBUTES[attr](self._terminal))
             self._attr = attr
             self._colour = None
 
         # Now swap colours if required.
         if colour != self._colour:
-            print self._terminal.color(colour),
+            sys.stdout.write(self._terminal.color(colour))
             self._colour = colour
 
     def _print_at(self, text, x, y):
@@ -853,14 +875,14 @@ class _BlessedScreen(Screen):
         if x != self._x or y != self._y:
             msg += self._terminal.move(y, x)
 
+        msg += text
+
         # Don't scroll the screen - move up a line if we're at the bottom.
-        if y >= self.height - 1:
-            msg += text + self._terminal.move_up()
-        else:
-            msg += text
+        # if y >= self.height - 1:
+        #     msg += self._terminal.move_up()
 
         # Print the text at the required location and update the current
         # position.
-        print msg,
-        self._x = x + len(text) + 1
+        sys.stdout.write(msg)
+        self._x = x + len(text)
         self._y = y
