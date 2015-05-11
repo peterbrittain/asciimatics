@@ -72,6 +72,8 @@ More Examples
 
 More examples of what you can do are available in the project samples directory, hosted on GitHub.  See https://github.com/peterbrittain/asciimatics/tree/master/samples.
 
+Alternatively, you can browse the gallery at https://github.com/peterbrittain/asciimatics/wiki.
+
 Bugs
 ----
 
