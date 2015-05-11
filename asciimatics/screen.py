@@ -718,10 +718,10 @@ class _BlessedScreen(Screen):
 
     #: Conversion from Screen attributes to curses equivalents.
     ATTRIBUTES = {
-        A_BOLD: lambda term, text: term.bold(text),
-        A_NORMAL: lambda term, text: text,
-        A_REVERSE: lambda term, text: term.reverse(text),
-        A_UNDERLINE: lambda term, text: term.underline(text)
+        A_BOLD: lambda term: term.bold,
+        A_NORMAL: lambda term: "",
+        A_REVERSE: lambda term: term.reverse,
+        A_UNDERLINE: lambda term: term.underline
     }
 
     def __init__(self, terminal):
@@ -735,6 +735,13 @@ class _BlessedScreen(Screen):
         # Set up basic colour schemes.
         self.colours = terminal.number_of_colors
 
+        # Remember current state so we don't keep programming colours/attributes
+        # and move commands unnecessarily.
+        self._colour = None
+        self._attr = None
+        self._x = None
+        self._y = None
+
     def scroll(self):
         """
         Scroll the Screen up one line.
@@ -746,9 +753,10 @@ class _BlessedScreen(Screen):
         """
         Clear the Screen of all content.
         """
-        print self._terminal.on_color(0) + self._terminal.color(1) + \
-            self._terminal.clear()
+        self._change_colours(7, 0)
+        print self._terminal.clear()
         self._start_line = 0
+        self._x = self._y = None
 
     def refresh(self):
         """
@@ -802,25 +810,57 @@ class _BlessedScreen(Screen):
         if x + len(text) >= self.width:
             text = text[:self.width - x]
 
-        # Convert attribute to blessed equivalent.
-        attr = self.ATTRIBUTES[attr] \
-            if attr in self.ATTRIBUTES else lambda p, q: q
-
         if len(text) > 0:
             if transparent:
                 for i, c in enumerate(text):
                     if c != " ":
-                        print (self._terminal.move(y, x+i) +
-                               self._terminal.color(colour) +
-                               attr(self._terminal, c) +
-                               self._terminal.color(colour) +
-                               self._terminal.on_color(0) +
-                               self._terminal.move_up)
+                        self._change_colours(colour, attr)
+                        self._print_at(c, x, y)
             else:
-                print(self._terminal.move(y, x) +
-                      self._terminal.color(colour) +
-                      attr(self._terminal, text) +
-                      self._terminal.color(colour) +
-                      self._terminal.on_color(0) +
-                      self._terminal.move_up)
-                # self._pad.addstr(y, x, text, curses.color_pair(colour) | attr)
+                self._change_colours(colour, attr)
+                self._print_at(text, x, y)
+
+    def _change_colours(self, colour, attr):
+        """
+        Change current colour if required.
+
+        :param colour: New colour to use
+        :param attr: New attributes to use
+        """
+        # Change attribute first as this will reset colours when swapping modes.
+        if attr != self._attr:
+            print self._terminal.normal + self._terminal.on_color(0),
+            if attr != 0:
+                print self.ATTRIBUTES[attr](self._terminal),
+            self._attr = attr
+            self._colour = None
+
+        # Now swap colours if required.
+        if colour != self._colour:
+            print self._terminal.color(colour),
+            self._colour = colour
+
+    def _print_at(self, text, x, y):
+        """
+        Print string at the required location.
+
+        :param text: The text string to print.
+        :param x: The x coordinate
+        :param y: The Y coordinate
+        """
+        # Move the cursor if necessary
+        msg = ""
+        if x != self._x or y != self._y:
+            msg += self._terminal.move(y, x)
+
+        # Don't scroll the screen - move up a line if we're at the bottom.
+        if y >= self.height - 1:
+            msg += text + self._terminal.move_up()
+        else:
+            msg += text
+
+        # Print the text at the required location and update the current
+        # position.
+        print msg,
+        self._x = x + len(text) + 1
+        self._y = y
