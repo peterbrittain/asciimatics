@@ -793,6 +793,9 @@ class _BlessedScreen(Screen):
                     self._print_at(new_cell[0], x, y)
                     self._screen_buffer[y+self._start_line][x] = new_cell
 
+        # Flush now to get all updates.
+        sys.stdout.flush()
+
     def get_key(self):
         """
         Check for a key without waiting.
