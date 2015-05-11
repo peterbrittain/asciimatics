@@ -2,11 +2,10 @@ from asciimatics.effects import Scroll, Mirage, Wipe, Cycle, Matrix, \
     BannerText, Stars, Print
 from asciimatics.renderers import FigletText, ImageFile, SpeechBubble, Rainbow
 from asciimatics.scene import Scene
-from asciimatics.screen import Screen
+from asciimatics.screen import Screen, COLOUR_GREEN, COLOUR_CYAN
 from asciimatics.sprites import Sam
 from asciimatics.paths import Path
 from blessed import Terminal
-from asciimatics.screen import COLOUR_GREEN, COLOUR_CYAN
 import math
 
 
