@@ -3,7 +3,8 @@ CHANGE HISTORY
 
 1.1.0
 -----
-- Added the Julia Set effect.
+- Added the Julia Set and Cog effects.
+- Fixed up off-by-one error in line drawing.
 
 1.0.0
 -----
