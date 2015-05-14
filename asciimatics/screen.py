@@ -310,7 +310,7 @@ class Screen(object):
         # Iinitialize base class variables - e.g. those used for drawing.
         self.height = height
         self.width = width
-        self._start_line = None
+        self._start_line = 0
         self._x = 0
         self._y = 0
 
@@ -464,6 +464,7 @@ class Screen(object):
 
         :param scenes: a list of :py:obj:`.Scene` objects to play.
         """
+        self.clear()
         while True:
             for scene in scenes:
                 frame = 0
