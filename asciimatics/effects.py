@@ -861,3 +861,73 @@ class RandomNoise(Effect):
     @property
     def stop_frame(self):
         return self._stop_frame
+
+
+class Julia(Effect):
+    """
+    Julia Set generator.  See http://en.wikipedia.org/wiki/Julia_set for more
+    information on this fractal.
+    """
+
+    # Character set to use so we still get a greyscale for low-colour systems.
+    _greyscale = '@@&&99##GGHHhh3322AAss;;::.. '
+
+    # Colour palette for 256 colour xterm mode.
+    _256_palette = [196, 202, 208, 214, 220, 226,
+                    154, 118, 82, 46,
+                    47, 48, 49, 50, 51,
+                    45, 39, 33, 27, 21,
+                    57, 93, 129, 201,
+                    200, 199, 198, 197, 0]
+
+    def __init__(self, screen, c=None, start_frame=0, stop_frame=0):
+        """
+        :param screen: The Screen being used for the Scene.
+        :param c: The starting value of 'c' for the Julia Set.
+        :param start_frame: Start index for the effect.
+        :param stop_frame: Stop index for the effect.
+        """
+        super(Julia, self).__init__(start_frame, stop_frame)
+        self._screen = screen
+        self._width = screen.width
+        self._height = screen.height
+        self._centre = [0.0, 0.0]
+        self._size = [4.0, 4.0]
+        self._min_x = self._min_y = -2.0
+        self._max_x = self._max_y = 2.0
+        self._c = c if c is not None else [-0.8, 0.156]
+        self._scale = 0.995
+
+    def reset(self):
+        pass
+
+    def _update(self, frame_no):
+        # Draw the new image to the required block.
+        c = complex(self._c[0], self._c[1])
+        sx = self._centre[0] - (self._size[0] / 2.0)
+        sy = self._centre[1] - (self._size[1] / 2.0)
+        for y in range(self._height):
+            for x in range(self._width):
+                z = complex(sx+self._size[0]*(float(x)/self._width),
+                            sy+self._size[1]*(float(y)/self._height))
+                n = len(self._256_palette)
+                while abs(z) < 10 and n >= 1:
+                    z = z ** 2 + c
+                    n -= 1
+                colour = \
+                    self._256_palette[n-1] if self._screen.colours >= 256 else 7
+                self._screen.putch(self._greyscale[n-1], x, y, colour)
+
+        # Zoom
+        self._size = [i * self._scale for i in self._size]
+        area = self._size[0] * self._size[1]
+        if area <= 4.0 or area >= 16:
+            self._scale = 2.0 - self._scale
+
+        # Rotate
+        self._c = [self._c[0] * cos(pi/180) - self._c[1] * sin(pi/180),
+                   self._c[0] * sin(pi/180) + self._c[1] * cos(pi/180)]
+
+    @property
+    def stop_frame(self):
+        return self._stop_frame
