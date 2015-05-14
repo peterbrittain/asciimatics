@@ -745,6 +745,67 @@ class Clock(Effect):
         return self._stop_frame
 
 
+class Wave(Effect):
+    """
+    A rolling sine wave.
+    """
+
+    def __init__(self, screen, x, y, width, height, start_frame=0,
+                 stop_frame=0):
+        """
+        :param screen: The Screen being used for the Scene.
+        :param x: X coordinate of the top left of the box containing the wave.
+        :param y: Y coordinate of the top left of the box containing the wave.
+        :param width: The width of the box containing the wave.
+        :param height: The height of the box containing the wave.
+        :param start_frame: Start index for the effect.
+        :param stop_frame: Stop index for the effect.
+        """
+        super(Wave, self).__init__(start_frame, stop_frame)
+        self._screen = screen
+        self._x = x
+        self._y = y
+        self._width = width
+        self._height = height
+        self._old_frame = 0
+        self._rate = 1
+
+    def reset(self):
+        pass
+
+    def _update(self, frame_no):
+        # Rate limit the animation
+        if frame_no % self._rate != 0:
+            return
+
+        # Function to plot.
+        f = lambda p: self._y + self._height/2 + (self._height/2 * sin(p*pi/40))
+
+        # Clear old wave.
+        if self._old_frame != 0:
+            self._screen.move(self._x, f(self._old_frame))
+            for x in range(0, self._width, 5):
+                self._screen.draw(self._x + x, f(self._old_frame+x), char=" ")
+            self._screen.move(self._x, f(self._old_frame))
+            for x in range(0, self._width, 5):
+                self._screen.draw(self._x + x, f(x-self._old_frame), char=" ")
+
+        # Draw new one
+        self._old_frame += 2
+        self._screen.move(self._x, f(self._old_frame))
+        for x in range(0, self._width, 5):
+            self._screen.draw(self._x + x, f(self._old_frame+x),
+                              colour=self._old_frame//30%16)
+        self._screen.move(self._x, f(-self._old_frame))
+        for x in range(0, self._width, 5):
+            self._screen.draw(self._x + x, f(x-self._old_frame),
+                              colour=16-self._old_frame//30%16)
+
+    @property
+    def stop_frame(self):
+        return self._stop_frame
+
+
 class RandomNoise(Effect):
     """
     White noise effect - like an old analogue TV set that isn't quite tuned
