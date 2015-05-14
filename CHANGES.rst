@@ -1,6 +1,10 @@
 CHANGE HISTORY
 ==============
 
+1.1.0
+-----
+- Added the Julia Set effect.
+
 1.0.0
 -----
 - Added Bressenham line drawing algorithm with anti-aliasing.
