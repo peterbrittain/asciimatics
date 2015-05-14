@@ -745,30 +745,33 @@ class Clock(Effect):
         return self._stop_frame
 
 
-class Wave(Effect):
+class Cog(Effect):
     """
-    A rolling sine wave.
+    A rotating cog.
     """
 
-    def __init__(self, screen, x, y, width, height, start_frame=0,
-                 stop_frame=0):
+    def __init__(self, screen, x, y, width, height, direction=1,
+                 start_frame=0, stop_frame=0):
         """
         :param screen: The Screen being used for the Scene.
-        :param x: X coordinate of the top left of the box containing the wave.
-        :param y: Y coordinate of the top left of the box containing the wave.
-        :param width: The width of the box containing the wave.
-        :param height: The height of the box containing the wave.
+        :param x: X coordinate of the top left of the box containing the cog.
+        :param y: Y coordinate of the top left of the box containing the cog.
+        :param width: The width of the box containing the cog.
+        :param height: The height of the box containing the cog.
+        :param direction: The direction of rotation. Positive numbers are
+            anti-clockwise, negative numbers clockwise.
         :param start_frame: Start index for the effect.
         :param stop_frame: Stop index for the effect.
         """
-        super(Wave, self).__init__(start_frame, stop_frame)
+        super(Cog, self).__init__(start_frame, stop_frame)
         self._screen = screen
         self._x = x
         self._y = y
         self._width = width
         self._height = height
         self._old_frame = 0
-        self._rate = 1
+        self._rate = 2
+        self._direction = direction
 
     def reset(self):
         pass
@@ -779,27 +782,22 @@ class Wave(Effect):
             return
 
         # Function to plot.
-        f = lambda p: self._y + self._height/2 + (self._height/2 * sin(p*pi/40))
+        f = lambda p: self._x + self._width/2 + (
+            self._height-6+(6*(p/4 % 2))) * sin((self._old_frame+p)*pi/40)
+        g = lambda p: self._y + self._height/2 + (
+            self._height/2-3+(3*(p/4 % 2))) * cos((self._old_frame+p)*pi/40)
 
         # Clear old wave.
         if self._old_frame != 0:
-            self._screen.move(self._x, f(self._old_frame))
-            for x in range(0, self._width, 5):
-                self._screen.draw(self._x + x, f(self._old_frame+x), char=" ")
-            self._screen.move(self._x, f(self._old_frame))
-            for x in range(0, self._width, 5):
-                self._screen.draw(self._x + x, f(x-self._old_frame), char=" ")
+            self._screen.move(f(0), g(0))
+            for x in range(81):
+                self._screen.draw(f(x), g(x), char=" ")
 
         # Draw new one
-        self._old_frame += 2
-        self._screen.move(self._x, f(self._old_frame))
-        for x in range(0, self._width, 5):
-            self._screen.draw(self._x + x, f(self._old_frame+x),
-                              colour=self._old_frame//30%16)
-        self._screen.move(self._x, f(-self._old_frame))
-        for x in range(0, self._width, 5):
-            self._screen.draw(self._x + x, f(x-self._old_frame),
-                              colour=16-self._old_frame//30%16)
+        self._old_frame += self._direction
+        self._screen.move(f(0), g(0))
+        for x in range(81):
+            self._screen.draw(f(x), g(x))
 
     @property
     def stop_frame(self):
