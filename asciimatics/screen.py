@@ -11,7 +11,7 @@ A_NORMAL = 2
 A_REVERSE = 3
 A_UNDERLINE = 4
 
-#: Standard colours cupported by Screen formatting functions
+#: Standard colours supported by Screen formatting functions
 COLOUR_BLACK = 0
 COLOUR_RED = 1
 COLOUR_GREEN = 2
@@ -307,7 +307,7 @@ class Screen(object):
         """
         Don't call this constructor directly.
         """
-        # Iinitialize base class variables - e.g. those used for drawing.
+        # Initialize base class variables - e.g. those used for drawing.
         self.height = height
         self.width = width
         self._start_line = 0
@@ -424,7 +424,7 @@ class Screen(object):
         Paint multi-colour text at the defined location.
 
         :param text: The (single line) text to be printed.
-        :param x: The columen (x coord) for the start of the text.
+        :param x: The column (x coord) for the start of the text.
         :param y: The line (y coord) for the start of the text.
         :param colour: The default colour of the text to be displayed.
         :param attr: The default cell attribute of the text to be displayed.
