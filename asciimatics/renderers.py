@@ -27,7 +27,7 @@ class Renderer(object):
     the other to make a simple animation sequence - e.g. a rotating globe.
 
     This class will convert text like ${c,a} into colour c, attribute a for any
-    subseqent text in the line, thus allowing multi-coloured text.  The
+    subsequent text in the line, thus allowing multi-coloured text.  The
     attribute is optional.
     """
 
@@ -61,21 +61,21 @@ class Renderer(object):
             new_image = []
             for line in image.split("\n"):
                 new_line = ""
-                attrs = (None, None)
+                attributes = (None, None)
                 colours = []
                 while len(line) > 0:
                     match = self._colour_sequence.match(line)
                     if match is None:
                         new_line += line[0]
-                        colours.append(attrs)
+                        colours.append(attributes)
                         line = line[1:]
                     else:
                         # The regexp either matches ${c,a} for group 2,3 or
                         # ${c} for group 4.
                         if match.group(3) is None:
-                            attrs = (int(match.group(4)), 0)
+                            attributes = (int(match.group(4)), 0)
                         else:
-                            attrs = (int(match.group(2)),
+                            attributes = (int(match.group(2)),
                                      ATTRIBUTES[match.group(3)])
                         line = match.group(5)
                 new_image.append(new_line)
@@ -133,7 +133,8 @@ class Renderer(object):
 
 class FigletText(Renderer):
     """
-    Simple renderer to convert a text string to a Figlet equivalent string.
+    This class renders the supplied text using the specified Figlet font.
+    See http://www.figlet.org/ for details of available fonts.
     """
 
     def __init__(self, text, font=DEFAULT_FONT):
@@ -147,7 +148,7 @@ class FigletText(Renderer):
 
 class _ImageSequence(object):
     """
-    Simple class to make an interator for a PIL Image object.
+    Simple class to make an iterator for a PIL Image object.
     """
 
     def __init__(self, im):
@@ -164,8 +165,8 @@ class _ImageSequence(object):
 
 class ImageFile(Renderer):
     """
-    Renderer to convert animage file (as supported by the Python Imaging
-    Library) into an ascii greyscale text image.
+    Renderer to convert an image file (as supported by the Python Imaging
+    Library) into an ascii grey scale text image.
     """
 
     # The ASCII grey scale from darkest to lightest.

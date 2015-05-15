@@ -9,12 +9,14 @@ def demo(win):
     screen = Screen.from_curses(win)
 
     effects = [
-        Cog(screen, 0, 0, 40, 20),
-        Cog(screen, 30, 15, 60, 30, direction=-1),
-        Print(screen, FigletText("ascii", font="smkeyboard"), x=48, y=3,
+        Cog(screen, 20, 10, 10),
+        Cog(screen, 60, 30, 15, direction=-1),
+        Print(screen, FigletText("ascii", font="smkeyboard"), x=47, y=3,
               start_frame=50),
-        Print(screen, FigletText("matics", font="smkeyboard"), x=46, y=7,
-              start_frame=100)
+        Print(screen, FigletText("matics", font="smkeyboard"), x=45, y=7,
+              start_frame=100),
+        Print(screen, FigletText("by Peter Brittain", font="term"), x=8, y=22,
+              start_frame=150)
     ]
     screen.play([Scene(effects, -1)])
 
