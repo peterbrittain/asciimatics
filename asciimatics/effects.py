@@ -69,7 +69,9 @@ class Effect(object):
 
 class Scroll(Effect):
     """
-    Special effect to scroll the screen up at a required rate.
+    Special effect to scroll the screen up at a required rate.  Since the Screen
+    has a limited size and will not wrap, ensure that it is large enough to
+    Scroll for the desired time.
     """
 
     def __init__(self, screen, rate, start_frame=0):
@@ -241,7 +243,7 @@ class Print(Effect):
 class Mirage(Effect):
     """
     Special effect to make bits of the specified text appear over time.  This
-    is automatically centred.
+    text is automatically centred on the screen.
     """
 
     def __init__(self, screen, renderer, y, colour, start_frame=0,
@@ -389,7 +391,7 @@ class _Trail(object):
 
     def _maybe_reseed(self, normal):
         """
-        Randomnly create a new column once this one is finished.
+        Randomly create a new column once this one is finished.
         """
         self._y += self._rate
         self._life -= 1
@@ -610,7 +612,7 @@ class _Flake(object):
 
     def _reseed(self):
         """
-        Randomnly create a new snowflake once this one is finished.
+        Randomly create a new snowflake once this one is finished.
         """
         self._char = choice(self._snow_chars)
         self._rate = randint(1, 3)
@@ -650,7 +652,7 @@ class _Flake(object):
 
 class Snow(Effect):
     """
-    Snow effect.
+    Settling snow effect.
     """
 
     def __init__(self, screen, start_frame=0, stop_frame=0):
@@ -750,14 +752,13 @@ class Cog(Effect):
     A rotating cog.
     """
 
-    def __init__(self, screen, x, y, width, height, direction=1,
+    def __init__(self, screen, x, y, radius, direction=1,
                  start_frame=0, stop_frame=0):
         """
         :param screen: The Screen being used for the Scene.
-        :param x: X coordinate of the top left of the box containing the cog.
-        :param y: Y coordinate of the top left of the box containing the cog.
-        :param width: The width of the box containing the cog.
-        :param height: The height of the box containing the cog.
+        :param x: X coordinate of the centre of the cog.
+        :param y: Y coordinate of the centre of the cog.
+        :param radius: The radius of the cog.
         :param direction: The direction of rotation. Positive numbers are
             anti-clockwise, negative numbers clockwise.
         :param start_frame: Start index for the effect.
@@ -767,8 +768,7 @@ class Cog(Effect):
         self._screen = screen
         self._x = x
         self._y = y
-        self._width = width
-        self._height = height
+        self._radius = radius
         self._old_frame = 0
         self._rate = 2
         self._direction = direction
@@ -782,10 +782,10 @@ class Cog(Effect):
             return
 
         # Function to plot.
-        f = lambda p: self._x + self._width/2 + (
-            self._height-6+(6*(p/4 % 2))) * sin((self._old_frame+p)*pi/40)
-        g = lambda p: self._y + self._height/2 + (
-            self._height/2-3+(3*(p/4 % 2))) * cos((self._old_frame+p)*pi/40)
+        f = lambda p: self._x + (
+            self._radius*2 - (6*(p/4 % 2))) * sin((self._old_frame+p)*pi/40)
+        g = lambda p: self._y + (
+            self._radius-(3*(p/4 % 2))) * cos((self._old_frame+p)*pi/40)
 
         # Clear old wave.
         if self._old_frame != 0:
@@ -807,7 +807,7 @@ class Cog(Effect):
 class RandomNoise(Effect):
     """
     White noise effect - like an old analogue TV set that isn't quite tuned
-    right.  If desired, a signal image (as a renderer) can be specified that
+    right.  If desired, a signal image (from a renderer) can be specified that
     will appear from the noise.
     """
 
@@ -867,7 +867,7 @@ class Julia(Effect):
     information on this fractal.
     """
 
-    # Character set to use so we still get a greyscale for low-colour systems.
+    # Character set to use so we still get a grey scale for low-colour systems.
     _greyscale = '@@&&99##GGHHhh3322AAss;;::.. '
 
     # Colour palette for 256 colour xterm mode.

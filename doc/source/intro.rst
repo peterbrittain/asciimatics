@@ -30,8 +30,8 @@ How to use it?
 
 Create a curses window, create a :py:obj:`.Screen`, put together a :py:obj:`.Scene`
 using some :py:obj:`.Effect` objects and then get the Screen to play it.  An Effect
-Will typically need to display some text.  This is provided by a
-:py:obj:`.Renderer`.  For example:
+Will typically need to display some pre-formatted text.  This is usually
+provided by a :py:obj:`.Renderer`.  For example:
 
 .. code-block:: python
 
@@ -51,3 +51,9 @@ Will typically need to display some text.  This is provided by a
         screen.play([Scene(effects, 500)])
 
     curses.wrapper(demo)
+
+Not all Effects have to use a Renderer.  In particular, dynamic Effects such as
+:py:obj:`.Snow` depend on the current Screen state to render each new image.
+This is allowed by the design, but often limits the re-usability of the code.
+Before you commit to this approach, consider why your new Effect can't be
+handled by a combination of a new Renderer and the :py:obj:`.Print` Effect.
