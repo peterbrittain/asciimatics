@@ -68,8 +68,8 @@ So you want to join in?  Great!  There's a few ground rules...
    that joy?  Not just by writing code that works, but by writing code that
    makes other programmers wish they'd written it.
 #. When writing code, make sure that it is
-   `PEP-8<https://www.python.org/dev/peps/pep-0008/>`_ compliant.  Tools such as
-   flake8 or editors like pycharm really help here.
+   `PEP-8 <https://www.python.org/dev/peps/pep-0008/>`_ compliant.  Tools
+   such as flake8 or editors like pycharm really help here.
 
 When you've got something you're happy with, please feel free to submit a pull
 request at https://github.com/peterbrittain/asciimatics/issues.
