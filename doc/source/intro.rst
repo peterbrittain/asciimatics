@@ -30,8 +30,8 @@ How to use it?
 
 Create a curses window, create a :py:obj:`.Screen`, put together a :py:obj:`.Scene`
 using some :py:obj:`.Effect` objects and then get the Screen to play it.  An Effect
-Will typically need to display some text.  This is provided by a
-:py:obj:`.Renderer`.  For example:
+Will typically need to display some pre-formatted text.  This is usually
+provided by a :py:obj:`.Renderer`.  For example:
 
 .. code-block:: python
 
@@ -51,3 +51,25 @@ Will typically need to display some text.  This is provided by a
         screen.play([Scene(effects, 500)])
 
     curses.wrapper(demo)
+
+Contributing to this project
+----------------------------
+
+So you want to join in?  Great!  There's a few ground rules...
+
+#. Before you do anything else, read up on the design.  You should find all you
+   need in the 4 base classes - i.e. Screen, Scene, Effect and Renderer.
+#. Make sure you consider why your new Effect can't be handled by a
+   combination of a new Renderer and the :py:obj:`.Print` Effect.  For example,
+   dynamic Effects such as :py:obj:`.Snow` depend on the current Screen state
+   to render each new image.
+#. Go the extra yard.  This project started on a whim to share the joy of
+   someone starting out programming back in the 1980s.  How do you maintain
+   that joy?  Not just by writing code that works, but by writing code that
+   makes other programmers wish they'd written it.
+#. When writing code, make sure that it is
+   `PEP-8 <https://www.python.org/dev/peps/pep-0008/>`_ compliant.  Tools
+   such as flake8 or editors like pycharm really help here.
+
+When you've got something you're happy with, please feel free to submit a pull
+request at https://github.com/peterbrittain/asciimatics/issues.
