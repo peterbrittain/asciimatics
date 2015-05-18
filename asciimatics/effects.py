@@ -861,7 +861,7 @@ class Julia(Effect):
         self._size = [i * self._scale for i in self._size]
         area = self._size[0] * self._size[1]
         if area <= 4.0 or area >= 16:
-            self._scale = 2.0 - self._scale
+            self._scale = 1.0 / self._scale
 
         # Rotate
         self._c = [self._c[0] * cos(pi/180) - self._c[1] * sin(pi/180),
