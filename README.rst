@@ -78,3 +78,9 @@ Bugs
 ----
 
 You can report bugs at https://github.com/peterbrittain/asciimatics/issues
+
+Contributing to the project
+---------------------------
+
+If you'd like to take part in this project (and see your name in the credits!), check out the guidance at
+http://asciimatics.readthedocs.org/en/latest/intro.html#contributing-to-this-project.
