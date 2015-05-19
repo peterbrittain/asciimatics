@@ -1,3 +1,4 @@
+from __future__ import division
 import curses
 from asciimatics.effects import Cog, Print
 from asciimatics.renderers import FigletText
@@ -13,7 +14,7 @@ def demo(win):
         if screen.width != 80 or screen.height != 24:
             effects = [
                 Print(screen, FigletText("Resize to 80x24"),
-                      y=screen.height/2-3),
+                      y=screen.height//2-3),
             ]
         else:
             effects = [
