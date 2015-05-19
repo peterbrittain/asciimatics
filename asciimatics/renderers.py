@@ -76,7 +76,7 @@ class Renderer(object):
                             attributes = (int(match.group(4)), 0)
                         else:
                             attributes = (int(match.group(2)),
-                                     ATTRIBUTES[match.group(3)])
+                                          ATTRIBUTES[match.group(3)])
                         line = match.group(5)
                 new_image.append(new_line)
                 colour_map.append(colours)

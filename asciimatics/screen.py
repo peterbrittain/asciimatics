@@ -4,6 +4,8 @@ import time
 from abc import ABCMeta, abstractmethod
 import copy
 import sys
+import signal
+from .exceptions import ResizeScreenError
 
 #: Attribute styles supported by Screen formatting functions
 A_BOLD = 1
@@ -313,6 +315,7 @@ class Screen(object):
         self._start_line = 0
         self._x = 0
         self._y = 0
+        self._resized = False
 
     @classmethod
     def from_curses(cls, win, height=200):
@@ -458,11 +461,17 @@ class Screen(object):
                 (y >= self._start_line) and
                 (y < self._start_line + self.height))
 
-    def play(self, scenes):
+    def play(self, scenes, stop_on_resize=False):
         """
         Play a set of scenes.
 
         :param scenes: a list of :py:obj:`.Scene` objects to play.
+        :param stop_on_resize: Whether to stop when the screen is resized.
+            Default is to carry on regardless - which will typically result
+            in an error. This is largely done for back-compatibility.
+
+        :raises ResizeScreenError: if the screen is resized (and allowed by
+            stop_on_resize).
         """
         self.clear()
         while True:
@@ -471,20 +480,26 @@ class Screen(object):
                 if scene.clear:
                     self.clear()
                 scene.reset()
-                while scene.duration < 0 or frame < scene.duration:
-                    # self.putch(
-                    #    str(scene.duration - frame) + " ", 0, self._start_line)
+                while (scene.duration < 0 or frame < scene.duration) and \
+                        not self._resized:
                     frame += 1
                     for effect in scene.effects:
                         effect.update(frame)
                     self.refresh()
                     c = self.get_key()
-                    if c in (ord("X"), ord("x")):
+                    if c in (ord("X"), ord("x"), ord("Q"), ord("q")):
                         return
                     if c in (ord(" "), ord("\n")):
                         break
-                    # curses.napms(50)
+                    if c == curses.KEY_RESIZE:
+                        self._resized = True
                     time.sleep(0.05)
+
+                # Break out of the function if mandated by caller.
+                if self._resized:
+                    self._resized = False
+                    if stop_on_resize:
+                        raise ResizeScreenError("Resized terminal")
 
     def move(self, x, y):
         """
@@ -640,6 +655,18 @@ class _CursesScreen(Screen):
         # Non-blocking key checks.
         self._pad.nodelay(1)
 
+        # Set up signal handler for screen resizing.
+        signal.signal(signal.SIGWINCH, self._resize_handler)
+
+    def _resize_handler(self, *_):
+        """
+        Window resize signal handler.  We don't care about any of the
+        parameters passed in beyond the object reference.
+        """
+        curses.endwin()
+        curses.initscr()
+        self._resized = True
+
     def scroll(self):
         """
         Scroll the Screen up one line.
@@ -657,7 +684,6 @@ class _CursesScreen(Screen):
         """
         Refresh the screen.
         """
-        (self.height, self.width) = self._screen.getmaxyx()
         self._pad.refresh(self._start_line,
                           0,
                           0,
@@ -761,6 +787,18 @@ class _BlessedScreen(Screen):
         self._y = None
         self._last_start_line = 0
 
+        # Set up signal handler for screen resizing.
+        signal.signal(signal.SIGWINCH, self._resize_handler)
+
+    def _resize_handler(self, *_):
+        """
+        Window resize signal handler.  We don't care about any of the
+        parameters passed in beyond the object reference.
+        """
+        self.width = self._terminal.width
+        self.height = self._terminal.height
+        self._resized = True
+
     def scroll(self):
         """
         Scroll the Screen up one line.
@@ -789,7 +827,7 @@ class _BlessedScreen(Screen):
         """
         # Scroll the screen as required to minimize redrawing.
         for _ in range(self._start_line - self._last_start_line):
-            print self._terminal.move(self.height-1, 0)
+            print(self._terminal.move(self.height-1, 0))
         self._last_start_line = self._start_line
 
         # Now draw any deltas to the scrolled screen.

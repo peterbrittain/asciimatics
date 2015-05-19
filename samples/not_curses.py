@@ -5,6 +5,7 @@ from asciimatics.scene import Scene
 from asciimatics.screen import Screen, COLOUR_GREEN, COLOUR_CYAN
 from asciimatics.sprites import Sam
 from asciimatics.paths import Path
+from asciimatics.exceptions import ResizeScreenError
 from blessed import Terminal
 import math
 
@@ -17,7 +18,12 @@ def ascii_credits():
     with term.fullscreen():
         with term.hidden_cursor():
             with term.cbreak():
-                _credits(term)
+                while True:
+                    try:
+                        _credits(term)
+                        return
+                    except ResizeScreenError:
+                        pass
 
 
 def _credits(term):
@@ -128,7 +134,7 @@ def _credits(term):
     ]
     scenes.append(Scene(effects, 200))
 
-    screen.play(scenes)
+    screen.play(scenes, stop_on_resize=True)
 
 
 if __name__ == "__main__":
