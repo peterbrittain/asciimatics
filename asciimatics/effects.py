@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from random import randint, random, choice
 from math import sin, cos, pi
-from screen import COLOUR_GREEN, COLOUR_YELLOW, A_BOLD, COLOUR_WHITE
+from .screen import COLOUR_GREEN, COLOUR_YELLOW, A_BOLD, COLOUR_WHITE
 import datetime
 
 
