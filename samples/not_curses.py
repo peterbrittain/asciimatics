@@ -1,3 +1,4 @@
+from __future__ import division
 from asciimatics.effects import Scroll, Mirage, Wipe, Cycle, Matrix, \
     BannerText, Stars, Print
 from asciimatics.renderers import FigletText, ImageFile, SpeechBubble, Rainbow
@@ -30,15 +31,15 @@ def _credits(term):
     screen = Screen.from_blessed(term)
 
     scenes = []
-    centre = (screen.width / 2, screen.height / 2)
+    centre = (screen.width // 2, screen.height // 2)
     curve_path = []
     for i in range(0, 11):
         curve_path.append(
             (centre[0] + (screen.width / 3 * math.sin(i * math.pi / 5)),
              centre[1] - (screen.height / 3 * math.cos(i * math.pi / 5))))
     path = Path()
-    path.jump_to(-20, centre[1] - screen.height / 3)
-    path.move_straight_to(centre[0], centre[1] - screen.height / 3, 10),
+    path.jump_to(-20, centre[1] - screen.height // 3)
+    path.move_straight_to(centre[0], centre[1] - screen.height // 3, 10),
     path.wait(30)
     path.move_round_to(curve_path, 80)
     path.wait(30)
@@ -49,7 +50,7 @@ def _credits(term):
         Sam(screen, path),
         Print(screen,
               SpeechBubble("WELCOME TO ASCIIMATICS", "L"),
-              x=centre[0] + 12, y=(centre[1] - screen.height / 3) - 4,
+              x=centre[0] + 12, y=(centre[1] - screen.height // 3) - 4,
               colour=COLOUR_CYAN,
               clear=True,
               start_frame=20,
@@ -78,7 +79,7 @@ def _credits(term):
         Mirage(
             screen,
             FigletText("Asciimatics"),
-            screen.height / 2 - 3,
+            screen.height // 2 - 3,
             COLOUR_GREEN,
             start_frame=100,
             stop_frame=200),
@@ -86,7 +87,7 @@ def _credits(term):
         Cycle(
             screen,
             FigletText("Asciimatics"),
-            screen.height / 2 - 3,
+            screen.height // 2 - 3,
             start_frame=200)
     ]
     scenes.append(Scene(effects, 250, clear=False))
@@ -96,7 +97,7 @@ def _credits(term):
             screen,
             Rainbow(screen, FigletText(
                 "Reliving the 80s in glorious ASCII text...", font='slant')),
-            screen.height / 2 - 3,
+            screen.height // 2 - 3,
             COLOUR_GREEN)
     ]
     scenes.append(Scene(effects))
@@ -125,12 +126,12 @@ def _credits(term):
         Cycle(
             screen,
             FigletText("ASCIIMATICS", font='big'),
-            screen.height / 2 - 8),
+            screen.height // 2 - 8),
         Cycle(
             screen,
             FigletText("ROCKS!", font='big'),
-            screen.height / 2 + 3),
-        Stars(screen, (screen.height + screen.width) / 2)
+            screen.height // 2 + 3),
+        Stars(screen, (screen.height + screen.width) // 2)
     ]
     scenes.append(Scene(effects, 200))
 
