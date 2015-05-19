@@ -1,3 +1,4 @@
+from __future__ import division
 import curses
 import os
 import time
@@ -418,7 +419,7 @@ class Screen(object):
 
         See curses for definitions of the colour and attribute values.
         """
-        x = (self.width - len(text))/2
+        x = (self.width - len(text))//2
         self.paint(text, x, y, colour, attr, colour_map=colour_map)
 
     def paint(self, text, x, y, colour=7, attr=0, transparent=False,
@@ -569,16 +570,16 @@ class Screen(object):
                     x += sx
 
                 if char is None:
-                    self.putch(self._line_chars[next_chars[0]], px/2, py/2,
+                    self.putch(self._line_chars[next_chars[0]], px//2, py//2,
                                colour)
                     if next_chars[1] != 0:
                         self.putch(self._line_chars[next_chars[1]],
-                                   px/2, py/2+sy, colour)
+                                   px//2, py//2+sy, colour)
                 elif char == " ":
-                    self.putch(char, px/2, py/2)
-                    self.putch(char, px/2, py/2+sy)
+                    self.putch(char, px//2, py//2)
+                    self.putch(char, px//2, py//2+sy)
                 else:
-                    self.putch(char, px/2, py/2, colour)
+                    self.putch(char, px//2, py//2, colour)
         else:
             err = dy
             while y != y1:
@@ -602,17 +603,17 @@ class Screen(object):
                     y += sy
 
                 if char is None:
-                    self.putch(self._line_chars[next_chars[0]], px/2, py/2,
+                    self.putch(self._line_chars[next_chars[0]], px//2, py//2,
                                colour)
                     if next_chars[1] != 0:
                         self.putch(
-                            self._line_chars[next_chars[1]], px/2+sx, py/2,
+                            self._line_chars[next_chars[1]], px//2+sx, py//2,
                             colour)
                 elif char == " ":
-                    self.putch(char, px/2, py/2)
-                    self.putch(char, px/2+sx, py/2)
+                    self.putch(char, px//2, py//2)
+                    self.putch(char, px//2+sx, py//2)
                 else:
-                    self.putch(char, px/2, py/2, colour)
+                    self.putch(char, px//2, py//2, colour)
 
 
 class _CursesScreen(Screen):
