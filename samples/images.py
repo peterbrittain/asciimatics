@@ -1,3 +1,4 @@
+from __future__ import division
 from asciimatics.effects import BannerText, Print, Scroll
 from asciimatics.renderers import ColourImageFile, FigletText
 from asciimatics.scene import Scene
@@ -15,7 +16,7 @@ def demo(win):
               stop_frame=200),
         Print(screen,
               FigletText("ASCIIMATICS NEWS", font='banner3'),
-              screen.height/2-3, colour=15),
+              screen.height//2-3, colour=15),
     ]
     scenes.append(Scene(effects))
     effects = [

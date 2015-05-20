@@ -1,3 +1,5 @@
+from __future__ import division
+
 def _spline(t, p0, p1, p2, p3):
     """
     Catmull-Rom cubic spline to interpolate 4 given points.
@@ -118,7 +120,7 @@ class Path(object):
         points.append(points[-1])
 
         # Convert the points into an interpolated set of more detailed points.
-        steps_per_spline = steps / (len(points) - 3)
+        steps_per_spline = steps // (len(points) - 3)
         for j in range(1, len(points) - 2):
             for t in range(1, steps_per_spline+1):
                 y = _spline(float(t) / steps_per_spline,
