@@ -1,4 +1,6 @@
 from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
 from abc import ABCMeta, abstractmethod
 from random import randint, random, choice
 from math import sin, cos, pi

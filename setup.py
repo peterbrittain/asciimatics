@@ -18,7 +18,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='asciimatics',
-    version='1.1.0',
+    version='1.2.0',
     description='An ASCII art and text cinematic storyboard/demo library',
     long_description=long_description,
     url='https://github.com/peterbrittain/asciimatics.git',
@@ -30,12 +30,16 @@ setup(
         'Intended Audience :: Developers',
         'Topic :: Text Processing :: General',
         'License :: OSI Approved :: Apache Software License',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.3',
     ],
     keywords='ascii art demo credits title sequence',
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
     install_requires=[
         'pyfiglet >= 0.7.2',
-        'Pillow >= 2.7.0',
+        'Pillow >= 2.7.0', 'six',
     ],
 )
