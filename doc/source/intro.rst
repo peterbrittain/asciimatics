@@ -64,10 +64,10 @@ So you want to join in?  Great!  There's a few ground rules...
    dynamic Effects such as :py:obj:`.Snow` depend on the current Screen state
    to render each new image.
 #. Go the extra yard.  This project started on a whim to share the joy of
-   someone starting out programming back in the 1980s.  How do you maintain
+   someone starting out programming back in the 1980s.  How do you sustain
    that joy?  Not just by writing code that works, but by writing code that
-   makes other programmers wish they'd written it.
-#. When writing code, make sure that it is
+   other programmers will admire.
+#. Make sure that your code is
    `PEP-8 <https://www.python.org/dev/peps/pep-0008/>`_ compliant.  Tools
    such as flake8 or editors like pycharm really help here.
 
