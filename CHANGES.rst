@@ -5,6 +5,7 @@ CHANGE HISTORY
 -----
 - Added the Julia Set and Cog effects.
 - Fixed up off-by-one error in line drawing.
+- Added support for screen resizing while playing a scene.
 
 1.0.0
 -----
