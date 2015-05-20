@@ -1,8 +1,9 @@
 # coding=utf-8
+from __future__ import division
 from pyfiglet import Figlet, DEFAULT_FONT
 from PIL import Image
 import re
-from screen import A_BOLD, A_NORMAL, A_REVERSE, A_UNDERLINE
+from .screen import A_BOLD, A_NORMAL, A_REVERSE, A_UNDERLINE
 
 
 #: Attribute conversion table for the ${c,a} form of attributes for
@@ -76,7 +77,7 @@ class Renderer(object):
                             attributes = (int(match.group(4)), 0)
                         else:
                             attributes = (int(match.group(2)),
-                                     ATTRIBUTES[match.group(3)])
+                                          ATTRIBUTES[match.group(3)])
                         line = match.group(5)
                 new_image.append(new_line)
                 colour_map.append(colours)
@@ -195,9 +196,9 @@ class ImageFile(Renderer):
                     if real_col == background:
                         ascii_image += " "
                     else:
-                        ascii_image += "${%d}" % (232 + col * 23/256)
+                        ascii_image += "${%d}" % (232 + col * 23//256)
                         ascii_image += self._greyscale[
-                            (int(col) * len(self._greyscale)) / 256]
+                            (int(col) * len(self._greyscale)) // 256]
             self._images.append(ascii_image)
 
 

@@ -1,3 +1,4 @@
+from __future__ import division
 import curses
 from asciimatics.effects import Cycle, Snow, Print
 from asciimatics.renderers import FigletText, Renderer
@@ -49,12 +50,12 @@ def demo(win):
         Cycle(
             screen,
             FigletText("HAPPY"),
-            screen.height / 2 - 6,
+            screen.height // 2 - 6,
             start_frame=300),
         Cycle(
             screen,
             FigletText("XMAS!"),
-            screen.height / 2 + 1,
+            screen.height // 2 + 1,
             start_frame=300),
     ]
     screen.play([Scene(effects, -1)])

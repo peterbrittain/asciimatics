@@ -1,7 +1,8 @@
+from __future__ import division
 from abc import ABCMeta, abstractmethod
 from random import randint, random, choice
 from math import sin, cos, pi
-from screen import COLOUR_GREEN, COLOUR_YELLOW, A_BOLD, COLOUR_WHITE
+from .screen import COLOUR_GREEN, COLOUR_YELLOW, A_BOLD, COLOUR_WHITE
 import datetime
 
 
@@ -215,7 +216,7 @@ class Print(Effect):
         self._renderer = renderer
         self._transparent = transparent
         self._y = y
-        self._x = ((self._screen.width - renderer.max_width) / 2 if x is None
+        self._x = ((self._screen.width - renderer.max_width) // 2 if x is None
                    else x)
         self._colour = colour
         self._clear = clear
@@ -273,7 +274,7 @@ class Mirage(Effect):
         image, colours = self._renderer.rendered_text
         for i, line in enumerate(image):
             if self._screen.is_visible(0, y):
-                x = (self._screen.width - len(line)) / 2
+                x = (self._screen.width - len(line)) // 2
                 for j, c in enumerate(line):
                     if c != " " and random() > 0.85:
                         if colours[i][j][0] is not None:
@@ -400,11 +401,11 @@ class _Trail(object):
             self._rate = randint(1, 2)
             if self._clear:
                 self._y = 0
-                self._life = self._screen.height / self._rate
+                self._life = self._screen.height // self._rate
             else:
-                self._y = randint(0, self._screen.height / 2)
+                self._y = randint(0, self._screen.height // 2)
                 self._life = \
-                    randint(1, self._screen.height - self._y) / self._rate
+                    randint(1, self._screen.height - self._y) // self._rate
 
     def update(self, reseed):
         """
@@ -546,7 +547,7 @@ class Sprite(Effect):
             if self._dir_count % 3 == 0:
                 direction = None
                 if self._dir_x is not None:
-                    dx = (x - self._dir_x) / 2
+                    dx = (x - self._dir_x) // 2
                     dy = y - self._dir_y
                     if dx * dx > dy * dy:
                         direction = "left" if dx < 0 else "right"
@@ -565,8 +566,8 @@ class Sprite(Effect):
                 direction = "default"
 
             # Now we've done the directions, centre the sprite on the path.
-            x -= self._renderer_dict[direction].max_width / 2
-            y -= self._renderer_dict[direction].max_height / 2
+            x -= self._renderer_dict[direction].max_width // 2
+            y -= self._renderer_dict[direction].max_height // 2
 
             # Update the path index for the sprite if needed.
             if self._path.is_finished():
@@ -671,7 +672,7 @@ class Snow(Effect):
 
     def _update(self, frame_no):
         if frame_no % 3 == 0:
-            if len(self._chars) < self._screen.width / 3:
+            if len(self._chars) < self._screen.width // 3:
                 self._chars.append(_Flake(self._screen))
 
             for char in self._chars:
@@ -783,9 +784,9 @@ class Cog(Effect):
 
         # Function to plot.
         f = lambda p: self._x + (
-            self._radius*2 - (6*(p/4 % 2))) * sin((self._old_frame+p)*pi/40)
+            self._radius*2 - (6*(p//4 % 2))) * sin((self._old_frame+p)*pi/40)
         g = lambda p: self._y + (
-            self._radius-(3*(p/4 % 2))) * cos((self._old_frame+p)*pi/40)
+            self._radius-(3*(p//4 % 2))) * cos((self._old_frame+p)*pi/40)
 
         # Clear old wave.
         if self._old_frame != 0:
@@ -830,8 +831,8 @@ class RandomNoise(Effect):
 
     def _update(self, frame_no):
         if self._signal:
-            start_x = int((self._screen.width - self._signal.max_width) / 2)
-            start_y = int((self._screen.height - self._signal.max_height) / 2)
+            start_x = int((self._screen.width - self._signal.max_width) // 2)
+            start_y = int((self._screen.height - self._signal.max_height) // 2)
             text, colours = self._signal.rendered_text
         else:
             start_x = start_y = 0
@@ -906,8 +907,8 @@ class Julia(Effect):
         sy = self._centre[1] - (self._size[1] / 2.0)
         for y in range(self._height):
             for x in range(self._width):
-                z = complex(sx+self._size[0]*(float(x)/self._width),
-                            sy+self._size[1]*(float(y)/self._height))
+                z = complex(sx+self._size[0]*(x/self._width),
+                            sy+self._size[1]*(y/self._height))
                 n = len(self._256_palette)
                 while abs(z) < 10 and n >= 1:
                     z = z ** 2 + c
