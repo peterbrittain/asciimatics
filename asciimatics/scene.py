@@ -1,3 +1,8 @@
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+
+
 class Scene(object):
     """
     Class to store the details of a single scene to be displayed.  This is
