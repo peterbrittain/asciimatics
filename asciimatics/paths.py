@@ -1,4 +1,7 @@
 from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+
 
 def _spline(t, p0, p1, p2, p3):
     """
