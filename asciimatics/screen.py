@@ -685,12 +685,13 @@ class _CursesScreen(Screen):
         """
         Refresh the screen.
         """
+        (h, w) = self._screen.getmaxyx()
         self._pad.refresh(self._start_line,
                           0,
                           0,
                           0,
-                          self.height - 1,
-                          self.width - 1)
+                          h - 1,
+                          w - 1)
 
     def get_key(self):
         """
