@@ -1,6 +1,10 @@
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
+from builtins import chr
+from builtins import object
+from builtins import range
+from future.utils import with_metaclass
 from abc import ABCMeta, abstractmethod
 from random import randint, random, choice
 from math import sin, cos, pi
@@ -8,7 +12,7 @@ from .screen import COLOUR_GREEN, COLOUR_YELLOW, A_BOLD, COLOUR_WHITE
 import datetime
 
 
-class Effect(object):
+class Effect(with_metaclass(ABCMeta, object)):
     """
     Abstract class to handle a special effect on the screen.  An Effect can
     cover anything from a static image at the start of the Scene through to
@@ -27,7 +31,6 @@ class Effect(object):
     New Effects, therefore need to implement the abstract methods on this
     class to satisfy the contract with Scene.
     """
-    __metaclass__ = ABCMeta
 
     def __init__(self, start_frame=0, stop_frame=0):
         """

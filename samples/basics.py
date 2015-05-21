@@ -1,4 +1,5 @@
 from __future__ import division
+from builtins import range
 import copy
 import math
 from asciimatics.effects import Cycle, Print, Stars
