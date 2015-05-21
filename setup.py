@@ -40,6 +40,7 @@ setup(
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
     install_requires=[
         'pyfiglet >= 0.7.2',
-        'Pillow >= 2.7.0', 'six',
+        'Pillow >= 2.7.0',
+        'future',
     ],
 )

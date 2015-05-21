@@ -1,6 +1,9 @@
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
+from builtins import object
+from builtins import range
+from future.utils import with_metaclass
 import curses
 import os
 import time
@@ -27,7 +30,7 @@ COLOUR_CYAN = 6
 COLOUR_WHITE = 7
 
 
-class Screen(object):
+class Screen(with_metaclass(ABCMeta, object)):
     """
     Class to track basic state of the screen.  This constructs the necessary
     resources to allow us to do the ASCII animations.
@@ -41,9 +44,6 @@ class Screen(object):
     screen vertically (e.g. Scroll).  It must be big enough to handle the
     full scrolling of your selected Effect.
     """
-
-    # This is an abstract class.
-    __metaclass__ = ABCMeta
 
     # Colour palette for 256 colour xterm
     _256_palette = [

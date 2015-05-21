@@ -1,4 +1,5 @@
 from __future__ import division
+from builtins import range
 from asciimatics.effects import Scroll, Mirage, Wipe, Cycle, Matrix, \
     BannerText, Stars, Print
 from asciimatics.renderers import FigletText, ImageFile, SpeechBubble, Rainbow
