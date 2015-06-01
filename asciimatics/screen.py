@@ -4,7 +4,6 @@ from __future__ import print_function
 from builtins import object
 from builtins import range
 from future.utils import with_metaclass
-import curses
 import os
 import time
 from abc import ABCMeta, abstractmethod
@@ -319,6 +318,7 @@ class Screen(with_metaclass(ABCMeta, object)):
         self._x = 0
         self._y = 0
         self._resized = False
+        self._resize_key = "UNDEFINED"  # Don't use None as this is the value for no key pressed
 
     @classmethod
     def from_curses(cls, win, height=200):
@@ -339,6 +339,16 @@ class Screen(with_metaclass(ABCMeta, object)):
         :param height: The buffer height for this window (if using scrolling).
         """
         return _BlessedScreen(terminal, height)
+
+    @classmethod
+    def from_windows(cls, console, height=200):
+        """
+        Construct a new Screen from a Windows console.
+
+        :param console: The Windows PyConsoleScreenBufferType returned from win32console.
+        :param height: The buffer height for this window (if using scrolling).
+        """
+        return _WindowsScreen(console, height)
 
     @property
     def start_line(self):
@@ -494,7 +504,7 @@ class Screen(with_metaclass(ABCMeta, object)):
                         return
                     if c in (ord(" "), ord("\n")):
                         break
-                    if c == curses.KEY_RESIZE:
+                    if c == self._resize_key:
                         self._resized = True
                     time.sleep(0.05)
 
@@ -618,170 +628,24 @@ class Screen(with_metaclass(ABCMeta, object)):
                     self.putch(char, px//2, py//2, colour)
 
 
-class _CursesScreen(Screen):
+class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
     """
-    Curses screen implementation.
+    Abstract class to handle screen buffering when not using curses.
     """
 
-    #: Conversion from Screen attributes to curses equivalents.
-    ATTRIBUTES = {
-        A_BOLD: curses.A_BOLD,
-        A_NORMAL: curses.A_NORMAL,
-        A_REVERSE: curses.A_REVERSE,
-        A_UNDERLINE: curses.A_UNDERLINE
-    }
-
-    def __init__(self, win, height=200):
+    def __init__(self, height, width, buffer_height):
         """
-        :param win: The window object as returned by the curses wrapper method.
-        :param height: The height of the screen buffer to be used.
+        :param height: The buffer height for this window.
+        :param width: The buffer width for this window.
+        :param buffer_height: The buffer height for this window.
         """
         # Save off the screen details and se up the scrolling pad.
-        super(_CursesScreen, self).__init__(
-            win.getmaxyx()[0], win.getmaxyx()[1])
-        self._screen = win
-        self.buffer_height = height
-        self._pad = curses.newpad(self.buffer_height, self.width)
+        super(_BufferedScreen, self).__init__(height, width)
 
-        # Set up basic colour schemes.
-        self.colours = 8
-        if os.environ['TERM'] == 'xterm-256color':
-            self.colours = 256
-        for i in range(1, self.colours):
-            curses.init_pair(i, i, curses.COLOR_BLACK)
-        for i in range(0, self.colours):
-            curses.init_pair(i + self.colours, curses.COLOR_BLACK, i)
-
-        # Disable the cursor.
-        curses.curs_set(0)
-
-        # Non-blocking key checks.
-        self._pad.nodelay(1)
-
-        # Set up signal handler for screen resizing.
-        signal.signal(signal.SIGWINCH, self._resize_handler)
-
-    def _resize_handler(self, *_):
-        """
-        Window resize signal handler.  We don't care about any of the
-        parameters passed in beyond the object reference.
-        """
-        curses.endwin()
-        curses.initscr()
-        self._resized = True
-
-    def scroll(self):
-        """
-        Scroll the Screen up one line.
-        """
-        self._start_line += 1
-
-    def clear(self):
-        """
-        Clear the Screen of all content.
-        """
-        self._pad.clear()
-        self._start_line = 0
-
-    def refresh(self):
-        """
-        Refresh the screen.
-        """
-        (h, w) = self._screen.getmaxyx()
-        self._pad.refresh(self._start_line,
-                          0,
-                          0,
-                          0,
-                          h - 1,
-                          w - 1)
-
-    def get_key(self):
-        """
-        Check for a key without waiting.
-        """
-        return self._pad.getch()
-
-    def getch(self, x, y):
-        """
-        Get the character at the specified location.
-
-        :param x: The column (x coord) of the character.
-        :param y: The row (y coord) of the character.
-
-        :return: A tuple of the ASCII code of the character at the location
-                 and the attributes for that character.
-        """
-        curses_rc = self._pad.inch(y, x)
-        return curses_rc & 0xff, curses_rc & 0xff >> 8
-
-    def putch(self, text, x, y, colour=7, attr=0, transparent=False):
-        """
-        Print the text at the specified location using the
-        specified colour and attributes.
-
-        :param text: The (single line) text to be printed.
-        :param x: The column (x coord) for the start of the text.
-        :param y: The line (y coord) for the start of the text.
-        :param colour: The colour of the text to be displayed.
-        :param attr: The cell attribute of the text to be displayed.
-        :param transparent: Whether to print spaces or not, thus giving a
-            transparent effect.
-
-        See curses for definitions of the colour and attribute values.
-        """
-        # Crop to pad size
-        if y < 0:
-            return
-        if x < 0:
-            text = text[-x:]
-            x = 0
-        if x + len(text) >= self.width:
-            text = text[:self.width - x]
-
-        # Convert attribute to curses equivalent
-        attr = self.ATTRIBUTES[attr] if attr in self.ATTRIBUTES else 0
-
-        # Print whatever is left
-        if len(text) > 0:
-            if transparent:
-                for i, c in enumerate(text):
-                    if c != " ":
-                        self._pad.addstr(
-                            y, x+i, c, curses.color_pair(colour) | attr)
-            else:
-                self._pad.addstr(y, x, text, curses.color_pair(colour) | attr)
-
-
-class _BlessedScreen(Screen):
-    """
-    Blessed screen implementation.
-    """
-
-    #: Conversion from Screen attributes to curses equivalents.
-    ATTRIBUTES = {
-        A_BOLD: lambda term: term.bold,
-        A_NORMAL: lambda term: "",
-        A_REVERSE: lambda term: term.reverse,
-        A_UNDERLINE: lambda term: term.underline
-    }
-
-    def __init__(self, terminal, height):
-        """
-        :param terminal: The blessed Terminal object.
-        :param height: The buffer height for this window (if using scrolling).
-        """
-        # Save off the screen details and se up the scrolling pad.
-        super(_BlessedScreen, self).__init__(terminal.height, terminal.width)
-
-        # Save off terminal an create screen buffers (required to reduce
-        # flicker).
-        self._terminal = terminal
+        # Create screen buffers (required to reduce flicker).
         self._screen_buffer = None
         self._double_buffer = None
-        self._buffer_height = height
-
-        # Set up basic colour schemes.
-        self.colours = terminal.number_of_colors
+        self._buffer_height = buffer_height
 
         # Remember current state so we don't keep programming colours/attributes
         # and move commands unnecessarily.
@@ -790,18 +654,6 @@ class _BlessedScreen(Screen):
         self._x = None
         self._y = None
         self._last_start_line = 0
-
-        # Set up signal handler for screen resizing.
-        signal.signal(signal.SIGWINCH, self._resize_handler)
-
-    def _resize_handler(self, *_):
-        """
-        Window resize signal handler.  We don't care about any of the
-        parameters passed in beyond the object reference.
-        """
-        self.width = self._terminal.width
-        self.height = self._terminal.height
-        self._resized = True
 
     def scroll(self):
         """
@@ -814,8 +666,8 @@ class _BlessedScreen(Screen):
         Clear the Screen of all content.
         """
         # Clear the actual terminal
-        self._change_colours(7, 0)
-        sys.stdout.write(self._terminal.clear())
+        self._change_colours(COLOUR_WHITE, 0)
+        self._clear()
         self._start_line = self._last_start_line = 0
         self._x = self._y = None
 
@@ -831,7 +683,7 @@ class _BlessedScreen(Screen):
         """
         # Scroll the screen as required to minimize redrawing.
         for _ in range(self._start_line - self._last_start_line):
-            print(self._terminal.move(self.height-1, 0))
+            self._scroll()
         self._last_start_line = self._start_line
 
         # Now draw any deltas to the scrolled screen.
@@ -842,16 +694,6 @@ class _BlessedScreen(Screen):
                     self._change_colours(new_cell[1], new_cell[2])
                     self._print_at(new_cell[0], x, y)
                     self._screen_buffer[y+self._start_line][x] = new_cell
-
-        # Flush now to get all updates.
-        sys.stdout.flush()
-
-    def get_key(self):
-        """
-        Check for a key without waiting.
-        """
-        key = self._terminal.inkey(timeout=0)
-        return ord(key) if key != "" else None
 
     def getch(self, x, y):
         """
@@ -895,6 +737,7 @@ class _BlessedScreen(Screen):
                 if c != " " or not transparent:
                     self._double_buffer[y][x+i] = (c, colour, attr)
 
+    @abstractmethod
     def _change_colours(self, colour, attr):
         """
         Change current colour if required.
@@ -902,19 +745,8 @@ class _BlessedScreen(Screen):
         :param colour: New colour to use
         :param attr: New attributes to use
         """
-        # Change attribute first as this will reset colours when swapping modes.
-        if attr != self._attr:
-            sys.stdout.write(self._terminal.normal + self._terminal.on_color(0))
-            if attr != 0:
-                sys.stdout.write(self.ATTRIBUTES[attr](self._terminal))
-            self._attr = attr
-            self._colour = None
 
-        # Now swap colours if required.
-        if colour != self._colour:
-            sys.stdout.write(self._terminal.color(colour))
-            self._colour = colour
-
+    @abstractmethod
     def _print_at(self, text, x, y):
         """
         Print string at the required location.
@@ -923,19 +755,381 @@ class _BlessedScreen(Screen):
         :param x: The x coordinate
         :param y: The Y coordinate
         """
-        # Move the cursor if necessary
-        msg = ""
-        if x != self._x or y != self._y:
-            msg += self._terminal.move(y, x)
 
-        msg += text
+    @abstractmethod
+    def _clear(self):
+        """
+        Clear the window.
+        """
 
-        # Don't scroll the screen - move up a line if we're at the bottom.
-        # if y >= self.height - 1:
-        #     msg += self._terminal.move_up()
+    @abstractmethod
+    def _scroll(self):
+        """
+        Scroll the window up one line.
+        """
 
-        # Print the text at the required location and update the current
-        # position.
-        sys.stdout.write(msg)
-        self._x = x + len(text)
-        self._y = y
+
+if sys.platform == "win32":
+    import win32console
+
+    class _WindowsScreen(_BufferedScreen):
+        """
+        Windows screen implementation.
+        """
+
+        # Colour lookup table.
+        _COLOURS = {
+            COLOUR_BLACK: 0,
+            COLOUR_RED: win32console.FOREGROUND_RED,
+            COLOUR_GREEN: win32console.FOREGROUND_GREEN,
+            COLOUR_YELLOW: win32console.FOREGROUND_RED | win32console.FOREGROUND_GREEN,
+            COLOUR_BLUE: win32console.FOREGROUND_BLUE,
+            COLOUR_MAGENTA: win32console.FOREGROUND_RED | win32console.FOREGROUND_BLUE,
+            COLOUR_CYAN: win32console.FOREGROUND_BLUE | win32console.FOREGROUND_GREEN,
+            COLOUR_WHITE: win32console.FOREGROUND_RED | win32console.FOREGROUND_GREEN | win32console.FOREGROUND_BLUE
+        }
+
+        # Attribute lookup table
+        _ATTRIBUTES = {
+            0: lambda x: x,
+            A_BOLD: lambda x: x | win32console.FOREGROUND_INTENSITY,
+            A_NORMAL: lambda x: x,
+            A_REVERSE: lambda x: x*16,  # Windows console uses a bitmap where background is the top nibble.
+            A_UNDERLINE: lambda x: x
+        }
+
+        def __init__(self, console, buffer_height):
+            """
+            :param console: The win32console PyConsoleScreenBufferType object.
+            :param buffer_height: The buffer height for this window (if using scrolling).
+            """
+            # Save off the screen details and se up the scrolling pad.
+            info = console.GetConsoleScreenBufferInfo()['Window']
+            width = info.Right - info.Left + 1
+            height = info.Bottom - info.Top + 1
+            super(_WindowsScreen, self).__init__(height, width, buffer_height)
+
+            # Save off the console details.
+            self._console = console
+            self._stdin = win32console.PyConsoleScreenBufferType(
+                win32console.GetStdHandle(win32console.STD_INPUT_HANDLE))
+            self._last_width = None
+            self._last_height = None
+
+            # Windows is limited to the ANSI colour set.
+            self.colours = 8
+
+        def get_key(self):
+            """
+            Check for a key without waiting.
+            """
+            # TODO: Fix this hack to handle resize events.
+            info = self._console.GetConsoleScreenBufferInfo()['Window']
+            width = info.Right - info.Left + 1
+            height = info.Bottom - info.Top + 1
+            if self._last_width is not None and (width != self._last_width or height != self._last_height):
+                self._resized = True
+            self._last_width = width
+            self._last_height = height
+
+            # Look for a new keypress and consume it if there is one.
+            if len(self._stdin.PeekConsoleInput(1)) > 0:
+                event = self._stdin.ReadConsoleInput(1)[0]
+                if event.EventType == win32console.KEY_EVENT and not event.KeyDown:
+                    return ord(event.Char)
+            return None
+
+        def _change_colours(self, colour, attr):
+            """
+            Change current colour if required.
+
+            :param colour: New colour to use
+            :param attr: New attributes to use
+            """
+            # Change attribute first as this will reset colours when swapping modes.
+            if colour != self._colour or attr != self._attr:
+                new_attr = self._ATTRIBUTES[attr](self._COLOURS[colour])
+                self._console.SetConsoleTextAttribute(new_attr)
+                self._attr = attr
+                self._colour = colour
+
+        def _print_at(self, text, x, y):
+            """
+            Print string at the required location.
+
+            :param text: The text string to print.
+            :param x: The x coordinate
+            :param y: The Y coordinate
+            """
+            # Move the cursor if necessary
+            if x != self._x or y != self._y:
+                self._console.SetConsoleCursorPosition(win32console.PyCOORDType(x, y))
+
+            # Print the text at the required location and update the current
+            # position.
+            self._console.WriteConsole(text)
+            self._x = x + len(text)
+            self._y = y
+
+        def _scroll(self):
+            """
+            Scroll up by one line.
+            """
+            # TODO: Fix up scrolling for windows.
+
+        def _clear(self):
+            """
+            Clear the terminal.
+            """
+            info = self._console.GetConsoleScreenBufferInfo()['Window']
+            width = info.Right - info.Left + 1
+            height = info.Bottom - info.Top + 1
+            box_size = width * height
+            self._console.FillConsoleOutputAttribute(0, box_size, win32console.PyCOORDType(0, 0))
+            self._console.FillConsoleOutputCharacter(" ", box_size, win32console.PyCOORDType(0, 0))
+            self._console.SetConsoleCursorPosition(win32console.PyCOORDType(0, 0))
+else:
+    # UNIX compatible platform - use curses
+    import curses
+
+    class _CursesScreen(Screen):
+        """
+        Curses screen implementation.
+        """
+
+        #: Conversion from Screen attributes to curses equivalents.
+        ATTRIBUTES = {
+            A_BOLD: curses.A_BOLD,
+            A_NORMAL: curses.A_NORMAL,
+            A_REVERSE: curses.A_REVERSE,
+            A_UNDERLINE: curses.A_UNDERLINE
+        }
+
+        def __init__(self, win, height=200):
+            """
+            :param win: The window object as returned by the curses wrapper method.
+            :param height: The height of the screen buffer to be used.
+            """
+            # Save off the screen details and se up the scrolling pad.
+            super(_CursesScreen, self).__init__(
+                win.getmaxyx()[0], win.getmaxyx()[1])
+            self._screen = win
+            self.buffer_height = height
+            self._pad = curses.newpad(self.buffer_height, self.width)
+
+            # Set up basic colour schemes.
+            self.colours = 8
+            if os.environ['TERM'] == 'xterm-256color':
+                self.colours = 256
+            for i in range(1, self.colours):
+                curses.init_pair(i, i, curses.COLOR_BLACK)
+            for i in range(0, self.colours):
+                curses.init_pair(i + self.colours, curses.COLOR_BLACK, i)
+
+            # Disable the cursor.
+            curses.curs_set(0)
+
+            # Non-blocking key checks.
+            self._pad.nodelay(1)
+
+            # Set up signal handler for screen resizing.
+            signal.signal(signal.SIGWINCH, self._resize_handler)
+            self._resize_key = curses.KEY_RESIZE
+
+        def _resize_handler(self, *_):
+            """
+            Window resize signal handler.  We don't care about any of the
+            parameters passed in beyond the object reference.
+            """
+            curses.endwin()
+            curses.initscr()
+            self._resized = True
+
+        def scroll(self):
+            """
+            Scroll the Screen up one line.
+            """
+            self._start_line += 1
+
+        def clear(self):
+            """
+            Clear the Screen of all content.
+            """
+            self._pad.clear()
+            self._start_line = 0
+
+        def refresh(self):
+            """
+            Refresh the screen.
+            """
+            (h, w) = self._screen.getmaxyx()
+            self._pad.refresh(self._start_line,
+                              0,
+                              0,
+                              0,
+                              h - 1,
+                              w - 1)
+
+        def get_key(self):
+            """
+            Check for a key without waiting.
+            """
+            return self._pad.getch()
+
+        def getch(self, x, y):
+            """
+            Get the character at the specified location.
+
+            :param x: The column (x coord) of the character.
+            :param y: The row (y coord) of the character.
+
+            :return: A tuple of the ASCII code of the character at the location
+                     and the attributes for that character.
+            """
+            curses_rc = self._pad.inch(y, x)
+            return curses_rc & 0xff, curses_rc & 0xff >> 8
+
+        def putch(self, text, x, y, colour=7, attr=0, transparent=False):
+            """
+            Print the text at the specified location using the
+            specified colour and attributes.
+
+            :param text: The (single line) text to be printed.
+            :param x: The column (x coord) for the start of the text.
+            :param y: The line (y coord) for the start of the text.
+            :param colour: The colour of the text to be displayed.
+            :param attr: The cell attribute of the text to be displayed.
+            :param transparent: Whether to print spaces or not, thus giving a
+                transparent effect.
+
+            See curses for definitions of the colour and attribute values.
+            """
+            # Crop to pad size
+            if y < 0:
+                return
+            if x < 0:
+                text = text[-x:]
+                x = 0
+            if x + len(text) >= self.width:
+                text = text[:self.width - x]
+
+            # Convert attribute to curses equivalent
+            attr = self.ATTRIBUTES[attr] if attr in self.ATTRIBUTES else 0
+
+            # Print whatever is left
+            if len(text) > 0:
+                if transparent:
+                    for i, c in enumerate(text):
+                        if c != " ":
+                            self._pad.addstr(
+                                y, x+i, c, curses.color_pair(colour) | attr)
+                else:
+                    self._pad.addstr(y, x, text, curses.color_pair(colour) | attr)
+
+
+    class _BlessedScreen(_BufferedScreen):
+        """
+        Blessed screen implementation.
+        """
+
+        #: Conversion from Screen attributes to curses equivalents.
+        ATTRIBUTES = {
+            A_BOLD: lambda term: term.bold,
+            A_NORMAL: lambda term: "",
+            A_REVERSE: lambda term: term.reverse,
+            A_UNDERLINE: lambda term: term.underline
+        }
+
+        def __init__(self, terminal, height):
+            """
+            :param terminal: The blessed Terminal object.
+            :param height: The buffer height for this window (if using scrolling).
+            """
+            # Save off the screen details and se up the scrolling pad.
+            super(_BlessedScreen, self).__init__(terminal.height, terminal.width, height)
+
+            # Save off terminal.
+            self._terminal = terminal
+
+            # Set up basic colour schemes.
+            self.colours = terminal.number_of_colors
+
+            # Set up signal handler for screen resizing.
+            signal.signal(signal.SIGWINCH, self._resize_handler)
+
+        def _resize_handler(self, *_):
+            """
+            Window resize signal handler.  We don't care about any of the
+            parameters passed in beyond the object reference.
+            """
+            self.width = self._terminal.width
+            self.height = self._terminal.height
+            self._resized = True
+
+        def refresh(self):
+            """
+            Refresh the screen.
+            """
+            # Flush screen buffer to get all updates after doing the common processing.
+            super(_BlessedScreen, self).refresh()
+            sys.stdout.flush()
+
+        def get_key(self):
+            """
+            Check for a key without waiting.
+            """
+            key = self._terminal.inkey(timeout=0)
+            return ord(key) if key != "" else None
+
+        def _change_colours(self, colour, attr):
+            """
+            Change current colour if required.
+
+            :param colour: New colour to use
+            :param attr: New attributes to use
+            """
+            # Change attribute first as this will reset colours when swapping modes.
+            if attr != self._attr:
+                sys.stdout.write(self._terminal.normal + self._terminal.on_color(0))
+                if attr != 0:
+                    sys.stdout.write(self.ATTRIBUTES[attr](self._terminal))
+                self._attr = attr
+                self._colour = None
+
+            # Now swap colours if required.
+            if colour != self._colour:
+                sys.stdout.write(self._terminal.color(colour))
+                self._colour = colour
+
+        def _print_at(self, text, x, y):
+            """
+            Print string at the required location.
+
+            :param text: The text string to print.
+            :param x: The x coordinate
+            :param y: The Y coordinate
+            """
+            # Move the cursor if necessary
+            msg = ""
+            if x != self._x or y != self._y:
+                msg += self._terminal.move(y, x)
+
+            msg += text
+
+            # Print the text at the required location and update the current
+            # position.
+            sys.stdout.write(msg)
+            self._x = x + len(text)
+            self._y = y
+
+        def _scroll(self):
+            """
+            Scroll up by one line.
+            """
+            print(self._terminal.move(self.height-1, 0))
+
+        def _clear(self):
+            """
+            Clear the terminal.
+            """
+            sys.stdout.write(self._terminal.clear())
