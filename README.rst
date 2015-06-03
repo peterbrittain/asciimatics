@@ -21,8 +21,8 @@ function, including:
 * Keyboard input (without blocking or echoing)
 * Detecting and handling when the console resizes
 
-Currently this API has been proven to work on CentOS 6 & 7 and Windows 7,
-though it should work for any platform that provides a working curses
+Currently this API has been proven to work on CentOS 6 & 7 and Windows 7 & 8,
+though it should also work for any platform that provides a working curses
 implementation.
 
 
