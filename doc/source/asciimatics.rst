@@ -11,6 +11,13 @@ asciimatics.effects module
     :members:
     :show-inheritance:
 
+asciimatics.exceptions module
+-----------------------------
+
+.. automodule:: asciimatics.exceptions
+    :members:
+    :show-inheritance:
+
 asciimatics.paths module
 ------------------------
 
