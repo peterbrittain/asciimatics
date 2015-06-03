@@ -6,6 +6,7 @@ from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError
 import sys
 
+
 def demo(screen):
     effects = [
         Print(screen, Rainbow(screen, FigletText("256 colours")),
