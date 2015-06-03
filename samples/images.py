@@ -3,12 +3,11 @@ from asciimatics.effects import BannerText, Print, Scroll
 from asciimatics.renderers import ColourImageFile, FigletText
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
-import curses
+from asciimatics.exceptions import ResizeScreenError
+import sys
 
 
-def demo(win):
-    screen = Screen.from_curses(win)
-
+def demo(screen):
     scenes = []
     effects = [
         Print(screen, ColourImageFile(screen, "colour_globe.gif",
@@ -16,7 +15,7 @@ def demo(win):
               stop_frame=200),
         Print(screen,
               FigletText("ASCIIMATICS NEWS", font='banner3'),
-              screen.height//2-3, colour=15),
+              screen.height//2-3, colour=7),
     ]
     scenes.append(Scene(effects))
     effects = [
@@ -32,8 +31,13 @@ def demo(win):
     ]
     scenes.append(Scene(effects))
 
-    screen.play(scenes)
+    screen.play(scenes, stop_on_resize=True)
 
 
 if __name__ == "__main__":
-    curses.wrapper(demo)
+    while True:
+        try:
+            Screen.wrapper(demo)
+            sys.exit(0)
+        except ResizeScreenError:
+            pass

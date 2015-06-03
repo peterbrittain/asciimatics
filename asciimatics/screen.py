@@ -12,22 +12,6 @@ import sys
 import signal
 from .exceptions import ResizeScreenError
 
-#: Attribute styles supported by Screen formatting functions
-A_BOLD = 1
-A_NORMAL = 2
-A_REVERSE = 3
-A_UNDERLINE = 4
-
-#: Standard colours supported by Screen formatting functions
-COLOUR_BLACK = 0
-COLOUR_RED = 1
-COLOUR_GREEN = 2
-COLOUR_YELLOW = 3
-COLOUR_BLUE = 4
-COLOUR_MAGENTA = 5
-COLOUR_CYAN = 6
-COLOUR_WHITE = 7
-
 
 class Screen(with_metaclass(ABCMeta, object)):
     """
@@ -44,7 +28,35 @@ class Screen(with_metaclass(ABCMeta, object)):
     full scrolling of your selected Effect.
     """
 
-    # Colour palette for 256 colour xterm
+    #: Attribute styles supported by Screen formatting functions
+    A_BOLD = 1
+    A_NORMAL = 2
+    A_REVERSE = 3
+    A_UNDERLINE = 4
+
+    #: Standard colours supported by Screen formatting functions
+    COLOUR_BLACK = 0
+    COLOUR_RED = 1
+    COLOUR_GREEN = 2
+    COLOUR_YELLOW = 3
+    COLOUR_BLUE = 4
+    COLOUR_MAGENTA = 5
+    COLOUR_CYAN = 6
+    COLOUR_WHITE = 7
+
+    # Colour palette for 8/16 colour terminals
+    _8_palette = [
+        0x00, 0x00, 0x00,
+        0x80, 0x00, 0x00,
+        0x00, 0x80, 0x00,
+        0x80, 0x80, 0x00,
+        0x00, 0x00, 0x80,
+        0x80, 0x00, 0x80,
+        0x00, 0x80, 0x80,
+        0xc0, 0xc0, 0xc0,
+    ] + [0x00 for _ in range(248 * 3)]
+
+    # Colour palette for 256 colour terminals
     _256_palette = [
         0x00, 0x00, 0x00,
         0x80, 0x00, 0x00,
@@ -314,6 +326,7 @@ class Screen(with_metaclass(ABCMeta, object)):
         # Initialize base class variables - e.g. those used for drawing.
         self.height = height
         self.width = width
+        self.colours = 0
         self._start_line = 0
         self._x = 0
         self._y = 0
@@ -341,14 +354,50 @@ class Screen(with_metaclass(ABCMeta, object)):
         return _BlessedScreen(terminal, height)
 
     @classmethod
-    def from_windows(cls, console, height=200):
+    def from_windows(cls, stdout, stdin, height=200):
         """
         Construct a new Screen from a Windows console.
 
-        :param console: The Windows PyConsoleScreenBufferType returned from win32console.
+        :param stdout: The Windows PyConsoleScreenBufferType for stdout returned from win32console.
+        :param stdin: The Windows PyConsoleScreenBufferType for stdin returned from win32console.
         :param height: The buffer height for this window (if using scrolling).
         """
-        return _WindowsScreen(console, height)
+        return _WindowsScreen(stdout, stdin, height)
+
+    @classmethod
+    def wrapper(cls, func, height=200):
+        """
+        Construct a new Screen for any platform.  This will initialize and tidy up the system as required around the
+        underlying console subsystem.
+
+        :param func: The function to call once the screen has been created.
+        :param height: The buffer height for this window (if using scrolling).
+        """
+        if sys.platform == "win32":
+            # Get the standard input/output buffers.
+            win_out = win32console.PyConsoleScreenBufferType(win32console.GetStdHandle(win32console.STD_OUTPUT_HANDLE))
+            win_in = win32console.PyConsoleScreenBufferType(win32console.GetStdHandle(win32console.STD_INPUT_HANDLE))
+
+            # Hide the cursor.
+            (size, visible) = win_out.GetConsoleCursorInfo()
+            win_out.SetConsoleCursorInfo(1, 0)
+
+            # Disable scrolling
+            mode = win_out.GetConsoleMode()
+            win_out.SetConsoleMode(mode & ~ win32console.ENABLE_WRAP_AT_EOL_OUTPUT)
+            try:
+                win_screen = _WindowsScreen(win_out, win_in, height)
+                func(win_screen)
+            finally:
+                win_out.SetConsoleCursorInfo(size, visible)
+                win_out.SetConsoleMode(mode)
+
+        else:
+            def _wrapper(win):
+                cur_screen = _CursesScreen(win, height)
+                func(cur_screen)
+
+            curses.wrapper(_wrapper)
 
     @property
     def start_line(self):
@@ -364,6 +413,17 @@ class Screen(with_metaclass(ABCMeta, object)):
             width) tuple.
         """
         return self.height, self.width
+
+    @property
+    def palette(self):
+        """
+        :return: A palette compatible with the PIL.
+        """
+        if self.colours < 256:
+            # Use the ANSI colour set.
+            return self._8_palette
+        else:
+            return self._256_palette
 
     @abstractmethod
     def scroll(self):
@@ -431,7 +491,7 @@ class Screen(with_metaclass(ABCMeta, object)):
 
         See curses for definitions of the colour and attribute values.
         """
-        x = (self.width - len(text))//2
+        x = (self.width - len(text)) // 2
         self.paint(text, x, y, colour, attr, colour_map=colour_map)
 
     def paint(self, text, x, y, colour=7, attr=0, transparent=False,
@@ -457,9 +517,9 @@ class Screen(with_metaclass(ABCMeta, object)):
         else:
             for i, c in enumerate(text):
                 if colour_map[i][0] is None:
-                    self.putch(c, x+i, y, colour, attr, transparent)
+                    self.putch(c, x + i, y, colour, attr, transparent)
                 else:
-                    self.putch(c, x+i, y, colour_map[i][0], colour_map[i][1],
+                    self.putch(c, x + i, y, colour_map[i][0], colour_map[i][1],
                                transparent)
 
     def is_visible(self, x, y):
@@ -547,8 +607,8 @@ class Screen(with_metaclass(ABCMeta, object)):
         self._x = x1
         self._y = y1
 
-        dx = abs(x1-x0)
-        dy = abs(y1-y0)
+        dx = abs(x1 - x0)
+        dy = abs(y1 - y0)
 
         sx = -1 if x0 > x1 else 1
         sy = -1 if y0 > y1 else 1
@@ -572,26 +632,26 @@ class Screen(with_metaclass(ABCMeta, object)):
                         next_chars[1] |= 2 ** ix * 4 ** (y % 2)
                     if not thin:
                         if y + sy >= py and y + sy - py < 2:
-                            next_chars[0] |= 2 ** ix * 4 ** ((y+sy) % 2)
+                            next_chars[0] |= 2 ** ix * 4 ** ((y + sy) % 2)
                         else:
-                            next_chars[1] |= 2 ** ix * 4 ** ((y+sy) % 2)
-                    err -= 2*dy
+                            next_chars[1] |= 2 ** ix * 4 ** ((y + sy) % 2)
+                    err -= 2 * dy
                     if err < 0:
                         y += sy
-                        err += 2*dx
+                        err += 2 * dx
                     x += sx
 
                 if char is None:
-                    self.putch(self._line_chars[next_chars[0]], px//2, py//2,
+                    self.putch(self._line_chars[next_chars[0]], px // 2, py // 2,
                                colour)
                     if next_chars[1] != 0:
                         self.putch(self._line_chars[next_chars[1]],
-                                   px//2, py//2+sy, colour)
+                                   px // 2, py // 2 + sy, colour)
                 elif char == " ":
-                    self.putch(char, px//2, py//2)
-                    self.putch(char, px//2, py//2+sy)
+                    self.putch(char, px // 2, py // 2)
+                    self.putch(char, px // 2, py // 2 + sy)
                 else:
-                    self.putch(char, px//2, py//2, colour)
+                    self.putch(char, px // 2, py // 2, colour)
         else:
             err = dy
             while y != y1:
@@ -605,27 +665,27 @@ class Screen(with_metaclass(ABCMeta, object)):
                         next_chars[1] |= 2 ** (x % 2) * 4 ** iy
                     if not thin:
                         if x + sx >= px and x + sx - px < 2:
-                            next_chars[0] |= 2 ** ((x+sx) % 2) * 4 ** iy
+                            next_chars[0] |= 2 ** ((x + sx) % 2) * 4 ** iy
                         else:
-                            next_chars[1] |= 2 ** ((x+sx) % 2) * 4 ** iy
-                    err -= 2*dx
+                            next_chars[1] |= 2 ** ((x + sx) % 2) * 4 ** iy
+                    err -= 2 * dx
                     if err < 0:
                         x += sx
-                        err += 2*dy
+                        err += 2 * dy
                     y += sy
 
                 if char is None:
-                    self.putch(self._line_chars[next_chars[0]], px//2, py//2,
+                    self.putch(self._line_chars[next_chars[0]], px // 2, py // 2,
                                colour)
                     if next_chars[1] != 0:
                         self.putch(
-                            self._line_chars[next_chars[1]], px//2+sx, py//2,
+                            self._line_chars[next_chars[1]], px // 2 + sx, py // 2,
                             colour)
                 elif char == " ":
-                    self.putch(char, px//2, py//2)
-                    self.putch(char, px//2+sx, py//2)
+                    self.putch(char, px // 2, py // 2)
+                    self.putch(char, px // 2 + sx, py // 2)
                 else:
-                    self.putch(char, px//2, py//2, colour)
+                    self.putch(char, px // 2, py // 2, colour)
 
 
 class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
@@ -666,7 +726,7 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
         Clear the Screen of all content.
         """
         # Clear the actual terminal
-        self._change_colours(COLOUR_WHITE, 0)
+        self._change_colours(self.COLOUR_WHITE, 0)
         self._clear()
         self._start_line = self._last_start_line = 0
         self._x = self._y = None
@@ -689,11 +749,11 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
         # Now draw any deltas to the scrolled screen.
         for y in range(self.height):
             for x in range(self.width):
-                new_cell = self._double_buffer[y+self._start_line][x]
-                if self._screen_buffer[y+self._start_line][x] != new_cell:
+                new_cell = self._double_buffer[y + self._start_line][x]
+                if self._screen_buffer[y + self._start_line][x] != new_cell:
                     self._change_colours(new_cell[1], new_cell[2])
                     self._print_at(new_cell[0], x, y)
-                    self._screen_buffer[y+self._start_line][x] = new_cell
+                    self._screen_buffer[y + self._start_line][x] = new_cell
 
     def getch(self, x, y):
         """
@@ -735,7 +795,7 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
         if len(text) > 0:
             for i, c in enumerate(text):
                 if c != " " or not transparent:
-                    self._double_buffer[y][x+i] = (c, colour, attr)
+                    self._double_buffer[y][x + i] = (c, colour, attr)
 
     @abstractmethod
     def _change_colours(self, colour, attr):
@@ -779,40 +839,41 @@ if sys.platform == "win32":
 
         # Colour lookup table.
         _COLOURS = {
-            COLOUR_BLACK: 0,
-            COLOUR_RED: win32console.FOREGROUND_RED,
-            COLOUR_GREEN: win32console.FOREGROUND_GREEN,
-            COLOUR_YELLOW: win32console.FOREGROUND_RED | win32console.FOREGROUND_GREEN,
-            COLOUR_BLUE: win32console.FOREGROUND_BLUE,
-            COLOUR_MAGENTA: win32console.FOREGROUND_RED | win32console.FOREGROUND_BLUE,
-            COLOUR_CYAN: win32console.FOREGROUND_BLUE | win32console.FOREGROUND_GREEN,
-            COLOUR_WHITE: win32console.FOREGROUND_RED | win32console.FOREGROUND_GREEN | win32console.FOREGROUND_BLUE
+            Screen.COLOUR_BLACK: 0,
+            Screen.COLOUR_RED: win32console.FOREGROUND_RED,
+            Screen.COLOUR_GREEN: win32console.FOREGROUND_GREEN,
+            Screen.COLOUR_YELLOW: win32console.FOREGROUND_RED | win32console.FOREGROUND_GREEN,
+            Screen.COLOUR_BLUE: win32console.FOREGROUND_BLUE,
+            Screen.COLOUR_MAGENTA: win32console.FOREGROUND_RED | win32console.FOREGROUND_BLUE,
+            Screen.COLOUR_CYAN: win32console.FOREGROUND_BLUE | win32console.FOREGROUND_GREEN,
+            Screen.COLOUR_WHITE: (win32console.FOREGROUND_RED | win32console.FOREGROUND_GREEN |
+                                  win32console.FOREGROUND_BLUE)
         }
 
         # Attribute lookup table
         _ATTRIBUTES = {
             0: lambda x: x,
-            A_BOLD: lambda x: x | win32console.FOREGROUND_INTENSITY,
-            A_NORMAL: lambda x: x,
-            A_REVERSE: lambda x: x*16,  # Windows console uses a bitmap where background is the top nibble.
-            A_UNDERLINE: lambda x: x
+            Screen.A_BOLD: lambda x: x | win32console.FOREGROUND_INTENSITY,
+            Screen.A_NORMAL: lambda x: x,
+            Screen.A_REVERSE: lambda x: x * 16,  # Windows console uses a bitmap where background is the top nibble.
+            Screen.A_UNDERLINE: lambda x: x
         }
 
-        def __init__(self, console, buffer_height):
+        def __init__(self, stdout, stdin, buffer_height):
             """
-            :param console: The win32console PyConsoleScreenBufferType object.
+            :param stdout: The win32console PyConsoleScreenBufferType object for stdout.
+            :param stdin: The win32console PyConsoleScreenBufferType object for stdin.
             :param buffer_height: The buffer height for this window (if using scrolling).
             """
             # Save off the screen details and se up the scrolling pad.
-            info = console.GetConsoleScreenBufferInfo()['Window']
+            info = stdout.GetConsoleScreenBufferInfo()['Window']
             width = info.Right - info.Left + 1
             height = info.Bottom - info.Top + 1
             super(_WindowsScreen, self).__init__(height, width, buffer_height)
 
             # Save off the console details.
-            self._console = console
-            self._stdin = win32console.PyConsoleScreenBufferType(
-                win32console.GetStdHandle(win32console.STD_INPUT_HANDLE))
+            self._stdout = stdout
+            self._stdin = stdin
             self._last_width = None
             self._last_height = None
 
@@ -824,7 +885,7 @@ if sys.platform == "win32":
             Check for a key without waiting.
             """
             # TODO: Fix this hack to handle resize events.
-            info = self._console.GetConsoleScreenBufferInfo()['Window']
+            info = self._stdout.GetConsoleScreenBufferInfo()['Window']
             width = info.Right - info.Left + 1
             height = info.Bottom - info.Top + 1
             if self._last_width is not None and (width != self._last_width or height != self._last_height):
@@ -849,7 +910,7 @@ if sys.platform == "win32":
             # Change attribute first as this will reset colours when swapping modes.
             if colour != self._colour or attr != self._attr:
                 new_attr = self._ATTRIBUTES[attr](self._COLOURS[colour])
-                self._console.SetConsoleTextAttribute(new_attr)
+                self._stdout.SetConsoleTextAttribute(new_attr)
                 self._attr = attr
                 self._colour = colour
 
@@ -863,11 +924,11 @@ if sys.platform == "win32":
             """
             # Move the cursor if necessary
             if x != self._x or y != self._y:
-                self._console.SetConsoleCursorPosition(win32console.PyCOORDType(x, y))
+                self._stdout.SetConsoleCursorPosition(win32console.PyCOORDType(x, y))
 
             # Print the text at the required location and update the current
             # position.
-            self._console.WriteConsole(text)
+            self._stdout.WriteConsole(text)
             self._x = x + len(text)
             self._y = y
 
@@ -881,13 +942,13 @@ if sys.platform == "win32":
             """
             Clear the terminal.
             """
-            info = self._console.GetConsoleScreenBufferInfo()['Window']
+            info = self._stdout.GetConsoleScreenBufferInfo()['Window']
             width = info.Right - info.Left + 1
             height = info.Bottom - info.Top + 1
             box_size = width * height
-            self._console.FillConsoleOutputAttribute(0, box_size, win32console.PyCOORDType(0, 0))
-            self._console.FillConsoleOutputCharacter(" ", box_size, win32console.PyCOORDType(0, 0))
-            self._console.SetConsoleCursorPosition(win32console.PyCOORDType(0, 0))
+            self._stdout.FillConsoleOutputAttribute(0, box_size, win32console.PyCOORDType(0, 0))
+            self._stdout.FillConsoleOutputCharacter(" ", box_size, win32console.PyCOORDType(0, 0))
+            self._stdout.SetConsoleCursorPosition(win32console.PyCOORDType(0, 0))
 else:
     # UNIX compatible platform - use curses
     import curses
@@ -899,10 +960,10 @@ else:
 
         #: Conversion from Screen attributes to curses equivalents.
         ATTRIBUTES = {
-            A_BOLD: curses.A_BOLD,
-            A_NORMAL: curses.A_NORMAL,
-            A_REVERSE: curses.A_REVERSE,
-            A_UNDERLINE: curses.A_UNDERLINE
+            Screen.A_BOLD: curses.A_BOLD,
+            Screen.A_NORMAL: curses.A_NORMAL,
+            Screen.A_REVERSE: curses.A_REVERSE,
+            Screen.A_UNDERLINE: curses.A_UNDERLINE
         }
 
         def __init__(self, win, height=200):
@@ -1022,10 +1083,9 @@ else:
                     for i, c in enumerate(text):
                         if c != " ":
                             self._pad.addstr(
-                                y, x+i, c, curses.color_pair(colour) | attr)
+                                y, x + i, c, curses.color_pair(colour) | attr)
                 else:
                     self._pad.addstr(y, x, text, curses.color_pair(colour) | attr)
-
 
     class _BlessedScreen(_BufferedScreen):
         """
@@ -1034,10 +1094,10 @@ else:
 
         #: Conversion from Screen attributes to curses equivalents.
         ATTRIBUTES = {
-            A_BOLD: lambda term: term.bold,
-            A_NORMAL: lambda term: "",
-            A_REVERSE: lambda term: term.reverse,
-            A_UNDERLINE: lambda term: term.underline
+            Screen.A_BOLD: lambda term: term.bold,
+            Screen.A_NORMAL: lambda term: "",
+            Screen.A_REVERSE: lambda term: term.reverse,
+            Screen.A_UNDERLINE: lambda term: term.underline
         }
 
         def __init__(self, terminal, height):
@@ -1126,7 +1186,7 @@ else:
             """
             Scroll up by one line.
             """
-            print(self._terminal.move(self.height-1, 0))
+            print(self._terminal.move(self.height - 1, 0))
 
         def _clear(self):
             """

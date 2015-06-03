@@ -1,9 +1,10 @@
 from __future__ import division
-import curses
 from asciimatics.effects import Cycle, Snow, Print
 from asciimatics.renderers import FigletText, Renderer
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
+from asciimatics.exceptions import ResizeScreenError
+import sys
 
 # Tree definition
 tree = """
@@ -39,13 +40,12 @@ tree = """
 """
 
 
-def demo(win):
-    screen = Screen.from_curses(win)
+def demo(screen):
     effects = [
         Print(screen, Renderer(images=tree),
               x=screen.width - 15,
               y=screen.height - 15,
-              colour=curses.COLOR_GREEN),
+              colour=Screen.COLOUR_GREEN),
         Snow(screen),
         Cycle(
             screen,
@@ -58,6 +58,11 @@ def demo(win):
             screen.height // 2 + 1,
             start_frame=300),
     ]
-    screen.play([Scene(effects, -1)])
+    screen.play([Scene(effects, -1)], stop_on_resize=True)
 
-curses.wrapper(demo)
+while True:
+    try:
+        Screen.wrapper(demo)
+        sys.exit(0)
+    except ResizeScreenError:
+        pass
