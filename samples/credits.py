@@ -52,7 +52,7 @@ def _credits(screen):
               clear=True,
               start_frame=350,
               stop_frame=400),
-        Print(screen, ImageFile("globe.gif"), 0,
+        Print(screen, ImageFile("globe.gif", colours=screen.colours), 0,
               start_frame=400),
     ]
     scenes.append(Scene(effects, 600))
