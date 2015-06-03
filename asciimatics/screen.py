@@ -398,7 +398,7 @@ class Screen(with_metaclass(ABCMeta, object)):
             finally:
                 win_out.SetConsoleCursorInfo(size, visible)
                 win_out.SetConsoleMode(mode)
-
+                win_out.SetConsoleTextAttribute(7)
         else:
             def _wrapper(win):
                 cur_screen = _CursesScreen(win, height)
@@ -956,7 +956,13 @@ if sys.platform == "win32":
             """
             Scroll up by one line.
             """
-            # TODO: Fix up scrolling for windows.
+            # Scroll the visible screen up by one line
+            info = self._stdout.GetConsoleScreenBufferInfo()['Window']
+            rectangle = win32console.PySMALL_RECTType(info.Left, info.Top + 1,
+                                                      info.Right, info.Bottom)
+            new_pos = win32console.PyCOORDType(0, info.Top)
+            self._stdout.ScrollConsoleScreenBuffer(
+                rectangle, None, new_pos, " ", 0)
 
         def _clear(self):
             """
