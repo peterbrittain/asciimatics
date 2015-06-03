@@ -1177,8 +1177,6 @@ else:
             Window resize signal handler.  We don't care about any of the
             parameters passed in beyond the object reference.
             """
-            self.width = self._terminal.width
-            self.height = self._terminal.height
             self._re_sized = True
 
         def refresh(self):
@@ -1186,9 +1184,13 @@ else:
             Refresh the screen.
             """
             # Flush screen buffer to get all updates after doing the common
-            # processing.
+            # processing.  Exact timing of the signal can interrupt the
+            # flush, raising an EINTR IOError, which we can safely ignore.
             super(_BlessedScreen, self).refresh()
-            sys.stdout.flush()
+            try:
+                sys.stdout.flush()
+            except IOError:
+                pass
 
         def get_key(self):
             """
