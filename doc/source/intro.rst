@@ -21,8 +21,8 @@ function, including:
 * Keyboard input (without blocking or echoing)
 * Detecting and handling when the console resizes
 
-Currently this API has been proven to work on CentOS 6 & 7 and Windows 7,
-though it should work for any platform that provides a working curses
+Currently this API has been proven to work on CentOS 6 & 7 and Windows 7 & 8,
+though it should also work for any platform that provides a working curses
 implementation.
 
 Installation
@@ -68,7 +68,7 @@ So you want to join in?  Great!  There's a few ground rules...
 
 #. Before you do anything else, read up on the design.  You should find all you
    need in the 4 base classes - i.e. Screen, Scene, Effect and Renderer.
-#. Make sure you consider why your new Effect can't be handled by a
+#. If writing a new Effect, consider why it can't be handled by a
    combination of a new Renderer and the :py:obj:`.Print` Effect.  For example,
    dynamic Effects such as :py:obj:`.Snow` depend on the current Screen state
    to render each new image.
