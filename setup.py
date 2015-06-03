@@ -9,6 +9,7 @@ https://github.com/pypa/sampleproject
 from setuptools import setup, find_packages
 from codecs import open
 from os import path
+import sys
 
 here = path.abspath(path.dirname(__file__))
 
@@ -35,6 +36,7 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
     ],
     keywords='ascii art demo credits title sequence',
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
@@ -42,5 +44,5 @@ setup(
         'pyfiglet >= 0.7.2',
         'Pillow >= 2.7.0',
         'future',
-    ],
+    ] + ['pypiwin32'] if sys.platform == 'win32' else [],
 )

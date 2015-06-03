@@ -8,7 +8,7 @@ from future.utils import with_metaclass
 from abc import ABCMeta, abstractmethod
 from random import randint, random, choice
 from math import sin, cos, pi
-from .screen import COLOUR_GREEN, COLOUR_YELLOW, A_BOLD, COLOUR_WHITE
+from .screen import Screen
 import datetime
 
 
@@ -427,13 +427,13 @@ class _Trail(object):
                 self._screen.putch(chr(randint(32, 126)),
                                    self._x,
                                    self._screen.start_line + self._y + i,
-                                   COLOUR_GREEN)
+                                   Screen.COLOUR_GREEN)
             for i in range(4, 6):
                 self._screen.putch(chr(randint(32, 126)),
                                    self._x,
                                    self._screen.start_line + self._y + i,
-                                   COLOUR_GREEN,
-                                   A_BOLD)
+                                   Screen.COLOUR_GREEN,
+                                   Screen.A_BOLD)
             self._maybe_reseed(reseed)
 
 
@@ -450,7 +450,7 @@ class Matrix(Effect):
         """
         super(Matrix, self).__init__(start_frame, stop_frame)
         self._screen = screen
-        self._chars = None
+        self._chars = []
 
     def reset(self):
         self._chars = [_Trail(self._screen, x) for x in
@@ -501,7 +501,7 @@ class Sprite(Effect):
     An animated character capable of following a path around the screen.
     """
 
-    def __init__(self, screen, renderer_dict, path, colour=COLOUR_WHITE,
+    def __init__(self, screen, renderer_dict, path, colour=Screen.COLOUR_WHITE,
                  clear=True, start_frame=0, stop_frame=0):
         """
         :param screen: The Screen being used for the Scene.
@@ -669,7 +669,7 @@ class Snow(Effect):
         """
         super(Snow, self).__init__(start_frame, stop_frame)
         self._screen = screen
-        self._chars = None
+        self._chars = []
 
     def reset(self):
         # Make the snow start falling one flake at a time.
@@ -744,8 +744,8 @@ class Clock(Effect):
         self._screen.draw(self._x + (self._r*sin(new_time.tm_sec*pi/30)*2),
                           self._y - (self._r*cos(new_time.tm_sec*pi/30)),
                           colour=6, thin=True)
-        self._screen.putch("o", self._x, self._y, COLOUR_YELLOW,
-                           A_BOLD)
+        self._screen.putch("o", self._x, self._y, Screen.COLOUR_YELLOW,
+                           Screen.A_BOLD)
         self._old_time = new_time
 
     @property
