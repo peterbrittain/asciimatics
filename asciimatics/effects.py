@@ -922,7 +922,7 @@ class Julia(Effect):
                     self._256_palette[n-1] if self._screen.colours >= 256 else 7
                 self._screen.putch(self._greyscale[n-1], x, y, colour)
 
-        # Zoom
+        # Zoo
         self._size = [i * self._scale for i in self._size]
         area = self._size[0] * self._size[1]
         if area <= 4.0 or area >= 16:
