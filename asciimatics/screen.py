@@ -330,10 +330,6 @@ class Screen(with_metaclass(ABCMeta, object)):
         self._start_line = 0
         self._x = 0
         self._y = 0
-        self._resized = False
-
-        # Don't use None as this is the value for no key pressed.
-        self._resize_key = "UNDEFINED"
 
     @classmethod
     def from_curses(cls, win, height=200):
@@ -457,6 +453,14 @@ class Screen(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
+    def has_resized(self):
+        """
+        Check whether the screen has been re-sized.
+
+        :returns: True when the screen has been re-sized since the last check.
+        """
+
+    @abstractmethod
     def getch(self, x, y):
         """
         Get the character at the specified location.
@@ -560,8 +564,9 @@ class Screen(with_metaclass(ABCMeta, object)):
                 if scene.clear:
                     self.clear()
                 scene.reset()
+                re_sized = False
                 while (scene.duration < 0 or frame < scene.duration) and \
-                        not self._resized:
+                        not re_sized:
                     frame += 1
                     for effect in scene.effects:
                         effect.update(frame)
@@ -571,13 +576,11 @@ class Screen(with_metaclass(ABCMeta, object)):
                         return
                     if c in (ord(" "), ord("\n")):
                         break
-                    if c == self._resize_key:
-                        self._resized = True
+                    re_sized = self.has_resized()
                     time.sleep(0.05)
 
                 # Break out of the function if mandated by caller.
-                if self._resized:
-                    self._resized = False
+                if re_sized:
                     if stop_on_resize:
                         raise ResizeScreenError("Resized terminal")
 
@@ -900,16 +903,6 @@ if sys.platform == "win32":
             """
             Check for a key without waiting.
             """
-            # TODO: Fix this hack to handle resize events.
-            info = self._stdout.GetConsoleScreenBufferInfo()['Window']
-            width = info.Right - info.Left + 1
-            height = info.Bottom - info.Top + 1
-            if self._last_width is not None and (
-                    width != self._last_width or height != self._last_height):
-                self._resized = True
-            self._last_width = width
-            self._last_height = height
-
             # Look for a new keypress and consume it if there is one.
             if len(self._stdin.PeekConsoleInput(1)) > 0:
                 event = self._stdin.ReadConsoleInput(1)[0]
@@ -917,6 +910,23 @@ if sys.platform == "win32":
                         not event.KeyDown):
                     return ord(event.Char)
             return None
+
+        def has_resized(self):
+            """
+            Check whether the screen has been re-sized.
+            """
+            # Get the current Window dimensions and check them against last
+            # time.
+            re_sized = False
+            info = self._stdout.GetConsoleScreenBufferInfo()['Window']
+            width = info.Right - info.Left + 1
+            height = info.Bottom - info.Top + 1
+            if self._last_width is not None and (
+                    width != self._last_width or height != self._last_height):
+                re_sized = True
+            self._last_width = width
+            self._last_height = height
+            return re_sized
 
         def _change_colours(self, colour, attr):
             """
@@ -988,7 +998,7 @@ else:
         """
 
         #: Conversion from Screen attributes to curses equivalents.
-        ATTRIBUTES = {
+        _ATTRIBUTES = {
             Screen.A_BOLD: curses.A_BOLD,
             Screen.A_NORMAL: curses.A_NORMAL,
             Screen.A_REVERSE: curses.A_REVERSE,
@@ -1024,8 +1034,8 @@ else:
             self._pad.nodelay(1)
 
             # Set up signal handler for screen resizing.
+            self._re_sized = False
             signal.signal(signal.SIGWINCH, self._resize_handler)
-            self._resize_key = curses.KEY_RESIZE
 
         def _resize_handler(self, *_):
             """
@@ -1034,7 +1044,7 @@ else:
             """
             curses.endwin()
             curses.initscr()
-            self._resized = True
+            self._re_sized = True
 
         def scroll(self):
             """
@@ -1065,7 +1075,18 @@ else:
             """
             Check for a key without waiting.
             """
-            return self._pad.getch()
+            key = self._pad.getch()
+            if key == curses.KEY_RESIZE:
+                self._re_sized = True
+            return key
+
+        def has_resized(self):
+            """
+            Check whether the screen has been re-sized.
+            """
+            re_sized = self._re_sized
+            self._re_sized = False
+            return re_sized
 
         def getch(self, x, y):
             """
@@ -1105,7 +1126,7 @@ else:
                 text = text[:self.width - x]
 
             # Convert attribute to curses equivalent
-            attr = self.ATTRIBUTES[attr] if attr in self.ATTRIBUTES else 0
+            attr = self._ATTRIBUTES[attr] if attr in self._ATTRIBUTES else 0
 
             # Print whatever is left
             if len(text) > 0:
@@ -1148,6 +1169,7 @@ else:
             self.colours = terminal.number_of_colors
 
             # Set up signal handler for screen resizing.
+            self._re_sized = False
             signal.signal(signal.SIGWINCH, self._resize_handler)
 
         def _resize_handler(self, *_):
@@ -1157,7 +1179,7 @@ else:
             """
             self.width = self._terminal.width
             self.height = self._terminal.height
-            self._resized = True
+            self._re_sized = True
 
         def refresh(self):
             """
@@ -1174,6 +1196,14 @@ else:
             """
             key = self._terminal.inkey(timeout=0)
             return ord(key) if key != "" else None
+
+        def has_resized(self):
+            """
+            Check whether the screen has been re-sized.
+            """
+            re_sized = self._re_sized
+            self._re_sized = False
+            return re_sized
 
         def _change_colours(self, colour, attr):
             """

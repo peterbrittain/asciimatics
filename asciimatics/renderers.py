@@ -177,10 +177,11 @@ class ImageFile(Renderer):
     # The ASCII grey scale from darkest to lightest.
     _greyscale = ' .:;rsA23hHG#9&@'
 
-    def __init__(self, filename, height=30):
+    def __init__(self, filename, height=30, colours=8):
         """
         :param filename: The name of the file to render.
         :param height: The height of the text rendered image.
+        :param colours: The number of colours the terminal supports.
         """
         super(ImageFile, self).__init__()
         image = Image.open(filename)
@@ -200,7 +201,14 @@ class ImageFile(Renderer):
                     if real_col == background:
                         ascii_image += " "
                     else:
-                        # TODO: ascii_image += "${%d}" % (232 + col * 23//256)
+                        if colours >= 256:
+                            ascii_image += "${%d}" % (232 + col * 23//256)
+                        else:
+                            ascii_image += "${%d,%d}" % (
+                                7 if col >= 85 else 0,
+                                Screen.A_BOLD if col < 85 or col > 170 else
+                                Screen.A_NORMAL
+                            )
                         ascii_image += self._greyscale[
                             (int(col) * len(self._greyscale)) // 256]
             self._images.append(ascii_image)
