@@ -20,7 +20,8 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 setup(
     name='asciimatics',
     version='1.2.0',
-    description='An ASCII art and text cinematic storyboard/demo library',
+    description='A cross-platform package to create ASCII art and cinematic '
+                'storyboard sequences',
     long_description=long_description,
     url='https://github.com/peterbrittain/asciimatics.git',
     author='Peter Brittain',
