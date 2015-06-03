@@ -331,7 +331,9 @@ class Screen(with_metaclass(ABCMeta, object)):
         self._x = 0
         self._y = 0
         self._resized = False
-        self._resize_key = "UNDEFINED"  # Don't use None as this is the value for no key pressed
+
+        # Don't use None as this is the value for no key pressed.
+        self._resize_key = "UNDEFINED"
 
     @classmethod
     def from_curses(cls, win, height=200):
@@ -358,8 +360,10 @@ class Screen(with_metaclass(ABCMeta, object)):
         """
         Construct a new Screen from a Windows console.
 
-        :param stdout: The Windows PyConsoleScreenBufferType for stdout returned from win32console.
-        :param stdin: The Windows PyConsoleScreenBufferType for stdin returned from win32console.
+        :param stdout: The Windows PyConsoleScreenBufferType for stdout returned
+            from win32console.
+        :param stdin: The Windows PyConsoleScreenBufferType for stdin returned
+            from win32console.
         :param height: The buffer height for this window (if using scrolling).
         """
         return _WindowsScreen(stdout, stdin, height)
@@ -367,16 +371,18 @@ class Screen(with_metaclass(ABCMeta, object)):
     @classmethod
     def wrapper(cls, func, height=200):
         """
-        Construct a new Screen for any platform.  This will initialize and tidy up the system as required around the
-        underlying console subsystem.
+        Construct a new Screen for any platform.  This will initialize and tidy
+        up the system as required around the underlying console subsystem.
 
         :param func: The function to call once the screen has been created.
         :param height: The buffer height for this window (if using scrolling).
         """
         if sys.platform == "win32":
             # Get the standard input/output buffers.
-            win_out = win32console.PyConsoleScreenBufferType(win32console.GetStdHandle(win32console.STD_OUTPUT_HANDLE))
-            win_in = win32console.PyConsoleScreenBufferType(win32console.GetStdHandle(win32console.STD_INPUT_HANDLE))
+            win_out = win32console.PyConsoleScreenBufferType(
+                win32console.GetStdHandle(win32console.STD_OUTPUT_HANDLE))
+            win_in = win32console.PyConsoleScreenBufferType(
+                win32console.GetStdHandle(win32console.STD_INPUT_HANDLE))
 
             # Hide the cursor.
             (size, visible) = win_out.GetConsoleCursorInfo()
@@ -384,7 +390,8 @@ class Screen(with_metaclass(ABCMeta, object)):
 
             # Disable scrolling
             mode = win_out.GetConsoleMode()
-            win_out.SetConsoleMode(mode & ~ win32console.ENABLE_WRAP_AT_EOL_OUTPUT)
+            win_out.SetConsoleMode(
+                mode & ~ win32console.ENABLE_WRAP_AT_EOL_OUTPUT)
             try:
                 win_screen = _WindowsScreen(win_out, win_in, height)
                 func(win_screen)
@@ -642,7 +649,7 @@ class Screen(with_metaclass(ABCMeta, object)):
                     x += sx
 
                 if char is None:
-                    self.putch(self._line_chars[next_chars[0]], px // 2, py // 2,
+                    self.putch(self._line_chars[next_chars[0]], px//2, py//2,
                                colour)
                     if next_chars[1] != 0:
                         self.putch(self._line_chars[next_chars[1]],
@@ -675,11 +682,11 @@ class Screen(with_metaclass(ABCMeta, object)):
                     y += sy
 
                 if char is None:
-                    self.putch(self._line_chars[next_chars[0]], px // 2, py // 2,
+                    self.putch(self._line_chars[next_chars[0]], px//2, py//2,
                                colour)
                     if next_chars[1] != 0:
                         self.putch(
-                            self._line_chars[next_chars[1]], px // 2 + sx, py // 2,
+                            self._line_chars[next_chars[1]], px//2 + sx, py//2,
                             colour)
                 elif char == " ":
                     self.putch(char, px // 2, py // 2)
@@ -842,11 +849,15 @@ if sys.platform == "win32":
             Screen.COLOUR_BLACK: 0,
             Screen.COLOUR_RED: win32console.FOREGROUND_RED,
             Screen.COLOUR_GREEN: win32console.FOREGROUND_GREEN,
-            Screen.COLOUR_YELLOW: win32console.FOREGROUND_RED | win32console.FOREGROUND_GREEN,
+            Screen.COLOUR_YELLOW: (win32console.FOREGROUND_RED |
+                                   win32console.FOREGROUND_GREEN),
             Screen.COLOUR_BLUE: win32console.FOREGROUND_BLUE,
-            Screen.COLOUR_MAGENTA: win32console.FOREGROUND_RED | win32console.FOREGROUND_BLUE,
-            Screen.COLOUR_CYAN: win32console.FOREGROUND_BLUE | win32console.FOREGROUND_GREEN,
-            Screen.COLOUR_WHITE: (win32console.FOREGROUND_RED | win32console.FOREGROUND_GREEN |
+            Screen.COLOUR_MAGENTA: (win32console.FOREGROUND_RED |
+                                    win32console.FOREGROUND_BLUE),
+            Screen.COLOUR_CYAN: (win32console.FOREGROUND_BLUE |
+                                 win32console.FOREGROUND_GREEN),
+            Screen.COLOUR_WHITE: (win32console.FOREGROUND_RED |
+                                  win32console.FOREGROUND_GREEN |
                                   win32console.FOREGROUND_BLUE)
         }
 
@@ -855,15 +866,20 @@ if sys.platform == "win32":
             0: lambda x: x,
             Screen.A_BOLD: lambda x: x | win32console.FOREGROUND_INTENSITY,
             Screen.A_NORMAL: lambda x: x,
-            Screen.A_REVERSE: lambda x: x * 16,  # Windows console uses a bitmap where background is the top nibble.
+            # Windows console uses a bitmap where background is the top nibble,
+            # so we can reverse by simply multiplying by 16.
+            Screen.A_REVERSE: lambda x: x * 16,
             Screen.A_UNDERLINE: lambda x: x
         }
 
         def __init__(self, stdout, stdin, buffer_height):
             """
-            :param stdout: The win32console PyConsoleScreenBufferType object for stdout.
-            :param stdin: The win32console PyConsoleScreenBufferType object for stdin.
-            :param buffer_height: The buffer height for this window (if using scrolling).
+            :param stdout: The win32console PyConsoleScreenBufferType object for
+                stdout.
+            :param stdin: The win32console PyConsoleScreenBufferType object for
+                stdin.
+            :param buffer_height: The buffer height for this window (if using
+                scrolling).
             """
             # Save off the screen details and se up the scrolling pad.
             info = stdout.GetConsoleScreenBufferInfo()['Window']
@@ -888,7 +904,8 @@ if sys.platform == "win32":
             info = self._stdout.GetConsoleScreenBufferInfo()['Window']
             width = info.Right - info.Left + 1
             height = info.Bottom - info.Top + 1
-            if self._last_width is not None and (width != self._last_width or height != self._last_height):
+            if self._last_width is not None and (
+                    width != self._last_width or height != self._last_height):
                 self._resized = True
             self._last_width = width
             self._last_height = height
@@ -896,7 +913,8 @@ if sys.platform == "win32":
             # Look for a new keypress and consume it if there is one.
             if len(self._stdin.PeekConsoleInput(1)) > 0:
                 event = self._stdin.ReadConsoleInput(1)[0]
-                if event.EventType == win32console.KEY_EVENT and not event.KeyDown:
+                if (event.EventType == win32console.KEY_EVENT and
+                        not event.KeyDown):
                     return ord(event.Char)
             return None
 
@@ -907,7 +925,8 @@ if sys.platform == "win32":
             :param colour: New colour to use
             :param attr: New attributes to use
             """
-            # Change attribute first as this will reset colours when swapping modes.
+            # Change attribute first as this will reset colours when swapping
+            # modes.
             if colour != self._colour or attr != self._attr:
                 new_attr = self._ATTRIBUTES[attr](self._COLOURS[colour])
                 self._stdout.SetConsoleTextAttribute(new_attr)
@@ -924,7 +943,8 @@ if sys.platform == "win32":
             """
             # Move the cursor if necessary
             if x != self._x or y != self._y:
-                self._stdout.SetConsoleCursorPosition(win32console.PyCOORDType(x, y))
+                self._stdout.SetConsoleCursorPosition(
+                    win32console.PyCOORDType(x, y))
 
             # Print the text at the required location and update the current
             # position.
@@ -946,9 +966,12 @@ if sys.platform == "win32":
             width = info.Right - info.Left + 1
             height = info.Bottom - info.Top + 1
             box_size = width * height
-            self._stdout.FillConsoleOutputAttribute(0, box_size, win32console.PyCOORDType(0, 0))
-            self._stdout.FillConsoleOutputCharacter(" ", box_size, win32console.PyCOORDType(0, 0))
-            self._stdout.SetConsoleCursorPosition(win32console.PyCOORDType(0, 0))
+            self._stdout.FillConsoleOutputAttribute(
+                0, box_size, win32console.PyCOORDType(0, 0))
+            self._stdout.FillConsoleOutputCharacter(
+                " ", box_size, win32console.PyCOORDType(0, 0))
+            self._stdout.SetConsoleCursorPosition(
+                win32console.PyCOORDType(0, 0))
 else:
     # UNIX compatible platform - use curses
     import curses
@@ -968,7 +991,8 @@ else:
 
         def __init__(self, win, height=200):
             """
-            :param win: The window object as returned by the curses wrapper method.
+            :param win: The window object as returned by the curses wrapper
+                method.
             :param height: The height of the screen buffer to be used.
             """
             # Save off the screen details and se up the scrolling pad.
@@ -1085,7 +1109,8 @@ else:
                             self._pad.addstr(
                                 y, x + i, c, curses.color_pair(colour) | attr)
                 else:
-                    self._pad.addstr(y, x, text, curses.color_pair(colour) | attr)
+                    self._pad.addstr(
+                        y, x, text, curses.color_pair(colour) | attr)
 
     class _BlessedScreen(_BufferedScreen):
         """
@@ -1103,10 +1128,12 @@ else:
         def __init__(self, terminal, height):
             """
             :param terminal: The blessed Terminal object.
-            :param height: The buffer height for this window (if using scrolling).
+            :param height: The buffer height for this window (if using
+                scrolling).
             """
             # Save off the screen details and se up the scrolling pad.
-            super(_BlessedScreen, self).__init__(terminal.height, terminal.width, height)
+            super(_BlessedScreen, self).__init__(
+                terminal.height, terminal.width, height)
 
             # Save off terminal.
             self._terminal = terminal
@@ -1130,7 +1157,8 @@ else:
             """
             Refresh the screen.
             """
-            # Flush screen buffer to get all updates after doing the common processing.
+            # Flush screen buffer to get all updates after doing the common
+            # processing.
             super(_BlessedScreen, self).refresh()
             sys.stdout.flush()
 
@@ -1148,9 +1176,11 @@ else:
             :param colour: New colour to use
             :param attr: New attributes to use
             """
-            # Change attribute first as this will reset colours when swapping modes.
+            # Change attribute first as this will reset colours when swapping
+            # modes.
             if attr != self._attr:
-                sys.stdout.write(self._terminal.normal + self._terminal.on_color(0))
+                sys.stdout.write(
+                    self._terminal.normal + self._terminal.on_color(0))
                 if attr != 0:
                     sys.stdout.write(self.ATTRIBUTES[attr](self._terminal))
                 self._attr = attr
