@@ -6,7 +6,7 @@ from asciimatics.renderers import Renderer
 import random
 
 # Images for Sam-ple sprite.
-from asciimatics.screen import COLOUR_WHITE
+from asciimatics.screen import Screen
 
 sam_default = [
     """
@@ -142,7 +142,7 @@ class Arrow(Sprite):
     Sample arrow sprite - points where it is going.
     """
 
-    def __init__(self, screen, path, colour=COLOUR_WHITE, start_frame=0,
+    def __init__(self, screen, path, colour=Screen.COLOUR_WHITE, start_frame=0,
                  stop_frame=0):
         """
         See :py:obj:`.Sprite` for details.
@@ -168,7 +168,7 @@ class Plot(Sprite):
     for plotting a path to the screen.
     """
 
-    def __init__(self, screen, path, colour=COLOUR_WHITE, start_frame=0,
+    def __init__(self, screen, path, colour=Screen.COLOUR_WHITE, start_frame=0,
                  stop_frame=0):
         """
         See :py:obj:`.Sprite` for details.

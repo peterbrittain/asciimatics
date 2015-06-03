@@ -7,16 +7,16 @@ from builtins import range
 from pyfiglet import Figlet, DEFAULT_FONT
 from PIL import Image
 import re
-from .screen import A_BOLD, A_NORMAL, A_REVERSE, A_UNDERLINE
+from .screen import Screen
 
 
 #: Attribute conversion table for the ${c,a} form of attributes for
 #: :py:obj:`.paint`.
 ATTRIBUTES = {
-    "1": A_BOLD,
-    "2": A_NORMAL,
-    "3": A_REVERSE,
-    "4": A_UNDERLINE,
+    "1": Screen.A_BOLD,
+    "2": Screen.A_NORMAL,
+    "3": Screen.A_REVERSE,
+    "4": Screen.A_UNDERLINE,
 }
 
 
@@ -53,7 +53,7 @@ class Renderer(object):
         self._max_height = 0
         self._animation = animation
         self._colour_map = None
-        self._plain_images = None
+        self._plain_images = []
 
     def _convert_images(self):
         """
@@ -93,7 +93,7 @@ class Renderer(object):
         """
         :return: The next image and colour map in the sequence as a tuple.
         """
-        if self._plain_images is None:
+        if len(self._plain_images) <= 0:
             self._convert_images()
 
         if self._animation is None:
@@ -112,7 +112,7 @@ class Renderer(object):
         :return: The max width of the rendered text (across all images if an
             animated renderer.
         """
-        if self._plain_images is None:
+        if len(self._plain_images) <= 0:
             self._convert_images()
 
         if self._max_width == 0:
@@ -127,7 +127,7 @@ class Renderer(object):
         :return: The max height of the rendered text (across all images if an
             animated renderer.
         """
-        if self._plain_images is None:
+        if len(self._plain_images) <= 0:
             self._convert_images()
 
         if self._max_height == 0:
@@ -200,7 +200,7 @@ class ImageFile(Renderer):
                     if real_col == background:
                         ascii_image += " "
                     else:
-                        ascii_image += "${%d}" % (232 + col * 23//256)
+                        # TODO: ascii_image += "${%d}" % (232 + col * 23//256)
                         ascii_image += self._greyscale[
                             (int(col) * len(self._greyscale)) // 256]
             self._images.append(ascii_image)
@@ -213,7 +213,10 @@ class ColourImageFile(Renderer):
 
     .. warning::
 
-        This is only compatible with 256-colour terminals.
+        This is only compatible with 256-colour terminals.  Results in other
+        terminals with reduced colour capabilities are severely restricted.
+        Since Windows only has 8 base colours, it is recommended that you
+        avoid this renderer on that platform.
     """
 
     def __init__(self, screen, filename, height=30):
@@ -239,7 +242,7 @@ class ColourImageFile(Renderer):
                 (int(frame.size[0] * height * 2.0 / frame.size[1]), height),
                 Image.BICUBIC)
             tmp_img = Image.new("P", (1, 1))
-            tmp_img.putpalette(screen._256_palette)
+            tmp_img.putpalette(screen.palette)
 
             # Avoid dithering - this requires a little hack to get directly
             # at the underlying library in PIL.
