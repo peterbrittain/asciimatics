@@ -1,8 +1,8 @@
 ASCIIMATICS
 ===========
 
-Asciimatics is a package to help people create simple ASCII animations using
-curses.  It is licensed under the Apache Software Foundation License 2.0.
+Asciimatics is a package to help people create simple ASCII animations on any
+platform.  It is licensed under the Apache Software Foundation License 2.0.
 
 It originated from some work that I did on PiConga to create a retro text
 credits roll for the project.  This worked so well, I re-used it for another
@@ -13,6 +13,17 @@ Why?
 ----
 
 Why not?  It brings a little joy to anyone who was programming in the 80s...
+Oh and it provides a single cross-platform Python class to do all basic console
+function, including:
+
+* Coloured/styled text - including 256 colour terminals
+* Cursor positioning
+* Keyboard input (without blocking or echoing)
+* Detecting and handling when the console resizes
+
+Currently this API has been proven to work on CentOS 6 & 7 and Windows 7,
+though it should work for any platform that provides a working curses
+implementation.
 
 
 Installation
