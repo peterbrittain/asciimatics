@@ -1,13 +1,11 @@
 from __future__ import division
-import curses
 from asciimatics.effects import Cycle, Stars
 from asciimatics.renderers import FigletText
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 
 
-def demo(win):
-    screen = Screen.from_curses(win)
+def demo(screen):
     effects = [
         Cycle(
             screen,
@@ -21,4 +19,4 @@ def demo(win):
     ]
     screen.play([Scene(effects, 500)])
 
-curses.wrapper(demo)
+Screen.wrapper(demo)

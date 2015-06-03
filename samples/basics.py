@@ -8,14 +8,8 @@ from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.sprites import Arrow, Plot, Sam
 from asciimatics.paths import Path
-import curses
-
-
-def ascii_credits():
-    """
-    Asciimatics credits!
-    """
-    curses.wrapper(_credits)
+from asciimatics.exceptions import ResizeScreenError
+import sys
 
 
 def _speak(screen, text, pos, start):
@@ -23,15 +17,13 @@ def _speak(screen, text, pos, start):
         screen,
         SpeechBubble(text, "L"),
         x=pos[0] + 4, y=pos[1] - 4,
-        colour=curses.COLOR_CYAN,
+        colour=Screen.COLOUR_CYAN,
         clear=True,
         start_frame=start,
         stop_frame=start+50)
 
 
-def _credits(win):
-    screen = Screen.from_curses(win)
-
+def demo(screen):
     scenes = []
     centre = (screen.width // 2, screen.height // 2)
     podium = (8, 5)
@@ -45,7 +37,7 @@ def _credits(win):
     path.wait(100)
 
     effects = [
-        Arrow(screen, path, colour=curses.COLOR_GREEN),
+        Arrow(screen, path, colour=Screen.COLOUR_GREEN),
         _speak(screen, "WELCOME TO ASCIIMATICS", centre, 30),
         _speak(screen, "My name is Aristotle Arrow.", podium, 110),
         _speak(screen,
@@ -58,7 +50,7 @@ def _credits(win):
     path.jump_to(podium[0], podium[1])
 
     effects = [
-        Arrow(screen, path, colour=curses.COLOR_GREEN),
+        Arrow(screen, path, colour=Screen.COLOUR_GREEN),
         _speak(screen, "Let's start with the Screen...", podium, 10),
         _speak(screen, "This is your Screen object.", podium, 80),
         Print(screen, Box(screen.width, screen.height), 0, 0, start_frame=90),
@@ -81,7 +73,7 @@ def _credits(win):
     path.jump_to(podium[0], podium[1])
 
     effects = [
-        Arrow(screen, path, colour=curses.COLOR_GREEN),
+        Arrow(screen, path, colour=Screen.COLOUR_GREEN),
         _speak(screen, "This is a new Scene.", podium, 10),
         _speak(screen, "The Screen stops all Effects and clears itself between "
                        "Scenes.",
@@ -98,7 +90,7 @@ def _credits(win):
     path.jump_to(podium[0], podium[1])
 
     effects = [
-        Arrow(screen, path, colour=curses.COLOR_GREEN),
+        Arrow(screen, path, colour=Screen.COLOUR_GREEN),
         _speak(screen, "So, how do you design your animation?", podium, 10),
         _speak(screen, "1) Decide on your cinematic flow of Scenes.", podium,
                80),
@@ -116,7 +108,7 @@ def _credits(win):
     path.jump_to(podium[0], podium[1])
 
     effects = [
-        Arrow(screen, path, colour=curses.COLOR_GREEN),
+        Arrow(screen, path, colour=Screen.COLOUR_GREEN),
         _speak(screen, "There are various effects you can use.  For "
                        "example...",
                podium, 10),
@@ -147,11 +139,11 @@ def _credits(win):
     path2.move_round_to(curve_path, 60)
 
     effects = [
-        Arrow(screen, path, colour=curses.COLOR_GREEN),
+        Arrow(screen, path, colour=Screen.COLOUR_GREEN),
         _speak(screen, "Sprites (like me) are also an Effect.", podium, 10),
         _speak(screen, "We take a pre-defined Path to follow.", podium, 80),
         _speak(screen, "Like this one...", podium, 150),
-        Plot(screen, path2, colour=curses.COLOR_BLUE, start_frame=160,
+        Plot(screen, path2, colour=Screen.COLOUR_BLUE, start_frame=160,
              stop_frame=300),
         _speak(screen, "My friend Sam will now follow it...", podium, 320),
         Sam(screen, copy.copy(path2), start_frame=380),
@@ -167,7 +159,7 @@ def _credits(win):
     path.wait(300)
 
     effects = [
-        Arrow(screen, path, colour=curses.COLOR_GREEN),
+        Arrow(screen, path, colour=Screen.COLOUR_GREEN),
         _speak(screen, "Goodbye!", podium, 10),
         Cycle(screen,
               FigletText("THE END!"),
@@ -178,8 +170,13 @@ def _credits(win):
     ]
     scenes.append(Scene(effects, 500))
 
-    screen.play(scenes)
+    screen.play(scenes, stop_on_resize=True)
 
 
 if __name__ == "__main__":
-    ascii_credits()
+    while True:
+        try:
+            Screen.wrapper(demo)
+            sys.exit(0)
+        except ResizeScreenError:
+            pass

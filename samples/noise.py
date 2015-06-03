@@ -1,18 +1,22 @@
-import curses
 from asciimatics.effects import RandomNoise
 from asciimatics.renderers import FigletText, Rainbow
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
+from asciimatics.exceptions import ResizeScreenError
+import sys
 
 
-def demo(win):
-    screen = Screen.from_curses(win)
-
+def demo(screen):
     effects = [
         RandomNoise(screen,
                     signal=Rainbow(screen,
                                    FigletText("ASCIIMATICS")))
     ]
-    screen.play([Scene(effects, -1)])
+    screen.play([Scene(effects, -1)], stop_on_resize=True)
 
-curses.wrapper(demo)
+while True:
+    try:
+        Screen.wrapper(demo)
+        sys.exit(0)
+    except ResizeScreenError:
+        pass

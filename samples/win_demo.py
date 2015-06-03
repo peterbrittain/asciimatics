@@ -7,9 +7,9 @@ from asciimatics.screen import Screen
 import win32console
 
 
-def demo(con):
+def demo(wout, win):
     while True:
-        screen = Screen.from_windows(con)
+        screen = Screen.from_windows(wout, win)
         effects = [
             Print(screen, Rainbow(screen, FigletText("256 colours")),
                   y=screen.height//2 - 8),
@@ -23,5 +23,6 @@ def demo(con):
         except ResizeScreenError:
             pass
 
-console = win32console.PyConsoleScreenBufferType(win32console.GetStdHandle(win32console.STD_OUTPUT_HANDLE))
-demo(console)
+wstdout = win32console.PyConsoleScreenBufferType(win32console.GetStdHandle(win32console.STD_OUTPUT_HANDLE))
+wstdin = win32console.PyConsoleScreenBufferType(win32console.GetStdHandle(win32console.STD_INPUT_HANDLE))
+demo(wstdout, wstdin)

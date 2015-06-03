@@ -1,6 +1,14 @@
 CHANGE HISTORY
 ==============
 
+1.2.0
+-----
+- Added Windows support, complete with Screen.wrapper() to handle all
+  required screen set up.  The old from_XXX class methods are now deprecated.
+- Fixed ColourImageFile to do bare minimum rendering on low colour terminals.
+- Added formal palette property to Screen for image conversions.
+- Verified Python 3.4 support.
+
 1.1.0
 -----
 - Added the Julia Set and Cog effects.
