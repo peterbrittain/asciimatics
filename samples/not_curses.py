@@ -4,7 +4,7 @@ from asciimatics.effects import Scroll, Mirage, Wipe, Cycle, Matrix, \
     BannerText, Stars, Print
 from asciimatics.renderers import FigletText, ImageFile, SpeechBubble, Rainbow
 from asciimatics.scene import Scene
-from asciimatics.screen import Screen, COLOUR_GREEN, COLOUR_CYAN
+from asciimatics.screen import Screen
 from asciimatics.sprites import Sam
 from asciimatics.paths import Path
 from asciimatics.exceptions import ResizeScreenError
@@ -52,21 +52,21 @@ def _credits(term):
         Print(screen,
               SpeechBubble("WELCOME TO ASCIIMATICS", "L"),
               x=centre[0] + 12, y=(centre[1] - screen.height // 3) - 4,
-              colour=COLOUR_CYAN,
+              colour=Screen.COLOUR_CYAN,
               clear=True,
               start_frame=20,
               stop_frame=50),
         Print(screen,
               SpeechBubble("Wheeeeeee!"),
               y=centre[1],
-              colour=COLOUR_CYAN,
+              colour=Screen.COLOUR_CYAN,
               clear=True,
               start_frame=100,
               stop_frame=250),
         Print(screen,
               SpeechBubble("A world of possibilities awaits you...", "L"),
               x=18, y=0,
-              colour=COLOUR_CYAN,
+              colour=Screen.COLOUR_CYAN,
               clear=True,
               start_frame=350,
               stop_frame=400),
@@ -81,7 +81,7 @@ def _credits(term):
             screen,
             FigletText("Asciimatics"),
             screen.height // 2 - 3,
-            COLOUR_GREEN,
+            Screen.COLOUR_GREEN,
             start_frame=100,
             stop_frame=200),
         Wipe(screen, start_frame=150),
@@ -99,7 +99,7 @@ def _credits(term):
             Rainbow(screen, FigletText(
                 "Reliving the 80s in glorious ASCII text...", font='slant')),
             screen.height // 2 - 3,
-            COLOUR_GREEN)
+            Screen.COLOUR_GREEN)
     ]
     scenes.append(Scene(effects))
 
@@ -108,17 +108,17 @@ def _credits(term):
             screen,
             FigletText("Conceived and"),
             screen.height,
-            COLOUR_GREEN),
+            Screen.COLOUR_GREEN),
         Mirage(
             screen,
             FigletText("written by:"),
             screen.height + 8,
-            COLOUR_GREEN),
+            Screen.COLOUR_GREEN),
         Mirage(
             screen,
             FigletText("Peter Brittain"),
             screen.height + 16,
-            COLOUR_GREEN),
+            Screen.COLOUR_GREEN),
         Scroll(screen, 3)
     ]
     scenes.append(Scene(effects, (screen.height + 24) * 3))

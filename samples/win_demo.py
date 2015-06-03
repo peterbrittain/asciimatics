@@ -23,6 +23,8 @@ def demo(wout, win):
         except ResizeScreenError:
             pass
 
-wstdout = win32console.PyConsoleScreenBufferType(win32console.GetStdHandle(win32console.STD_OUTPUT_HANDLE))
-wstdin = win32console.PyConsoleScreenBufferType(win32console.GetStdHandle(win32console.STD_INPUT_HANDLE))
+wstdout = win32console.PyConsoleScreenBufferType(
+    win32console.GetStdHandle(win32console.STD_OUTPUT_HANDLE))
+wstdin = win32console.PyConsoleScreenBufferType(
+    win32console.GetStdHandle(win32console.STD_INPUT_HANDLE))
 demo(wstdout, wstdin)
