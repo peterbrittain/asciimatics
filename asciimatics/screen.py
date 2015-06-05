@@ -19,8 +19,11 @@ class Screen(with_metaclass(ABCMeta, object)):
     resources to allow us to do the ASCII animations.
 
     This is an abstract class that will build the correct concrete class for
-    you when you call the class methods :py:obj:`.from_curses` or
-    :py:obj:`.from_blessed`.
+    you when you call :py:meth:`.wrapper`.
+
+    It is still permitted to call the class methods - e.g.
+    :py:meth:`.from_curses` or :py:meth:`.from_blessed`, however these are
+    deprecated and may be removed in future major releases.
 
     Note that you need to define the required height for your screen buffer.
     This is important if you plan on using any Effects that will scroll the

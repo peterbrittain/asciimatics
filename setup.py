@@ -20,8 +20,8 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 setup(
     name='asciimatics',
     version='1.2.0',
-    description='A cross-platform package to create ASCII art and cinematic '
-                'storyboard sequences',
+    description='A unified package to do curses-like operations across all '
+                'platforms (including Windows) and create ASCII art animations',
     long_description=long_description,
     url='https://github.com/peterbrittain/asciimatics.git',
     author='Peter Brittain',
@@ -39,7 +39,7 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
     ],
-    keywords='ascii art demo credits title sequence',
+    keywords='ascii art demo credits title sequence animation curses windows',
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
     install_requires=[
         'pyfiglet >= 0.7.2',
