@@ -76,7 +76,7 @@ And you should see something like this:
 Documentation
 -------------
 
-Documentation is available at http://asciimatics.readthedocs.org/en/latest/
+Documentation is available at http://asciimatics.readthedocs.org/
 
 More Examples
 -------------
