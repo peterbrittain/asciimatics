@@ -714,35 +714,40 @@ class Clock(Effect):
         pass
 
     def _update(self, frame_no):
+        # Helper functions to map various time elements
+        _hour_pos = lambda t: (t.tm_hour + t.tm_min / 60) * pi/6
+        _min_pos = lambda t: t.tm_min * pi/30
+        _sec_pos = lambda t: t.tm_sec * pi/30
+
         # Clear old hands
         if self._old_time is not None:
             ot = self._old_time
             self._screen.move(self._x, self._y)
-            self._screen.draw(self._x + (self._r*sin(ot.tm_hour*pi/6)),
-                              self._y - (self._r*cos(ot.tm_hour*pi/6)/2),
+            self._screen.draw(self._x + (self._r*sin(_hour_pos(ot))),
+                              self._y - (self._r*cos(_hour_pos(ot)) / 2),
                               char=" ")
             self._screen.move(self._x, self._y)
-            self._screen.draw(self._x + (self._r*sin(ot.tm_min*pi/30)*2),
-                              self._y - (self._r*cos(ot.tm_min*pi/30)),
+            self._screen.draw(self._x + (self._r*sin(_min_pos(ot)) * 2),
+                              self._y - (self._r*cos(_min_pos(ot))),
                               char=" ")
             self._screen.move(self._x, self._y)
-            self._screen.draw(self._x + (self._r*sin(ot.tm_sec*pi/30)*2),
-                              self._y - (self._r*cos(ot.tm_sec*pi/30)),
+            self._screen.draw(self._x + (self._r*sin(_sec_pos(ot)) * 2),
+                              self._y - (self._r*cos(_sec_pos(ot))),
                               char=" ")
 
         # Draw new ones
         new_time = datetime.datetime.now().timetuple()
         self._screen.move(self._x, self._y)
-        self._screen.draw(self._x + (self._r*sin(new_time.tm_hour*pi/6)),
-                          self._y - (self._r*cos(new_time.tm_hour*pi/6)/2),
+        self._screen.draw(self._x + (self._r*sin(_hour_pos(new_time))),
+                          self._y - (self._r*cos(_hour_pos(new_time)) / 2),
                           colour=7)
         self._screen.move(self._x, self._y)
-        self._screen.draw(self._x + (self._r*sin(new_time.tm_min*pi/30)*2),
-                          self._y - (self._r*cos(new_time.tm_min*pi/30)),
+        self._screen.draw(self._x + (self._r*sin(_min_pos(new_time)) * 2),
+                          self._y - (self._r*cos(_min_pos(new_time))),
                           colour=7)
         self._screen.move(self._x, self._y)
-        self._screen.draw(self._x + (self._r*sin(new_time.tm_sec*pi/30)*2),
-                          self._y - (self._r*cos(new_time.tm_sec*pi/30)),
+        self._screen.draw(self._x + (self._r*sin(_sec_pos(new_time))*2),
+                          self._y - (self._r*cos(_sec_pos(new_time))),
                           colour=6, thin=True)
         self._screen.putch("o", self._x, self._y, Screen.COLOUR_YELLOW,
                            Screen.A_BOLD)
