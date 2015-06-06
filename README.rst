@@ -39,7 +39,7 @@ To install asciimatics, simply:
 How to use it?
 --------------
 
-Create a curses window, create a Screen, put together a Scene using some
+Create a Screen, put together a Scene using some
 Effects and then get the Screen to play it.
 
 .. code-block:: python
