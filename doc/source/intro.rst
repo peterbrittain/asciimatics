@@ -38,7 +38,7 @@ To install asciimatics, simply:
 How to use it?
 --------------
 
-Create a curses window, create a :py:obj:`.Screen`, put together a :py:obj:`.Scene`
+Create a :py:obj:`.Screen`, put together a :py:obj:`.Scene`
 using some :py:obj:`.Effect` objects and then get the Screen to play it.  An Effect
 will typically need to display some pre-formatted text.  This is usually
 provided by a :py:obj:`.Renderer`.  For example:
