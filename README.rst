@@ -44,14 +44,12 @@ Effects and then get the Screen to play it.
 
 .. code-block:: python
 
-    import curses
     from asciimatics.effects import Cycle, Stars
     from asciimatics.renderers import FigletText
     from asciimatics.scene import Scene
     from asciimatics.screen import Screen
     
-    def demo(win):
-        screen = Screen.from_curses(win)
+    def demo(screen):
         effects = [
             Cycle(
                 screen,
@@ -65,7 +63,7 @@ Effects and then get the Screen to play it.
         ]
         screen.play([Scene(effects, 500)])
     
-    curses.wrapper(demo)
+    Screen.wrapper(demo)
 
 And you should see something like this:
 
