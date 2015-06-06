@@ -86,7 +86,7 @@ Alternatively, you can browse the gallery at https://github.com/peterbrittain/as
 Bugs
 ----
 
-You can report bug and submit enhancement requests at https://github.com/peterbrittain/asciimatics/issues
+You can report bugs and submit enhancement requests at https://github.com/peterbrittain/asciimatics/issues
 
 Contributing to the project
 ---------------------------
