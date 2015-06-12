@@ -4,6 +4,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 from builtins import object
 from builtins import range
+from future.utils import with_metaclass
+from abc import ABCMeta, abstractproperty, abstractmethod
 from pyfiglet import Figlet, DEFAULT_FONT
 from PIL import Image
 import re
@@ -20,7 +22,7 @@ ATTRIBUTES = {
 }
 
 
-class Renderer(object):
+class Renderer(with_metaclass(ABCMeta, object)):
     """
     A Renderer is simply a class that will return one or more text renderings
     for display by an Effect.
@@ -30,9 +32,43 @@ class Renderer(object):
 
     It can also represent a sequence of strings that can be played one after
     the other to make a simple animation sequence - e.g. a rotating globe.
+    """
 
-    This class will convert text like ${c,a} into colour c, attribute a for any
-    subsequent text in the line, thus allowing multi-coloured text.  The
+    @abstractproperty
+    def max_width(self):
+        """
+        :return: The max width of the rendered text (across all images if an
+            animated renderer.
+        """
+
+    @abstractproperty
+    def rendered_text(self):
+        """
+        :return: The next image and colour map in the sequence as a tuple.
+        """
+
+    @abstractproperty
+    def images(self):
+        """
+        :return: An iterator of all the images in the Renderer.
+        """
+
+    @abstractproperty
+    def max_height(self):
+        """
+        :return: The max height of the rendered text (across all images if an
+            animated renderer.
+        """
+
+
+class StaticRenderer(Renderer):
+    """
+    A StaticRenderer is a Renderer that can create all possible images in
+    advance.  After construction the images will not change, but can by cycled
+    for animation purposes.
+
+    This class will also convert text like ${c,a} into colour c, attribute a
+    for any subsequent text in the line, thus allowing multi-coloured text.  The
     attribute is optional.
     """
 
@@ -89,6 +125,16 @@ class Renderer(object):
             self._colour_map.append(colour_map)
 
     @property
+    def images(self):
+        """
+        :return: An iterator of all the images in the Renderer.
+        """
+        if len(self._plain_images) <= 0:
+            self._convert_images()
+
+        return iter(self._plain_images)
+
+    @property
     def rendered_text(self):
         """
         :return: The next image and colour map in the sequence as a tuple.
@@ -107,6 +153,20 @@ class Renderer(object):
                 self._colour_map[index])
 
     @property
+    def max_height(self):
+        """
+        :return: The max height of the rendered text (across all images if an
+            animated renderer.
+        """
+        if len(self._plain_images) <= 0:
+            self._convert_images()
+
+        if self._max_height == 0:
+            for image in self._plain_images:
+                self._max_height = max(len(image), self._max_height)
+        return self._max_height
+
+    @property
     def max_width(self):
         """
         :return: The max width of the rendered text (across all images if an
@@ -121,22 +181,78 @@ class Renderer(object):
                 self._max_width = max(new_max, self._max_width)
         return self._max_width
 
+
+class DynamicRenderer(with_metaclass(ABCMeta, Renderer)):
+    """
+    A DynamicRenderer is a Renderer that creates each image as requested.  It
+    has a defined maximum size on construction.`
+    """
+
+    def __init__(self, height, width):
+        """
+        :param height: The max height of the rendered image.
+        :param width: The max width of the rendered image.
+        """
+        super(DynamicRenderer, self).__init__()
+        self._height = height
+        self._width = width
+        self._plain_image = []
+        self._colour_map = []
+
+    def _clear(self):
+        """
+        Clear the current image.
+        """
+        self._plain_image = [" " * self._width for _ in range(self._height)]
+        self._colour_map = [[(None, 0) for _ in range(self._width)]
+                            for _ in range(self._height)]
+
+    def _write(self, text, x, y, colour=Screen.COLOUR_WHITE,
+               attr=Screen.A_NORMAL):
+        """
+        Write some text to the specified location in the current image.
+
+        :param text: The text to be added.
+        :param x: The X coordinate in the image.
+        :param y: The Y coordinate in the image.
+        :param colour: The colour of the text to add.
+        :param attr: The attribute of the image.
+        """
+        self._plain_image[y] = text.join(
+            [self._plain_image[y][:x], self._plain_image[y][x+len(text):]])
+        for i, c in enumerate(text):
+            self._colour_map[y][x + i] = (colour, attr)
+
+    @abstractmethod
+    def _render_now(self):
+        """
+        Common method to render the latest image.
+
+        :returns: A tuple of the plain image and the colour map as per
+        :py:meth:`.rendered_text`.
+        """
+
+    @property
+    def images(self):
+        # We can't return all, so just return the latest rendered image.
+        self._clear()
+        return [self._render_now()[0]]
+
+    @property
+    def rendered_text(self):
+        self._clear()
+        return self._render_now()
+
     @property
     def max_height(self):
-        """
-        :return: The max height of the rendered text (across all images if an
-            animated renderer.
-        """
-        if len(self._plain_images) <= 0:
-            self._convert_images()
+        return self._height
 
-        if self._max_height == 0:
-            for image in self._plain_images:
-                self._max_height = max(len(image), self._max_height)
-        return self._max_height
+    @property
+    def max_width(self):
+        return self._width
 
 
-class FigletText(Renderer):
+class FigletText(StaticRenderer):
     """
     This class renders the supplied text using the specified Figlet font.
     See http://www.figlet.org/ for details of available fonts.
@@ -168,7 +284,7 @@ class _ImageSequence(object):
             raise IndexError
 
 
-class ImageFile(Renderer):
+class ImageFile(StaticRenderer):
     """
     Renderer to convert an image file (as supported by the Python Imaging
     Library) into an ascii grey scale text image.
@@ -214,7 +330,7 @@ class ImageFile(Renderer):
             self._images.append(ascii_image)
 
 
-class ColourImageFile(Renderer):
+class ColourImageFile(StaticRenderer):
     """
     Renderer to convert an image file (as supported by the Python Imaging
     Library) into an block image of available colours.
@@ -279,7 +395,7 @@ class ColourImageFile(Renderer):
             self._images.append(ascii_image)
 
 
-class SpeechBubble(Renderer):
+class SpeechBubble(StaticRenderer):
     """
     Renders supplied text into a speech bubble.
     """
@@ -305,7 +421,7 @@ class SpeechBubble(Renderer):
         self._images = [bubble]
 
 
-class Box(Renderer):
+class Box(StaticRenderer):
     """
     Renders a simple box using ASCII characters.  This does not render in
     extended box drawing characters as that requires direct use of the curses
@@ -326,7 +442,7 @@ class Box(Renderer):
         self._images = [box]
 
 
-class Rainbow(Renderer):
+class Rainbow(StaticRenderer):
     """
     Chained renderer to add rainbow colours to output of another renderer.
     The embedded rendered must not use multi-colour mode (i.e. ${c,a} 
@@ -351,15 +467,80 @@ class Rainbow(Renderer):
         """
         super(Rainbow, self).__init__()
         palette = self._256_palette if screen.colours > 16 else self._16_palette
-        for image in renderer._images:
+        for image in renderer.images:
             new_image = ""
-            x = y = 0
-            for c in image:
-                colour = (x + y) % len(palette)
-                new_image += '${%d,1}%s' % (palette[colour], c)
-                if c == '\n':
-                    x = 0
-                    y += 1
-                else:
-                    x += 1
+            for y, line in enumerate(image):
+                for x, c in enumerate(line):
+                    colour = (x + y) % len(palette)
+                    new_image += '${%d,1}%s' % (palette[colour], c)
+                new_image += "\n"
             self._images.append(new_image)
+
+
+class BarChart(DynamicRenderer):
+    """
+    Renderer to create a bar chart using the specified functions as inputs for
+    each entry.  Can be used to chart distributions or to imitate a sound
+    equalizer.
+    """
+    def __init__(self, height, width, functions, char="#",
+                 colour=Screen.COLOUR_GREEN, gradient=None):
+        """
+        :param height: The max height of the rendered image.
+        :param width: The max width of the rendered image.
+        :param functions: List of functions to chart.
+        :param char: Character to use for the bar.
+        :param colour: Default colour to use for the bars.  This can be a
+            single value or list of values (to cycle around for each bar).
+        :param gradient: Colour gradient for use on all bars.  This is a list of
+            tuple pairs specifying a threshold and a colour.
+        """
+        super(BarChart, self).__init__(height, width)
+        self._functions = functions
+        self._char = char
+        self._colours = [colour] if isinstance(colour, int) else colour
+        self._gradient = gradient
+
+    def _render_now(self):
+        super(BarChart, self)._render_now()
+
+        # Create  the box around the chart...
+        self._write("+" + "-" * (self._width - 2) + "+", 0, 0)
+        for line in range(1, self._height):
+            self._write("|", 0, line)
+            self._write("|", self._width - 1, line)
+        self._write("+" + "-" * (self._width - 2) + "+", 0, self._height - 1)
+
+        # Now add the axes...
+        int_h = self._height - 4
+        int_w = self._width - 6
+        for line in range(int_h):
+            self._write("]", 3, line + 2)
+
+        # Allow double-width bars if there's space.
+        bar_size = 2 if int_h > (3 * len(self._functions)) - 1 else 1
+        gap = (int_h - (bar_size * len(self._functions))) / (len(
+            self._functions) - 1)
+
+        # Now add the bars...
+        for i, fn in enumerate(self._functions):
+            bar_len = fn()
+            y = 2 + (i * bar_size) + int(i * gap)
+            colour = self._colours[i % len(self._colours)]
+            if self._gradient:
+                last = 0
+                for value, colour in self._gradient:
+                    if value - last > 0:
+                        size = value if bar_len >= value else bar_len
+                        for line in range(bar_size):
+                            self._write(self._char * (size-last), 4 + last,
+                                                      y + line,
+                                        colour)
+                    if bar_len < value:
+                        break
+                    last = value
+            else:
+                for line in range(bar_size):
+                    self._write(self._char * bar_len, 4, y + line, colour)
+
+        return self._plain_image, self._colour_map

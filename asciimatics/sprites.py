@@ -2,7 +2,7 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from asciimatics.effects import Sprite
-from asciimatics.renderers import Renderer
+from asciimatics.renderers import StaticRenderer
 import random
 
 # Images for Sam-ple sprite.
@@ -126,11 +126,11 @@ class Sam(Sprite):
         super(Sam, self).__init__(
             screen,
             renderer_dict={
-                "default": Renderer(images=sam_default, animation=_blink),
-                "left": Renderer(images=[sam_left]),
-                "right": Renderer(images=[sam_right]),
-                "down": Renderer(images=[sam_down]),
-                "up": Renderer(images=[sam_up]),
+                "default": StaticRenderer(images=sam_default, animation=_blink),
+                "left": StaticRenderer(images=[sam_left]),
+                "right": StaticRenderer(images=[sam_right]),
+                "down": StaticRenderer(images=[sam_down]),
+                "up": StaticRenderer(images=[sam_up]),
             },
             path=path,
             start_frame=start_frame,
@@ -150,11 +150,11 @@ class Arrow(Sprite):
         super(Arrow, self).__init__(
             screen,
             renderer_dict={
-                "default": Renderer(images=default_arrow, animation=_blink),
-                "left": Renderer(images=[left_arrow]),
-                "right": Renderer(images=[right_arrow]),
-                "down": Renderer(images=[down_arrow]),
-                "up": Renderer(images=[up_arrow]),
+                "default": StaticRenderer(images=default_arrow, animation=_blink),
+                "left": StaticRenderer(images=[left_arrow]),
+                "right": StaticRenderer(images=[right_arrow]),
+                "down": StaticRenderer(images=[down_arrow]),
+                "up": StaticRenderer(images=[up_arrow]),
             },
             path=path,
             colour=colour,
@@ -176,7 +176,7 @@ class Plot(Sprite):
         super(Plot, self).__init__(
             screen,
             renderer_dict={
-                "default": Renderer(images=["X"])
+                "default": StaticRenderer(images=["X"])
             },
             path=path,
             colour=colour,
