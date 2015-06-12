@@ -1,6 +1,14 @@
 CHANGE HISTORY
 ==============
 
+1.3.0
+-----
+- Added BarChart rendered and demo.
+- Split Renderer into StaticRenderer and DynamicRenderer.  Code that used
+  Renderer should now use StaticRenderer.
+- Added speed option to Print effect.
+- Fixed up curses colour detection and .
+
 1.2.0
 -----
 - Added Windows support, complete with Screen.wrapper() to handle all

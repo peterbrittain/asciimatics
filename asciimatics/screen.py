@@ -1022,9 +1022,7 @@ else:
             self._pad = curses.newpad(self.buffer_height, self.width)
 
             # Set up basic colour schemes.
-            self.colours = 8
-            if os.environ['TERM'] == 'xterm-256color':
-                self.colours = 256
+            self.colours = curses.COLORS
             for i in range(1, self.colours):
                 curses.init_pair(i, i, curses.COLOR_BLACK)
             for i in range(0, self.colours):
