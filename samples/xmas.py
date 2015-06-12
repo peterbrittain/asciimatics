@@ -1,6 +1,6 @@
 from __future__ import division
 from asciimatics.effects import Cycle, Snow, Print
-from asciimatics.renderers import FigletText, Renderer
+from asciimatics.renderers import FigletText, StaticRenderer
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError
@@ -42,7 +42,7 @@ tree = """
 
 def demo(screen):
     effects = [
-        Print(screen, Renderer(images=tree),
+        Print(screen, StaticRenderer(images=tree),
               x=screen.width - 15,
               y=screen.height - 15,
               colour=Screen.COLOUR_GREEN),

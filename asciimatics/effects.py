@@ -204,7 +204,8 @@ class Print(Effect):
     """
 
     def __init__(self, screen, renderer, y, x=None, colour=7,
-                 clear=False, transparent=True, start_frame=0, stop_frame=0):
+                 clear=False, transparent=True, speed=4, start_frame=0,
+                 stop_frame=0):
         """
         :param screen: The Screen being used for the Scene.
         :param renderer: The renderer to be printed.
@@ -213,6 +214,7 @@ class Print(Effect):
         :param y: The line (y coordinate) for the start of the text.
         :param colour: The colour attribute to use for the text.
         :param clear: Whether to clear the text before stopping.
+        :param speed: The refresh rate in frames between refreshes.
         :param start_frame: Start index for the effect.
         :param stop_frame: Stop index for the effect.
         """
@@ -225,6 +227,7 @@ class Print(Effect):
                    else x)
         self._colour = colour
         self._clear = clear
+        self._speed = speed
 
     def reset(self):
         pass  # Nothing required
@@ -234,7 +237,7 @@ class Print(Effect):
             for i in range(0, self._renderer.max_height):
                 self._screen.putch(
                     " " * self._renderer.max_width, self._x, self._y + i)
-        elif frame_no % 4 == 0:
+        elif frame_no % self._speed == 0:
             image, colours = self._renderer.rendered_text
             for (i, line) in enumerate(image):
                 self._screen.paint(line, self._x, self._y + i, self._colour,
