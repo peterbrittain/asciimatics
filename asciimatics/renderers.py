@@ -478,13 +478,21 @@ class Rainbow(StaticRenderer):
 
 
 class BarChart(DynamicRenderer):
+
+    #: Which axes to draw when rendering
+    NONE = 0
+    X_AXIS = 1
+    Y_AXIS = 2
+    BOTH = 3
+
     """
     Renderer to create a bar chart using the specified functions as inputs for
     each entry.  Can be used to chart distributions or to imitate a sound
     equalizer.
     """
     def __init__(self, height, width, functions, char="#",
-                 colour=Screen.COLOUR_GREEN, gradient=None):
+                 colour=Screen.COLOUR_GREEN, gradient=None, scale=None,
+                 axes=Y_AXIS, intervals=None, labels=False, border=True):
         """
         :param height: The max height of the rendered image.
         :param width: The max width of the rendered image.
@@ -494,53 +502,116 @@ class BarChart(DynamicRenderer):
             single value or list of values (to cycle around for each bar).
         :param gradient: Colour gradient for use on all bars.  This is a list of
             tuple pairs specifying a threshold and a colour.
+        :param scale: Maximum value for the bars.  This is used to scale the
+            function values to the maximum space available.  Any value over this
+            will be truncated when drawn.  Defaults to the number of available
+            characters in the chart.
+        :param axes: Which axes to draw.
+        :param intervals: Units for interval markers on the mains axis.
+            Defaults to none.
+        :param labels: Whether to label the main axis.
+        :param border: Whether to draw a border around the chart.
         """
         super(BarChart, self).__init__(height, width)
         self._functions = functions
         self._char = char
         self._colours = [colour] if isinstance(colour, int) else colour
         self._gradient = gradient
+        self._scale = scale
+        self._axes = axes
+        self._intervals = intervals
+        self._labels = labels
+        self._border = border
 
     def _render_now(self):
         super(BarChart, self)._render_now()
 
-        # Create  the box around the chart...
-        self._write("+" + "-" * (self._width - 2) + "+", 0, 0)
-        for line in range(1, self._height):
-            self._write("|", 0, line)
-            self._write("|", self._width - 1, line)
-        self._write("+" + "-" * (self._width - 2) + "+", 0, self._height - 1)
+        # Dimensions for the chart.
+        int_h = self._height
+        int_w = self._width
+        start_x = 0
+        start_y = 0
+        scale = int_w if self._scale is None else self._scale
 
-        # Now add the axes...
-        int_h = self._height - 4
-        int_w = self._width - 6
-        for line in range(int_h):
-            self._write("]", 3, line + 2)
+        # Create  the box around the chart...
+        if self._border:
+            self._write("+" + "-" * (self._width-2) + "+", 0, 0)
+            for line in range(1, self._height):
+                self._write("|", 0, line)
+                self._write("|", self._width - 1, line)
+            self._write("+" + "-" * (self._width-2) + "+", 0, self._height - 1)
+            int_h -= 4
+            int_w -= 6
+            start_y += 2
+            start_x += 3
+
+        # Now add the axes - resizing chart space as required...
+        if (self._axes & BarChart.X_AXIS) > 0:
+            int_h -= 1
+
+        if (self._axes & BarChart.Y_AXIS) > 0:
+            int_w -= 2
+            start_x += 1
+
+        if self._labels:
+            int_h -= 1
+
+        if (self._axes & BarChart.X_AXIS) > 0:
+            self._write("-" * int_w, start_x, start_y + int_h)
+        if (self._axes & BarChart.Y_AXIS) > 0:
+            for line in range(int_h):
+                self._write("|", start_x - 1, start_y + line)
+        if self._axes == BarChart.BOTH:
+            self._write("+", start_x - 1, start_y + int_h)
+        if self._labels:
+            self._write("0", start_x, start_y + int_h + 1)
+            max = str(scale)
+            self._write(max, start_x + int_w - len(max), start_y + int_h + 1)
+
+        # Now add any interval markers if required.
+        if self._intervals is not None:
+            x = self._intervals
+            while x < scale:
+                for line in range(int_h):
+                    self._write(
+                        ":", start_x + int(x * int_w / scale), start_y + line)
+                self._write(
+                    "+", start_x + int(x * int_w/scale), start_y + int_h)
+                x += self._intervals
 
         # Allow double-width bars if there's space.
-        bar_size = 2 if int_h > (3 * len(self._functions)) - 1 else 1
-        gap = (int_h - (bar_size * len(self._functions))) / (len(
-            self._functions) - 1)
+        bar_size = 2 if int_h >= (3 * len(self._functions)) - 1 else 1
+        gap = 0 if len(self._functions) <= 1 else (int_h - (bar_size * len(
+            self._functions))) / (len(self._functions) - 1)
 
         # Now add the bars...
         for i, fn in enumerate(self._functions):
-            bar_len = fn()
-            y = 2 + (i * bar_size) + int(i * gap)
+            bar_len = int(fn() * int_w / scale)
+            y = start_y + (i * bar_size) + int(i * gap)
             colour = self._colours[i % len(self._colours)]
             if self._gradient:
                 last = 0
-                for value, colour in self._gradient:
+                size = 0
+                for threshold, colour in self._gradient:
+                    value = int(threshold * int_w / scale)
                     if value - last > 0:
+                        # Size to fit the available space
                         size = value if bar_len >= value else bar_len
+                        if size > int_w:
+                            size = int_w
                         for line in range(bar_size):
-                            self._write(self._char * (size-last), 4 + last,
-                                                      y + line,
-                                        colour)
-                    if bar_len < value:
+                            self._write(
+                                self._char * (size-last),
+                                start_x + last,
+                                y + line,
+                                colour)
+
+                    # Stop if we reached the end of the line or the chart
+                    if bar_len < value or size >= int_w:
                         break
                     last = value
             else:
                 for line in range(bar_size):
-                    self._write(self._char * bar_len, 4, y + line, colour)
+                    self._write(self._char * bar_len, start_x, y + line, colour)
 
         return self._plain_image, self._colour_map
