@@ -150,7 +150,8 @@ class Arrow(Sprite):
         super(Arrow, self).__init__(
             screen,
             renderer_dict={
-                "default": StaticRenderer(images=default_arrow, animation=_blink),
+                "default": StaticRenderer(images=default_arrow,
+                                          animation=_blink),
                 "left": StaticRenderer(images=[left_arrow]),
                 "right": StaticRenderer(images=[right_arrow]),
                 "down": StaticRenderer(images=[down_arrow]),

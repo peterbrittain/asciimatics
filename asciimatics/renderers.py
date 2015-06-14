@@ -60,6 +60,12 @@ class Renderer(with_metaclass(ABCMeta, object)):
             animated renderer.
         """
 
+    def __repr__(self):
+        """
+        :returns: a plain string representation of the next rendered image.
+        """
+        return "\n".join(self.rendered_text[0])
+
 
 class StaticRenderer(Renderer):
     """
@@ -565,19 +571,21 @@ class BarChart(DynamicRenderer):
             self._write("+", start_x - 1, start_y + int_h)
         if self._labels:
             self._write("0", start_x, start_y + int_h + 1)
-            max = str(scale)
-            self._write(max, start_x + int_w - len(max), start_y + int_h + 1)
+            text = str(scale)
+            self._write(text, start_x + int_w - len(text), start_y + int_h + 1)
 
-        # Now add any interval markers if required.
+        # Now add any interval markers if required...
         if self._intervals is not None:
-            x = self._intervals
-            while x < scale:
+            i = self._intervals
+            while i < scale:
+                x = start_x + int(i * int_w / scale)
                 for line in range(int_h):
-                    self._write(
-                        ":", start_x + int(x * int_w / scale), start_y + line)
-                self._write(
-                    "+", start_x + int(x * int_w/scale), start_y + int_h)
-                x += self._intervals
+                    self._write(":", x, start_y + line)
+                self._write("+", x, start_y + int_h)
+                if self._labels:
+                    val = str(i)
+                    self._write(val, x - (len(val) // 2), start_y + int_h + 1)
+                i += self._intervals
 
         # Allow double-width bars if there's space.
         bar_size = 2 if int_h >= (3 * len(self._functions)) - 1 else 1
@@ -590,6 +598,8 @@ class BarChart(DynamicRenderer):
             y = start_y + (i * bar_size) + int(i * gap)
             colour = self._colours[i % len(self._colours)]
             if self._gradient:
+                # Colour gradient required - break down into chunks for each
+                # color.
                 last = 0
                 size = 0
                 for threshold, colour in self._gradient:
@@ -611,6 +621,7 @@ class BarChart(DynamicRenderer):
                         break
                     last = value
             else:
+                # Solid colour - just write the whole block out.
                 for line in range(bar_size):
                     self._write(self._char * bar_len, start_x, y + line, colour)
 

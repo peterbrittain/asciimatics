@@ -25,7 +25,7 @@ setup(
     long_description=long_description,
     url='https://github.com/peterbrittain/asciimatics.git',
     author='Peter Brittain',
-    author_email='',
+    author_email='peter.brittain.os@gmail.com',
     license='Apache 2.0',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
