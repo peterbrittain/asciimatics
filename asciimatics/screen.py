@@ -988,7 +988,7 @@ if sys.platform == "win32":
             self._stdout.FillConsoleOutputAttribute(
                 0, box_size, win32console.PyCOORDType(0, 0))
             self._stdout.FillConsoleOutputCharacter(
-                " ", box_size, win32console.PyCOORDType(0, 0))
+                u" ", box_size, win32console.PyCOORDType(0, 0))
             self._stdout.SetConsoleCursorPosition(
                 win32console.PyCOORDType(0, 0))
 else:
