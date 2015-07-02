@@ -1,6 +1,8 @@
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
+from future.utils import with_metaclass
+from abc import ABCMeta, abstractmethod, abstractproperty
 from builtins import object
 from builtins import range
 
@@ -22,7 +24,46 @@ def _spline(t, p0, p1, p2, p3):
         + (t - 1) * t * t * p3) / 2
 
 
-class Path(object):
+class _AbstractPath(with_metaclass(ABCMeta, object)):
+    """
+    Class to represent the motion of a Sprite.
+
+    The Screen will reset() the Path before iterating through each position
+    using next_pos() and checking whether it has reached the end using
+    is_finished().
+    """
+
+    def __init__(self):
+        """
+        To define a Path, use the methods to jump to a location, wait or move
+        between points.
+        """
+        self._steps = []
+        self._index = None
+        self._rec_x = 0
+        self._rec_y = 0
+        self.reset()
+
+    @abstractmethod
+    def reset(self):
+        """
+        Reset the Path for use next time.
+        """
+
+    @abstractmethod
+    def next_pos(self):
+        """
+        :return: The next position tuple (x, y) for the Sprite on this path.
+        """
+
+    @abstractmethod
+    def is_finished(self):
+        """
+        :return: Whether this path has got to the end.
+        """
+
+
+class Path(_AbstractPath):
     """
     Class to record and play back the motion of a Sprite.
     
@@ -33,9 +74,10 @@ class Path(object):
 
     def __init__(self):
         """
-        To define a Path, use the methods to jump to a location, wait or move 
+        To define a Path, use the methods to jump to a location, wait or move
         between points.
         """
+        super(Path, self).__init__()
         self._steps = []
         self._index = None
         self._rec_x = 0
@@ -136,3 +178,52 @@ class Path(object):
                 x = int(points[j][0] + ((points[j + 1][0] - points[j][0]) *
                                         float(t) / steps_per_spline))
                 self._add_step((x, int(y)))
+
+
+class DynamicPath(with_metaclass(ABCMeta, _AbstractPath)):
+    """
+    Class to create a dynamic path that reacts to events
+
+    The Screen will reset() the Path before iterating through each position
+    using next_pos() and checking whether it has reached the end using
+    is_finished().
+    """
+
+    def __init__(self, screen, x, y):
+        """
+        To define a Path, use the methods to jump to a location, wait or move
+        between points.
+        """
+        super(DynamicPath, self).__init__()
+        self._screen = screen
+        self._x = self._start_x = x
+        self._y = self._start_y = y
+        self.reset()
+
+    def reset(self):
+        """
+        Reset the Path for use next time.
+        """
+        self._x = self._start_x
+        self._y = self._start_y
+
+    def next_pos(self):
+        """
+        :return: The next position tuple (x, y) for the Sprite on this path.
+        """
+        return self._x, self._y
+
+    def is_finished(self):
+        """
+        :return: Whether this path has got to the end.
+        """
+        return False
+
+    @abstractmethod
+    def process_key(self, key):
+        """
+        Process any keypress.
+
+        :param key: The key that was pressed.
+        :returns: None if the Effect processed the key, else the original key.
+        """

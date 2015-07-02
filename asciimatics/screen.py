@@ -47,7 +47,68 @@ class Screen(with_metaclass(ABCMeta, object)):
     COLOUR_CYAN = 6
     COLOUR_WHITE = 7
 
-    # Colour palette for 8/16 colour terminals
+    #: Standard extended key codes.    
+    KEY_ESCAPE = -1
+    KEY_F1 = -2
+    KEY_F2 = -3
+    KEY_F3 = -4
+    KEY_F4 = -5
+    KEY_F5 = -6
+    KEY_F6 = -7
+    KEY_F7 = -8
+    KEY_F8 = -9
+    KEY_F9 = -10
+    KEY_F10 = -11
+    KEY_F11 = -12
+    KEY_F12 = -13
+    KEY_F13 = -14
+    KEY_F14 = -15
+    KEY_F15 = -16
+    KEY_F16 = -17
+    KEY_F17 = -18
+    KEY_F18 = -19
+    KEY_F19 = -20
+    KEY_F20 = -21
+    KEY_F21 = -22
+    KEY_F22 = -23
+    KEY_F23 = -24
+    KEY_F24 = -25
+    KEY_PRINT_SCREEN = -100
+    KEY_INSERT = -101
+    KEY_DELETE = -102
+    KEY_HOME = -200
+    KEY_END = -201
+    KEY_LEFT = -203
+    KEY_UP = -204
+    KEY_RIGHT = -205
+    KEY_DOWN = -206
+    KEY_PAGE_UP = -207
+    KEY_PAGE_DOWN = -208
+    KEY_BACK = -300
+    KEY_TAB = -301
+    KEY_NUMPAD0 = -400
+    KEY_NUMPAD1 = -401
+    KEY_NUMPAD2 = -402
+    KEY_NUMPAD3 = -403
+    KEY_NUMPAD4 = -404
+    KEY_NUMPAD5 = -405
+    KEY_NUMPAD6 = -406
+    KEY_NUMPAD7 = -407
+    KEY_NUMPAD8 = -408
+    KEY_NUMPAD9 = -409
+    KEY_MULTIPLY = -410
+    KEY_ADD = -411
+    KEY_SUBTRACT = -412
+    KEY_DECIMAL = -413
+    KEY_DIVIDE = -414
+    KEY_CAPS_LOCK = -500
+    KEY_NUM_LOCK = -501
+    KEY_SCROLL_LOCK = -502
+    KEY_SHIFT = -600
+    KEY_CONTROL = -601
+    KEY_MENU = -602
+
+    #  Colour palette for 8/16 colour terminals
     _8_palette = [
         0x00, 0x00, 0x00,
         0x80, 0x00, 0x00,
@@ -575,6 +636,8 @@ class Screen(with_metaclass(ABCMeta, object)):
                         effect.update(frame)
                     self.refresh()
                     c = self.get_key()
+                    if c is not None:
+                        c = scene.process_key(c)
                     if c in (ord("X"), ord("x"), ord("Q"), ord("q")):
                         return
                     if c in (ord(" "), ord("\n")):
@@ -844,11 +907,75 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
 
 if sys.platform == "win32":
     import win32console
+    import win32con
 
     class _WindowsScreen(_BufferedScreen):
         """
         Windows screen implementation.
         """
+
+        # Virtual key code mapping.
+        _KEY_MAP = {
+            win32con.VK_ESCAPE: Screen.KEY_ESCAPE,
+            win32con.VK_F1: Screen.KEY_F1,
+            win32con.VK_F2: Screen.KEY_F2,
+            win32con.VK_F3: Screen.KEY_F3,
+            win32con.VK_F4: Screen.KEY_F4,
+            win32con.VK_F5: Screen.KEY_F5,
+            win32con.VK_F6: Screen.KEY_F6,
+            win32con.VK_F7: Screen.KEY_F7,
+            win32con.VK_F8: Screen.KEY_F8,
+            win32con.VK_F9: Screen.KEY_F9,
+            win32con.VK_F10: Screen.KEY_F10,
+            win32con.VK_F11: Screen.KEY_F11,
+            win32con.VK_F12: Screen.KEY_F12,
+            win32con.VK_F13: Screen.KEY_F13,
+            win32con.VK_F14: Screen.KEY_F14,
+            win32con.VK_F15: Screen.KEY_F15,
+            win32con.VK_F16: Screen.KEY_F16,
+            win32con.VK_F17: Screen.KEY_F17,
+            win32con.VK_F18: Screen.KEY_F18,
+            win32con.VK_F19: Screen.KEY_F19,
+            win32con.VK_F20: Screen.KEY_F20,
+            win32con.VK_F21: Screen.KEY_F21,
+            win32con.VK_F22: Screen.KEY_F22,
+            win32con.VK_F23: Screen.KEY_F23,
+            win32con.VK_F24: Screen.KEY_F24,
+            win32con.VK_PRINT: Screen.KEY_PRINT_SCREEN,
+            win32con.VK_INSERT: Screen.KEY_INSERT,
+            win32con.VK_DELETE: Screen.KEY_DELETE,
+            win32con.VK_HOME: Screen.KEY_HOME,
+            win32con.VK_END: Screen.KEY_END,
+            win32con.VK_LEFT: Screen.KEY_LEFT,
+            win32con.VK_UP: Screen.KEY_UP,
+            win32con.VK_RIGHT: Screen.KEY_RIGHT,
+            win32con.VK_DOWN: Screen.KEY_DOWN,
+            win32con.VK_PRIOR: Screen.KEY_PAGE_UP,
+            win32con.VK_NEXT: Screen.KEY_PAGE_DOWN,
+            win32con.VK_BACK: Screen.KEY_BACK,
+            win32con.VK_TAB: Screen.KEY_TAB,
+            win32con.VK_NUMPAD0: Screen.KEY_NUMPAD0,
+            win32con.VK_NUMPAD1: Screen.KEY_NUMPAD1,
+            win32con.VK_NUMPAD2: Screen.KEY_NUMPAD2,
+            win32con.VK_NUMPAD3: Screen.KEY_NUMPAD3,
+            win32con.VK_NUMPAD4: Screen.KEY_NUMPAD4,
+            win32con.VK_NUMPAD5: Screen.KEY_NUMPAD5,
+            win32con.VK_NUMPAD6: Screen.KEY_NUMPAD6,
+            win32con.VK_NUMPAD7: Screen.KEY_NUMPAD7,
+            win32con.VK_NUMPAD8: Screen.KEY_NUMPAD8,
+            win32con.VK_NUMPAD9: Screen.KEY_NUMPAD9,
+            win32con.VK_MULTIPLY: Screen.KEY_MULTIPLY,
+            win32con.VK_ADD: Screen.KEY_ADD,
+            win32con.VK_SUBTRACT: Screen.KEY_SUBTRACT,
+            win32con.VK_DECIMAL: Screen.KEY_DECIMAL,
+            win32con.VK_DIVIDE: Screen.KEY_DIVIDE,
+            win32con.VK_CAPITAL: Screen.KEY_CAPS_LOCK,
+            win32con.VK_NUMLOCK: Screen.KEY_NUM_LOCK,
+            win32con.VK_SCROLL: Screen.KEY_SCROLL_LOCK,
+            win32con.VK_SHIFT: Screen.KEY_SHIFT,
+            win32con.VK_CONTROL: Screen.KEY_CONTROL,
+            win32con.VK_MENU: Screen.KEY_MENU,
+        }
 
         # Colour lookup table.
         _COLOURS = {
@@ -910,7 +1037,10 @@ if sys.platform == "win32":
             if len(self._stdin.PeekConsoleInput(1)) > 0:
                 event = self._stdin.ReadConsoleInput(1)[0]
                 if (event.EventType == win32console.KEY_EVENT and
-                        not event.KeyDown):
+                        event.KeyDown):
+                    # Translate keys that don't match characters first.
+                    if event.VirtualKeyCode in self._KEY_MAP:
+                        return self._KEY_MAP[event.VirtualKeyCode]
                     return ord(event.Char)
             return None
 

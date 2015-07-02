@@ -5,9 +5,10 @@ from builtins import chr
 from builtins import object
 from builtins import range
 from future.utils import with_metaclass
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 from random import randint, random, choice
 from math import sin, cos, pi
+from asciimatics.paths import DynamicPath
 from .screen import Screen
 import datetime
 
@@ -26,10 +27,16 @@ class Effect(with_metaclass(ABCMeta, object)):
         explicit configuration or querying :py:obj:`.stop_frame` for every
         Effect).
     3.  It will then run the scene, calling :py:meth:`.Effect.update` for
-        each effect that is in the scene.
+        each effect that is in the scene.  The base Effect will then call the
+        abstract method _update() if the effect should be visible.
+    4.  If any keys are pressed, the scene will call
+        :py:meth:`.Effect.process_key` for each key, allowing the effect to act
+        on it if needed.
 
     New Effects, therefore need to implement the abstract methods on this
-    class to satisfy the contract with Scene.
+    class to satisfy the contract with Scene.  Since most effects don't require
+    user interaction, the default process_key() implementation will ignore the
+    key (and so effects don't need to implement this method unless needed).
     """
 
     def __init__(self, start_frame=0, stop_frame=0):
@@ -65,12 +72,20 @@ class Effect(with_metaclass(ABCMeta, object)):
         :param frame_no: The index of the frame being generated.
         """
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def stop_frame(self):
         """
         Last frame for this effect.  A value of zero means no specific end.
         """
+
+    def process_key(self, key):
+        """
+        Process any keypress.
+
+        :param key: The key that was pressed.
+        :returns: None if the Effect processed the key, else the original key.
+        """
+        return key
 
 
 class Scroll(Effect):
@@ -598,6 +613,10 @@ class Sprite(Effect):
     @property
     def stop_frame(self):
         return self._stop_frame
+
+    def process_key(self, key):
+        if isinstance(self._path, DynamicPath):
+            return self._path.process_key(key)
 
 
 class _Flake(object):
