@@ -42,7 +42,6 @@ class _AbstractPath(with_metaclass(ABCMeta, object)):
         self._index = None
         self._rec_x = 0
         self._rec_y = 0
-        self.reset()
 
     @abstractmethod
     def reset(self):
@@ -191,8 +190,8 @@ class DynamicPath(with_metaclass(ABCMeta, _AbstractPath)):
 
     def __init__(self, screen, x, y):
         """
-        To define a Path, use the methods to jump to a location, wait or move
-        between points.
+        To implement a DynamicPath, override the :py:meth:`.process_key()`
+        method to react to any user input.
         """
         super(DynamicPath, self).__init__()
         self._screen = screen

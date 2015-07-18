@@ -1130,6 +1130,53 @@ else:
         Curses screen implementation.
         """
 
+        # Virtual key code mapping.
+        _KEY_MAP = {
+            27: Screen.KEY_ESCAPE,
+            curses.KEY_F1: Screen.KEY_F1,
+            curses.KEY_F2: Screen.KEY_F2,
+            curses.KEY_F3: Screen.KEY_F3,
+            curses.KEY_F4: Screen.KEY_F4,
+            curses.KEY_F5: Screen.KEY_F5,
+            curses.KEY_F6: Screen.KEY_F6,
+            curses.KEY_F7: Screen.KEY_F7,
+            curses.KEY_F8: Screen.KEY_F8,
+            curses.KEY_F9: Screen.KEY_F9,
+            curses.KEY_F10: Screen.KEY_F10,
+            curses.KEY_F11: Screen.KEY_F11,
+            curses.KEY_F12: Screen.KEY_F12,
+            curses.KEY_F13: Screen.KEY_F13,
+            curses.KEY_F14: Screen.KEY_F14,
+            curses.KEY_F15: Screen.KEY_F15,
+            curses.KEY_F16: Screen.KEY_F16,
+            curses.KEY_F17: Screen.KEY_F17,
+            curses.KEY_F18: Screen.KEY_F18,
+            curses.KEY_F19: Screen.KEY_F19,
+            curses.KEY_F20: Screen.KEY_F20,
+            curses.KEY_F21: Screen.KEY_F21,
+            curses.KEY_F22: Screen.KEY_F22,
+            curses.KEY_F23: Screen.KEY_F23,
+            curses.KEY_F24: Screen.KEY_F24,
+            curses.KEY_PRINT: Screen.KEY_PRINT_SCREEN,
+            curses.KEY_IC: Screen.KEY_INSERT,
+            curses.KEY_DC: Screen.KEY_DELETE,
+            curses.KEY_HOME: Screen.KEY_HOME,
+            curses.KEY_END: Screen.KEY_END,
+            curses.KEY_LEFT: Screen.KEY_LEFT,
+            curses.KEY_UP: Screen.KEY_UP,
+            curses.KEY_RIGHT: Screen.KEY_RIGHT,
+            curses.KEY_DOWN: Screen.KEY_DOWN,
+            curses.KEY_PPAGE: Screen.KEY_PAGE_UP,
+            curses.KEY_NPAGE: Screen.KEY_PAGE_DOWN,
+            curses.KEY_BACKSPACE: Screen.KEY_BACK,
+            9: Screen.KEY_TAB,
+            # Terminals translate keypad keys, so no need for a special
+            # mapping here.
+
+            # Terminals don't transmit meta keys (like control, shift, etc), so
+            # there's no translation for them either.
+        }
+
         #: Conversion from Screen attributes to curses equivalents.
         _ATTRIBUTES = {
             Screen.A_BOLD: curses.A_BOLD,
@@ -1150,6 +1197,7 @@ else:
             self._screen = win
             self.buffer_height = height
             self._pad = curses.newpad(self.buffer_height, self.width)
+            self._pad.keypad(1)
 
             # Set up basic colour schemes.
             self.colours = curses.COLORS
@@ -1209,7 +1257,13 @@ else:
             key = self._pad.getch()
             if key == curses.KEY_RESIZE:
                 self._re_sized = True
-            return key
+            elif key in self._KEY_MAP:
+                self.putch(str(self._KEY_MAP[key]), 0, 1, 2)
+                return self._KEY_MAP[key]
+            if key != -1:
+                self.putch(str(key), 0, 0, 1)
+                return key
+            return None
 
         def has_resized(self):
             """
