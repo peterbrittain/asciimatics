@@ -954,6 +954,9 @@ if sys.platform == "win32":
             win32con.VK_NEXT: Screen.KEY_PAGE_DOWN,
             win32con.VK_BACK: Screen.KEY_BACK,
             win32con.VK_TAB: Screen.KEY_TAB,
+        }
+
+        _EXTRA_KEY_MAP = {
             win32con.VK_NUMPAD0: Screen.KEY_NUMPAD0,
             win32con.VK_NUMPAD1: Screen.KEY_NUMPAD1,
             win32con.VK_NUMPAD2: Screen.KEY_NUMPAD2,
@@ -1029,6 +1032,26 @@ if sys.platform == "win32":
             # Windows is limited to the ANSI colour set.
             self.colours = 8
 
+            # Opt for compatibility with Linux by default
+            self._map_all = False
+
+        def map_all_keys(self, state):
+            """
+            Switch on extended keyboard mapping for this Screen.
+
+            :param state: Boolean flag where true means map all keys.
+
+            Enabling this setting will allow Windows to tell you when any key
+            is pressed, including metakeys (like shift and control) and whether
+            the numeric keypad keys have been used.
+
+            .. warning::
+
+                Using this means your application will not be compatible across
+                all platforms.
+            """
+            self._map_all = state
+
         def get_key(self):
             """
             Check for a key without waiting.
@@ -1041,6 +1064,9 @@ if sys.platform == "win32":
                     # Translate keys that don't match characters first.
                     if event.VirtualKeyCode in self._KEY_MAP:
                         return self._KEY_MAP[event.VirtualKeyCode]
+                    if (self._map_all and
+                                event.VirtualKeyCode in self._EXTRA_KEY_MAP):
+                        return self._EXTRA_KEY_MAP[event.VirtualKeyCode]
                     return ord(event.Char)
             return None
 
