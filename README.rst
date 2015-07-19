@@ -83,8 +83,8 @@ More examples of what you can do are available in the project samples directory,
 
 Alternatively, you can browse the gallery at https://github.com/peterbrittain/asciimatics/wiki.
 
-Bugs
-----
+Bugs and enhancements
+---------------------
 
 You can report bugs and submit enhancement requests at https://github.com/peterbrittain/asciimatics/issues
 
