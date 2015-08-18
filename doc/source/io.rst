@@ -35,3 +35,22 @@ Input
 To handle user input, use the :py:meth:`get_key` method.  This instantly returns the latest key-press, including auto repeat for keys held down, without waiting for a new line and without echoing it to screen.  The returned key is the ordinal representation of the key (taking into account keyboard state - e.g. caps lock) if possible, or an extended key code (the `KEY_xxx` constants in the Screen class) where not.  If there is no key-press available, this will return `None`.
 
 For example, if you press 'a' normally `get_key` will return 97, which is `ord('a')`.  If you press the same key with caps lock on, you will get 65, which is `ord('A')`.  If you press 'F7' you will get `KEY_F7` instead.
+
+Screen Resizing
+---------------
+It is not possible to change the Screen size programmatically.  However, the user may resize their terminal or console while your program is running.
+
+You can read the current  size from the :py:obj:`.dimensions` property on the Screen.  Rather than poll this property, you can check if your Screen has resized by calling the :py:meth:`.has_resized` method.  This will tell you if the dimensions have been changed by the user since it was last called.  
+
+In addition, you can tell the Screen to throw an exception if this happens while you are playing a Scene by specifying stop_on_resize=True.
+
+Scraping Text
+-------------
+Sometimes it is useful to be able to read what is already displayed on the Screen at a given location.  This is often referred to as screen scraping.  You can do this using the :py:meth:`.getch` method.  It will return the displayed character and attributes for any single character location on the Screen.
+
+.. code-block:: python
+
+    # Check we've not already displayed something before updating.
+    current_char, attributes = screen.getch(x, y)
+    if current_char != 32:
+        screen.putch('X', x, y)
