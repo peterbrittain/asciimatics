@@ -28,7 +28,11 @@ Attributes are defined by the `A_xxx` constants in the Screen class.  Most syste
     # Bright green text
     screen.putch('Hello world!', 0, 0, COLOUR_GREEN, A_BOLD)
 
-If you want to do something more complex, you can use the :py:`paint` method to specify a colour map for each character to be displayed.  This must be an list of paired colour\attribute values (tuples or lists) that is at least as long as the text to be displayed.
+If you want to do something more complex, you can use the :py:`paint` method to specify a colour map for each character to be displayed.  This must be an list of paired colour\attribute values (tuples or lists) that is at least as long as the text to be displayed.  This method is typically used for displaying complex, multi-coloured text from a Renderer.
+
+Refreshing the Screen
+---------------------
+The Screen maintains a buffer of what is to be displayed and will only actually display it once the :py:meth:`refresh` method is called.  This is done to reduce flicker on the display device as new content is created.  The expectation is that applications re-render everything that needs to be displayed and then call refresh at the end.  When using the :py:meth:`play` method to do animations, this is done automatically at the end of each frame.
 
 Input
 -----
@@ -54,3 +58,21 @@ Sometimes it is useful to be able to read what is already displayed on the Scree
     current_char, attributes = screen.getch(x, y)
     if current_char != 32:
         screen.putch('X', x, y)
+
+Line drawing
+------------
+The Screen object also provides some anti-aliased line drawing facilities, using ASCII characters to represent the line.  The :py:meth:`move` method will move the drawing cursor to the specified coordinates and then the :py:meth:`draw` method will draw a straight line from the current cursor location to the specified coordinates.
+
+You can override the anti-aliasing with the `char` parameter.  This is most useful when trying to clear what was already drawn.  For example:
+
+.. code-block:: python
+
+    # draw a diagonal line from the top-left of the screen.
+    screen.move(0, 0)
+    screen.draw(10, 10)
+
+    # Clear the line
+    screen.move(0, 0)
+    screen.draw(10, 10, char=' ')
+
+If the resulting line is too thick, you can also pick a thinner pen by specifying `thin=True`.  Examples of both styles can be found in the Clock sample code.
