@@ -3,11 +3,14 @@ CHANGE HISTORY
 
 1.3.0
 -----
-- Added BarChart rendered and demo.
+- Added BarChart renderer and demo.
+- Added support for extended key codes on Windows and Linux.
+- Added support for dynamic paths using keyboard input.  Created interactive
+  demo sample to show how this works.
 - Split Renderer into StaticRenderer and DynamicRenderer.  Code that used
   Renderer should now use StaticRenderer.
 - Added speed option to Print effect.
-- Fixed up curses colour detection and .
+- Fixed up curses colour detection and Unicode bug in python2 on Windows.
 
 1.2.0
 -----
