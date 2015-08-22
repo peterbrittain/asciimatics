@@ -19,7 +19,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='asciimatics',
-    version='1.2.0',
+    version='1.3.0',
     description='A unified package to do curses-like operations across all '
                 'platforms (including Windows) and create ASCII art animations',
     long_description=long_description,
