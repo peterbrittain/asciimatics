@@ -28,3 +28,15 @@ All renderer a must implement the API of the abstract Renderer class, however th
 Once you have a renderer you can extract the next image to de displayed by calling :py:meth:`.rendered_text`.  This will cycle round the images generated and return a tuple that you can pass to the Screen paint method.  Generally speaking, rather than doing this directly, you will typically want to use an Effect to handle this.
 
 For more examples of each, see the asciimatics samples folder.
+
+Experimental
+------------
+A Renderer can also return a plain text string representation of the next rendered text image.  This means they can be used outside of a Screen.  For example:
+
+.. code-block:: python
+
+    # Print a bar chart with random bars formed of equals signs.
+    def fn():
+        return randint(0, 40)
+    renderer = BarChart(10, 40, [fn, fn], char='=')
+    print(renderer)
