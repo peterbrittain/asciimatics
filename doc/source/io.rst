@@ -3,7 +3,7 @@ Basic Input\\Output
 
 Creating a Screen
 ------------------
-The starting point for any asciimatics program is the :py:obj:`.Screen` object.  It can most easily be obtained from the :py:methods:`.wrapper` static method.  This will handle all the necessary initialization for your environment and pass the constructed Screen into the specified function.  For example:
+The starting point for any asciimatics program is the :py:obj:`.Screen` object.  It can most easily be obtained from the :py:meth:`.wrapper` static method.  This will handle all the necessary initialization for your environment and pass the constructed Screen into the specified function.  For example:
 
 .. code-block:: python
 
@@ -28,7 +28,7 @@ Attributes are defined by the `A_xxx` constants in the Screen class.  Most syste
     # Bright green text
     screen.putch('Hello world!', 0, 0, COLOUR_GREEN, A_BOLD)
 
-If you want to do something more complex, you can use the :py:`.paint` method to specify a colour map for each character to be displayed.  This must be an list of paired colour\attribute values (tuples or lists) that is at least as long as the text to be displayed.  This method is typically used for displaying complex, multi-coloured text from a Renderer.
+If you want to do something more complex, you can use the :py:meth:`.paint` method to specify a colour map for each character to be displayed.  This must be an list of paired colour\attribute values (tuples or lists) that is at least as long as the text to be displayed.  This method is typically used for displaying complex, multi-coloured text from a Renderer.
 
 Refreshing the Screen
 ---------------------
