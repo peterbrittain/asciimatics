@@ -12,6 +12,8 @@ Contents:
    :maxdepth: 2
 
    intro
+   io
+   rendering
    modules
 
 Indices and tables
