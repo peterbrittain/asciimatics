@@ -34,9 +34,8 @@ To install asciimatics, simply:
 
     $ pip install asciimatics
 
-
-How to use it?
---------------
+Quick start guide
+-----------------
 
 Create a :py:obj:`.Screen`, put together a :py:obj:`.Scene`
 using some :py:obj:`.Effect` objects and then get the Screen to play it.  An Effect
