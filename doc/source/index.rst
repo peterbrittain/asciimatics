@@ -14,7 +14,7 @@ Contents:
    intro
    io
    rendering
-   Animation
+   animation
    modules
 
 Indices and tables
