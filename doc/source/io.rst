@@ -32,7 +32,7 @@ If you want to do something more complex, you can use the :py:meth:`.paint` meth
 
 Refreshing the Screen
 ---------------------
-The Screen maintains a buffer of what is to be displayed and will only actually display it once the :py:meth:`.refresh` method is called.  This is done to reduce flicker on the display device as new content is created.  The expectation is that applications re-render everything that needs to be displayed and then call refresh when all the new content is ready to be displayed.  When using the :py:meth:`.play` method to do animations, this is done For you automatically at the end of each frame.
+The Screen maintains a buffer of what is to be displayed and will only actually display it once the :py:meth:`.refresh` method is called.  This is done to reduce flicker on the display device as new content is created.  The expectation is that applications re-render everything that needs to be displayed and then call refresh when all the new content is ready to be displayed.  When using the :py:meth:`.play` method to do animations, this is done for you automatically at the end of each frame.
 
 Input
 -----
