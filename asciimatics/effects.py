@@ -617,6 +617,8 @@ class Sprite(Effect):
     def process_key(self, key):
         if isinstance(self._path, DynamicPath):
             return self._path.process_key(key)
+        else:
+            return key
 
 
 class _Flake(object):
