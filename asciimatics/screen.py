@@ -550,7 +550,8 @@ class Screen(with_metaclass(ABCMeta, object)):
         :param transparent: Whether to print spaces or not, thus giving a
             transparent effect.
 
-        See curses for definitions of the colour and attribute values.
+        The colours and attributes are the COLOUR_xxx and A_yyy constants
+        defined in the Screen class.
         """
 
     def centre(self, text, y, colour=7, attr=0, colour_map=None):
@@ -564,7 +565,8 @@ class Screen(with_metaclass(ABCMeta, object)):
         :param attr: The cell attribute of the text to be displayed.
         :param colour_map: Colour/attribute list for multi-colour text.
 
-        See curses for definitions of the colour and attribute values.
+        The colours and attributes are the COLOUR_xxx and A_yyy constants
+        defined in the Screen class.
         """
         x = (self.width - len(text)) // 2
         self.paint(text, x, y, colour, attr, colour_map=colour_map)
@@ -583,7 +585,8 @@ class Screen(with_metaclass(ABCMeta, object)):
             transparent effect.
         :param colour_map: Colour/attribute list for multi-colour text.
 
-        See curses for definitions of the colour and attribute values.  The
+        The colours and attributes are the COLOUR_xxx and A_yyy constants
+        defined in the Screen class.
         colour_map is a list of tuples (colour, attribute) that must be the
         same length as the passed in text (or None if no mapping is required).
         """
@@ -857,7 +860,8 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
         :param transparent: Whether to print spaces or not, thus giving a
             transparent effect.
 
-        See curses for definitions of the colour and attribute values.
+        The colours and attributes are the COLOUR_xxx and A_yyy constants
+        defined in the Screen class.
         """
         # Trim text to the buffer.
         if y < 0 or y >= self._buffer_height:
@@ -1284,10 +1288,8 @@ else:
             if key == curses.KEY_RESIZE:
                 self._re_sized = True
             elif key in self._KEY_MAP:
-                self.putch(str(self._KEY_MAP[key]), 0, 1, 2)
                 return self._KEY_MAP[key]
             if key != -1:
-                self.putch(str(key), 0, 0, 1)
                 return key
             return None
 
@@ -1325,7 +1327,8 @@ else:
             :param transparent: Whether to print spaces or not, thus giving a
                 transparent effect.
 
-            See curses for definitions of the colour and attribute values.
+            The colours and attributes are the COLOUR_xxx and A_yyy constants
+            defined in the Screen class.
             """
             # Crop to pad size
             if y < 0:
@@ -1355,7 +1358,7 @@ else:
         Blessed screen implementation.
         """
 
-        #: Conversion from Screen attributes to curses equivalents.
+        #: Conversion from Screen attributes to blessed equivalents.
         ATTRIBUTES = {
             Screen.A_BOLD: lambda term: term.bold,
             Screen.A_NORMAL: lambda term: "",
