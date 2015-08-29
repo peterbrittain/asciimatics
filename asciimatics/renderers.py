@@ -456,7 +456,7 @@ class Rainbow(StaticRenderer):
     """
 
     # Colour palette when limited to 16 colours (8 dim and 8 bright).
-    _16_palette = [1, 3, 2, 6, 4, 5]
+    _16_palette = [1, 1, 3, 3, 2, 2, 6, 6, 4, 4, 5, 5]
 
     # Colour palette for 256 colour xterm mode.
     _256_palette = [196, 202, 208, 214, 220, 226,
