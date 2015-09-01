@@ -2,7 +2,7 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from future.utils import with_metaclass
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 from builtins import object
 from builtins import range
 
@@ -190,7 +190,7 @@ class DynamicPath(with_metaclass(ABCMeta, _AbstractPath)):
 
     def __init__(self, screen, x, y):
         """
-        To implement a DynamicPath, override the :py:meth:`.process_key()`
+        To implement a DynamicPath, override the :py:meth:`.process_event()`
         method to react to any user input.
         """
         super(DynamicPath, self).__init__()
@@ -219,10 +219,11 @@ class DynamicPath(with_metaclass(ABCMeta, _AbstractPath)):
         return False
 
     @abstractmethod
-    def process_key(self, key):
+    def process_event(self, event):
         """
-        Process any keypress.
+        Process any mouse event.
 
-        :param key: The key that was pressed.
-        :returns: None if the Effect processed the key, else the original key.
+        :param event: The event that was triggered.
+        :returns: None if the Effect processed the event, else the original
+                  event.
         """

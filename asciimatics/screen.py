@@ -4,12 +4,12 @@ from __future__ import print_function
 from builtins import object
 from builtins import range
 from future.utils import with_metaclass
-import os
 import time
 from abc import ABCMeta, abstractmethod
 import copy
 import sys
 import signal
+from asciimatics.event import KeyboardEvent, MouseEvent
 from .exceptions import ResizeScreenError
 
 
@@ -510,10 +510,23 @@ class Screen(with_metaclass(ABCMeta, object)):
         Refresh the screen.
         """
 
-    @abstractmethod
     def get_key(self):
         """
-        Check for a key without waiting.
+        Check for a key without waiting.  This method is deprecated.  Use
+        :py:meth:`.get_event` instead.
+        """
+        event = self.get_event()
+        if event and isinstance(event, KeyboardEvent):
+            return event.key_code
+        return None
+
+    @abstractmethod
+    def get_event(self):
+        """
+        Check for any events (e.g. key-press or mouse movement) without waiting.
+
+        :returns: A :py:obj:`.Event` object if anything was detected, otherwise
+                  it returns None.
         """
 
     @abstractmethod
@@ -631,20 +644,25 @@ class Screen(with_metaclass(ABCMeta, object)):
                 if scene.clear:
                     self.clear()
                 scene.reset()
-                re_sized = False
+                re_sized = skipped = False
                 while (scene.duration < 0 or frame < scene.duration) and \
-                        not re_sized:
+                        not re_sized and not skipped:
                     frame += 1
                     for effect in scene.effects:
                         effect.update(frame)
                     self.refresh()
-                    c = self.get_key()
-                    if c is not None:
-                        c = scene.process_key(c)
-                    if c in (ord("X"), ord("x"), ord("Q"), ord("q")):
-                        return
-                    if c in (ord(" "), ord("\n")):
-                        break
+                    event = self.get_event()
+                    while event is not None:
+                        event = scene.process_event(event)
+                        if isinstance(event, KeyboardEvent):
+                            c = event.key_code
+                            self.putch(str(c), 0, 0)
+                            if c in (ord("X"), ord("x"), ord("Q"), ord("q")):
+                                return
+                            if c in (ord(" "), ord("\n")):
+                                skipped = True
+                                break
+                        event = self.get_event()
                     re_sized = self.has_resized()
                     time.sleep(0.05)
 
@@ -1056,22 +1074,40 @@ if sys.platform == "win32":
             """
             self._map_all = state
 
-        def get_key(self):
+        def get_event(self):
             """
-            Check for a key without waiting.
+            Check for any event without waiting.
             """
-            # Look for a new keypress and consume it if there is one.
+            # Look for a new event and consume it if there is one.
             if len(self._stdin.PeekConsoleInput(1)) > 0:
                 event = self._stdin.ReadConsoleInput(1)[0]
                 if (event.EventType == win32console.KEY_EVENT and
                         event.KeyDown):
-                    # Translate keys that don't match characters first.
+                    # Translate keys into a KeyboardEvent object.
+                    key_code = ord(event.Char)
                     if event.VirtualKeyCode in self._KEY_MAP:
-                        return self._KEY_MAP[event.VirtualKeyCode]
+                        key_code = self._KEY_MAP[event.VirtualKeyCode]
                     if (self._map_all and
-                                event.VirtualKeyCode in self._EXTRA_KEY_MAP):
-                        return self._EXTRA_KEY_MAP[event.VirtualKeyCode]
-                    return ord(event.Char)
+                            event.VirtualKeyCode in self._EXTRA_KEY_MAP):
+                        key_code = self._EXTRA_KEY_MAP[event.VirtualKeyCode]
+                    return KeyboardEvent(key_code)
+                elif event.EventType == win32console.MOUSE_EVENT:
+                    # Translate into a MouseEvent object.
+                    button = 0
+                    if event.EventFlags == 0:
+                        # Button pressed - translate it.
+                        if (event.ButtonState &
+                                win32con.FROM_LEFT_1ST_BUTTON_PRESSED != 0):
+                            button |= MouseEvent.LEFT_CLICK
+                        if (event.ButtonState &
+                                win32con.RIGHTMOST_BUTTON_PRESSED != 0):
+                            button |= MouseEvent.RIGHT_CLICK
+                    elif event.EventFlags & win32con.DOUBLE_CLICK != 0:
+                        button |= MouseEvent.DOUBLE_CLICK
+
+                    return MouseEvent(event.MousePosition.X,
+                                      event.MousePosition.Y,
+                                      button)
             return None
 
         def has_resized(self):
@@ -1280,9 +1316,9 @@ else:
                               h - 1,
                               w - 1)
 
-        def get_key(self):
+        def get_event(self):
             """
-            Check for a key without waiting.
+            Check for an event without waiting.
             """
             key = self._pad.getch()
             if key == curses.KEY_RESIZE:
@@ -1355,7 +1391,8 @@ else:
 
     class _BlessedScreen(_BufferedScreen):
         """
-        Blessed screen implementation.
+        Blessed screen implementation.  This is deprecated as it doesn't support
+        mouse input.
         """
 
         #: Conversion from Screen attributes to blessed equivalents.
@@ -1406,9 +1443,13 @@ else:
             except IOError:
                 pass
 
-        def get_key(self):
+        def get_event(self):
             """
-            Check for a key without waiting.
+            Check for any event without waiting.
+
+            .. warning::
+
+                This does not support mouse events.
             """
             key = self._terminal.inkey(timeout=0)
             return ord(key) if key != "" else None

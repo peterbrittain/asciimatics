@@ -1,6 +1,14 @@
 CHANGE HISTORY
 ==============
 
+1.4.0
+-----
+- Added Mouse support.  This had 2 major impacts:
+  1. It meant that blessed support is now completely deprecated as it doesn't
+     support mouse input.
+  2. All references to processing keys is now deprecated.  You must now use the
+     event equivalent API instead.
+
 1.3.0
 -----
 - Added BarChart renderer and demo.
