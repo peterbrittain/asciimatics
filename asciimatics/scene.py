@@ -32,18 +32,19 @@ class Scene(object):
         for effect in self._effects:
             effect.reset()
 
-    def process_key(self, key):
+    def process_event(self, event):
         """
-        Process a new keypress.
+        Process a new input event.
 
-        :param key: The key that has been pressed.
-        :returns: None if the Scene processed the key, else the original key.
+        :param event: The Event that has been triggered.
+        :returns: None if the Scene processed the event, else the original
+                  event.
         """
         for effect in self._effects:
-            key = effect.process_key(key)
-            if key is None:
+            event = effect.process_event(event)
+            if event is None:
                 break
-        return key
+        return event
 
     @property
     def effects(self):

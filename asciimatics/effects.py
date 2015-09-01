@@ -29,14 +29,14 @@ class Effect(with_metaclass(ABCMeta, object)):
     3.  It will then run the scene, calling :py:meth:`.Effect.update` for
         each effect that is in the scene.  The base Effect will then call the
         abstract method _update() if the effect should be visible.
-    4.  If any keys are pressed, the scene will call
-        :py:meth:`.Effect.process_key` for each key, allowing the effect to act
-        on it if needed.
+    4.  If any keys are pressed or the mouse moved/clicked, the scene will call
+        :py:meth:`.Effect.process_event` for each event, allowing the effect to
+        act on it if needed.
 
     New Effects, therefore need to implement the abstract methods on this
     class to satisfy the contract with Scene.  Since most effects don't require
-    user interaction, the default process_key() implementation will ignore the
-    key (and so effects don't need to implement this method unless needed).
+    user interaction, the default process_event() implementation will ignore the
+    event (and so effects don't need to implement this method unless needed).
     """
 
     def __init__(self, start_frame=0, stop_frame=0):
@@ -78,14 +78,15 @@ class Effect(with_metaclass(ABCMeta, object)):
         Last frame for this effect.  A value of zero means no specific end.
         """
 
-    def process_key(self, key):
+    def process_event(self, event):
         """
-        Process any keypress.
+        Process any input event.
 
-        :param key: The key that was pressed.
-        :returns: None if the Effect processed the key, else the original key.
+        :param event: The event that was triggered.
+        :returns: None if the Effect processed the event, else the original
+                  event.
         """
-        return key
+        return event
 
 
 class Scroll(Effect):
@@ -614,11 +615,11 @@ class Sprite(Effect):
     def stop_frame(self):
         return self._stop_frame
 
-    def process_key(self, key):
+    def process_event(self, event):
         if isinstance(self._path, DynamicPath):
-            return self._path.process_key(key)
+            return self._path.process_event(event)
         else:
-            return key
+            return event
 
 
 class _Flake(object):
