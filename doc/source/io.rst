@@ -71,9 +71,10 @@ The exact class returned depends on the event.  It will be either
 :py:obj:`.KeyboardEvent` or :py:obj:`.MouseEvent`.  Handling of each is covered
 below.
 
-*KEYBOARD*
+KEYBOARD
+^^^^^^^^
 This event is triggered for any key-press, including auto repeat when keys are
-held down.  The :py:obj:`.KeyboardEvent.key_code` is the ordinal representation
+held down.  The :py:obj:`key_code` is the ordinal representation
 of the key (taking into account keyboard state - e.g. caps lock) if possible,
 or an extended key code (the `KEY_xxx` constants in the Screen class) where not.
 
@@ -81,11 +82,12 @@ For example, if you press 'a' normally `get_key` will return 97, which is
 `ord('a')`.  If you press the same key with caps lock on, you will get 65,
 which is `ord('A')`.  If you press 'F7' you will get `KEY_F7` instead.
 
-*MOUSE*
+MOUSE
+^^^^^
 This event is triggered for any mouse movement or button click.  The current
-coordinates of the mouse on the Screen are stored in the :py:obj:`.MouseEvent.x`
-and :py:obj:`.MouseEvent.y` properties.  If a button was clicked, this is
-tracked by the :py:obj:`.MouseEvent.buttons` property.  Allowed values for the
+coordinates of the mouse on the Screen are stored in the :py:obj:`x`
+and :py:obj:`y` properties.  If a button was clicked, this is
+tracked by the :py:obj:`buttons` property.  Allowed values for the
 buttons are LEFT_CLICK, RIGHT_CLICK and DOUBLE_CLICK.
 
 .. warning::
