@@ -88,6 +88,16 @@ and :py:obj:`.MouseEvent.y` properties.  If a button was clicked, this is
 tracked by the :py:obj:`.MouseEvent.buttons` property.  Allowed values for the
 buttons are LEFT_CLICK, RIGHT_CLICK and DOUBLE_CLICK.
 
+.. warning::
+
+    In general, Windows will report all of these without any modifications.
+    Linux will only report mouse events if you are using a terminal that
+    supports mouse events (e.g. xterm) in the terminfo database.  Even then,
+    not all terminals report all events.  For example, the standard xterm
+    function is just to report button clicks.  If you need your application
+    to handle mouse move events too, you will need to use the xterm-1003
+    terminal type instead.
+
 Screen Resizing
 ---------------
 It is not possible to change the Screen size programmatically.  However, the

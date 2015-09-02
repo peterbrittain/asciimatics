@@ -653,6 +653,7 @@ class Screen(with_metaclass(ABCMeta, object)):
                     self.refresh()
                     event = self.get_event()
                     while event is not None:
+                        self.putch(str(event), 0, 0)
                         event = scene.process_event(event)
                         if isinstance(event, KeyboardEvent):
                             c = event.key_code
@@ -1282,6 +1283,10 @@ else:
             self._re_sized = False
             signal.signal(signal.SIGWINCH, self._resize_handler)
 
+            # Enable mouse events
+            curses.mousemask(curses.ALL_MOUSE_EVENTS |
+                             curses.REPORT_MOUSE_POSITION)
+
         def _resize_handler(self, *_):
             """
             Window resize signal handler.  We don't care about any of the
@@ -1322,11 +1327,25 @@ else:
             """
             key = self._pad.getch()
             if key == curses.KEY_RESIZE:
+                # Handle screen resize
                 self._re_sized = True
-            elif key in self._KEY_MAP:
-                return self._KEY_MAP[key]
-            if key != -1:
-                return key
+            elif key == curses.KEY_MOUSE:
+                # Handle a mouse event
+                _, x, y, _, bstate = curses.getmouse()
+                buttons = 0
+                if bstate & curses.BUTTON1_CLICKED != 0:
+                    buttons |= MouseEvent.LEFT_CLICK
+                if bstate & curses.BUTTON3_CLICKED != 0:
+                    buttons |= MouseEvent.RIGHT_CLICK
+                if bstate & curses.BUTTON1_DOUBLE_CLICKED != 0:
+                    buttons |= MouseEvent.DOUBLE_CLICK
+                return MouseEvent(x, y, buttons)
+            else:
+                # Handle a genuine key press.
+                if key in self._KEY_MAP:
+                    return KeyboardEvent(self._KEY_MAP[key])
+                elif key != -1:
+                    return KeyboardEvent(key)
             return None
 
         def has_resized(self):
