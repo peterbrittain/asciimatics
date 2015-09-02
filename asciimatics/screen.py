@@ -653,11 +653,9 @@ class Screen(with_metaclass(ABCMeta, object)):
                     self.refresh()
                     event = self.get_event()
                     while event is not None:
-                        self.putch(str(event), 0, 0)
                         event = scene.process_event(event)
                         if isinstance(event, KeyboardEvent):
                             c = event.key_code
-                            self.putch(str(c), 0, 0)
                             if c in (ord("X"), ord("x"), ord("Q"), ord("q")):
                                 return
                             if c in (ord(" "), ord("\n")):
@@ -1468,10 +1466,10 @@ else:
 
             .. warning::
 
-                This does not support mouse events.
+                Blessed does not support mouse events.
             """
             key = self._terminal.inkey(timeout=0)
-            return ord(key) if key != "" else None
+            return KeyboardEvent(ord(key)) if key != "" else None
 
         def has_resized(self):
             """
