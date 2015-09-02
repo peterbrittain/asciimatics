@@ -95,8 +95,8 @@ buttons are LEFT_CLICK, RIGHT_CLICK and DOUBLE_CLICK.
     supports mouse events (e.g. xterm) in the terminfo database.  Even then,
     not all terminals report all events.  For example, the standard xterm
     function is just to report button clicks.  If you need your application
-    to handle mouse move events too, you will need to use the xterm-1003
-    terminal type instead.
+    to handle mouse move events too, you will need to use a terminal that
+    supports the additional extensions - e.g. the xterm-1003 terminal type.
 
 Screen Resizing
 ---------------
