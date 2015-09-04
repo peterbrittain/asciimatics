@@ -25,7 +25,7 @@ All renderers must implement the API of the abstract :py:obj:`Renderer` class, h
         return randint(0, 40)
     renderer = BarChart(10, 40, [fn, fn], char='=')
 
-Once you have a Renderer you can extract the next text to de displayed by calling :py:meth:`.rendered_text`.  This will cycle round the static rendered text sequentially or just create the new dynamic rendered text and return it (for use in the Screen paint method).  Generally speaking, rather than doing this directly with the Screen, you will typically want to use an Effect to handle this.  See `Animation`_ for more details.
+Once you have a Renderer you can extract the next text to de displayed by calling :py:meth:`.rendered_text`.  This will cycle round the static rendered text sequentially or just create the new dynamic rendered text and return it (for use in the Screen paint method).  Generally speaking, rather than doing this directly with the Screen, you will typically want to use an Effect to handle this.  See :ref:`animation-ref` for more details.
 
 For more examples of Renderers, see the asciimatics samples folder.
 
