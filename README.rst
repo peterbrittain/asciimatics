@@ -19,6 +19,7 @@ function you could ask for, including:
 * Coloured/styled text - including 256 colour terminals
 * Cursor positioning
 * Keyboard input (without blocking or echoing)
+* Mouse input (terminal permitting)
 * Detecting and handling when the console resizes
 * Screen scraping
 * Anti-aliased ASCII line-drawing
