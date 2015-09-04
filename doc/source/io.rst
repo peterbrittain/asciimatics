@@ -28,37 +28,55 @@ location in a specified colour.  The coordinates are zero-indexed starting at
 the top left of the screen and move down and right, so the example above
 displays `Hello world!` at (0, 0) which is the top left of the screen.
 
+Colours
+^^^^^^^
 Common colours are defined by the `COLOUR_xxx` constants in the Screen class,
 e.g. `COLOUR_RED`.  If you have a display capable of handling more than these
 (e.g. 256 colour xterm) you can use the indexes of the colours for that display
-directly instead.
+directly instead.  When creating effects that use these extra colours, it is
+recommended that you also support a reduced colour mode, using just the
+8 common colours.  For an example of how to do this, see the :py:obj:`.Rainbow`
+class.
 
-Attributes are defined by the `A_xxx` constants in the Screen class, e.g.
-`A_BOLD`.  Most systems will support bold (a.k.a bright), normal and reverse
-attributes.  Others are capable of more, but you will have difficulties using
-them in a cross-platform manner and so they are deprecated.  The attribute is
-just another parameter to `putch`.  For example:
+Attributes
+^^^^^^^^^^
+Attributes are a way of modifying the displayed text in some basic ways that
+early hardware terminals supported before they had colours.  Most
+systems don't use hardware terminals any more, but the concept persists in
+all native console APIs and so is also used here.
+
+Supported attributes are defined by the `A_xxx` constants in the Screen class,
+e.g. `A_BOLD`.  Most systems will support bold (a.k.a bright), normal and
+reverse attributes.  Others are capable of more, but you will have
+difficulties using them in a cross-platform manner and so they are deprecated.
+The attribute is just another parameter to `putch`.  For example:
 
 .. code-block:: python
 
     # Bright green text
     screen.putch('Hello world!', 0, 0, COLOUR_GREEN, A_BOLD)
 
+Multicoloured strings
+^^^^^^^^^^^^^^^^^^^^^
 If you want to do something more complex, you can use the :py:meth:`.paint`
 method to specify a colour map for each character to be displayed.  This must
-be an list of paired colour/attribute values (tuples or lists) that is at least
+be a list of paired colour/attribute values (tuples or lists) that is at least
 as long as the text to be displayed.  This method is typically used for
-displaying complex, multi-coloured text from a Renderer.
+displaying complex, multi-coloured text from a Renderer.  See `Animation`_ for
+More details.
 
 Refreshing the Screen
 ---------------------
+Just using the above method to output to screen isn't quite enough.
 The Screen maintains a buffer of what is to be displayed and will only actually
 display it once the :py:meth:`.refresh` method is called.  This is done to
-reduce flicker on the display device as new content is created.  The
-expectation is that applications re-render everything that needs to be
-displayed and then call refresh when all the new content is ready to be
-displayed.  When using the :py:meth:`.play` method to do animations, this is
-done for you automatically at the end of each frame.
+reduce flicker on the display device as new content is created.  
+
+Applications are required to re-render everything that needs to be
+displayed and then call refresh when all the new content is ready.  
+Note that the :py:meth:`.play` method will do this for you automatically
+at the end of each frame, so you don't need to call it again inside your
+animations.
 
 Input
 -----
@@ -71,8 +89,8 @@ The exact class returned depends on the event.  It will be either
 :py:obj:`.KeyboardEvent` or :py:obj:`.MouseEvent`.  Handling of each is covered
 below.
 
-KEYBOARD
-^^^^^^^^
+KeyboardEvent
+^^^^^^^^^^^^^
 This event is triggered for any key-press, including auto repeat when keys are
 held down.  The :py:obj:`key_code` is the ordinal representation
 of the key (taking into account keyboard state - e.g. caps lock) if possible,
@@ -82,8 +100,8 @@ For example, if you press 'a' normally `get_key` will return 97, which is
 `ord('a')`.  If you press the same key with caps lock on, you will get 65,
 which is `ord('A')`.  If you press 'F7' you will get `KEY_F7` instead.
 
-MOUSE
-^^^^^
+MouseEvent
+^^^^^^^^^^
 This event is triggered for any mouse movement or button click.  The current
 coordinates of the mouse on the Screen are stored in the :py:obj:`x`
 and :py:obj:`y` properties.  If a button was clicked, this is
@@ -92,7 +110,7 @@ buttons are LEFT_CLICK, RIGHT_CLICK and DOUBLE_CLICK.
 
 .. warning::
 
-    In general, Windows will report all of these without any modifications.
+    In general, Windows will report all of these straight out of the box.
     Linux will only report mouse events if you are using a terminal that
     supports mouse events (e.g. xterm) in the terminfo database.  Even then,
     not all terminals report all events.  For example, the standard xterm
