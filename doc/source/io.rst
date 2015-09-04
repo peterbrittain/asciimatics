@@ -62,8 +62,8 @@ If you want to do something more complex, you can use the :py:meth:`.paint`
 method to specify a colour map for each character to be displayed.  This must
 be a list of paired colour/attribute values (tuples or lists) that is at least
 as long as the text to be displayed.  This method is typically used for
-displaying complex, multi-coloured text from a Renderer.  See `Animation`_ for
-More details.
+displaying complex, multi-coloured text from a Renderer.  See
+:ref:`Animation-ref` for more details.
 
 Refreshing the Screen
 ---------------------
