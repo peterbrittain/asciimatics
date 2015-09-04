@@ -1,4 +1,4 @@
-.. animation-ref:
+.. _animation-ref:
 
 Animation
 =========
