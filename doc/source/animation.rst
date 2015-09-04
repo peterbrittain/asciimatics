@@ -1,3 +1,5 @@
+.. animation-ref:
+
 Animation
 =========
 
