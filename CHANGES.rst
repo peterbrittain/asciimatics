@@ -8,6 +8,8 @@ CHANGE HISTORY
      support mouse input.
   2. All references to processing keys is now deprecated.  You must now use the
      event equivalent API instead.
+- Added support for dynamic addition/removal of Effects from a Scene, using
+  add_effect() and remove_effect().
 
 1.3.0
 -----

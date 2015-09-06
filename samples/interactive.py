@@ -1,13 +1,16 @@
-from asciimatics.effects import Sprite
+from asciimatics.effects import Sprite, Print
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import ResizeScreenError
-from asciimatics.renderers import StaticRenderer
+from asciimatics.renderers import StaticRenderer, SpeechBubble, FigletText
 from asciimatics.screen import Screen
 from asciimatics.paths import DynamicPath
 from asciimatics.sprites import Arrow
 from asciimatics.scene import Scene
 import sys
 
+# Sprites used for the demo
+arrow = None
+cross_hairs = None
 
 class KeyboardController(DynamicPath):
     def process_event(self, event):
@@ -32,10 +35,17 @@ class KeyboardController(DynamicPath):
 
 
 class MouseController(DynamicPath):
+    def __init__(self, sprite, scene, x, y):
+        super(MouseController, self).__init__(scene, x, y)
+        self._sprite = sprite
+
     def process_event(self, event):
         if isinstance(event, MouseEvent):
             self._x = event.x
             self._y = event.y
+            if event.buttons & MouseEvent.LEFT_CLICK != 0:
+                # Try to whack the other sprites when mouse is clicked
+                self._sprite.whack()
         else:
             return event
 
@@ -51,26 +61,62 @@ class InteractiveArrow(Arrow):
                 screen, screen.width // 2, screen.height // 2),
             colour=Screen.COLOUR_GREEN)
 
+    def say(self, text):
+        # TODO: Should be current pos.
+        x, y = self._path.next_pos()
+        self._scene.add_effect(
+            Print(self._screen,
+                  SpeechBubble(text, "L"),
+                  x=x + 4, y=y - 4,
+                  colour=Screen.COLOUR_CYAN,
+                  clear=True,
+                  delete_count=50))
 
-class MousePlot(Sprite):
+
+class CrossHairs(Sprite):
     def __init__(self, screen):
         """
         See :py:obj:`.Sprite` for details.
         """
-        super(MousePlot, self).__init__(
+        super(CrossHairs, self).__init__(
             screen,
             renderer_dict={
                 "default": StaticRenderer(images=["X"])
             },
-            path=MouseController(screen, screen.width // 2, screen.height // 2),
+            path=MouseController(
+                self, screen, screen.width // 2, screen.height // 2),
             colour=Screen.COLOUR_RED)
+
+    def whack(self):
+        global arrow
+
+        x, y = self._path.next_pos()
+        if self.overlaps(arrow):
+            arrow.say("OUCH!")
+        else:
+            self._scene.add_effect(Print(
+                self._screen,
+                SpeechBubble("BANG!"), y, x, clear=True, delete_count=50))
 
 
 def demo(screen):
+    global arrow, cross_hairs
+    arrow = InteractiveArrow(screen)
+    cross_hairs = CrossHairs(screen)
+
     scenes = []
     effects = [
-        InteractiveArrow(screen),
-        MousePlot(screen)
+        Print(screen, FigletText("Hit the arrow with the mouse!", "digital"),
+              y=screen.height//3-3),
+        Print(screen, FigletText("Press space when you're ready.", "digital"),
+              y=2 * screen.height//3-3),
+    ]
+    scenes.append(Scene(effects, -1))
+
+
+    effects = [
+        arrow,
+        cross_hairs
     ]
     scenes.append(Scene(effects, -1))
 

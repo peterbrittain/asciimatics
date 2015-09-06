@@ -19,7 +19,9 @@ class Scene(object):
                          the duration.  A value of -1 means don't stop.
         :param clear: Whether to clear the Screen at the start of the Scene.
         """
-        self._effects = effects
+        self._effects = []
+        for effect in effects:
+            self.add_effect(effect)
         self._duration = duration
         if duration == 0:
             self._duration = max([x.stop_frame for x in effects])
@@ -31,6 +33,24 @@ class Scene(object):
         """
         for effect in self._effects:
             effect.reset()
+
+    def add_effect(self, effect):
+        """
+        Add an effect to the Scene.  This can be done at any time - event
+        when playing the Scene.
+
+        :param effect: The Effect to be added.
+        """
+        effect.register_scene(self)
+        self._effects.append(effect)
+
+    def remove_effect(self, effect):
+        """
+        Remove an effect from the scene.
+
+        :param effect: The effect to remove.
+        """
+        self._effects.remove(effect)
 
     def process_event(self, event):
         """
