@@ -21,15 +21,17 @@ class Effect(with_metaclass(ABCMeta, object)):
 
     The basic interaction with a :py:obj:`.Scene` is as follows:
 
-    1.  The Scene will call :py:meth:`.Effect.reset` for all Effects when it
+    1.  The Scene will register with the Effect when it as added using
+        :py:meth:`.register_scene`.
+    2.  The Scene will call :py:meth:`.Effect.reset` for all Effects when it
         starts.
-    2.  The Scene will determine the number of frames required (either through
+    3.  The Scene will determine the number of frames required (either through
         explicit configuration or querying :py:obj:`.stop_frame` for every
         Effect).
-    3.  It will then run the scene, calling :py:meth:`.Effect.update` for
+    4.  It will then run the scene, calling :py:meth:`.Effect.update` for
         each effect that is in the scene.  The base Effect will then call the
         abstract method _update() if the effect should be visible.
-    4.  If any keys are pressed or the mouse moved/clicked, the scene will call
+    5.  If any keys are pressed or the mouse moved/clicked, the scene will call
         :py:meth:`.Effect.process_event` for each event, allowing the effect to
         act on it if needed.
 
@@ -39,13 +41,16 @@ class Effect(with_metaclass(ABCMeta, object)):
     event (and so effects don't need to implement this method unless needed).
     """
 
-    def __init__(self, start_frame=0, stop_frame=0):
+    def __init__(self, start_frame=0, stop_frame=0, delete_count=None):
         """
         :param start_frame: Start index for the effect.
         :param stop_frame: Stop index for the effect.
+        :param delete_count: Number of frames before this effect is deleted.
         """
         self._start_frame = start_frame
         self._stop_frame = stop_frame
+        self._delete_count = delete_count
+        self._scene = None
 
     def update(self, frame_no):
         """
@@ -56,6 +61,14 @@ class Effect(with_metaclass(ABCMeta, object)):
         if (frame_no > self._start_frame and
                 (self._stop_frame == 0 or frame_no < self._stop_frame)):
             self._update(frame_no)
+
+    def register_scene(self, scene):
+        """
+        Register the Scene that owns this Effect.
+
+        :param scene: The Scene to be registered
+        """
+        self._scene = scene
 
     @abstractmethod
     def reset(self):
@@ -78,6 +91,17 @@ class Effect(with_metaclass(ABCMeta, object)):
         Last frame for this effect.  A value of zero means no specific end.
         """
 
+    @property
+    def delete_count(self):
+        """
+        The number of frames before this Effect should be deleted.
+        """
+        return self._delete_count
+
+    @delete_count.setter
+    def delete_count(self, value):
+        self._delete_count = value
+
     def process_event(self, event):
         """
         Process any input event.
@@ -96,13 +120,14 @@ class Scroll(Effect):
     Scroll for the desired time.
     """
 
-    def __init__(self, screen, rate, start_frame=0):
+    def __init__(self, screen, rate, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param rate: How many frames to wait between scrolling the screen.
-        :param start_frame: Start index for the effect.
+
+        Also see the common keyward arguments in :py:obj:`.Effect`.
         """
-        super(Scroll, self).__init__(start_frame)
+        super(Scroll, self).__init__(**kwargs)
         self._screen = screen
         self._rate = rate
         self._last_frame = None
@@ -127,14 +152,15 @@ class Cycle(Effect):
     This effect is not compatible with multi-colour rendered text.
     """
 
-    def __init__(self, screen, renderer, y, start_frame=0):
+    def __init__(self, screen, renderer, y, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param renderer: The Renderer which is to be cycled.
         :param y: The line (y coordinate) for the start of the text.
-        :param start_frame: Start index for the effect.
+
+        Also see the common keyward arguments in :py:obj:`.Effect`.
         """
-        super(Cycle, self).__init__(start_frame)
+        super(Cycle, self).__init__(**kwargs)
         self._screen = screen
         self._renderer = renderer
         self._y = y
@@ -166,17 +192,16 @@ class BannerText(Effect):
     banner.
     """
 
-    def __init__(self, screen, renderer, y, colour, start_frame=0,
-                 stop_frame=0):
+    def __init__(self, screen, renderer, y, colour, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param renderer: The renderer to be scrolled
         :param y: The line (y coordinate) for the start of the text.
         :param colour: The colour attribute to use for the text.
-        :param start_frame: Start index for the effect.
-        :param stop_frame: Stop index for the effect.
+
+        Also see the common keyward arguments in :py:obj:`.Effect`.
         """
-        super(BannerText, self).__init__(start_frame, stop_frame)
+        super(BannerText, self).__init__(**kwargs)
         self._screen = screen
         self._renderer = renderer
         self._y = y
@@ -220,8 +245,7 @@ class Print(Effect):
     """
 
     def __init__(self, screen, renderer, y, x=None, colour=7,
-                 clear=False, transparent=True, speed=4, start_frame=0,
-                 stop_frame=0):
+                 clear=False, transparent=True, speed=4, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param renderer: The renderer to be printed.
@@ -231,10 +255,10 @@ class Print(Effect):
         :param colour: The colour attribute to use for the text.
         :param clear: Whether to clear the text before stopping.
         :param speed: The refresh rate in frames between refreshes.
-        :param start_frame: Start index for the effect.
-        :param stop_frame: Stop index for the effect.
+
+        Also see the common keyward arguments in :py:obj:`.Effect`.
         """
-        super(Print, self).__init__(start_frame, stop_frame)
+        super(Print, self).__init__(**kwargs)
         self._screen = screen
         self._renderer = renderer
         self._transparent = transparent
@@ -249,7 +273,8 @@ class Print(Effect):
         pass  # Nothing required
 
     def _update(self, frame_no):
-        if frame_no == self._stop_frame - 1 and self._clear:
+        if self._clear and \
+                (frame_no == self._stop_frame - 1) or (self._delete_count == 1):
             for i in range(0, self._renderer.max_height):
                 self._screen.putch(
                     " " * self._renderer.max_width, self._x, self._y + i)
@@ -271,17 +296,16 @@ class Mirage(Effect):
     text is automatically centred on the screen.
     """
 
-    def __init__(self, screen, renderer, y, colour, start_frame=0,
-                 stop_frame=0):
+    def __init__(self, screen, renderer, y, colour, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param renderer: The renderer to be displayed.
         :param y: The line (y coordinate) for the start of the text.
         :param colour: The colour attribute to use for the text.
-        :param start_frame: Start index for the effect.
-        :param stop_frame: Stop index for the effect.
+
+        Also see the common keyward arguments in :py:obj:`.Effect`.
         """
-        super(Mirage, self).__init__(start_frame, stop_frame)
+        super(Mirage, self).__init__(**kwargs)
         self._screen = screen
         self._renderer = renderer
         self._y = y
@@ -373,13 +397,14 @@ class Stars(Effect):
     Add random stars to the screen and make them twinkle.
     """
 
-    def __init__(self, screen, count, start_frame=0):
+    def __init__(self, screen, count, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param count: The number of starts to create.
-        :param start_frame: Start index for the effect.
+
+        Also see the common keyward arguments in :py:obj:`.Effect`.
         """
-        super(Stars, self).__init__(start_frame)
+        super(Stars, self).__init__(**kwargs)
         self._screen = screen
         self._max = count
         self._stars = []
@@ -461,13 +486,13 @@ class Matrix(Effect):
     Matrix-like falling green letters.
     """
 
-    def __init__(self, screen, start_frame=0, stop_frame=0):
+    def __init__(self, screen, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
-        :param start_frame: Start index for the effect.
-        :param stop_frame: Stop index for the effect.
+
+        Also see the common keyward arguments in :py:obj:`.Effect`.
         """
-        super(Matrix, self).__init__(start_frame, stop_frame)
+        super(Matrix, self).__init__(**kwargs)
         self._screen = screen
         self._chars = []
 
@@ -491,13 +516,13 @@ class Wipe(Effect):
     Wipe the screen down from top to bottom.
     """
 
-    def __init__(self, screen, start_frame=0, stop_frame=0):
+    def __init__(self, screen, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
-        :param start_frame: Start index for the effect.
-        :param stop_frame: Stop index for the effect.
+
+        Also see the common keyward arguments in :py:obj:`.Effect`.
         """
-        super(Wipe, self).__init__(start_frame, stop_frame)
+        super(Wipe, self).__init__(**kwargs)
         self._screen = screen
         self._y = None
 
@@ -521,7 +546,7 @@ class Sprite(Effect):
     """
 
     def __init__(self, screen, renderer_dict, path, colour=Screen.COLOUR_WHITE,
-                 clear=True, start_frame=0, stop_frame=0):
+                 clear=True, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param renderer_dict: A dictionary of Renderers to use for displaying
@@ -529,10 +554,10 @@ class Sprite(Effect):
         :param path: The Path for the Sprite to follow.
         :param colour: The colour to use to render the Sprite.
         :param clear: Whether to clear out old images or leave a trail.
-        :param start_frame: Start index for the effect.
-        :param stop_frame: Stop index for the effect.
+
+        Also see the common keyward arguments in :py:obj:`.Effect`.
         """
-        super(Sprite, self).__init__(start_frame, stop_frame)
+        super(Sprite, self).__init__(**kwargs)
         self._screen = screen
         self._renderer_dict = renderer_dict
         self._path = path
@@ -555,6 +580,33 @@ class Sprite(Effect):
         self._dir_y = None
         self._old_direction = None
         self._path.reset()
+
+    def overlaps(self, other):
+        """
+        Check whether this Sprite overlaps another.
+
+        :param other: The other Sprite to check for an overlap.
+        :returns: True if the two Sprites overlap.
+        """
+        # TODO: Should be current position and last rendered image.
+        (x, y) = self._path.next_pos()
+        w = self._renderer_dict['default'].max_width
+        h = self._renderer_dict['default'].max_height
+        x -= w // 2
+        y -= h // 2
+
+        # TODO: Should be current position and last rendered image.
+        (x2, y2) = other._path.next_pos()
+        w2 = other._renderer_dict['default'].max_width
+        h2 = other._renderer_dict['default'].max_height
+        x2 -= w2 // 2
+        y2 -= h2 // 2
+
+        if ((x > x2 + w2 - 1) or (x2 > x + w - 1) or
+                (y > y2 + h2 - 1) or (y2 > y + h - 1)):
+            return False
+        else:
+            return True
 
     def _update(self, frame_no):
         if frame_no % 2 == 0:
@@ -686,13 +738,13 @@ class Snow(Effect):
     Settling snow effect.
     """
 
-    def __init__(self, screen, start_frame=0, stop_frame=0):
+    def __init__(self, screen, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
-        :param start_frame: Start index for the effect.
-        :param stop_frame: Stop index for the effect.
+
+        Also see the common keyward arguments in :py:obj:`.Effect`.
         """
-        super(Snow, self).__init__(start_frame, stop_frame)
+        super(Snow, self).__init__(**kwargs)
         self._screen = screen
         self._chars = []
 
@@ -719,16 +771,16 @@ class Clock(Effect):
     An ASCII ticking clock (telling the correct local time).
     """
 
-    def __init__(self, screen, x, y, r, start_frame=0, stop_frame=0):
+    def __init__(self, screen, x, y, r, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param x: X coordinate for the centre of the clock.
         :param y: Y coordinate for the centre of the clock.
         :param r: Radius of the clock.
-        :param start_frame: Start index for the effect.
-        :param stop_frame: Stop index for the effect.
+
+        Also see the common keyward arguments in :py:obj:`.Effect`.
         """
-        super(Clock, self).__init__(start_frame, stop_frame)
+        super(Clock, self).__init__(**kwargs)
         self._screen = screen
         self._x = x
         self._y = y
@@ -788,8 +840,7 @@ class Cog(Effect):
     A rotating cog.
     """
 
-    def __init__(self, screen, x, y, radius, direction=1,
-                 start_frame=0, stop_frame=0):
+    def __init__(self, screen, x, y, radius, direction=1, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param x: X coordinate of the centre of the cog.
@@ -797,10 +848,10 @@ class Cog(Effect):
         :param radius: The radius of the cog.
         :param direction: The direction of rotation. Positive numbers are
             anti-clockwise, negative numbers clockwise.
-        :param start_frame: Start index for the effect.
-        :param stop_frame: Stop index for the effect.
+
+        Also see the common keyward arguments in :py:obj:`.Effect`.
         """
-        super(Cog, self).__init__(start_frame, stop_frame)
+        super(Cog, self).__init__(**kwargs)
         self._screen = screen
         self._x = x
         self._y = y
@@ -847,14 +898,14 @@ class RandomNoise(Effect):
     will appear from the noise.
     """
 
-    def __init__(self, screen, signal=None, start_frame=0, stop_frame=0):
+    def __init__(self, screen, signal=None, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param signal: The renderer to use as the 'signal' in the white noise.
-        :param start_frame: Start index for the effect.
-        :param stop_frame: Stop index for the effect.
+
+        Also see the common keyward arguments in :py:obj:`.Effect`.
         """
-        super(RandomNoise, self).__init__(start_frame, stop_frame)
+        super(RandomNoise, self).__init__(**kwargs)
         self._screen = screen
         self._signal = signal
         self._strength = None
@@ -914,14 +965,14 @@ class Julia(Effect):
                     57, 93, 129, 201,
                     200, 199, 198, 197, 0]
 
-    def __init__(self, screen, c=None, start_frame=0, stop_frame=0):
+    def __init__(self, screen, c=None, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param c: The starting value of 'c' for the Julia Set.
-        :param start_frame: Start index for the effect.
-        :param stop_frame: Stop index for the effect.
+
+        Also see the common keyward arguments in :py:obj:`.Effect`.
         """
-        super(Julia, self).__init__(start_frame, stop_frame)
+        super(Julia, self).__init__(**kwargs)
         self._screen = screen
         self._width = screen.width
         self._height = screen.height

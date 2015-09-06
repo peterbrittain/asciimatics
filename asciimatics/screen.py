@@ -650,6 +650,10 @@ class Screen(with_metaclass(ABCMeta, object)):
                     frame += 1
                     for effect in scene.effects:
                         effect.update(frame)
+                        if effect.delete_count is not None:
+                            effect.delete_count -= 1
+                            if effect.delete_count == 0:
+                                scene.remove_effect(effect)
                     self.refresh()
                     event = self.get_event()
                     while event is not None:
