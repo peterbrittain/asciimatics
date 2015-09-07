@@ -113,7 +113,6 @@ def demo(screen):
     ]
     scenes.append(Scene(effects, -1))
 
-
     effects = [
         arrow,
         cross_hairs
