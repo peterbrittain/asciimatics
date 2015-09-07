@@ -64,7 +64,7 @@ def demo(screen):
         _speak(screen, "It can handle as many Effects as you like.",
                podium, 500),
         _speak(screen, "Please press <SPACE> now.", podium, 570),
-        Stars(screen, (screen.width + screen.height) // 2, 360)
+        Stars(screen, (screen.width + screen.height) // 2, start_frame=360)
     ]
     scenes.append(Scene(effects, -1))
 

@@ -556,7 +556,7 @@ class Screen(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
-    def putch(self, text, x, y, colour=7, attr=0, transparent=False):
+    def putch(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
         """
         Print the text at the specified location using the
         specified colour and attributes.
@@ -566,6 +566,7 @@ class Screen(with_metaclass(ABCMeta, object)):
         :param y: The line (y coord) for the start of the text.
         :param colour: The colour of the text to be displayed.
         :param attr: The cell attribute of the text to be displayed.
+        :param bg: The background colour of the text to be displayed.
         :param transparent: Whether to print spaces or not, thus giving a
             transparent effect.
 
@@ -590,7 +591,7 @@ class Screen(with_metaclass(ABCMeta, object)):
         x = (self.width - len(text)) // 2
         self.paint(text, x, y, colour, attr, colour_map=colour_map)
 
-    def paint(self, text, x, y, colour=7, attr=0, transparent=False,
+    def paint(self, text, x, y, colour=7, attr=0, bg=0, transparent=False,
               colour_map=None):
         """
         Paint multi-colour text at the defined location.
@@ -600,6 +601,7 @@ class Screen(with_metaclass(ABCMeta, object)):
         :param y: The line (y coord) for the start of the text.
         :param colour: The default colour of the text to be displayed.
         :param attr: The default cell attribute of the text to be displayed.
+        :param bg: The default background colour of the text to be displayed.
         :param transparent: Whether to print spaces or not, thus giving a
             transparent effect.
         :param colour_map: Colour/attribute list for multi-colour text.
@@ -610,14 +612,14 @@ class Screen(with_metaclass(ABCMeta, object)):
         same length as the passed in text (or None if no mapping is required).
         """
         if colour_map is None:
-            self.putch(text, x, y, colour, attr, transparent)
+            self.putch(text, x, y, colour, attr, bg, transparent)
         else:
             for i, c in enumerate(text):
                 if colour_map[i][0] is None:
-                    self.putch(c, x + i, y, colour, attr, transparent)
+                    self.putch(c, x + i, y, colour, attr, bg, transparent)
                 else:
                     self.putch(c, x + i, y, colour_map[i][0], colour_map[i][1],
-                               transparent)
+                               bg, transparent)
 
     def is_visible(self, x, y):
         """
@@ -690,7 +692,7 @@ class Screen(with_metaclass(ABCMeta, object)):
         self._x = int(round(x, 1)) * 2
         self._y = int(round(y, 1)) * 2
 
-    def draw(self, x, y, char=None, colour=7, thin=False):
+    def draw(self, x, y, char=None, colour=7, bg=0, thin=False):
         """
         Draw a line from drawing cursor to the specified position.  This uses a
         modified Bressenham algorithm, interpolating twice as many points to
@@ -701,6 +703,7 @@ class Screen(with_metaclass(ABCMeta, object)):
         :param y: The line (y coord) for the location to check.
         :param char: Optional character to use to draw the line.
         :param colour: Optional colour for plotting the line.
+        :param bg: Optional background colour for plotting the line.
         :param thin: Optional width of anti-aliased line.
         """
         # Define line end points.
@@ -749,15 +752,15 @@ class Screen(with_metaclass(ABCMeta, object)):
 
                 if char is None:
                     self.putch(self._line_chars[next_chars[0]], px//2, py//2,
-                               colour)
+                               colour, bg=bg)
                     if next_chars[1] != 0:
                         self.putch(self._line_chars[next_chars[1]],
-                                   px // 2, py // 2 + sy, colour)
+                                   px // 2, py // 2 + sy, colour, bg=bg)
                 elif char == " ":
-                    self.putch(char, px // 2, py // 2)
-                    self.putch(char, px // 2, py // 2 + sy)
+                    self.putch(char, px // 2, py // 2, bg=bg)
+                    self.putch(char, px // 2, py // 2 + sy, bg=bg)
                 else:
-                    self.putch(char, px // 2, py // 2, colour)
+                    self.putch(char, px // 2, py // 2, colour, bg=bg)
         else:
             err = dy
             while y != y1:
@@ -782,16 +785,16 @@ class Screen(with_metaclass(ABCMeta, object)):
 
                 if char is None:
                     self.putch(self._line_chars[next_chars[0]], px//2, py//2,
-                               colour)
+                               colour, bg=bg)
                     if next_chars[1] != 0:
                         self.putch(
                             self._line_chars[next_chars[1]], px//2 + sx, py//2,
-                            colour)
+                            colour, bg=bg)
                 elif char == " ":
-                    self.putch(char, px // 2, py // 2)
-                    self.putch(char, px // 2 + sx, py // 2)
+                    self.putch(char, px // 2, py // 2, bg=bg)
+                    self.putch(char, px // 2 + sx, py // 2, bg=bg)
                 else:
-                    self.putch(char, px // 2, py // 2, colour)
+                    self.putch(char, px // 2, py // 2, colour, bg=bg)
 
 
 class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
@@ -817,6 +820,7 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
         # and move commands unnecessarily.
         self._colour = None
         self._attr = None
+        self._bg = None
         self._x = None
         self._y = None
         self._last_start_line = 0
@@ -832,13 +836,13 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
         Clear the Screen of all content.
         """
         # Clear the actual terminal
-        self._change_colours(self.COLOUR_WHITE, 0)
+        self._change_colours(self.COLOUR_WHITE, 0, 0)
         self._clear()
         self._start_line = self._last_start_line = 0
         self._x = self._y = None
 
         # Reset our screen buffer
-        line = [(" ", 7, 0) for _ in range(self.width)]
+        line = [(" ", 7, 0, 0) for _ in range(self.width)]
         self._screen_buffer = [
             copy.deepcopy(line) for _ in range(self._buffer_height)]
         self._double_buffer = copy.deepcopy(self._screen_buffer)
@@ -857,7 +861,7 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
             for x in range(self.width):
                 new_cell = self._double_buffer[y + self._start_line][x]
                 if self._screen_buffer[y + self._start_line][x] != new_cell:
-                    self._change_colours(new_cell[1], new_cell[2])
+                    self._change_colours(new_cell[1], new_cell[2], new_cell[3])
                     self._print_at(new_cell[0], x, y)
                     self._screen_buffer[y + self._start_line][x] = new_cell
 
@@ -871,10 +875,11 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
         :return: A tuple of the ASCII code of the character at the location
                  and the attributes for that character.
         """
+        # TODO: Need to fix up colours/attributes here.
         cell = self._screen_buffer[y][x]
         return ord(cell[0]), cell[1] + cell[2] * 256
 
-    def putch(self, text, x, y, colour=7, attr=0, transparent=False):
+    def putch(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
         """
         Print the text at the specified location using the
         specified colour and attributes.
@@ -884,6 +889,7 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
         :param y: The line (y coord) for the start of the text.
         :param colour: The colour of the text to be displayed.
         :param attr: The cell attribute of the text to be displayed.
+        :param bg: The background colour of the text to be displayed.
         :param transparent: Whether to print spaces or not, thus giving a
             transparent effect.
 
@@ -902,15 +908,16 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
         if len(text) > 0:
             for i, c in enumerate(text):
                 if c != " " or not transparent:
-                    self._double_buffer[y][x + i] = (c, colour, attr)
+                    self._double_buffer[y][x + i] = (c, colour, attr, bg)
 
     @abstractmethod
-    def _change_colours(self, colour, attr):
+    def _change_colours(self, colour, attr, bg):
         """
         Change current colour if required.
 
-        :param colour: New colour to use
-        :param attr: New attributes to use
+        :param colour: New colour to use.
+        :param attr: New attributes to use.
+        :param bg: New background colour to use.
         """
 
     @abstractmethod
@@ -1011,7 +1018,7 @@ if sys.platform == "win32":
             win32con.VK_MENU: Screen.KEY_MENU,
         }
 
-        # Colour lookup table.
+        # Foreground colour lookup table.
         _COLOURS = {
             Screen.COLOUR_BLACK: 0,
             Screen.COLOUR_RED: win32console.FOREGROUND_RED,
@@ -1028,14 +1035,31 @@ if sys.platform == "win32":
                                   win32console.FOREGROUND_BLUE)
         }
 
+        # Background colour lookup table.
+        _BG_COLOURS = {
+            Screen.COLOUR_BLACK: 0,
+            Screen.COLOUR_RED: win32console.BACKGROUND_RED,
+            Screen.COLOUR_GREEN: win32console.BACKGROUND_GREEN,
+            Screen.COLOUR_YELLOW: (win32console.BACKGROUND_RED |
+                                   win32console.BACKGROUND_GREEN),
+            Screen.COLOUR_BLUE: win32console.BACKGROUND_BLUE,
+            Screen.COLOUR_MAGENTA: (win32console.BACKGROUND_RED |
+                                    win32console.BACKGROUND_BLUE),
+            Screen.COLOUR_CYAN: (win32console.BACKGROUND_BLUE |
+                                 win32console.BACKGROUND_GREEN),
+            Screen.COLOUR_WHITE: (win32console.BACKGROUND_RED |
+                                  win32console.BACKGROUND_GREEN |
+                                  win32console.BACKGROUND_BLUE)
+        }
+
         # Attribute lookup table
         _ATTRIBUTES = {
             0: lambda x: x,
             Screen.A_BOLD: lambda x: x | win32console.FOREGROUND_INTENSITY,
             Screen.A_NORMAL: lambda x: x,
             # Windows console uses a bitmap where background is the top nibble,
-            # so we can reverse by simply multiplying by 16.
-            Screen.A_REVERSE: lambda x: x * 16,
+            # so we can reverse by swapping nibbles.
+            Screen.A_REVERSE: lambda x: ((x & 15) * 16) + ((x & 240) // 16),
             Screen.A_UNDERLINE: lambda x: x
         }
 
@@ -1136,20 +1160,23 @@ if sys.platform == "win32":
             self._last_height = height
             return re_sized
 
-        def _change_colours(self, colour, attr):
+        def _change_colours(self, colour, attr, bg):
             """
             Change current colour if required.
 
-            :param colour: New colour to use
-            :param attr: New attributes to use
+            :param colour: New colour to use.
+            :param attr: New attributes to use.
+            :param bg: New background colour to use.
             """
             # Change attribute first as this will reset colours when swapping
             # modes.
-            if colour != self._colour or attr != self._attr:
-                new_attr = self._ATTRIBUTES[attr](self._COLOURS[colour])
+            if colour != self._colour or attr != self._attr or self._bg != bg:
+                new_attr = self._ATTRIBUTES[attr](
+                    self._COLOURS[colour] + self._BG_COLOURS[bg])
                 self._stdout.SetConsoleTextAttribute(new_attr)
                 self._attr = attr
                 self._colour = colour
+                self._bg = bg
 
         def _print_at(self, text, x, y):
             """
@@ -1377,7 +1404,7 @@ else:
             curses_rc = self._pad.inch(y, x)
             return curses_rc & 0xff, curses_rc & 0xff >> 8
 
-        def putch(self, text, x, y, colour=7, attr=0, transparent=False):
+        def putch(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
             """
             Print the text at the specified location using the
             specified colour and attributes.
@@ -1387,6 +1414,7 @@ else:
             :param y: The line (y coord) for the start of the text.
             :param colour: The colour of the text to be displayed.
             :param attr: The cell attribute of the text to be displayed.
+            :param bg: The background colour of the text to be displayed.
             :param transparent: Whether to print spaces or not, thus giving a
                 transparent effect.
 
@@ -1489,12 +1517,13 @@ else:
             self._re_sized = False
             return re_sized
 
-        def _change_colours(self, colour, attr):
+        def _change_colours(self, colour, attr, bg):
             """
             Change current colour if required.
 
-            :param colour: New colour to use
-            :param attr: New attributes to use
+            :param colour: New colour to use.
+            :param attr: New attributes to use.
+            :param bg: New background colour to use.
             """
             # Change attribute first as this will reset colours when swapping
             # modes.
@@ -1510,6 +1539,9 @@ else:
             if colour != self._colour:
                 sys.stdout.write(self._terminal.color(colour))
                 self._colour = colour
+            if bg != self._bg:
+                sys.stdout.write(self._terminal.on_color(bg))
+                self._bg = bg
 
         def _print_at(self, text, x, y):
             """

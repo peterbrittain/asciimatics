@@ -10,6 +10,10 @@ CHANGE HISTORY
      event equivalent API instead.
 - Added support for dynamic addition/removal of Effects from a Scene, using
   add_effect() and remove_effect().
+- Converted all effects to use **kwargs to pass through to base Effect class so
+  that future common frame related features were instantly available.  These
+  parameters must always be specified as keyword arguments as a result.
+- Added support for background colours.
 
 1.3.0
 -----
