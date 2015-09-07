@@ -449,16 +449,22 @@ class Screen(with_metaclass(ABCMeta, object)):
             win_out.SetConsoleCursorInfo(1, 0)
 
             # Disable scrolling
-            mode = win_out.GetConsoleMode()
+            out_mode = win_out.GetConsoleMode()
             win_out.SetConsoleMode(
-                mode & ~ win32console.ENABLE_WRAP_AT_EOL_OUTPUT)
+                out_mode & ~ win32console.ENABLE_WRAP_AT_EOL_OUTPUT)
+
+            # Enable mouse input
+            in_mode = win_in.GetConsoleMode()
+            win_in.SetConsoleMode(in_mode | win32console.ENABLE_MOUSE_INPUT)
+
             try:
                 win_screen = _WindowsScreen(win_out, win_in, height)
                 func(win_screen)
             finally:
                 win_out.SetConsoleCursorInfo(size, visible)
-                win_out.SetConsoleMode(mode)
+                win_out.SetConsoleMode(out_mode)
                 win_out.SetConsoleTextAttribute(7)
+                win_in.SetConsoleMode(in_mode)
         else:
             def _wrapper(win):
                 cur_screen = _CursesScreen(win, height)
