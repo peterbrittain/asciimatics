@@ -125,7 +125,7 @@ class Scroll(Effect):
         :param screen: The Screen being used for the Scene.
         :param rate: How many frames to wait between scrolling the screen.
 
-        Also see the common keyward arguments in :py:obj:`.Effect`.
+        Also see the common keyword arguments in :py:obj:`.Effect`.
         """
         super(Scroll, self).__init__(**kwargs)
         self._screen = screen
@@ -158,7 +158,7 @@ class Cycle(Effect):
         :param renderer: The Renderer which is to be cycled.
         :param y: The line (y coordinate) for the start of the text.
 
-        Also see the common keyward arguments in :py:obj:`.Effect`.
+        Also see the common keyword arguments in :py:obj:`.Effect`.
         """
         super(Cycle, self).__init__(**kwargs)
         self._screen = screen
@@ -199,7 +199,7 @@ class BannerText(Effect):
         :param y: The line (y coordinate) for the start of the text.
         :param colour: The colour attribute to use for the text.
 
-        Also see the common keyward arguments in :py:obj:`.Effect`.
+        Also see the common keyword arguments in :py:obj:`.Effect`.
         """
         super(BannerText, self).__init__(**kwargs)
         self._screen = screen
@@ -244,7 +244,7 @@ class Print(Effect):
     the required location.
     """
 
-    def __init__(self, screen, renderer, y, x=None, colour=7,
+    def __init__(self, screen, renderer, y, x=None, colour=7, bg=0,
                  clear=False, transparent=True, speed=4, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
@@ -253,10 +253,11 @@ class Print(Effect):
                   If not specified, defaults to centring the text on screen.
         :param y: The line (y coordinate) for the start of the text.
         :param colour: The colour attribute to use for the text.
+        :param bg: The background colour to use for the text.
         :param clear: Whether to clear the text before stopping.
         :param speed: The refresh rate in frames between refreshes.
 
-        Also see the common keyward arguments in :py:obj:`.Effect`.
+        Also see the common keyword arguments in :py:obj:`.Effect`.
         """
         super(Print, self).__init__(**kwargs)
         self._screen = screen
@@ -266,6 +267,7 @@ class Print(Effect):
         self._x = ((self._screen.width - renderer.max_width) // 2 if x is None
                    else x)
         self._colour = colour
+        self._bg = bg
         self._clear = clear
         self._speed = speed
 
@@ -276,12 +278,15 @@ class Print(Effect):
         if self._clear and \
                 (frame_no == self._stop_frame - 1) or (self._delete_count == 1):
             for i in range(0, self._renderer.max_height):
-                self._screen.putch(
-                    " " * self._renderer.max_width, self._x, self._y + i)
+                self._screen.putch(" " * self._renderer.max_width,
+                                   self._x,
+                                   self._y + i,
+                                   bg=self._bg)
         elif frame_no % self._speed == 0:
             image, colours = self._renderer.rendered_text
             for (i, line) in enumerate(image):
                 self._screen.paint(line, self._x, self._y + i, self._colour,
+                                   bg=self._bg,
                                    transparent=self._transparent,
                                    colour_map=colours[i])
 
@@ -303,7 +308,7 @@ class Mirage(Effect):
         :param y: The line (y coordinate) for the start of the text.
         :param colour: The colour attribute to use for the text.
 
-        Also see the common keyward arguments in :py:obj:`.Effect`.
+        Also see the common keyword arguments in :py:obj:`.Effect`.
         """
         super(Mirage, self).__init__(**kwargs)
         self._screen = screen
@@ -402,7 +407,7 @@ class Stars(Effect):
         :param screen: The Screen being used for the Scene.
         :param count: The number of starts to create.
 
-        Also see the common keyward arguments in :py:obj:`.Effect`.
+        Also see the common keyword arguments in :py:obj:`.Effect`.
         """
         super(Stars, self).__init__(**kwargs)
         self._screen = screen
@@ -490,7 +495,7 @@ class Matrix(Effect):
         """
         :param screen: The Screen being used for the Scene.
 
-        Also see the common keyward arguments in :py:obj:`.Effect`.
+        Also see the common keyword arguments in :py:obj:`.Effect`.
         """
         super(Matrix, self).__init__(**kwargs)
         self._screen = screen
@@ -516,14 +521,16 @@ class Wipe(Effect):
     Wipe the screen down from top to bottom.
     """
 
-    def __init__(self, screen, **kwargs):
+    def __init__(self, screen, bg=0, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
+        :param bg: Optional background colour to use for the wipe.
 
-        Also see the common keyward arguments in :py:obj:`.Effect`.
+        Also see the common keyword arguments in :py:obj:`.Effect`.
         """
         super(Wipe, self).__init__(**kwargs)
         self._screen = screen
+        self._bg = bg
         self._y = None
 
     def reset(self):
@@ -532,7 +539,8 @@ class Wipe(Effect):
     def _update(self, frame_no):
         if frame_no % 2 == 0:
             if self._screen.is_visible(0, self._y):
-                self._screen.putch(" " * self._screen.width, 0, self._y)
+                self._screen.putch(
+                    " " * self._screen.width, 0, self._y, bg=self._bg)
             self._y += 1
 
     @property
@@ -555,7 +563,7 @@ class Sprite(Effect):
         :param colour: The colour to use to render the Sprite.
         :param clear: Whether to clear out old images or leave a trail.
 
-        Also see the common keyward arguments in :py:obj:`.Effect`.
+        Also see the common keyword arguments in :py:obj:`.Effect`.
         """
         super(Sprite, self).__init__(**kwargs)
         self._screen = screen
@@ -588,20 +596,18 @@ class Sprite(Effect):
         :param other: The other Sprite to check for an overlap.
         :returns: True if the two Sprites overlap.
         """
-        # TODO: Should be current position and last rendered image.
-        (x, y) = self._path.next_pos()
-        w = self._renderer_dict['default'].max_width
-        h = self._renderer_dict['default'].max_height
-        x -= w // 2
-        y -= h // 2
+        x = self._old_x
+        y = self._old_y
+        w = self._old_width
+        h = self._old_height
 
-        # TODO: Should be current position and last rendered image.
-        (x2, y2) = other._path.next_pos()
-        w2 = other._renderer_dict['default'].max_width
-        h2 = other._renderer_dict['default'].max_height
-        x2 -= w2 // 2
-        y2 -= h2 // 2
+        # TODO: fix up internal references
+        x2 = other._old_x
+        y2 = other._old_y
+        w2 = other._old_width
+        h2 = other._old_height
 
+        self._screen.putch("{}:{} {}:{} -> {}:{} {}:{}".format(x, y, w, h, x2, y2, w2, h2), 0, 0)
         if ((x > x2 + w2 - 1) or (x2 > x + w - 1) or
                 (y > y2 + h2 - 1) or (y2 > y + h - 1)):
             return False
@@ -742,7 +748,7 @@ class Snow(Effect):
         """
         :param screen: The Screen being used for the Scene.
 
-        Also see the common keyward arguments in :py:obj:`.Effect`.
+        Also see the common keyword arguments in :py:obj:`.Effect`.
         """
         super(Snow, self).__init__(**kwargs)
         self._screen = screen
@@ -778,7 +784,7 @@ class Clock(Effect):
         :param y: Y coordinate for the centre of the clock.
         :param r: Radius of the clock.
 
-        Also see the common keyward arguments in :py:obj:`.Effect`.
+        Also see the common keyword arguments in :py:obj:`.Effect`.
         """
         super(Clock, self).__init__(**kwargs)
         self._screen = screen
@@ -849,7 +855,7 @@ class Cog(Effect):
         :param direction: The direction of rotation. Positive numbers are
             anti-clockwise, negative numbers clockwise.
 
-        Also see the common keyward arguments in :py:obj:`.Effect`.
+        Also see the common keyword arguments in :py:obj:`.Effect`.
         """
         super(Cog, self).__init__(**kwargs)
         self._screen = screen
@@ -903,7 +909,7 @@ class RandomNoise(Effect):
         :param screen: The Screen being used for the Scene.
         :param signal: The renderer to use as the 'signal' in the white noise.
 
-        Also see the common keyward arguments in :py:obj:`.Effect`.
+        Also see the common keyword arguments in :py:obj:`.Effect`.
         """
         super(RandomNoise, self).__init__(**kwargs)
         self._screen = screen
@@ -970,7 +976,7 @@ class Julia(Effect):
         :param screen: The Screen being used for the Scene.
         :param c: The starting value of 'c' for the Julia Set.
 
-        Also see the common keyward arguments in :py:obj:`.Effect`.
+        Also see the common keyword arguments in :py:obj:`.Effect`.
         """
         super(Julia, self).__init__(**kwargs)
         self._screen = screen

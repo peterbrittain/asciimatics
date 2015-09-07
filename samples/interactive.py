@@ -12,6 +12,7 @@ import sys
 arrow = None
 cross_hairs = None
 
+
 class KeyboardController(DynamicPath):
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):

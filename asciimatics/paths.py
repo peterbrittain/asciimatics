@@ -78,7 +78,7 @@ class Path(_AbstractPath):
         """
         super(Path, self).__init__()
         self._steps = []
-        self._index = None
+        self._index = 0
         self._rec_x = 0
         self._rec_y = 0
         self.reset()
