@@ -381,7 +381,7 @@ class _Star(object):
         if not self._screen.is_visible(self._x, self._y):
             self._respawn()
 
-        cur_char, _ = self._screen.getch(self._x, self._y)
+        cur_char, _, _, _ = self._screen.getch(self._x, self._y)
         if cur_char not in (ord(self._old_char), 32):
             self._respawn()
 
@@ -589,15 +589,17 @@ class Sprite(Effect):
         self._old_direction = None
         self._path.reset()
 
-    def overlaps(self, other):
+    def overlaps(self, other, use_new_pos=False):
         """
         Check whether this Sprite overlaps another.
 
         :param other: The other Sprite to check for an overlap.
+        :param use_new_pos: Whether to use latest position (due to recent
+            update).  Defaults to False.
         :returns: True if the two Sprites overlap.
         """
-        x = self._old_x
-        y = self._old_y
+        (x, y) = self._path.next_pos() if use_new_pos else (self._old_x,
+                                                            self._old_y)
         w = self._old_width
         h = self._old_height
 
@@ -716,7 +718,7 @@ class _Flake(object):
         current_char = None
         for _ in range(self._rate):
             self._y += 1
-            current_char, _ = self._screen.getch(self._x, self._y)
+            current_char, _, _, _ = self._screen.getch(self._x, self._y)
             if current_char != 32:
                 break
 
