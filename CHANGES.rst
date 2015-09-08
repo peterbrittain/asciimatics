@@ -4,10 +4,12 @@ CHANGE HISTORY
 1.4.0
 -----
 - Added Mouse support.  This had 2 major impacts:
+
   1. It meant that blessed support is now completely deprecated as it doesn't
      support mouse input.
   2. All references to processing keys is now deprecated.  You must now use the
      event equivalent API instead.
+
 - Added support for dynamic addition/removal of Effects from a Scene, using
   add_effect() and remove_effect().
 - Converted all effects to use **kwargs to pass through to base Effect class so
