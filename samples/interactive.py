@@ -92,7 +92,7 @@ class CrossHairs(Sprite):
         global arrow
 
         x, y = self._path.next_pos()
-        if self.overlaps(arrow):
+        if self.overlaps(arrow, use_new_pos=True):
             arrow.say("OUCH!")
         else:
             self._scene.add_effect(Print(

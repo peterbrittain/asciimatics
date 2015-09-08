@@ -14,6 +14,8 @@ CHANGE HISTORY
   that future common frame related features were instantly available.  These
   parameters must always be specified as keyword arguments as a result.
 - Added support for background colours.
+- Fixed up getch() so that it is consistent across all platforms and includes
+  all character attributes.
 
 1.3.0
 -----

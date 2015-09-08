@@ -872,12 +872,11 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
         :param x: The column (x coord) of the character.
         :param y: The row (y coord) of the character.
 
-        :return: A tuple of the ASCII code of the character at the location
-                 and the attributes for that character.
+        :return: A 4-tuple of (ascii code, foreground, attributes, background)
+                 for the character at the location.
         """
-        # TODO: Need to fix up colours/attributes here.
         cell = self._screen_buffer[y][x]
-        return ord(cell[0]), cell[1] + cell[2] * 256
+        return ord(cell[0]), cell[1], cell[2], cell[3]
 
     def putch(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
         """
@@ -1227,7 +1226,7 @@ else:
     # UNIX compatible platform - use curses
     import curses
 
-    class _CursesScreen(Screen):
+    class _CursesScreen(_BufferedScreen):
         """
         Curses screen implementation.
         """
@@ -1279,40 +1278,26 @@ else:
             # there's no translation for them either.
         }
 
-        #: Conversion from Screen attributes to curses equivalents.
-        _ATTRIBUTES = {
-            Screen.A_BOLD: curses.A_BOLD,
-            Screen.A_NORMAL: curses.A_NORMAL,
-            Screen.A_REVERSE: curses.A_REVERSE,
-            Screen.A_UNDERLINE: curses.A_UNDERLINE
-        }
-
         def __init__(self, win, height=200):
             """
             :param win: The window object as returned by the curses wrapper
                 method.
             :param height: The height of the screen buffer to be used.
             """
-            # Save off the screen details and se up the scrolling pad.
+            # Save off the screen details.
             super(_CursesScreen, self).__init__(
-                win.getmaxyx()[0], win.getmaxyx()[1])
+                win.getmaxyx()[0], win.getmaxyx()[1], height)
             self._screen = win
-            self.buffer_height = height
-            self._pad = curses.newpad(self.buffer_height, self.width)
-            self._pad.keypad(1)
+            self._screen.keypad(1)
 
             # Set up basic colour schemes.
             self.colours = curses.COLORS
-            for i in range(1, self.colours):
-                curses.init_pair(i, i, curses.COLOR_BLACK)
-            for i in range(0, self.colours):
-                curses.init_pair(i + self.colours, curses.COLOR_BLACK, i)
 
             # Disable the cursor.
             curses.curs_set(0)
 
             # Non-blocking key checks.
-            self._pad.nodelay(1)
+            self._screen.nodelay(1)
 
             # Set up signal handler for screen resizing.
             self._re_sized = False
@@ -1321,6 +1306,28 @@ else:
             # Enable mouse events
             curses.mousemask(curses.ALL_MOUSE_EVENTS |
                              curses.REPORT_MOUSE_POSITION)
+
+            # Lookup the necessary escape codes in the terminfo database.
+            self._move_y_x = curses.tigetstr("cup")
+            self._fg_color = curses.tigetstr("setaf")
+            self._bg_color = curses.tigetstr("setab")
+            self._a_normal = curses.tigetstr("sgr0")
+            self._a_bold = curses.tigetstr("bold")
+            self._a_reverse = curses.tigetstr("rev")
+            self._a_underline = curses.tigetstr("smul")
+            self._clear_screen = curses.tigetstr("clear")
+
+            # Conversion from Screen attributes to curses equivalents.
+            self._ATTRIBUTES = {
+                Screen.A_BOLD: self._a_bold,
+                Screen.A_NORMAL: self._a_normal,
+                Screen.A_REVERSE: self._a_reverse,
+                Screen.A_UNDERLINE: self._a_underline
+            }
+
+            # We'll actually break out into low-level output, so flush any
+            # high level buffers now.
+            self._screen.refresh()
 
         def _resize_handler(self, *_):
             """
@@ -1331,36 +1338,35 @@ else:
             curses.initscr()
             self._re_sized = True
 
-        def scroll(self):
+        def _scroll(self):
             """
             Scroll the Screen up one line.
             """
-            self._start_line += 1
+            print(curses.tparm(self._move_y_x, self.height - 1, 0))
 
-        def clear(self):
+        def _clear(self):
             """
             Clear the Screen of all content.
             """
-            self._pad.clear()
-            self._start_line = 0
+            sys.stdout.write(self._clear_screen)
+            sys.stdout.flush()
 
         def refresh(self):
             """
             Refresh the screen.
             """
-            (h, w) = self._screen.getmaxyx()
-            self._pad.refresh(self._start_line,
-                              0,
-                              0,
-                              0,
-                              h - 1,
-                              w - 1)
+            # TODO: How best to handle this as a buffered screen?
+            super(_CursesScreen, self).refresh()
+            try:
+                sys.stdout.flush()
+            except IOError:
+                pass
 
         def get_event(self):
             """
             Check for an event without waiting.
             """
-            key = self._pad.getch()
+            key = self._screen.getch()
             if key == curses.KEY_RESIZE:
                 # Handle screen resize
                 self._re_sized = True
@@ -1391,58 +1397,50 @@ else:
             self._re_sized = False
             return re_sized
 
-        def getch(self, x, y):
+        def _change_colours(self, colour, attr, bg):
             """
-            Get the character at the specified location.
+            Change current colour if required.
 
-            :param x: The column (x coord) of the character.
-            :param y: The row (y coord) of the character.
-
-            :return: A tuple of the ASCII code of the character at the location
-                     and the attributes for that character.
+            :param colour: New colour to use.
+            :param attr: New attributes to use.
+            :param bg: New background colour to use.
             """
-            curses_rc = self._pad.inch(y, x)
-            return curses_rc & 0xff, curses_rc & 0xff >> 8
+            # Change attribute first as this will reset colours when swapping
+            # modes.
+            if attr != self._attr:
+                sys.stdout.write(self._a_normal)
+                if attr != 0:
+                    sys.stdout.write(self._ATTRIBUTES[attr])
+                self._attr = attr
+                self._colour = None
+                self._bg = None
 
-        def putch(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
+            # Now swap colours if required.
+            if colour != self._colour:
+                sys.stdout.write(curses.tparm(self._fg_color, colour))
+                self._colour = colour
+            if bg != self._bg:
+                sys.stdout.write(curses.tparm(self._bg_color, bg))
+                self._bg = bg
+
+        def _print_at(self, text, x, y):
             """
-            Print the text at the specified location using the
-            specified colour and attributes.
+            Print string at the required location.
 
-            :param text: The (single line) text to be printed.
-            :param x: The column (x coord) for the start of the text.
-            :param y: The line (y coord) for the start of the text.
-            :param colour: The colour of the text to be displayed.
-            :param attr: The cell attribute of the text to be displayed.
-            :param bg: The background colour of the text to be displayed.
-            :param transparent: Whether to print spaces or not, thus giving a
-                transparent effect.
-
-            The colours and attributes are the COLOUR_xxx and A_yyy constants
-            defined in the Screen class.
+            :param text: The text string to print.
+            :param x: The x coordinate
+            :param y: The Y coordinate
             """
-            # Crop to pad size
-            if y < 0:
-                return
-            if x < 0:
-                text = text[-x:]
-                x = 0
-            if x + len(text) >= self.width:
-                text = text[:self.width - x]
+            # Move the cursor if necessary
+            msg = ""
+            if x != self._x or y != self._y:
+                msg += curses.tparm(self._move_y_x, y, x)
 
-            # Convert attribute to curses equivalent
-            attr = self._ATTRIBUTES[attr] if attr in self._ATTRIBUTES else 0
+            msg += text
 
-            # Print whatever is left
-            if len(text) > 0:
-                if transparent:
-                    for i, c in enumerate(text):
-                        if c != " ":
-                            self._pad.addstr(
-                                y, x + i, c, curses.color_pair(colour) | attr)
-                else:
-                    self._pad.addstr(
-                        y, x, text, curses.color_pair(colour) | attr)
+            # Print the text at the required location and update the current
+            # position.
+            sys.stdout.write(msg)
 
     class _BlessedScreen(_BufferedScreen):
         """
