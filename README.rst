@@ -26,9 +26,9 @@ function you could ask for, including:
 * Image to ASCII conversion
 * Many animation effects
 
-Currently this API has been proven to work on CentOS 6 & 7 and Windows 7 & 8,
-though it should also work for any platform that provides a working curses
-implementation.  
+Currently this API has been proven to work on CentOS 6 & 7, Raspbian (i.e.
+Debian wheezy) and Windows 7 & 8, though it should also work for any 
+platform that provides a working curses implementation.  
 
 (Please let me know if you successfully verified it on other platforms so
 that I can update this list).
