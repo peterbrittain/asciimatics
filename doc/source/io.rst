@@ -12,6 +12,7 @@ constructed Screen into the specified function.  For example:
 
     def demo(screen):
         screen.putch('Hello world!', 0, 0)
+        screen.refresh()
         sleep(10)
 
     Screen.wrapper(demo)
