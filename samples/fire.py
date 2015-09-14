@@ -12,7 +12,7 @@ def demo(screen):
 
     effects = [
         Print(screen,
-              Fire(screen.height, screen.width,
+              Fire(screen.height, 80,
                    Figlet(font="banner", width=200).renderText("ASCIIMATICS"),
                    100),
               0,
