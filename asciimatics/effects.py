@@ -4,6 +4,7 @@ from __future__ import print_function
 from builtins import chr
 from builtins import object
 from builtins import range
+import copy
 from future.utils import with_metaclass
 from abc import ABCMeta, abstractmethod, abstractproperty
 from random import randint, random, choice
@@ -609,7 +610,6 @@ class Sprite(Effect):
         w2 = other._old_width
         h2 = other._old_height
 
-        self._screen.putch("{}:{} {}:{} -> {}:{} {}:{}".format(x, y, w, h, x2, y2, w2, h2), 0, 0)
         if ((x > x2 + w2 - 1) or (x2 > x + w - 1) or
                 (y > y2 + h2 - 1) or (y2 > y + h - 1)):
             return False
@@ -619,8 +619,8 @@ class Sprite(Effect):
     def _update(self, frame_no):
         if frame_no % 2 == 0:
             # Blank out the old sprite if moved.
-            if self._clear and \
-                    self._old_x is not None and self._old_y is not None:
+            if (self._clear and
+                    self._old_x is not None and self._old_y is not None):
                 for i in range(0, self._old_height):
                     self._screen.putch(
                         " " * self._old_width, self._old_x, self._old_y + i, 0)
@@ -800,39 +800,39 @@ class Clock(Effect):
 
     def _update(self, frame_no):
         # Helper functions to map various time elements
-        _hour_pos = lambda t: (t.tm_hour + t.tm_min / 60) * pi/6
-        _min_pos = lambda t: t.tm_min * pi/30
-        _sec_pos = lambda t: t.tm_sec * pi/30
+        _hour_pos = lambda t: (t.tm_hour + t.tm_min / 60) * pi / 6
+        _min_pos = lambda t: t.tm_min * pi / 30
+        _sec_pos = lambda t: t.tm_sec * pi / 30
 
         # Clear old hands
         if self._old_time is not None:
             ot = self._old_time
             self._screen.move(self._x, self._y)
-            self._screen.draw(self._x + (self._r*sin(_hour_pos(ot))),
-                              self._y - (self._r*cos(_hour_pos(ot)) / 2),
+            self._screen.draw(self._x + (self._r * sin(_hour_pos(ot))),
+                              self._y - (self._r * cos(_hour_pos(ot)) / 2),
                               char=" ")
             self._screen.move(self._x, self._y)
-            self._screen.draw(self._x + (self._r*sin(_min_pos(ot)) * 2),
-                              self._y - (self._r*cos(_min_pos(ot))),
+            self._screen.draw(self._x + (self._r * sin(_min_pos(ot)) * 2),
+                              self._y - (self._r * cos(_min_pos(ot))),
                               char=" ")
             self._screen.move(self._x, self._y)
-            self._screen.draw(self._x + (self._r*sin(_sec_pos(ot)) * 2),
-                              self._y - (self._r*cos(_sec_pos(ot))),
+            self._screen.draw(self._x + (self._r * sin(_sec_pos(ot)) * 2),
+                              self._y - (self._r * cos(_sec_pos(ot))),
                               char=" ")
 
         # Draw new ones
         new_time = datetime.datetime.now().timetuple()
         self._screen.move(self._x, self._y)
-        self._screen.draw(self._x + (self._r*sin(_hour_pos(new_time))),
-                          self._y - (self._r*cos(_hour_pos(new_time)) / 2),
+        self._screen.draw(self._x + (self._r * sin(_hour_pos(new_time))),
+                          self._y - (self._r * cos(_hour_pos(new_time)) / 2),
                           colour=7)
         self._screen.move(self._x, self._y)
-        self._screen.draw(self._x + (self._r*sin(_min_pos(new_time)) * 2),
-                          self._y - (self._r*cos(_min_pos(new_time))),
+        self._screen.draw(self._x + (self._r * sin(_min_pos(new_time)) * 2),
+                          self._y - (self._r * cos(_min_pos(new_time))),
                           colour=7)
         self._screen.move(self._x, self._y)
-        self._screen.draw(self._x + (self._r*sin(_sec_pos(new_time))*2),
-                          self._y - (self._r*cos(_sec_pos(new_time))),
+        self._screen.draw(self._x + (self._r * sin(_sec_pos(new_time)) * 2),
+                          self._y - (self._r * cos(_sec_pos(new_time))),
                           colour=6, thin=True)
         self._screen.putch("o", self._x, self._y, Screen.COLOUR_YELLOW,
                            Screen.A_BOLD)
@@ -934,8 +934,8 @@ class RandomNoise(Effect):
 
         for x in range(self._screen.width):
             for y in range(self._screen.height):
-                ix = x-start_x
-                iy = y-start_y
+                ix = x - start_x
+                iy = y - start_y
                 if (self._signal and random() <= self._strength and
                         x >= start_x and y >= start_y and
                         iy < len(text) and ix < len(text[iy])):
@@ -1001,15 +1001,15 @@ class Julia(Effect):
         sy = self._centre[1] - (self._size[1] / 2.0)
         for y in range(self._height):
             for x in range(self._width):
-                z = complex(sx+self._size[0]*(x/self._width),
-                            sy+self._size[1]*(y/self._height))
+                z = complex(sx + self._size[0] * (x / self._width),
+                            sy + self._size[1] * (y / self._height))
                 n = len(self._256_palette)
                 while abs(z) < 10 and n >= 1:
                     z = z ** 2 + c
                     n -= 1
                 colour = \
                     self._256_palette[n-1] if self._screen.colours >= 256 else 7
-                self._screen.putch(self._greyscale[n-1], x, y, colour)
+                self._screen.putch(self._greyscale[n - 1], x, y, colour)
 
         # Zoo
         self._size = [i * self._scale for i in self._size]
@@ -1018,8 +1018,8 @@ class Julia(Effect):
             self._scale = 1.0 / self._scale
 
         # Rotate
-        self._c = [self._c[0] * cos(pi/180) - self._c[1] * sin(pi/180),
-                   self._c[0] * sin(pi/180) + self._c[1] * cos(pi/180)]
+        self._c = [self._c[0] * cos(pi / 180) - self._c[1] * sin(pi / 180),
+                   self._c[0] * sin(pi / 180) + self._c[1] * cos(pi / 180)]
 
     @property
     def stop_frame(self):

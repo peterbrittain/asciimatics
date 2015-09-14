@@ -4,6 +4,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 from builtins import object
 from builtins import range
+import copy
+from random import randint
 from future.utils import with_metaclass
 from abc import ABCMeta, abstractproperty, abstractmethod
 from pyfiglet import Figlet, DEFAULT_FONT
@@ -484,6 +486,11 @@ class Rainbow(StaticRenderer):
 
 
 class BarChart(DynamicRenderer):
+    """
+    Renderer to create a bar chart using the specified functions as inputs for
+    each entry.  Can be used to chart distributions or to imitate a sound
+    equalizer.
+    """
 
     #: Which axes to draw when rendering
     NONE = 0
@@ -491,11 +498,6 @@ class BarChart(DynamicRenderer):
     Y_AXIS = 2
     BOTH = 3
 
-    """
-    Renderer to create a bar chart using the specified functions as inputs for
-    each entry.  Can be used to chart distributions or to imitate a sound
-    equalizer.
-    """
     def __init__(self, height, width, functions, char="#",
                  colour=Screen.COLOUR_GREEN, gradient=None, scale=None,
                  axes=Y_AXIS, intervals=None, labels=False, border=True):
@@ -624,5 +626,119 @@ class BarChart(DynamicRenderer):
                 # Solid colour - just write the whole block out.
                 for line in range(bar_size):
                     self._write(self._char * bar_len, start_x, y + line, colour)
+
+        return self._plain_image, self._colour_map
+
+
+class Fire(DynamicRenderer):
+    """
+    Renderer to create a fire effect based on a specified `emitter` that
+    defines the heat source.
+    """
+
+    _COLOURS = [
+        (Screen.COLOUR_RED, 0),
+        (Screen.COLOUR_RED, 0),
+        (Screen.COLOUR_RED, 0),
+        (Screen.COLOUR_RED, 0),
+        (Screen.COLOUR_RED, 0),
+        (Screen.COLOUR_RED, 0),
+        (Screen.COLOUR_RED, 0),
+        (Screen.COLOUR_RED, Screen.A_BOLD),
+        (Screen.COLOUR_RED, Screen.A_BOLD),
+        (Screen.COLOUR_RED, Screen.A_BOLD),
+        (Screen.COLOUR_RED, Screen.A_BOLD),
+        (Screen.COLOUR_YELLOW, Screen.A_BOLD),
+        (Screen.COLOUR_YELLOW, Screen.A_BOLD),
+        (Screen.COLOUR_YELLOW, Screen.A_BOLD),
+        (Screen.COLOUR_YELLOW, Screen.A_BOLD),
+        (Screen.COLOUR_WHITE, Screen.A_BOLD),
+    ]
+
+    _CHARS = " ...::$$$@@@##"
+
+    def __init__(self, height, width, emitter, intensity):
+        """
+
+        :param height: Height of the box to contain the flames.
+        :param width: Width of the box to contain the flames.
+        :param emitter: Heat source for the flames.  Any non-whitespace
+            character is treated as part of the heat source.
+        :param intensity: The strength of the flames.  The bigger the number,
+            the hotter the fire.
+        """
+        super(Fire, self).__init__(height, width)
+        self._emitter = emitter
+        self._intensity = intensity
+        self._count = len([c for c in emitter if c not in " \n"])
+        line = [0 for _ in range(self._width)]
+        self._buffer = [copy.deepcopy(line) for _ in range(self._width * 2)]
+
+        # Figure out offset of emitter to centre at the bottom of the buffer
+        e_width = 0
+        e_height = 0
+        for line in self._emitter.split("\n"):
+            e_width = max(e_width, len(line))
+            e_height += 1
+        self._x = (width - e_width) // 2
+        self._y = height - e_height
+
+    def _create_new_source(self):
+        # Find a random place in the emitter
+        pos = randint(0, self._count)
+        x = self._x
+        y = self._y
+        for c in self._emitter:
+            if c not in " \n":
+                pos -= 1
+                if pos <= 0:
+                    break
+            if c == "\n":
+                x = self._x
+                y += 1
+            else:
+                x += 1
+        if 0 <= x < self._width:
+            self._buffer[y][x] += 15
+
+    def _render_now(self):
+        super(Fire, self)._render_now()
+
+        # First make the fire rise with convection
+        for y in range(len(self._buffer) - 1):
+            self._buffer[y] = self._buffer[y + 1]
+        self._buffer[len(self._buffer) - 1] = [0 for _ in range(self._width)]
+
+        # Seed new hot spots
+        for _ in range(self._intensity):
+            self._create_new_source()
+
+        # Seed a few cooler spots
+        for _ in range(self._intensity // 2):
+            self._buffer[randint(0, self._height - 1)][
+                randint(0, self._width - 1)] -= 10
+
+        # Simulate cooling effect of the resulting environment.
+        for y in range(len(self._buffer)):
+            for x in range(self._width):
+                new_val = self._buffer[y][x]
+                if y < len(self._buffer) - 1:
+                    new_val += self._buffer[y + 1][x]
+                    if x > 0:
+                        new_val += self._buffer[y][x - 1]
+                    if x < self._width - 1:
+                        new_val += self._buffer[y][x + 1]
+                self._buffer[y][x] = new_val // 4
+
+        # Now build the rendered text from the simulated flames.
+        self._clear()
+        for x in range(self._width):
+            for y in range(len(self._buffer)):
+                    if self._buffer[y][x] > 0:
+                        colour = self._COLOURS[min(len(self._COLOURS) - 1,
+                                                   self._buffer[y][x])]
+                        char = self._CHARS[min(len(self._CHARS) - 1,
+                                               self._buffer[y][x])]
+                        self._write(char, x, y, colour[0], colour[1])
 
         return self._plain_image, self._colour_map
