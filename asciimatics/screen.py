@@ -615,11 +615,13 @@ class Screen(with_metaclass(ABCMeta, object)):
             self.putch(text, x, y, colour, attr, bg, transparent)
         else:
             for i, c in enumerate(text):
-                if colour_map[i][0] is None:
-                    self.putch(c, x + i, y, colour, attr, bg, transparent)
-                else:
-                    self.putch(c, x + i, y, colour_map[i][0], colour_map[i][1],
-                               bg, transparent)
+                if len(colour_map[i]) > 0 and colour_map[i][0] is not None:
+                    colour = colour_map[i][0]
+                if len(colour_map[i]) > 1 and colour_map[i][1] is not None:
+                    attr = colour_map[i][1]
+                if len(colour_map[i]) > 2 and colour_map[i][2] is not None:
+                    bg = colour_map[i][2]
+                self.putch(c, x + i, y, colour, attr, bg, transparent)
 
     def is_visible(self, x, y):
         """

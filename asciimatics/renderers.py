@@ -212,11 +212,11 @@ class DynamicRenderer(with_metaclass(ABCMeta, Renderer)):
         Clear the current image.
         """
         self._plain_image = [" " * self._width for _ in range(self._height)]
-        self._colour_map = [[(None, 0) for _ in range(self._width)]
+        self._colour_map = [[(None, 0, 0) for _ in range(self._width)]
                             for _ in range(self._height)]
 
     def _write(self, text, x, y, colour=Screen.COLOUR_WHITE,
-               attr=Screen.A_NORMAL):
+               attr=Screen.A_NORMAL, bg=Screen.COLOUR_BLACK):
         """
         Write some text to the specified location in the current image.
 
@@ -225,11 +225,12 @@ class DynamicRenderer(with_metaclass(ABCMeta, Renderer)):
         :param y: The Y coordinate in the image.
         :param colour: The colour of the text to add.
         :param attr: The attribute of the image.
+        :param bg: The background colour of the text to add.
         """
         self._plain_image[y] = text.join(
             [self._plain_image[y][:x], self._plain_image[y][x+len(text):]])
         for i, c in enumerate(text):
-            self._colour_map[y][x + i] = (colour, attr)
+            self._colour_map[y][x + i] = (colour, attr, bg)
 
     @abstractmethod
     def _render_now(self):
@@ -636,7 +637,7 @@ class Fire(DynamicRenderer):
     defines the heat source.
     """
 
-    _COLOURS = [
+    _COLOURS_16 = [
         (Screen.COLOUR_RED, 0),
         (Screen.COLOUR_RED, 0),
         (Screen.COLOUR_RED, 0),
@@ -655,9 +656,28 @@ class Fire(DynamicRenderer):
         (Screen.COLOUR_WHITE, Screen.A_BOLD),
     ]
 
+    _COLOURS_256 = [
+        (0, 0),
+        (52, 0),
+        (88, 0),
+        (124, 0),
+        (160, 0),
+        (196, 0),
+        (202, 0),
+        (208, 0),
+        (214, 0),
+        (220, 0),
+        (226, 0),
+        (227, 0),
+        (228, 0),
+        (229, 0),
+        (230, 0),
+        (231, 0),
+    ]
+
     _CHARS = " ...::$$$@@@##"
 
-    def __init__(self, height, width, emitter, intensity):
+    def __init__(self, height, width, emitter, intensity, colours):
         """
 
         :param height: Height of the box to contain the flames.
@@ -666,6 +686,7 @@ class Fire(DynamicRenderer):
             character is treated as part of the heat source.
         :param intensity: The strength of the flames.  The bigger the number,
             the hotter the fire.
+        :param colours: Number of colours the screen supports.
         """
         super(Fire, self).__init__(height, width)
         self._emitter = emitter
@@ -673,6 +694,7 @@ class Fire(DynamicRenderer):
         self._count = len([c for c in emitter if c not in " \n"])
         line = [0 for _ in range(self._width)]
         self._buffer = [copy.deepcopy(line) for _ in range(self._width * 2)]
+        self._colours = self._COLOURS_256 if colours >= 256 else self._COLOURS_16
 
         # Figure out offset of emitter to centre at the bottom of the buffer
         e_width = 0
@@ -735,7 +757,7 @@ class Fire(DynamicRenderer):
         for x in range(self._width):
             for y in range(len(self._buffer)):
                     if self._buffer[y][x] > 0:
-                        colour = self._COLOURS[min(len(self._COLOURS) - 1,
+                        colour = self._colours[min(len(self._colours) - 1,
                                                    self._buffer[y][x])]
                         char = self._CHARS[min(len(self._CHARS) - 1,
                                                self._buffer[y][x])]
