@@ -15,7 +15,7 @@ def demo(screen):
 
     effects = [
         Print(screen,
-              Fire(screen.height, 80, text, 100),
+              Fire(screen.height, 80, text, 100, screen.colours),
               0,
               speed=1,
               transparent=False),
@@ -30,7 +30,7 @@ def demo(screen):
               colour=Screen.COLOUR_WHITE,
               speed=1),
     ]
-    scenes.append(Scene(effects, 600))
+    scenes.append(Scene(effects, -1))
 
     screen.play(scenes, stop_on_resize=True)
 
