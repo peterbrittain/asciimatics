@@ -10,17 +10,18 @@ import sys
 def demo(screen):
     scenes = []
 
+    text = Figlet(font="banner", width=200).renderText("ASCIIMATICS")
+    width = max([len(x) for x in text.split("\n")])
+
     effects = [
         Print(screen,
-              Fire(screen.height, 80,
-                   Figlet(font="banner", width=200).renderText("ASCIIMATICS"),
-                   100),
+              Fire(screen.height, 80, text, 100),
               0,
               speed=1,
               transparent=False),
         Print(screen,
               FigletText("ASCIIMATICS", "banner"),
-              screen.height - 9, x=3,
+              screen.height - 9, x=(screen.width - width) // 2 + 1,
               colour=Screen.COLOUR_BLACK,
               speed=1),
         Print(screen,
