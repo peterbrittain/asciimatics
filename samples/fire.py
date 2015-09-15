@@ -10,12 +10,48 @@ import sys
 def demo(screen):
     scenes = []
 
+    effects = [
+        Print(screen,
+              Fire(screen.height, 80, "*" * 70, 0.8, 60, screen.colours,
+                   bg=screen.colours >= 256),
+              0,
+              speed=1,
+              transparent=False),
+        Print(screen,
+              FigletText("ASCII", "banner3"),
+              (screen.height - 4) // 2,
+              colour=Screen.COLOUR_BLACK,
+              speed=1,
+              stop_frame=30),
+        Print(screen,
+              FigletText("is", "banner3"),
+              (screen.height - 4) // 2,
+              colour=Screen.COLOUR_BLACK,
+              speed=1,
+              start_frame=30,
+              stop_frame=50),
+        Print(screen,
+              FigletText("on", "banner3"),
+              (screen.height - 4) // 2,
+              colour=Screen.COLOUR_BLACK,
+              speed=1,
+              start_frame=50,
+              stop_frame=70),
+        Print(screen,
+              FigletText("Fire!", "banner3"),
+              (screen.height - 4) // 2,
+              colour=Screen.COLOUR_BLACK,
+              speed=1,
+              start_frame=70),
+    ]
+    scenes.append(Scene(effects, 100))
+
     text = Figlet(font="banner", width=200).renderText("ASCIIMATICS")
     width = max([len(x) for x in text.split("\n")])
 
     effects = [
         Print(screen,
-              Fire(screen.height, 80, text, 100, screen.colours),
+              Fire(screen.height, 80, text, 0.4, 40, screen.colours),
               0,
               speed=1,
               transparent=False),
