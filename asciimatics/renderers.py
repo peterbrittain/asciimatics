@@ -5,7 +5,7 @@ from __future__ import print_function
 from builtins import object
 from builtins import range
 import copy
-from random import randint
+from random import randint, random
 from future.utils import with_metaclass
 from abc import ABCMeta, abstractproperty, abstractmethod
 from pyfiglet import Figlet, DEFAULT_FONT
@@ -675,26 +675,31 @@ class Fire(DynamicRenderer):
         (231, 0),
     ]
 
-    _CHARS = " ...::$$$@@@##"
+    _CHARS = " ...::$$$&&&@@"
 
-    def __init__(self, height, width, emitter, intensity, colours):
+    def __init__(self, height, width, emitter, intensity, spot ,colours,
+                 bg=False):
         """
-
         :param height: Height of the box to contain the flames.
         :param width: Width of the box to contain the flames.
         :param emitter: Heat source for the flames.  Any non-whitespace
             character is treated as part of the heat source.
         :param intensity: The strength of the flames.  The bigger the number,
-            the hotter the fire.
+            the hotter the fire.  0 <= intensity <= 1.0.
+        :param spot: Heat of each spot source.  Must be an integer > 0.
         :param colours: Number of colours the screen supports.
+        :param bg: (Optional) Whether to render background colours only.
         """
         super(Fire, self).__init__(height, width)
         self._emitter = emitter
         self._intensity = intensity
+        self._spot_heat = spot
         self._count = len([c for c in emitter if c not in " \n"])
         line = [0 for _ in range(self._width)]
         self._buffer = [copy.deepcopy(line) for _ in range(self._width * 2)]
-        self._colours = self._COLOURS_256 if colours >= 256 else self._COLOURS_16
+        self._colours = self._COLOURS_256 if colours >= 256 else \
+            self._COLOURS_16
+        self._bg_too = bg
 
         # Figure out offset of emitter to centre at the bottom of the buffer
         e_width = 0
@@ -705,24 +710,6 @@ class Fire(DynamicRenderer):
         self._x = (width - e_width) // 2
         self._y = height - e_height
 
-    def _create_new_source(self):
-        # Find a random place in the emitter
-        pos = randint(0, self._count)
-        x = self._x
-        y = self._y
-        for c in self._emitter:
-            if c not in " \n":
-                pos -= 1
-                if pos <= 0:
-                    break
-            if c == "\n":
-                x = self._x
-                y += 1
-            else:
-                x += 1
-        if 0 <= x < self._width:
-            self._buffer[y][x] += 15
-
     def _render_now(self):
         super(Fire, self)._render_now()
 
@@ -732,11 +719,21 @@ class Fire(DynamicRenderer):
         self._buffer[len(self._buffer) - 1] = [0 for _ in range(self._width)]
 
         # Seed new hot spots
+        x = self._x
+        y = self._y
+        for c in self._emitter:
+            if c not in " \n" and random() < self._intensity:
+                self._buffer[y][x] += randint(1,self._spot_heat)
+            if c == "\n":
+                x = self._x
+                y += 1
+            else:
+                x += 1
         for _ in range(self._intensity):
             self._create_new_source()
 
         # Seed a few cooler spots
-        for _ in range(self._intensity // 2):
+        for _ in range(self._width // 2):
             self._buffer[randint(0, self._height - 1)][
                 randint(0, self._width - 1)] -= 10
 
@@ -759,8 +756,13 @@ class Fire(DynamicRenderer):
                     if self._buffer[y][x] > 0:
                         colour = self._colours[min(len(self._colours) - 1,
                                                    self._buffer[y][x])]
-                        char = self._CHARS[min(len(self._CHARS) - 1,
+                        if self._bg_too:
+                            char = " "
+                            bg = colour[0]
+                        else:
+                            char = self._CHARS[min(len(self._CHARS) - 1,
                                                self._buffer[y][x])]
-                        self._write(char, x, y, colour[0], colour[1])
+                            bg = 0
+                        self._write(char, x, y, colour[0], colour[1], bg)
 
         return self._plain_image, self._colour_map
