@@ -29,17 +29,24 @@ setup(
     license='Apache 2.0',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
+        'Environment :: Console',
+        'Environment :: Console :: Curses',
         'Intended Audience :: Developers',
         'Topic :: Text Processing :: General',
         'License :: OSI Approved :: Apache Software License',
+        'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
+        'Topic :: Software Development :: User Interfaces',
+        'Topic :: Terminals',
     ],
-    keywords='ascii art demo credits title sequence animation curses windows',
+    keywords='ascii ansi art credits titles animation curses '
+             'ncurses windows xterm mouse keyboard terminal tty'
+             'color colour crossplatform console',
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
     install_requires=[
         'pyfiglet >= 0.7.2',
