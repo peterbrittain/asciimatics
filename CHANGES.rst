@@ -8,15 +8,15 @@ CHANGE HISTORY
   1. It meant that blessed support is now completely deprecated as it doesn't
      support mouse input.
   2. All references to processing keys is now deprecated.  You must now use the
-     event equivalent API instead.
+     `get_event()` equivalent API instead.
 
 - Added support for dynamic addition/removal of Effects from a Scene, using
-  add_effect() and remove_effect().
+  `add_effect()` and `remove_effect()`.
 - Converted all effects to use `**kwargs` to pass through to base Effect class so
   that future common frame related features were instantly available.  These
   parameters must now always be specified as keyword arguments as a result.
 - Added support for background colours.
-- Fixed up getch() so that it is consistent across all platforms and includes
+- Fixed up `getch()` so that it is consistent across all platforms and includes
   all character attributes.
 
 1.3.0
@@ -32,7 +32,7 @@ CHANGE HISTORY
 
 1.2.0
 -----
-- Added Windows support, complete with Screen.wrapper() to handle all
+- Added Windows support, complete with `Screen.wrapper()` to handle all
   required screen set up.  The old from_XXX class methods are now deprecated.
 - Fixed ColourImageFile to do bare minimum rendering on low colour terminals.
 - Added formal palette property to Screen for image conversions.
@@ -50,7 +50,7 @@ CHANGE HISTORY
 - Added Bressenham line drawing algorithm with anti-aliasing.
 - Added Random Noise effect.
 - Added support for blessed as well as curses - if you want to continue to
-  use curses, construct the Screen using the from_curses() class method.
+  use curses, construct the Screen using the `from_curses()` class method.
 - Fixed up some docs errors.
 
 0.4.0
