@@ -19,9 +19,9 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='asciimatics',
-    version='1.3.0',
-    description='A unified package to do curses-like operations across all '
-                'platforms (including Windows) and create ASCII art animations',
+    version='1.4.0',
+    Description='A cross-platform package to replace curses (mouse, keyboard, '
+                'colours and positioning) and create ASCII animations',
     long_description=long_description,
     url='https://github.com/peterbrittain/asciimatics.git',
     author='Peter Brittain',
