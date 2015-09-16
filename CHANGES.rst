@@ -3,6 +3,7 @@ CHANGE HISTORY
 
 1.4.0
 -----
+- Added Fire renderer and demo.
 - Added Mouse support.  This had 2 major impacts:
 
   1. It meant that blessed support is now completely deprecated as it doesn't
