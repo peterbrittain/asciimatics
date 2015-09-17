@@ -13,12 +13,14 @@ CHANGE HISTORY
 
 - Added support for dynamic addition/removal of Effects from a Scene, using
   `add_effect()` and `remove_effect()`.
-- Converted all effects to use `**kwargs` to pass through to base Effect class so
-  that future common frame related features were instantly available.  These
+- Converted all effects to use `**kwargs` to pass through to base Effect class
+  so that future common frame related features were instantly available.  These
   parameters must now always be specified as keyword arguments as a result.
 - Added support for background colours.
-- Fixed up `getch()` so that it is consistent across all platforms and includes
-  all character attributes.
+- Renamed `getch()` and `putch()` to `get_from()` and `print_at()`.  Old
+  functions are still present, but deprecated.
+- Fixed up `get_from()` so that it is consistent across all platforms and
+  includes all character attributes.
 
 1.3.0
 -----

@@ -544,7 +544,7 @@ class Screen(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
-    def getch(self, x, y):
+    def get_from(self, x, y):
         """
         Get the character at the specified location.
 
@@ -555,9 +555,19 @@ class Screen(with_metaclass(ABCMeta, object)):
                  and the attributes for that character.
         """
 
-    @abstractmethod
-    def putch(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
+    def getch(self, x, y):
         """
+        Check for a key without waiting.  This method is deprecated.  Use
+        :py:meth:`.get_from` instead.
+        """
+        return self.get_from(x, y)
+
+    @abstractmethod
+    def print_at(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
+        """
+        Check for a key without waiting.  This method is deprecated.  Use
+        :py:meth:`.print_at` instead.
+
         Print the text at the specified location using the
         specified colour and attributes.
 
@@ -573,6 +583,13 @@ class Screen(with_metaclass(ABCMeta, object)):
         The colours and attributes are the COLOUR_xxx and A_yyy constants
         defined in the Screen class.
         """
+
+    def putch(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
+        """
+        Check for a key without waiting.  This method is deprecated.  Use
+        :py:meth:`.print_at` instead.
+        """
+        self.putch(text, x, y, colour, attr, bg, transparent)
 
     def centre(self, text, y, colour=7, attr=0, colour_map=None):
         """
@@ -612,7 +629,7 @@ class Screen(with_metaclass(ABCMeta, object)):
         same length as the passed in text (or None if no mapping is required).
         """
         if colour_map is None:
-            self.putch(text, x, y, colour, attr, bg, transparent)
+            self.print_at(text, x, y, colour, attr, bg, transparent)
         else:
             for i, c in enumerate(text):
                 if len(colour_map[i]) > 0 and colour_map[i][0] is not None:
@@ -621,7 +638,7 @@ class Screen(with_metaclass(ABCMeta, object)):
                     attr = colour_map[i][1]
                 if len(colour_map[i]) > 2 and colour_map[i][2] is not None:
                     bg = colour_map[i][2]
-                self.putch(c, x + i, y, colour, attr, bg, transparent)
+                self.print_at(c, x + i, y, colour, attr, bg, transparent)
 
     def is_visible(self, x, y):
         """
@@ -753,16 +770,16 @@ class Screen(with_metaclass(ABCMeta, object)):
                     x += sx
 
                 if char is None:
-                    self.putch(self._line_chars[next_chars[0]], px//2, py//2,
-                               colour, bg=bg)
+                    self.print_at(self._line_chars[next_chars[0]], px//2, py//2,
+                                  colour, bg=bg)
                     if next_chars[1] != 0:
-                        self.putch(self._line_chars[next_chars[1]],
-                                   px // 2, py // 2 + sy, colour, bg=bg)
+                        self.print_at(self._line_chars[next_chars[1]],
+                                      px // 2, py // 2 + sy, colour, bg=bg)
                 elif char == " ":
-                    self.putch(char, px // 2, py // 2, bg=bg)
-                    self.putch(char, px // 2, py // 2 + sy, bg=bg)
+                    self.print_at(char, px // 2, py // 2, bg=bg)
+                    self.print_at(char, px // 2, py // 2 + sy, bg=bg)
                 else:
-                    self.putch(char, px // 2, py // 2, colour, bg=bg)
+                    self.print_at(char, px // 2, py // 2, colour, bg=bg)
         else:
             err = dy
             while y != y1:
@@ -786,17 +803,17 @@ class Screen(with_metaclass(ABCMeta, object)):
                     y += sy
 
                 if char is None:
-                    self.putch(self._line_chars[next_chars[0]], px//2, py//2,
-                               colour, bg=bg)
+                    self.print_at(self._line_chars[next_chars[0]], px//2, py//2,
+                                  colour, bg=bg)
                     if next_chars[1] != 0:
-                        self.putch(
+                        self.print_at(
                             self._line_chars[next_chars[1]], px//2 + sx, py//2,
                             colour, bg=bg)
                 elif char == " ":
-                    self.putch(char, px // 2, py // 2, bg=bg)
-                    self.putch(char, px // 2 + sx, py // 2, bg=bg)
+                    self.print_at(char, px // 2, py // 2, bg=bg)
+                    self.print_at(char, px // 2 + sx, py // 2, bg=bg)
                 else:
-                    self.putch(char, px // 2, py // 2, colour, bg=bg)
+                    self.print_at(char, px // 2, py // 2, colour, bg=bg)
 
 
 class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
@@ -827,6 +844,22 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
         self._y = None
         self._last_start_line = 0
 
+        # Reset the screen ready to go...
+        self._reset()
+
+    def _reset(self):
+        """
+        Reset the internal buffers for the screen.
+        """
+        self._start_line = self._last_start_line = 0
+        self._x = self._y = None
+
+        # Reset our screen buffer
+        line = [(" ", 7, 0, 0) for _ in range(self.width)]
+        self._screen_buffer = [
+            copy.deepcopy(line) for _ in range(self._buffer_height)]
+        self._double_buffer = copy.deepcopy(self._screen_buffer)
+
     def scroll(self):
         """
         Scroll the Screen up one line.
@@ -840,14 +873,7 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
         # Clear the actual terminal
         self._change_colours(self.COLOUR_WHITE, 0, 0)
         self._clear()
-        self._start_line = self._last_start_line = 0
-        self._x = self._y = None
-
-        # Reset our screen buffer
-        line = [(" ", 7, 0, 0) for _ in range(self.width)]
-        self._screen_buffer = [
-            copy.deepcopy(line) for _ in range(self._buffer_height)]
-        self._double_buffer = copy.deepcopy(self._screen_buffer)
+        self._reset()
 
     def refresh(self):
         """
@@ -867,7 +893,7 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
                     self._print_at(new_cell[0], x, y)
                     self._screen_buffer[y + self._start_line][x] = new_cell
 
-    def getch(self, x, y):
+    def get_from(self, x, y):
         """
         Get the character at the specified location.
 
@@ -880,7 +906,7 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
         cell = self._screen_buffer[y][x]
         return ord(cell[0]), cell[1], cell[2], cell[3]
 
-    def putch(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
+    def print_at(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
         """
         Print the text at the specified location using the
         specified colour and attributes.
@@ -1367,7 +1393,7 @@ else:
             """
             Check for an event without waiting.
             """
-            key = self._screen.getch()
+            key = self._screen.get_from()
             if key == curses.KEY_RESIZE:
                 # Handle screen resize
                 self._re_sized = True

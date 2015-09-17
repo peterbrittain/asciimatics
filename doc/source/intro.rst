@@ -13,17 +13,23 @@ Why?
 ----
 
 Why not?  It brings a little joy to anyone who was programming in the 80s...
-Oh and it provides a single cross-platform Python class to do all basic console
-function, including:
+Oh and it provides a single cross-platform Python class to do all the console
+function you could ask for, including:
 
 * Coloured/styled text - including 256 colour terminals
 * Cursor positioning
 * Keyboard input (without blocking or echoing)
+* Mouse input (terminal permitting)
 * Detecting and handling when the console resizes
+* Screen scraping
+* Anti-aliased ASCII line-drawing
+* Image to ASCII conversion
+* Many animation effects
 
-Currently this API has been proven to work on CentOS 6 & 7 and Windows 7 & 8,
-though it should also work for any platform that provides a working curses
-implementation.
+Currently this API has been proven to work on CentOS 6 & 7, Raspbian (i.e.
+Debian wheezy) and Windows 7 & 8, though it should also work for any
+platform that provides a working curses implementation.
+
 
 Installation
 ------------
