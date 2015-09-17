@@ -140,13 +140,13 @@ Scraping Text
 Sometimes it is useful to be able to read what is already displayed on the
 Screen at a given location.  This is often referred to as screen scraping.  You
 can do this using the :py:meth:`.get_from` method.  It will return the displayed
-character and attributes (as a tuple pair) for any single character location on
+character and attributes (as a 4-tuple) for any single character location on
 the Screen.
 
 .. code-block:: python
 
     # Check we've not already displayed something before updating.
-    current_char, attributes = screen.get_from(x, y)
+    current_char, fg, attr, bg = screen.get_from(x, y)
     if current_char != 32:
         screen.print_at('X', x, y)
 

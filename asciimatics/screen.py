@@ -552,7 +552,8 @@ class Screen(with_metaclass(ABCMeta, object)):
         :param y: The row (y coord) of the character.
 
         :return: A tuple of the ASCII code of the character at the location
-                 and the attributes for that character.
+                 and the colour attributes for that character.  The format
+                 is (<character>, <foreground>, <attribute>, <background>).
         """
 
     def getch(self, x, y):
