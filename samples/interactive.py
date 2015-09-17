@@ -61,7 +61,7 @@ class TrackingPath(DynamicPath):
 
     def next_pos(self):
         x, y = self._path.next_pos()
-        return (x + 8, y - 2)
+        return x + 8, y - 2
 
 
 class Speak(Sprite):
