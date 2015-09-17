@@ -51,6 +51,34 @@ class MouseController(DynamicPath):
             return event
 
 
+class TrackingPath(DynamicPath):
+    def __init__(self, scene, path):
+        super(TrackingPath, self).__init__(scene, 0, 0)
+        self._path = path
+
+    def process_event(self, event):
+        return event
+
+    def next_pos(self):
+        x, y = self._path.next_pos()
+        return (x + 8, y - 2)
+
+
+class Speak(Sprite):
+    def __init__(self, screen, scene, path, text, **kwargs):
+        """
+        See :py:obj:`.Sprite` for details.
+        """
+        super(Speak, self).__init__(
+            screen,
+            renderer_dict={
+                "default": SpeechBubble(text, "L")
+            },
+            path=TrackingPath(scene, path),
+            colour=Screen.COLOUR_CYAN,
+            **kwargs)
+
+
 class InteractiveArrow(Arrow):
     def __init__(self, screen):
         """
@@ -63,15 +91,8 @@ class InteractiveArrow(Arrow):
             colour=Screen.COLOUR_GREEN)
 
     def say(self, text):
-        # TODO: Should be current pos.
-        x, y = self._path.next_pos()
         self._scene.add_effect(
-            Print(self._screen,
-                  SpeechBubble(text, "L"),
-                  x=x + 4, y=y - 4,
-                  colour=Screen.COLOUR_CYAN,
-                  clear=True,
-                  delete_count=50))
+            Speak(self._screen, self._scene, self._path, text, delete_count=50))
 
 
 class CrossHairs(Sprite):
