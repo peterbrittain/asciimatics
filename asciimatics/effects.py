@@ -604,7 +604,7 @@ class Sprite(Effect):
         w = self._old_width
         h = self._old_height
 
-        # TODO: fix up internal references
+        # TODO: Consider exposing read only access to this data.
         x2 = other._old_x
         y2 = other._old_y
         w2 = other._old_width

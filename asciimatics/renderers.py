@@ -677,7 +677,7 @@ class Fire(DynamicRenderer):
 
     _CHARS = " ...::$$$&&&@@"
 
-    def __init__(self, height, width, emitter, intensity, spot ,colours,
+    def __init__(self, height, width, emitter, intensity, spot, colours,
                  bg=False):
         """
         :param height: Height of the box to contain the flames.
@@ -723,7 +723,7 @@ class Fire(DynamicRenderer):
         y = self._y
         for c in self._emitter:
             if c not in " \n" and random() < self._intensity:
-                self._buffer[y][x] += randint(1,self._spot_heat)
+                self._buffer[y][x] += randint(1, self._spot_heat)
             if c == "\n":
                 x = self._x
                 y += 1

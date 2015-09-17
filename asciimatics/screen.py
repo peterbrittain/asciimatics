@@ -1357,7 +1357,6 @@ else:
             """
             Refresh the screen.
             """
-            # TODO: How best to handle this as a buffered screen?
             super(_CursesScreen, self).refresh()
             try:
                 sys.stdout.flush()
