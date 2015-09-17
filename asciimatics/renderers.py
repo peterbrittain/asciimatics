@@ -729,8 +729,6 @@ class Fire(DynamicRenderer):
                 y += 1
             else:
                 x += 1
-        for _ in range(self._intensity):
-            self._create_new_source()
 
         # Seed a few cooler spots
         for _ in range(self._width // 2):
