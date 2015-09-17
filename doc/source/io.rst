@@ -11,7 +11,7 @@ constructed Screen into the specified function.  For example:
 .. code-block:: python
 
     def demo(screen):
-        screen.putch('Hello world!', 0, 0)
+        screen.print_at('Hello world!', 0, 0)
         screen.refresh()
         sleep(10)
 
@@ -24,7 +24,7 @@ deprecated though and may be removed in future releases.
 Output
 ------
 Once you have a Screen, the simplest way to output text is using the
-:py:meth:`.putch` method.  This allows you to place a string at a desired
+:py:meth:`.print_at` method.  This allows you to place a string at a desired
 location in a specified colour.  The coordinates are zero-indexed starting at
 the top left of the screen and move down and right, so the example above
 displays `Hello world!` at (0, 0) which is the top left of the screen.
@@ -50,12 +50,12 @@ Supported attributes are defined by the `A_xxx` constants in the Screen class,
 e.g. `A_BOLD`.  Most systems will support bold (a.k.a bright), normal and
 reverse attributes.  Others are capable of more, but you will have
 difficulties using them in a cross-platform manner and so they are deprecated.
-The attribute is just another parameter to `putch`.  For example:
+The attribute is just another parameter to `print_at`.  For example:
 
 .. code-block:: python
 
     # Bright green text
-    screen.putch('Hello world!', 0, 0, COLOUR_GREEN, A_BOLD)
+    screen.print_at('Hello world!', 0, 0, COLOUR_GREEN, A_BOLD)
 
 Multicoloured strings
 ^^^^^^^^^^^^^^^^^^^^^
@@ -139,16 +139,16 @@ Scraping Text
 -------------
 Sometimes it is useful to be able to read what is already displayed on the
 Screen at a given location.  This is often referred to as screen scraping.  You
-can do this using the :py:meth:`.getch` method.  It will return the displayed
+can do this using the :py:meth:`.get_from` method.  It will return the displayed
 character and attributes (as a tuple pair) for any single character location on
 the Screen.
 
 .. code-block:: python
 
     # Check we've not already displayed something before updating.
-    current_char, attributes = screen.getch(x, y)
+    current_char, attributes = screen.get_from(x, y)
     if current_char != 32:
-        screen.putch('X', x, y)
+        screen.print_at('X', x, y)
 
 Line drawing
 ------------

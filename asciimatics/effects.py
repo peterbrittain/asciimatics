@@ -279,10 +279,10 @@ class Print(Effect):
         if self._clear and \
                 (frame_no == self._stop_frame - 1) or (self._delete_count == 1):
             for i in range(0, self._renderer.max_height):
-                self._screen.putch(" " * self._renderer.max_width,
-                                   self._x,
-                                   self._y + i,
-                                   bg=self._bg)
+                self._screen.print_at(" " * self._renderer.max_width,
+                                      self._x,
+                                      self._y + i,
+                                      bg=self._bg)
         elif frame_no % self._speed == 0:
             image, colours = self._renderer.rendered_text
             for (i, line) in enumerate(image):
@@ -332,11 +332,11 @@ class Mirage(Effect):
                 for j, c in enumerate(line):
                     if c != " " and random() > 0.85:
                         if colours[i][j][0] is not None:
-                            self._screen.putch(c, x, y,
-                                               colours[i][j][0],
-                                               colours[i][j][1])
+                            self._screen.print_at(c, x, y,
+                                                  colours[i][j][0],
+                                                  colours[i][j][1])
                         else:
-                            self._screen.putch(c, x, y, self._colour)
+                            self._screen.print_at(c, x, y, self._colour)
                     x += 1
             y += 1
 
@@ -371,7 +371,7 @@ class _Star(object):
         while True:
             self._x = randint(0, width - 1)
             self._y = randint(0, height - 1)
-            if self._screen.getch(self._x, self._y)[0] == 32:
+            if self._screen.get_from(self._x, self._y)[0] == 32:
                 break
         self._old_char = " "
 
@@ -382,7 +382,7 @@ class _Star(object):
         if not self._screen.is_visible(self._x, self._y):
             self._respawn()
 
-        cur_char, _, _, _ = self._screen.getch(self._x, self._y)
+        cur_char, _, _, _ = self._screen.get_from(self._x, self._y)
         if cur_char not in (ord(self._old_char), 32):
             self._respawn()
 
@@ -394,7 +394,7 @@ class _Star(object):
         if new_char == self._old_char:
             return
 
-        self._screen.putch(new_char, self._x, self._y)
+        self._screen.print_at(new_char, self._x, self._y)
         self._old_char = new_char
 
 
@@ -468,22 +468,22 @@ class _Trail(object):
         """
         if self._clear:
             for i in range(0, 3):
-                self._screen.putch(" ",
-                                   self._x,
-                                   self._screen.start_line + self._y + i)
+                self._screen.print_at(" ",
+                                      self._x,
+                                      self._screen.start_line + self._y + i)
             self._maybe_reseed(reseed)
         else:
             for i in range(0, 3):
-                self._screen.putch(chr(randint(32, 126)),
-                                   self._x,
-                                   self._screen.start_line + self._y + i,
-                                   Screen.COLOUR_GREEN)
+                self._screen.print_at(chr(randint(32, 126)),
+                                      self._x,
+                                      self._screen.start_line + self._y + i,
+                                      Screen.COLOUR_GREEN)
             for i in range(4, 6):
-                self._screen.putch(chr(randint(32, 126)),
-                                   self._x,
-                                   self._screen.start_line + self._y + i,
-                                   Screen.COLOUR_GREEN,
-                                   Screen.A_BOLD)
+                self._screen.print_at(chr(randint(32, 126)),
+                                      self._x,
+                                      self._screen.start_line + self._y + i,
+                                      Screen.COLOUR_GREEN,
+                                      Screen.A_BOLD)
             self._maybe_reseed(reseed)
 
 
@@ -540,7 +540,7 @@ class Wipe(Effect):
     def _update(self, frame_no):
         if frame_no % 2 == 0:
             if self._screen.is_visible(0, self._y):
-                self._screen.putch(
+                self._screen.print_at(
                     " " * self._screen.width, 0, self._y, bg=self._bg)
             self._y += 1
 
@@ -622,11 +622,11 @@ class Sprite(Effect):
             if (self._clear and
                     self._old_x is not None and self._old_y is not None):
                 for i in range(0, self._old_height):
-                    self._screen.putch(
+                    self._screen.print_at(
                         " " * self._old_width, self._old_x, self._old_y + i, 0)
 
             # Don't draw a new one if we're about to stop the Sprite.
-            if self._delete_count is not None and self._delete_count <= 1:
+            if self._delete_count is not None and self._delete_count <= 2:
                 return
 
             # Figure out the direction of the sprite, if enough time has
@@ -662,7 +662,7 @@ class Sprite(Effect):
                 self._path.reset()
 
             # Draw the new sprite.
-            # self._screen.putch(str(x)+","+str(y)+" ", 0, 0)
+            # self._screen.print_at(str(x)+","+str(y)+" ", 0, 0)
             image, colours = self._renderer_dict[direction].rendered_text
             for (i, line) in enumerate(image):
                 self._screen.paint(line, x, y + i, self._colour,
@@ -718,19 +718,19 @@ class _Flake(object):
         """
         Update that snowflake!
         """
-        self._screen.putch(" ", self._x, self._y)
+        self._screen.print_at(" ", self._x, self._y)
         current_char = None
         for _ in range(self._rate):
             self._y += 1
-            current_char, _, _, _ = self._screen.getch(self._x, self._y)
+            current_char, _, _, _ = self._screen.get_from(self._x, self._y)
             if current_char != 32:
                 break
 
         if ((current_char in [ord(x) for x in self._snow_chars + " "]) and
                 (self._y < self._screen.start_line + self._screen.height)):
-            self._screen.putch(self._char,
-                               self._x,
-                               self._y)
+            self._screen.print_at(self._char,
+                                  self._x,
+                                  self._y)
         else:
             if self._y >= self._screen.start_line + self._screen.height:
                 self._y = self._screen.start_line + self._screen.height - 1
@@ -738,9 +738,9 @@ class _Flake(object):
             drift_index = self._drift_chars.find(chr(current_char))
             if 0 <= drift_index < len(self._drift_chars) - 1:
                 drift_char = self._drift_chars[drift_index + 1]
-                self._screen.putch(drift_char, self._x, self._y)
+                self._screen.print_at(drift_char, self._x, self._y)
             else:
-                self._screen.putch(",", self._x, self._y - 1)
+                self._screen.print_at(",", self._x, self._y - 1)
             if reseed:
                 self._reseed()
 
@@ -838,8 +838,8 @@ class Clock(Effect):
         self._screen.draw(self._x + (self._r * sin(_sec_pos(new_time)) * 2),
                           self._y - (self._r * cos(_sec_pos(new_time))),
                           colour=6, thin=True)
-        self._screen.putch("o", self._x, self._y, Screen.COLOUR_YELLOW,
-                           Screen.A_BOLD)
+        self._screen.print_at("o", self._x, self._y, Screen.COLOUR_YELLOW,
+                              Screen.A_BOLD)
         self._old_time = new_time
 
     @property
@@ -881,10 +881,10 @@ class Cog(Effect):
             return
 
         # Function to plot.
-        f = lambda p: self._x + (
-            self._radius*2 - (6*(p//4 % 2))) * sin((self._old_frame+p)*pi/40)
-        g = lambda p: self._y + (
-            self._radius-(3*(p//4 % 2))) * cos((self._old_frame+p)*pi/40)
+        f = lambda p: self._x + (self._radius * 2 - (6 * (p // 4 % 2))) * sin(
+            (self._old_frame + p) * pi / 40)
+        g = lambda p: self._y + (self._radius - (3 * (p // 4 % 2))) * cos(
+            (self._old_frame + p) * pi / 40)
 
         # Clear old wave.
         if self._old_frame != 0:
@@ -948,7 +948,7 @@ class RandomNoise(Effect):
                                        colour_map=[colours[iy][ix]])
                 else:
                     if random() < 0.2:
-                        self._screen.putch(chr(randint(33, 126)), x, y)
+                        self._screen.print_at(chr(randint(33, 126)), x, y)
 
         # Tune the signal
         self._strength += self._step
@@ -1012,10 +1012,11 @@ class Julia(Effect):
                     z = z ** 2 + c
                     n -= 1
                 colour = \
-                    self._256_palette[n-1] if self._screen.colours >= 256 else 7
-                self._screen.putch(self._greyscale[n - 1], x, y, colour)
+                    self._256_palette[
+                        n - 1] if self._screen.colours >= 256 else 7
+                self._screen.print_at(self._greyscale[n - 1], x, y, colour)
 
-        # Zoo
+        # Zoom
         self._size = [i * self._scale for i in self._size]
         area = self._size[0] * self._size[1]
         if area <= 4.0 or area >= 16:
