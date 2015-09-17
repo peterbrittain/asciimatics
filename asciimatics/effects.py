@@ -625,6 +625,10 @@ class Sprite(Effect):
                     self._screen.putch(
                         " " * self._old_width, self._old_x, self._old_y + i, 0)
 
+            # Don't draw a new one if we're about to stop the Sprite.
+            if self._delete_count is not None and self._delete_count <= 1:
+                return
+
             # Figure out the direction of the sprite, if enough time has
             # elapsed.
             (x, y) = self._path.next_pos()
