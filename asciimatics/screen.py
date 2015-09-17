@@ -1394,7 +1394,7 @@ else:
             """
             Check for an event without waiting.
             """
-            key = self._screen.get_from()
+            key = self._screen.getch()
             if key == curses.KEY_RESIZE:
                 # Handle screen resize
                 self._re_sized = True
