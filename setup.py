@@ -19,9 +19,10 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='asciimatics',
-    version='1.4.0',
-    Description='A cross-platform package to replace curses (mouse, keyboard, '
-                'colours and positioning) and create ASCII animations',
+    version='1.4.1',
+    description='A cross-platform package to replace curses (mouse/keyboard '
+                'input & text colours/positioning) and create ASCII '
+                'animations',
     long_description=long_description,
     url='https://github.com/peterbrittain/asciimatics.git',
     author='Peter Brittain',
@@ -45,7 +46,7 @@ setup(
         'Topic :: Terminals',
     ],
     keywords='ascii ansi art credits titles animation curses '
-             'ncurses windows xterm mouse keyboard terminal tty'
+             'ncurses windows xterm mouse keyboard terminal tty '
              'color colour crossplatform console',
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
     install_requires=[
