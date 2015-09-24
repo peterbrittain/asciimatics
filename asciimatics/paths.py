@@ -18,10 +18,10 @@ def _spline(t, p0, p1, p2, p3):
     :param p3: The last point to interpolate.
     """
     return (
-        t * ((2 - t) * t - 1) * p0
-        + (t * t * (3 * t - 5) + 2) * p1
-        + t * ((4 - 3 * t) * t + 1) * p2
-        + (t - 1) * t * t * p3) / 2
+        t * ((2 - t) * t - 1) * p0 +
+        (t * t * (3 * t - 5) + 2) * p1 +
+        t * ((4 - 3 * t) * t + 1) * p2 +
+        (t - 1) * t * t * p3) / 2
 
 
 class _AbstractPath(with_metaclass(ABCMeta, object)):

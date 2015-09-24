@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from builtins import object
 from builtins import range
-from math import pi, sin, cos
+from math import pi, sin, cos, atan2
 from random import uniform, random, randint
 from asciimatics.effects import Effect
 from asciimatics.screen import Screen
@@ -14,7 +14,7 @@ class _Particle(object):
     A single particle in a Particle Effect.
     """
 
-    def __init__(self, chars, x, y, dx, dy, colours, delta):
+    def __init__(self, chars, x, y, dx, dy, colours, delta, parm=None):
         self._chars = chars
         self._x = x
         self._y = y
@@ -24,6 +24,7 @@ class _Particle(object):
         self._delta = delta
         self._t = 0
         self._last = None
+        self._parm = parm
 
     def last(self):
         return self._last
@@ -79,32 +80,33 @@ class Particles(Effect):
         return self._stop_frame
 
 
-class Firework(Particles):
+class RingFirework(Particles):
     """
-    An exploding firework.
+    A classic firework exploding to a simple ring.
     """
 
     def __init__(self, screen, x, y, life_time, **kwargs):
-        super(Firework, self).__init__(
-            screen, 15, self._new_particle, 4, life_time, **kwargs)
+        super(RingFirework, self).__init__(
+            screen, 15, self._new_particle, 3, life_time, **kwargs)
         self._x = x
         self._y = y
         self._colour = randint(1, 7)
+        self._acceleration = 1.0 - (1.0 / life_time)
 
     def _new_particle(self):
         direction = uniform(0, 2 * pi)
         return _Particle("*+:. ",
                          self._x,
                          self._y,
-                         sin(direction) * 3,
-                         cos(direction) * 1.5,
+                         sin(direction) * 3 * 8 / self._life_time,
+                         cos(direction) * 1.5 * 8 / self._life_time,
                          [(self._colour, Screen.A_BOLD, 0), (0, 0, 0)],
                          self._explode)
 
     def _explode(self, particle):
         # Simulate some gravity and slowdown in explosion
-        particle._dy = particle._dy * 0.9 + 0.05
-        particle._dx = particle._dx * 0.9
+        particle._dy = particle._dy * self._acceleration + 0.03
+        particle._dx = particle._dx * self._acceleration
         particle._x += particle._dx
         particle._y += particle._dy
 
@@ -112,7 +114,88 @@ class Firework(Particles):
             (len(particle._colours)-1) * particle._t // self._life_time]
         return (particle._chars[
                     (len(particle._chars)-1) * particle._t // self._life_time],
-                round(particle._x),
-                round(particle._y),
+                int(particle._x),
+                int(particle._y),
+                colour[0], colour[1], colour[2])
+
+
+class SerpentFirework(Particles):
+    """
+    An firework where each trail changes direction.
+    """
+
+    def __init__(self, screen, x, y, life_time, **kwargs):
+        super(SerpentFirework, self).__init__(
+            screen, 8, self._new_particle, 2, life_time, **kwargs)
+        self._x = x
+        self._y = y
+        self._colour = randint(1, 7)
+
+    def _new_particle(self):
+        direction = uniform(0, 2 * pi)
+        acceleration = uniform(0, 2 * pi)
+        return _Particle("++++- ",
+                         self._x,
+                         self._y,
+                         cos(direction),
+                         sin(direction) / 2,
+                         [(self._colour, Screen.A_BOLD, 0), (0, 0, 0)],
+                         self._explode,
+                         parm=acceleration)
+
+    def _explode(self, particle):
+        # Change direction like a serpent firework.
+        if particle._t % 3 == 0:
+            particle._parm = uniform(0, 2 * pi)
+        particle._dx = (particle._dx + cos(particle._parm) / 2) * 0.8
+        particle._dy = (particle._dy + sin(particle._parm) / 4) * 0.8
+        particle._x += particle._dx
+        particle._y += particle._dy
+
+        colour = particle._colours[
+            (len(particle._colours)-1) * particle._t // self._life_time]
+        return (particle._chars[
+                    (len(particle._chars)-1) * particle._t // self._life_time],
+                int(particle._x),
+                int(particle._y),
+                colour[0], colour[1], colour[2])
+
+
+class StarFirework(Particles):
+    """
+    A classic firework exploding to a star shape.
+    """
+
+    def __init__(self, screen, x, y, life_time, **kwargs):
+        super(StarFirework, self).__init__(
+            screen, 10, self._new_particle, life_time, life_time, **kwargs)
+        self._x = x
+        self._y = y
+        self._colour = randint(1, 7)
+        self._acceleration = 1.0 - (1.0 / life_time)
+
+    def _new_particle(self):
+        direction = randint(0, 16) * pi / 8
+        return _Particle("...++ ",
+                         self._x,
+                         self._y,
+                         sin(direction) * 3 * 8 / self._life_time,
+                         cos(direction) * 1.5 * 8 / self._life_time,
+                         [(self._colour, Screen.A_BOLD, 0), (0, 0, 0)],
+                         self._explode)
+
+    def _explode(self, particle):
+        # Simulate some gravity and slowdown in explosion
+        particle._dy = particle._dy * self._acceleration + 0.03
+        particle._dx = particle._dx * self._acceleration
+        particle._x += particle._dx
+        particle._y += particle._dy
+
+        colour = particle._colours[
+            (len(particle._colours)-1) * particle._t // self._life_time]
+        return (particle._chars[
+                    (len(particle._chars)-1) * particle._t // self._life_time],
+                int(particle._x),
+                int(particle._y),
                 colour[0], colour[1], colour[2])
 

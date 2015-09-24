@@ -804,9 +804,14 @@ class Clock(Effect):
 
     def _update(self, frame_no):
         # Helper functions to map various time elements
-        _hour_pos = lambda t: (t.tm_hour + t.tm_min / 60) * pi / 6
-        _min_pos = lambda t: t.tm_min * pi / 30
-        _sec_pos = lambda t: t.tm_sec * pi / 30
+        def _hour_pos(t):
+            return (t.tm_hour + t.tm_min / 60) * pi / 6
+
+        def _min_pos(t):
+            return t.tm_min * pi / 30
+
+        def _sec_pos(t):
+            return t.tm_sec * pi / 30
 
         # Clear old hands
         if self._old_time is not None:
@@ -881,10 +886,13 @@ class Cog(Effect):
             return
 
         # Function to plot.
-        f = lambda p: self._x + (self._radius * 2 - (6 * (p // 4 % 2))) * sin(
-            (self._old_frame + p) * pi / 40)
-        g = lambda p: self._y + (self._radius - (3 * (p // 4 % 2))) * cos(
-            (self._old_frame + p) * pi / 40)
+        def f(p):
+            return self._x + (self._radius * 2 - (6 * (p // 4 % 2))) * sin(
+                (self._old_frame + p) * pi / 40)
+
+        def g(p):
+            return self._y + (self._radius - (3 * (p // 4 % 2))) * cos(
+                (self._old_frame + p) * pi / 40)
 
         # Clear old wave.
         if self._old_frame != 0:
