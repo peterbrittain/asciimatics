@@ -566,9 +566,6 @@ class Screen(with_metaclass(ABCMeta, object)):
     @abstractmethod
     def print_at(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
         """
-        Check for a key without waiting.  This method is deprecated.  Use
-        :py:meth:`.print_at` instead.
-
         Print the text at the specified location using the
         specified colour and attributes.
 
