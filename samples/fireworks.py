@@ -1,6 +1,6 @@
 from asciimatics.effects import Stars, Print
 from asciimatics.particles import RingFirework, SerpentFirework, StarFirework
-from asciimatics.renderers import SpeechBubble
+from asciimatics.renderers import SpeechBubble, FigletText, Rainbow
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError
@@ -14,7 +14,7 @@ def demo(screen):
         Stars(screen, screen.width),
         Print(screen,
               SpeechBubble("Press space to see it again"),
-              y=screen.height // 2 - 1,
+              y=screen.height - 3,
               start_frame=300)
     ]
     for i in range(80):
@@ -31,7 +31,18 @@ def demo(screen):
                                 randint(start, stop),
                                 start_frame=randint(0, 250)))
 
+    effects.append(Print(screen,
+                         Rainbow(screen, FigletText("HAPPY")),
+                         screen.height // 2 - 6,
+                         speed=1,
+                         start_frame=100))
+    effects.append(Print(screen,
+                         Rainbow(screen, FigletText("NEW YEAR!")),
+                         screen.height // 2 + 1,
+                         speed=1,
+                         start_frame=100))
     scenes.append(Scene(effects, -1))
+
     screen.play(scenes, stop_on_resize=True)
 
 while True:
