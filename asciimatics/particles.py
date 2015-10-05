@@ -108,6 +108,7 @@ class Rocket(ParticleSystem):
         self._end_y = y
         self._acceleration = (self._end_y - self._y) // life_time
         self._on_destroy = on_destroy
+        self._life_time = life_time
 
     def _new_particle(self):
         return _Particle("|",
@@ -123,7 +124,9 @@ class Rocket(ParticleSystem):
         particle.x += particle.dx
         particle.y += particle.dy
         if particle.y <= self._end_y:
+            # Rounding errors may mean we need to end slightly early.
             particle.y = self._end_y
+            particle.time = self._life_time - 1
 
         colour = particle.colours[0]
         return (particle.chars[0],

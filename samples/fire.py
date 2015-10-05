@@ -59,11 +59,13 @@ def demo(screen):
               FigletText("ASCIIMATICS", "banner"),
               screen.height - 9, x=(screen.width - width) // 2 + 1,
               colour=Screen.COLOUR_BLACK,
+              bg=Screen.COLOUR_BLACK,
               speed=1),
         Print(screen,
               FigletText("ASCIIMATICS", "banner"),
               screen.height - 9,
               colour=Screen.COLOUR_WHITE,
+              bg=Screen.COLOUR_WHITE,
               speed=1),
     ]
     scenes.append(Scene(effects, -1))
