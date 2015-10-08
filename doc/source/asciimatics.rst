@@ -25,6 +25,13 @@ asciimatics.exceptions module
     :members:
     :show-inheritance:
 
+asciimatics.particles module
+----------------------------
+
+.. automodule:: asciimatics.particles
+    :members:
+    :show-inheritance:
+
 asciimatics.paths module
 ------------------------
 
