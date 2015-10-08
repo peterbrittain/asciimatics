@@ -1,6 +1,15 @@
 CHANGE HISTORY
 ==============
 
+1.5.0
+-----
+- Created the ParticleEffect and associated classes.
+- Implemented the StarFirework, RingFirework and SerpentFirework effects.
+
+1.4.1
+-----
+- Minor fixes to setup.py to correct packaging meta-data.
+
 1.4.0
 -----
 - Added Fire renderer and demo.
