@@ -4,6 +4,7 @@ from __future__ import print_function
 from abc import ABCMeta, abstractmethod
 from builtins import object
 from builtins import range
+from copy import copy
 from math import pi, sin, cos
 from random import uniform, randint
 from future.utils import with_metaclass
@@ -192,7 +193,7 @@ class ParticleEffect(with_metaclass(ABCMeta, Effect)):
 
     def _update(self, frame_no):
         # Take a copy in case a new system is added to the list this iteration.
-        for system in self._active_systems.copy():
+        for system in copy(self._active_systems):
             if len(system.particles) > 0 or system.time_left > 0:
                 system.update()
             else:
