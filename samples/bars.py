@@ -44,10 +44,15 @@ def demo(screen):
             Print(screen,
                   BarChart(
                       7, 60, [lambda: time.time() * 10 % 101],
-                      gradient=None if screen.colours < 256 else [
-                          (10, 234), (20, 236), (30, 238), (40, 240),
-                          (50, 242), (60, 244), (70, 246), (80, 248),
-                          (90, 250), (100, 252)
+                      gradient=[
+                          (33, Screen.COLOUR_RED, Screen.COLOUR_RED),
+                          (66, Screen.COLOUR_YELLOW, Screen.COLOUR_YELLOW),
+                          (100, Screen.COLOUR_WHITE, Screen.COLOUR_WHITE),
+                      ] if screen.colours < 256 else [
+                          (10, 234, 234), (20, 236, 236), (30, 238, 238),
+                          (40, 240, 240), (50, 242, 242), (60, 244, 244),
+                          (70, 246, 246), (80, 248, 248), (90, 250, 250),
+                          (100, 252, 252)
                       ],
                       char=">",
                       scale=100.0,
@@ -59,6 +64,7 @@ def demo(screen):
                       10, 60,
                       [wv(1), wv(2), wv(3), wv(4), wv(5), wv(7), wv(8), wv(9)],
                       colour=[c for c in range(1, 8)],
+                      bg=[c for c in range(1, 8)],
                       scale=2.0,
                       axes=BarChart.X_AXIS,
                       intervals=0.5,

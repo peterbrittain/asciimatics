@@ -500,8 +500,9 @@ class BarChart(DynamicRenderer):
     BOTH = 3
 
     def __init__(self, height, width, functions, char="#",
-                 colour=Screen.COLOUR_GREEN, gradient=None, scale=None,
-                 axes=Y_AXIS, intervals=None, labels=False, border=True):
+                 colour=Screen.COLOUR_GREEN, bg=Screen.COLOUR_BLACK,
+                 gradient=None, scale=None, axes=Y_AXIS, intervals=None,
+                 labels=False, border=True):
         """
         :param height: The max height of the rendered image.
         :param width: The max width of the rendered image.
@@ -509,8 +510,11 @@ class BarChart(DynamicRenderer):
         :param char: Character to use for the bar.
         :param colour: Default colour to use for the bars.  This can be a
             single value or list of values (to cycle around for each bar).
+        :param bg: Default background colour to use for the bars.  This can be a
+            single value or list of values (to cycle around for each bar).
         :param gradient: Colour gradient for use on all bars.  This is a list of
-            tuple pairs specifying a threshold and a colour.
+            tuple pairs specifying a threshold and a colour, or triplets to
+            include a background colour too.
         :param scale: Maximum value for the bars.  This is used to scale the
             function values to the maximum space available.  Any value over this
             will be truncated when drawn.  Defaults to the number of available
@@ -525,6 +529,7 @@ class BarChart(DynamicRenderer):
         self._functions = functions
         self._char = char
         self._colours = [colour] if isinstance(colour, int) else colour
+        self._bgs = [bg] if isinstance(bg, int) else bg
         self._gradient = gradient
         self._scale = scale
         self._axes = axes
@@ -600,12 +605,18 @@ class BarChart(DynamicRenderer):
             bar_len = int(fn() * int_w / scale)
             y = start_y + (i * bar_size) + int(i * gap)
             colour = self._colours[i % len(self._colours)]
+            bg = self._bgs[i % len(self._bgs)]
             if self._gradient:
                 # Colour gradient required - break down into chunks for each
                 # color.
                 last = 0
                 size = 0
-                for threshold, colour in self._gradient:
+                for gradient in self._gradient:
+                    if len(gradient) < 3:
+                        threshold, colour = gradient
+                        bg = Screen.COLOUR_BLACK
+                    else:
+                        threshold, colour, bg = gradient
                     value = int(threshold * int_w / scale)
                     if value - last > 0:
                         # Size to fit the available space
@@ -617,7 +628,8 @@ class BarChart(DynamicRenderer):
                                 self._char * (size-last),
                                 start_x + last,
                                 y + line,
-                                colour)
+                                colour,
+                                bg=bg)
 
                     # Stop if we reached the end of the line or the chart
                     if bar_len < value or size >= int_w:
@@ -626,7 +638,8 @@ class BarChart(DynamicRenderer):
             else:
                 # Solid colour - just write the whole block out.
                 for line in range(bar_size):
-                    self._write(self._char * bar_len, start_x, y + line, colour)
+                    self._write(
+                        self._char * bar_len, start_x, y + line, colour, bg=bg)
 
         return self._plain_image, self._colour_map
 

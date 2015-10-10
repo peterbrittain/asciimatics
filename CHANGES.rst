@@ -5,6 +5,7 @@ CHANGE HISTORY
 -----
 - Created the ParticleEffect and associated classes.
 - Implemented the StarFirework, RingFirework and SerpentFirework effects.
+- Added background colour options to BarChart renderer.
 
 1.4.1
 -----
