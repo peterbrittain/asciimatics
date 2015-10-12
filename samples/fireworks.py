@@ -17,10 +17,10 @@ def demo(screen):
               y=screen.height - 3,
               start_frame=300)
     ]
-    for i in range(80):
+    for i in range(screen.height):
         fireworks = [
             (RingFirework, 15, 30),
-            (StarFirework, 15, 30),
+            (StarFirework, 25, 35),
             (SerpentFirework, 30, 35),
         ]
         firework, start, stop = choice(fireworks)

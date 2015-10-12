@@ -901,6 +901,8 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
         :return: A 4-tuple of (ascii code, foreground, attributes, background)
                  for the character at the location.
         """
+        if y < 0 or y >= self._buffer_height or x < 0 or x >= self.width:
+            return None
         cell = self._screen_buffer[y][x]
         return ord(cell[0]), cell[1], cell[2], cell[3]
 
