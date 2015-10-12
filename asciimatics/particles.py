@@ -117,7 +117,8 @@ class ParticleSystem(object):
     system will be called once per frame to be displayed to te screen.
     """
 
-    def __init__(self, screen, x, y, count, new_particle, spawn, life_time):
+    def __init__(self, screen, x, y, count, new_particle, spawn, life_time,
+                 blend=False):
         """
         :param screen: The screen to which the particle system will be rendered.
         :param x: The x location of origin of the particle system.
@@ -126,6 +127,7 @@ class ParticleSystem(object):
         :param new_particle: The function to call to spawn a new particle.
         :param spawn: The number of frames for which to spawn particles.
         :param life_time: The life time of the whole particle system.
+        :param blend: Whether to blend particles or not.  Defaults to False.
         """
         super(ParticleSystem, self).__init__()
         self._screen = screen
@@ -136,6 +138,7 @@ class ParticleSystem(object):
         self._life_time = life_time
         self.particles = []
         self.time_left = spawn
+        self._blend = blend
 
     def update(self):
         """
@@ -152,12 +155,41 @@ class ParticleSystem(object):
             # Clear our the old particle
             last = particle.last()
             if last is not None:
-                self._screen.print_at(
-                    " ", last[1], last[2], last[3], last[4], last[5])
+                x, y, fg, attr, bg = last[1], last[2], last[3], last[4], last[5]
+                # Figure out new character and colour
+                if self._blend:
+                    # TODO: Sort out blending on non-RGB systems
+                    # Assume simple linear addition along the text/colours.
+                    # char, fg, attr, bg = self._screen.get_from(x, y)
+                    # pos = particle.chars.find(chr(char))
+                    # new_char = particle.chars[pos - 1] if pos > 0 else " "
+                    # pos = particle.colours.find((fg, attr, bg))
+                    # fg, attr, bg = (
+                    #     particle.colours[pos - 1] if pos > 1 else 0, 0, 0)
+                    new_char = " "
+                else:
+                    new_char = " "
+                self._screen.print_at(new_char, x, y, fg, attr, bg)
 
             if particle.time < self._life_time:
                 # Draw the new one
                 char, x, y, fg, attr, bg = particle.next()
+                screen_data = self._screen.get_from(x, y)
+                if self._blend and screen_data:
+                    char2, fg2, attr2, bg2 = screen_data
+                    pos = particle.chars.find(char)
+                    pos2 = particle.chars.find(chr(char2))
+                    pos -= pos2 if pos2 >= 0 else 0
+                    char = particle.chars[max(pos, 0)]
+                    fg, attr, bg = particle.colours[
+                        max(min(pos, len(particle.colours)-1), 0)]
+
+                    # TODO: Sort out blending on non-RGB systems
+                    # pos = particle.colours.find((fg, attr, bg))
+                    # pos2 = particle.colours.find((fg2, attr2, bg2))
+                    # pos2 += pos if pos >= 0 else 0
+                    # fg, attr, bg = (
+                    #     particle.colours[min(pos2, len(particle.colours) - 1)])
                 self._screen.print_at(char, x, y, fg, attr, bg)
             else:
                 self.particles.remove(particle)
@@ -382,12 +414,14 @@ class StarTrail(ParticleSystem):
         self._colour = colour
 
     def _new_particle(self):
-        return Particle("+... ",
+        return Particle("+:,. ",
                         self._x,
                         self._y,
                         0,
                         0,
-                        [(self._colour, Screen.A_BOLD, 0), (0, 0, 0)],
+                        [(self._colour, Screen.A_BOLD, 0),
+                         (self._colour, 0, 0),
+                         (0, 0, 0)],
                         self._life_time,
                         self._twinkle)
 
@@ -423,12 +457,12 @@ class StarFirework(ParticleEffect):
                 on_each=self._trail))
 
     def _trail(self, parent):
-        if randint(0, len(self._active_systems)) < 30:
+        if len(self._active_systems) < 150 and randint(0,100) < 50:
             self._active_systems.insert(
                 0, StarTrail(self._screen,
                              parent.x,
                              parent.y,
-                             7,
+                             10,
                              parent.colours[0][0]))
 
 
