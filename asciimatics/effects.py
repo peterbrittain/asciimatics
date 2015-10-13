@@ -458,7 +458,8 @@ class _Trail(object):
                 self._y = 0
                 self._life = self._screen.height // self._rate
             else:
-                self._y = randint(0, self._screen.height // 2) - self._screen.height // 4
+                self._y = randint(0, self._screen.height // 2) - \
+                    self._screen.height // 4
                 self._life = \
                     randint(1, self._screen.height - self._y) // self._rate
 

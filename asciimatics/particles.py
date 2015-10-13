@@ -6,7 +6,7 @@ from builtins import object
 from builtins import range
 from copy import copy
 from math import pi, sin, cos
-from random import uniform, randint
+from random import uniform, randint, random
 from future.utils import with_metaclass
 from asciimatics.effects import Effect
 from asciimatics.screen import Screen
@@ -288,18 +288,20 @@ class RingExplosion(ParticleSystem):
         :param life_time: The life time of this explosion.
         """
         super(RingExplosion, self).__init__(
-            screen, x, y, 15, self._new_particle, 3, life_time)
+            screen, x, y, 30, self._new_particle, 1, life_time)
         self._colour = randint(1, 7)
         self._acceleration = 1.0 - (1.0 / life_time)
 
     def _new_particle(self):
         direction = uniform(0, 2 * pi)
-        return Particle("**::. ",
+        return Particle("***:. ",
                         self._x,
                         self._y,
                         sin(direction) * 3 * 8 / self._life_time,
                         cos(direction) * 1.5 * 8 / self._life_time,
-                        [(self._colour, Screen.A_BOLD, 0), (0, 0, 0)],
+                        [(self._colour, Screen.A_BOLD, 0),
+                         (self._colour, 0, 0),
+                         (0, 0, 0)],
                         self._life_time,
                         self._explode)
 
@@ -378,7 +380,7 @@ class StarExplosion(ParticleSystem):
         self._point_count = 0
 
     def _new_particle(self):
-        direction = self._point_count * 2* pi / self._points
+        direction = self._point_count * 2 * pi / self._points
         self._point_count += 1
         return Particle("+",
                         self._x,
@@ -438,6 +440,49 @@ class StarTrail(ParticleSystem):
         return int(particle.x), int(particle.y)
 
 
+class PalmExplosion(ParticleSystem):
+    """
+    A classic firework explosion into a palm shape.
+    """
+
+    def __init__(self, screen, x, y, life_time, on_each=None):
+        """
+        :param screen: The Screen being used for this particle system.
+        :param x: The column (x coordinate) for the origin of this explosion.
+        :param y: The line (y coordinate) for the origin of this explosion.
+        :param life_time: The life time of this explosion.
+        :param on_each: The function to call to spawn a trail.
+        """
+        super(PalmExplosion, self).__init__(
+            screen, x, y, 6, self._new_particle, 2, life_time)
+        self._colour = randint(1, 7)
+        self._on_each = on_each
+        self._arc_start = uniform(pi / 6, pi / 3)
+        self._arc_end = self._arc_start + uniform(pi / 6, pi / 2)
+
+    def _new_particle(self):
+        direction = uniform(self._arc_start, self._arc_end)
+        return Particle("* ",
+                        self._x,
+                        self._y,
+                        cos(direction) * 1.5,
+                        -sin(direction),
+                        [(self._colour, Screen.A_BOLD, 0),
+                         (0, 0, 0)],
+                        self._life_time,
+                        self._explode,
+                        on_each=self._on_each)
+
+    @staticmethod
+    def _explode(particle):
+        # Simulate some gravity
+        particle.dy += 0.2
+        particle.x += particle.dx
+        particle.y += particle.dy
+
+        return int(particle.x), int(particle.y)
+
+
 class StarFirework(ParticleEffect):
     """
     Classic rocket with star explosion.
@@ -461,7 +506,7 @@ class StarFirework(ParticleEffect):
                 randint(6, 20), on_each=self._trail))
 
     def _trail(self, parent):
-        if len(self._active_systems) < 150 and randint(0,100) < 50:
+        if len(self._active_systems) < 150 and randint(0, 100) < 50:
             self._active_systems.insert(
                 0, StarTrail(self._screen,
                              parent.x,
@@ -510,3 +555,34 @@ class SerpentFirework(ParticleEffect):
     def _next(self, parent):
         self._active_systems.append(SerpentExplosion(
             self._screen, parent.x, parent.y, self._life_time - 10))
+
+
+class PalmFirework(ParticleEffect):
+    """
+    Classic palm shaped firework.
+    """
+
+    def __init__(self, screen, x, y, life_time, **kwargs):
+        """
+        See :py:obj:`.ParticleEffect` for details of the parameters.
+        """
+        super(PalmFirework, self).__init__(screen, x, y, life_time, **kwargs)
+
+    def reset(self):
+        self._active_systems = []
+        self._active_systems.append(
+            Rocket(self._screen, self._x, self._y, 10, on_destroy=self._next))
+
+    def _next(self, parent):
+        self._active_systems.append(PalmExplosion(
+            self._screen, parent.x, parent.y, self._life_time - 10,
+            on_each=self._trail))
+
+    def _trail(self, parent):
+        if len(self._active_systems) < 100 and randint(0, 100) < 80:
+            self._active_systems.insert(
+                0, StarTrail(self._screen,
+                             parent.x,
+                             parent.y,
+                             10,
+                             parent.colours[0][0]))
