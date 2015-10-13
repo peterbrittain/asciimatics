@@ -360,22 +360,26 @@ class StarExplosion(ParticleSystem):
     A classic firework explosion to a Peony shape with trails.
     """
 
-    def __init__(self, screen, x, y, life_time, on_each):
+    def __init__(self, screen, x, y, life_time, points, on_each):
         """
         :param screen: The Screen being used for this particle system.
         :param x: The column (x coordinate) for the origin of this explosion.
         :param y: The line (y coordinate) for the origin of this explosion.
         :param life_time: The life time of this explosion.
+        :param points: Number of points the explosion should have.
         :param on_each: The function to call to spawn a trail.
         """
         super(StarExplosion, self).__init__(
-            screen, x, y, 15, self._new_particle, 2, life_time)
+            screen, x, y, points, self._new_particle, 1, life_time)
         self._colour = randint(1, 7)
         self._acceleration = 1.0 - (1.0 / life_time)
         self._on_each = on_each
+        self._points = points
+        self._point_count = 0
 
     def _new_particle(self):
-        direction = randint(0, 16) * pi / 8
+        direction = self._point_count * 2* pi / self._points
+        self._point_count += 1
         return Particle("+",
                         self._x,
                         self._y,
@@ -454,7 +458,7 @@ class StarFirework(ParticleEffect):
         self._active_systems.append(
             StarExplosion(
                 self._screen, parent.x, parent.y, self._life_time - 10,
-                on_each=self._trail))
+                randint(6, 20), on_each=self._trail))
 
     def _trail(self, parent):
         if len(self._active_systems) < 150 and randint(0,100) < 50:
