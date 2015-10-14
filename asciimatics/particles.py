@@ -6,7 +6,7 @@ from builtins import object
 from builtins import range
 from copy import copy
 from math import pi, sin, cos
-from random import uniform, randint, random
+from random import uniform, randint
 from future.utils import with_metaclass
 from asciimatics.effects import Effect
 from asciimatics.screen import Screen
@@ -48,7 +48,7 @@ class Particle(object):
         self.dy = dy
         self.colours = colours
         self.time = 0
-        self._life_time = life_time
+        self.life_time = life_time
 
         self._move = move
         self._next_colour = (
@@ -67,7 +67,7 @@ class Particle(object):
         each character.
         """
         return self.chars[
-            (len(self.chars)-1) * self.time // self._life_time]
+            (len(self.chars)-1) * self.time // self.life_time]
 
     def _default_next_colour(self):
         """
@@ -75,7 +75,7 @@ class Particle(object):
         each colour tuple.
         """
         return self.colours[
-            (len(self.colours) - 1) * self.time // self._life_time]
+            (len(self.colours) - 1) * self.time // self.life_time]
 
     def last(self):
         """
@@ -102,7 +102,7 @@ class Particle(object):
         # Trigger any configured events
         if self.time == 1 and self._on_create is not None:
             self._on_create(self)
-        elif self._life_time == self.time and self._on_destroy is not None:
+        elif self.life_time == self.time and self._on_destroy is not None:
             self._on_destroy(self)
         elif self._on_each is not None:
             self._on_each(self)
@@ -155,41 +155,23 @@ class ParticleSystem(object):
             # Clear our the old particle
             last = particle.last()
             if last is not None:
-                x, y, fg, attr, bg = last[1], last[2], last[3], last[4], last[5]
-                # Figure out new character and colour
-                if self._blend:
-                    # TODO: Sort out blending on non-RGB systems
-                    # Assume simple linear addition along the text/colours.
-                    # char, fg, attr, bg = self._screen.get_from(x, y)
-                    # pos = particle.chars.find(chr(char))
-                    # new_char = particle.chars[pos - 1] if pos > 0 else " "
-                    # pos = particle.colours.find((fg, attr, bg))
-                    # fg, attr, bg = (
-                    #     particle.colours[pos - 1] if pos > 1 else 0, 0, 0)
-                    new_char = " "
-                else:
-                    new_char = " "
-                self._screen.print_at(new_char, x, y, fg, attr, bg)
+                x, y = last[1], last[2]
+                self._screen.print_at(" ", x, y, 0, 0, 0)
 
-            if particle.time < self._life_time:
+            if particle.time < particle.life_time:
                 # Draw the new one
                 char, x, y, fg, attr, bg = particle.next()
                 screen_data = self._screen.get_from(x, y)
                 if self._blend and screen_data:
                     char2, fg2, attr2, bg2 = screen_data
-                    pos = particle.chars.find(char)
-                    pos2 = particle.chars.find(chr(char2))
-                    pos -= pos2 if pos2 >= 0 else 0
-                    char = particle.chars[max(pos, 0)]
-                    fg, attr, bg = particle.colours[
-                        max(min(pos, len(particle.colours)-1), 0)]
-
-                    # TODO: Sort out blending on non-RGB systems
-                    # pos = particle.colours.find((fg, attr, bg))
-                    # pos2 = particle.colours.find((fg2, attr2, bg2))
-                    # pos2 += pos if pos >= 0 else 0
-                    # fg, attr, bg = (
-                    #     particle.colours[min(pos2, len(particle.colours) - 1)])
+                    index = -1
+                    for i, colours in enumerate(particle.colours):
+                        if (fg2, attr2, bg2) == colours:
+                            index = i
+                            break
+                    index += 1
+                    fg, attr, bg = \
+                        particle.colours[min(index, len(particle.colours) - 1)]
                 self._screen.print_at(char, x, y, fg, attr, bg)
             else:
                 self.particles.remove(particle)
@@ -483,6 +465,51 @@ class PalmExplosion(ParticleSystem):
         return int(particle.x), int(particle.y)
 
 
+class ExplosionFlames(ParticleSystem):
+    """
+    An explosion of flame and smoke.
+    """
+
+    def __init__(self, screen, x, y, life_time):
+        """
+        :param screen: The Screen being used for this particle system.
+        :param x: The column (x coordinate) for the origin of this explosion.
+        :param y: The line (y coordinate) for the origin of this explosion.
+        :param life_time: The life time of this explosion.
+        """
+        super(ExplosionFlames, self).__init__(
+            screen, x, y, 40, self._new_particle, life_time - 10, life_time,
+            blend=True)
+
+    def _new_particle(self):
+        direction = uniform(0, 2 * pi)
+        d = self._life_time - 10
+        r = uniform(0, sin(pi * (d - self.time_left) / (d * 2))) * 5
+        return Particle("#",
+                        self._x + sin(direction) * r * 2.0,
+                        self._y + cos(direction) * r,
+                        0,
+                        0,
+                        [
+                            # (Screen.COLOUR_BLACK, Screen.A_BOLD, 0),
+                            # (Screen.COLOUR_YELLOW, 0, 0),
+                            # (Screen.COLOUR_BLACK, Screen.A_BOLD, 0),
+                            # (Screen.COLOUR_WHITE, 0, 0),
+                            (Screen.COLOUR_BLACK, 0, 0),
+                            (Screen.COLOUR_RED, 0, 0),
+                            (Screen.COLOUR_RED, Screen.A_BOLD, 0),
+                            (Screen.COLOUR_YELLOW, Screen.A_BOLD, 0),
+                            (Screen.COLOUR_BLACK, Screen.A_BOLD, 0),
+                            (Screen.COLOUR_WHITE, Screen.A_BOLD, 0),
+                        ],
+                        3,
+                        self._burn)
+
+    @staticmethod
+    def _burn(particle):
+        return int(particle.x), int(particle.y)
+
+
 class StarFirework(ParticleEffect):
     """
     Classic rocket with star explosion.
@@ -586,3 +613,20 @@ class PalmFirework(ParticleEffect):
                              parent.y,
                              10,
                              parent.colours[0][0]))
+
+
+class Explosion(ParticleEffect):
+    """
+    An explosion effect.
+    """
+
+    def __init__(self, screen, x, y, life_time, **kwargs):
+        """
+        See :py:obj:`.ParticleEffect` for details of the parameters.
+        """
+        super(Explosion, self).__init__(screen, x, y, life_time, **kwargs)
+
+    def reset(self):
+        self._active_systems = []
+        self._active_systems.append(
+            ExplosionFlames(self._screen, self._x, self._y, self._life_time))
