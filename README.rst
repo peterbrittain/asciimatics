@@ -28,7 +28,7 @@ function you could ask for, including:
 
 Currently this API has been proven to work on CentOS 6 & 7, Raspbian (i.e.
 Debian wheezy), Windows 7, 8 & 10 and OSX 10.11, though it should also
-work for any other platform that provide a working curses implementation.  
+work for any other platform that provides a working curses implementation.  
 
 (Please let me know if you successfully verified it on other platforms so
 that I can update this list).
