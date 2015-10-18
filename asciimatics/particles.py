@@ -197,6 +197,7 @@ class ParticleEffect(with_metaclass(ABCMeta, Effect)):
         self._y = y
         self._life_time = life_time
         self._active_systems = []
+        self.reset()
 
     @abstractmethod
     def reset(self):
