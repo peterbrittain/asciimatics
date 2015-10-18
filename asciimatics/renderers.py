@@ -648,6 +648,10 @@ class Fire(DynamicRenderer):
     """
     Renderer to create a fire effect based on a specified `emitter` that
     defines the heat source.
+
+    The implementation here uses the same techniques described in
+    http://freespace.virgin.net/hugo.elias/models/m_fire.htm, although a
+    slightly different implementation.
     """
 
     _COLOURS_16 = [
