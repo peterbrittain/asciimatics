@@ -402,6 +402,8 @@ class Screen(with_metaclass(ABCMeta, object)):
 
         :param win: The curses window to use.
         :param height: The buffer height for this window (if using scrolling).
+
+        This method is deprecated.  Please use :py:meth:`.wrapper` instead.
         """
         return _CursesScreen(win, height)
 
@@ -412,6 +414,8 @@ class Screen(with_metaclass(ABCMeta, object)):
 
         :param terminal: The blessed Terminal to use.
         :param height: The buffer height for this window (if using scrolling).
+
+        This method is deprecated.  Please use :py:meth:`.wrapper` instead.
         """
         return _BlessedScreen(terminal, height)
 
@@ -425,6 +429,8 @@ class Screen(with_metaclass(ABCMeta, object)):
         :param stdin: The Windows PyConsoleScreenBufferType for stdin returned
             from win32console.
         :param height: The buffer height for this window (if using scrolling).
+
+        This method is deprecated.  Please use :py:meth:`.wrapper` instead.
         """
         return _WindowsScreen(stdout, stdin, height)
 
@@ -558,8 +564,8 @@ class Screen(with_metaclass(ABCMeta, object)):
 
     def getch(self, x, y):
         """
-        Check for a key without waiting.  This method is deprecated.  Use
-        :py:meth:`.get_from` instead.
+        Get the character at a specified location..  This method is deprecated.
+        Use :py:meth:`.get_from` instead.
         """
         return self.get_from(x, y)
 
@@ -584,7 +590,7 @@ class Screen(with_metaclass(ABCMeta, object)):
 
     def putch(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
         """
-        Check for a key without waiting.  This method is deprecated.  Use
+        Print text at the specified location.  This method is deprecated.  Use
         :py:meth:`.print_at` instead.
         """
         self.putch(text, x, y, colour, attr, bg, transparent)
