@@ -629,8 +629,9 @@ class Screen(with_metaclass(ABCMeta, object)):
 
         The colours and attributes are the COLOUR_xxx and A_yyy constants
         defined in the Screen class.
-        colour_map is a list of tuples (colour, attribute) that must be the
-        same length as the passed in text (or None if no mapping is required).
+        colour_map is a list of tuples (foreground, attribute, background) that
+        must be the same length as the passed in text (or None if no mapping is
+        required).
         """
         if colour_map is None:
             self.print_at(text, x, y, colour, attr, bg, transparent)
