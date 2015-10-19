@@ -42,11 +42,10 @@ To install asciimatics, simply:
 
     $ pip install asciimatics
 
-If you are trying to build the code yourself or trying to run the samples
-from a cloned repository without installing as above first, don't forget to
-ensure that you have installed the dependencies in `requirements.txt 
-<https://github.com/peterbrittain/asciimatics/blob/master/requirements.txt>`_
-first.
+This should install all your dependencies for you.  If you don't use pip
+or it fails to install them, you can install the dependencies directly, 
+using the packages listed in `requirements.txt 
+<https://github.com/peterbrittain/asciimatics/blob/master/requirements.txt>`_.
 
 How to use it?
 --------------
