@@ -23,8 +23,8 @@ function you could ask for, including:
 * Detecting and handling when the console resizes
 * Screen scraping
 * Anti-aliased ASCII line-drawing
-* Image to ASCII conversion
-* Many animation effects
+* Image to ASCII conversion - including JPEG and GIF formats
+* Many animation effects - e.g. sprites, particle systems, banners, etc.
 
 Currently this API has been proven to work on CentOS 6 & 7, Raspbian (i.e.
 Debian wheezy), Windows 7, 8 & 10 and OSX 10.11, though it should also
