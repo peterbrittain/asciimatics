@@ -402,6 +402,8 @@ class Screen(with_metaclass(ABCMeta, object)):
 
         :param win: The curses window to use.
         :param height: The buffer height for this window (if using scrolling).
+
+        This method is deprecated.  Please use :py:meth:`.wrapper` instead.
         """
         return _CursesScreen(win, height)
 
@@ -412,6 +414,8 @@ class Screen(with_metaclass(ABCMeta, object)):
 
         :param terminal: The blessed Terminal to use.
         :param height: The buffer height for this window (if using scrolling).
+
+        This method is deprecated.  Please use :py:meth:`.wrapper` instead.
         """
         return _BlessedScreen(terminal, height)
 
@@ -425,6 +429,8 @@ class Screen(with_metaclass(ABCMeta, object)):
         :param stdin: The Windows PyConsoleScreenBufferType for stdin returned
             from win32console.
         :param height: The buffer height for this window (if using scrolling).
+
+        This method is deprecated.  Please use :py:meth:`.wrapper` instead.
         """
         return _WindowsScreen(stdout, stdin, height)
 
@@ -558,17 +564,14 @@ class Screen(with_metaclass(ABCMeta, object)):
 
     def getch(self, x, y):
         """
-        Check for a key without waiting.  This method is deprecated.  Use
-        :py:meth:`.get_from` instead.
+        Get the character at a specified location..  This method is deprecated.
+        Use :py:meth:`.get_from` instead.
         """
         return self.get_from(x, y)
 
     @abstractmethod
     def print_at(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
         """
-        Check for a key without waiting.  This method is deprecated.  Use
-        :py:meth:`.print_at` instead.
-
         Print the text at the specified location using the
         specified colour and attributes.
 
@@ -587,7 +590,7 @@ class Screen(with_metaclass(ABCMeta, object)):
 
     def putch(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
         """
-        Check for a key without waiting.  This method is deprecated.  Use
+        Print text at the specified location.  This method is deprecated.  Use
         :py:meth:`.print_at` instead.
         """
         self.putch(text, x, y, colour, attr, bg, transparent)
@@ -626,8 +629,9 @@ class Screen(with_metaclass(ABCMeta, object)):
 
         The colours and attributes are the COLOUR_xxx and A_yyy constants
         defined in the Screen class.
-        colour_map is a list of tuples (colour, attribute) that must be the
-        same length as the passed in text (or None if no mapping is required).
+        colour_map is a list of tuples (foreground, attribute, background) that
+        must be the same length as the passed in text (or None if no mapping is
+        required).
         """
         if colour_map is None:
             self.print_at(text, x, y, colour, attr, bg, transparent)
@@ -894,6 +898,7 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
                     self._print_at(new_cell[0], x, y)
                     self._screen_buffer[y + self._start_line][x] = new_cell
 
+
     def get_from(self, x, y):
         """
         Get the character at the specified location.
@@ -904,7 +909,9 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
         :return: A 4-tuple of (ascii code, foreground, attributes, background)
                  for the character at the location.
         """
-        cell = self._screen_buffer[y][x]
+        if y < 0 or y >= self._buffer_height or x < 0 or x >= self.width:
+            return None
+        cell = self._double_buffer[y][x]
         return ord(cell[0]), cell[1], cell[2], cell[3]
 
     def print_at(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
@@ -1340,11 +1347,11 @@ else:
             self._move_y_x = curses.tigetstr("cup")
             self._fg_color = curses.tigetstr("setaf")
             self._bg_color = curses.tigetstr("setab")
-            self._a_normal = curses.tigetstr("sgr0")
-            self._a_bold = curses.tigetstr("bold")
-            self._a_reverse = curses.tigetstr("rev")
-            self._a_underline = curses.tigetstr("smul")
-            self._clear_screen = curses.tigetstr("clear")
+            self._a_normal = curses.tigetstr("sgr0").decode("utf-8")
+            self._a_bold = curses.tigetstr("bold").decode("utf-8")
+            self._a_reverse = curses.tigetstr("rev").decode("utf-8")
+            self._a_underline = curses.tigetstr("smul").decode("utf-8")
+            self._clear_screen = curses.tigetstr("clear").decode("utf-8")
 
             # Conversion from Screen attributes to curses equivalents.
             self._ATTRIBUTES = {
@@ -1371,7 +1378,8 @@ else:
             """
             Scroll the Screen up one line.
             """
-            print(curses.tparm(self._move_y_x, self.height - 1, 0))
+            print(curses.tparm(
+                self._move_y_x, self.height - 1, 0).decode("utf-8"))
 
         def _clear(self):
             """
@@ -1445,10 +1453,12 @@ else:
 
             # Now swap colours if required.
             if colour != self._colour:
-                sys.stdout.write(curses.tparm(self._fg_color, colour))
+                sys.stdout.write(curses.tparm(
+                    self._fg_color, colour).decode("utf-8"))
                 self._colour = colour
             if bg != self._bg:
-                sys.stdout.write(curses.tparm(self._bg_color, bg))
+                sys.stdout.write(curses.tparm(
+                    self._bg_color, bg).decode("utf-8"))
                 self._bg = bg
 
         def _print_at(self, text, x, y):
@@ -1462,7 +1472,7 @@ else:
             # Move the cursor if necessary
             msg = ""
             if x != self._x or y != self._y:
-                msg += curses.tparm(self._move_y_x, y, x)
+                msg += curses.tparm(self._move_y_x, y, x).decode("utf-8")
 
             msg += text
 
