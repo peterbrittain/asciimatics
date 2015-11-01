@@ -8,6 +8,10 @@ CHANGE HISTORY
   and Explosion effects.
 - Added background colour options to BarChart renderer.
 
+1.4.2
+-----
+- Fix for Python 3 support on Linux variants.
+
 1.4.1
 -----
 - Minor fixes to setup.py to correct packaging meta-data.
