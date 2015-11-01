@@ -1348,11 +1348,11 @@ else:
             self._move_y_x = curses.tigetstr("cup")
             self._fg_color = curses.tigetstr("setaf")
             self._bg_color = curses.tigetstr("setab")
-            self._a_normal = curses.tigetstr("sgr0")
-            self._a_bold = curses.tigetstr("bold")
-            self._a_reverse = curses.tigetstr("rev")
-            self._a_underline = curses.tigetstr("smul")
-            self._clear_screen = curses.tigetstr("clear")
+            self._a_normal = curses.tigetstr("sgr0").decode("utf-8")
+            self._a_bold = curses.tigetstr("bold").decode("utf-8")
+            self._a_reverse = curses.tigetstr("rev").decode("utf-8")
+            self._a_underline = curses.tigetstr("smul").decode("utf-8")
+            self._clear_screen = curses.tigetstr("clear").decode("utf-8")
 
             # Conversion from Screen attributes to curses equivalents.
             self._ATTRIBUTES = {
@@ -1379,7 +1379,8 @@ else:
             """
             Scroll the Screen up one line.
             """
-            print(curses.tparm(self._move_y_x, self.height - 1, 0))
+            print(curses.tparm(
+                self._move_y_x, self.height - 1, 0).decode("utf-8"))
 
         def _clear(self):
             """
@@ -1453,10 +1454,12 @@ else:
 
             # Now swap colours if required.
             if colour != self._colour:
-                sys.stdout.write(curses.tparm(self._fg_color, colour))
+                sys.stdout.write(curses.tparm(
+                    self._fg_color, colour).decode("utf-8"))
                 self._colour = colour
             if bg != self._bg:
-                sys.stdout.write(curses.tparm(self._bg_color, bg))
+                sys.stdout.write(curses.tparm(
+                    self._bg_color, bg).decode("utf-8"))
                 self._bg = bg
 
         def _print_at(self, text, x, y):
@@ -1470,7 +1473,7 @@ else:
             # Move the cursor if necessary
             msg = ""
             if x != self._x or y != self._y:
-                msg += curses.tparm(self._move_y_x, y, x)
+                msg += curses.tparm(self._move_y_x, y, x).decode("utf-8")
 
             msg += text
 
