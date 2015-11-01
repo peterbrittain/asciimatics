@@ -19,7 +19,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='asciimatics',
-    version='1.4.1',
+    version='1.4.2',
     description='A cross-platform package to replace curses (mouse/keyboard '
                 'input & text colours/positioning) and create ASCII '
                 'animations',
