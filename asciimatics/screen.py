@@ -898,6 +898,7 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
                     self._print_at(new_cell[0], x, y)
                     self._screen_buffer[y + self._start_line][x] = new_cell
 
+
     def get_from(self, x, y):
         """
         Get the character at the specified location.
@@ -910,7 +911,8 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
         """
         if y < 0 or y >= self._buffer_height or x < 0 or x >= self.width:
             return None
-        cell = self._screen_buffer[y][x]
+        # TODO: Fix hack!
+        cell = self._double_buffer[y][x]
         return ord(cell[0]), cell[1], cell[2], cell[3]
 
     def print_at(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):

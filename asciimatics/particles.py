@@ -5,7 +5,7 @@ from abc import ABCMeta, abstractmethod
 from builtins import object
 from builtins import range
 from copy import copy
-from math import pi, sin, cos
+from math import pi, sin, cos, atan
 from random import uniform, randint
 from future.utils import with_metaclass
 from asciimatics.effects import Effect
@@ -61,21 +61,23 @@ class Particle(object):
         self._on_each = on_each
         self._on_destroy = on_destroy
 
-    def _default_next_char(self):
+    @staticmethod
+    def _default_next_char(particle):
         """
         Default next character implementation - linear progression through
         each character.
         """
-        return self.chars[
-            (len(self.chars)-1) * self.time // self.life_time]
+        return particle.chars[
+            (len(particle.chars)-1) * particle.time // particle.life_time]
 
-    def _default_next_colour(self):
+    @staticmethod
+    def _default_next_colour(particle):
         """
         Default next colour implementation - linear progression through
         each colour tuple.
         """
-        return self.colours[
-            (len(self.colours) - 1) * self.time // self.life_time]
+        return particle.colours[
+            (len(particle.colours) - 1) * particle.time // particle.life_time]
 
     def last(self):
         """
@@ -94,8 +96,8 @@ class Particle(object):
         """
         # Get next particle details
         x, y = self._move(self)
-        colour = self._next_colour()
-        char = self._next_char()
+        colour = self._next_colour(self)
+        char = self._next_char(self)
         self._last = char, x, y, colour[0], colour[1], colour[2]
         self.time += 1
 
@@ -155,8 +157,18 @@ class ParticleSystem(object):
             # Clear our the old particle
             last = particle.last()
             if last is not None:
-                x, y = last[1], last[2]
-                self._screen.print_at(" ", x, y, 0, 0, 0)
+                char, x, y, fg, attr, bg = last
+                screen_data = self._screen.get_from(x, y)
+                if self._blend and screen_data:
+                    char2, fg2, attr2, bg2 = screen_data
+                    index = 0
+                    for i, colours in enumerate(particle.colours):
+                        if (fg2, attr2, bg2) == colours:
+                            index = i
+                            break
+                    index -= 1
+                    fg, attr, bg = particle.colours[max(index, 0)]
+                self._screen.print_at(" ", x, y, fg, attr, bg)
 
             if particle.time < particle.life_time:
                 # Draw the new one
@@ -214,6 +226,7 @@ class ParticleEffect(with_metaclass(ABCMeta, Effect)):
             else:
                 self._active_systems.remove(system)
 
+    @property
     def stop_frame(self):
         return self._stop_frame
 
@@ -479,36 +492,38 @@ class ExplosionFlames(ParticleSystem):
         :param life_time: The life time of this explosion.
         """
         super(ExplosionFlames, self).__init__(
-            screen, x, y, 40, self._new_particle, life_time - 10, life_time,
+            screen, x, y, 30, self._new_particle, life_time - 10, life_time,
             blend=True)
 
     def _new_particle(self):
         direction = uniform(0, 2 * pi)
         d = self._life_time - 10
-        r = uniform(0, sin(pi * (d - self.time_left) / (d * 2))) * 5
+        r = uniform(0, sin(pi * (d - self.time_left) / (d * 2))) * 3.0
         return Particle("#",
                         self._x + sin(direction) * r * 2.0,
                         self._y + cos(direction) * r,
-                        0,
-                        0,
+                        sin(direction) / 2.0,
+                        cos(direction) / 4.0,
                         [
-                            # (Screen.COLOUR_BLACK, Screen.A_BOLD, 0),
-                            # (Screen.COLOUR_YELLOW, 0, 0),
-                            # (Screen.COLOUR_BLACK, Screen.A_BOLD, 0),
-                            # (Screen.COLOUR_WHITE, 0, 0),
                             (Screen.COLOUR_BLACK, 0, 0),
                             (Screen.COLOUR_RED, 0, 0),
                             (Screen.COLOUR_RED, Screen.A_BOLD, 0),
                             (Screen.COLOUR_YELLOW, Screen.A_BOLD, 0),
-                            (Screen.COLOUR_BLACK, Screen.A_BOLD, 0),
                             (Screen.COLOUR_WHITE, Screen.A_BOLD, 0),
                         ],
-                        3,
-                        self._burn)
+                        10,
+                        self._burn,
+                        next_colour=self._colour)
 
     @staticmethod
     def _burn(particle):
+        particle.x += particle.dx
+        particle.y += particle.dy
         return int(particle.x), int(particle.y)
+
+    @staticmethod
+    def _colour(particle):
+        return particle.colours[0]
 
 
 class StarFirework(ParticleEffect):
