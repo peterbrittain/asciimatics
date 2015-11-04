@@ -444,9 +444,18 @@ class Screen(with_metaclass(ABCMeta, object)):
         :param height: The buffer height for this window (if using scrolling).
         """
         if sys.platform == "win32":
-            # Get the standard input/output buffers.
-            win_out = win32console.PyConsoleScreenBufferType(
+            # Clone the standard output buffer so that we can do whatever we
+            # need for the application, but restore the buffer at the end.
+            # Note that we need to resize the clone to ensure that it is the
+            # same size as the original in some versions of Windows.
+            old_out = win32console.PyConsoleScreenBufferType(
                 win32console.GetStdHandle(win32console.STD_OUTPUT_HANDLE))
+            info = old_out.GetConsoleScreenBufferInfo()
+            win_out = win32console.CreateConsoleScreenBuffer()
+            win_out.SetConsoleScreenBufferSize(info['Size'])
+            win_out.SetConsoleActiveScreenBuffer()
+
+            # Get the standard input buffer.
             win_in = win32console.PyConsoleScreenBufferType(
                 win32console.GetStdHandle(win32console.STD_INPUT_HANDLE))
 
@@ -464,9 +473,17 @@ class Screen(with_metaclass(ABCMeta, object)):
             win_in.SetConsoleMode(in_mode | win32console.ENABLE_MOUSE_INPUT)
 
             try:
+                # Create the screen and invoke the wrapped function.
                 win_screen = _WindowsScreen(win_out, win_in, height)
                 func(win_screen)
+
+                # Only restore the screen if we are genuinely finished - and so
+                # have not raised an exception.  This stops the restore from
+                # overriding any resize events.
+                old_out.SetConsoleActiveScreenBuffer()
+                win_out = old_out
             finally:
+                # Reset the original screen settings.
                 win_out.SetConsoleCursorInfo(size, visible)
                 win_out.SetConsoleMode(out_mode)
                 win_out.SetConsoleTextAttribute(7)
@@ -898,7 +915,6 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
                     self._print_at(new_cell[0], x, y)
                     self._screen_buffer[y + self._start_line][x] = new_cell
 
-
     def get_from(self, x, y):
         """
         Get the character at the specified location.
@@ -911,7 +927,6 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
         """
         if y < 0 or y >= self._buffer_height or x < 0 or x >= self.width:
             return None
-        # TODO: Fix hack!
         cell = self._double_buffer[y][x]
         return ord(cell[0]), cell[1], cell[2], cell[3]
 
@@ -1108,7 +1123,7 @@ if sys.platform == "win32":
             :param buffer_height: The buffer height for this window (if using
                 scrolling).
             """
-            # Save off the screen details and se up the scrolling pad.
+            # Save off the screen details and set up the scrolling pad.
             info = stdout.GetConsoleScreenBufferInfo()['Window']
             width = info.Right - info.Left + 1
             height = info.Bottom - info.Top + 1

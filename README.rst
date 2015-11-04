@@ -1,13 +1,12 @@
 ASCIIMATICS
 ===========
 
-Asciimatics is a package to help people create simple ASCII animations on any
-platform.  It is licensed under the Apache Software Foundation License 2.0.
+Asciimatics is a package to help people create full-screen ASCII animations on
+any platform.  It is licensed under the Apache Software Foundation License 2.0.
 
 It originated from some work that I did on PiConga to create a retro text
 credits roll for the project.  This worked so well, I re-used it for another
 project.  At that point I felt it might be fun to share with others.
-
 
 Why?
 ----
@@ -36,7 +35,11 @@ that I can update this list).
 Installation
 ------------
 
-To install asciimatics, simply:
+Asciimatics supports Python versions 2 & 3.  For a list of the precise
+list of tested versions, see `here <https://pypi.python.org/pypi/asciimatics>`_.
+
+To install asciimatics, simply install with `pip`.  You can get it from
+`here <http://pip.readthedocs.org/en/stable/installing/>`_ and then just run:
 
 .. code-block:: bash
 
@@ -51,8 +54,8 @@ Additionally, Windows users will need to install `pypiwin32`.
 How to use it?
 --------------
 
-Create a Screen, put together a Scene using some
-Effects and then get the Screen to play it.
+Create a Screen, put together a Scene using some Effects and then get the
+Screen to play it.
 
 .. code-block:: python
 
@@ -91,17 +94,29 @@ Documentation is available at http://asciimatics.readthedocs.org/
 More examples
 -------------
 
-More examples of what you can do are available in the project samples directory, hosted on GitHub.  See https://github.com/peterbrittain/asciimatics/tree/master/samples.
+More examples of what you can do are available in the project samples
+directory, hosted on GitHub.  See
+https://github.com/peterbrittain/asciimatics/tree/master/samples.
 
-Alternatively, you can browse the gallery at https://github.com/peterbrittain/asciimatics/wiki.
+To run them, simply download these files and then simply run them directly
+with `python`.  Note that most can run on any platform, apart from:
+
+* `not_curses.py` which is a demo of the deprecated `blessed` support on Linux
+* `win_demo.py` which is a demo of the deprecated direct `win32console` support
+  on Windows.
+
+Alternatively, you can browse most of the samples in the gallery at
+https://github.com/peterbrittain/asciimatics/wiki.
 
 Bugs and enhancements
 ---------------------
 
-You can report bugs and submit enhancement requests at https://github.com/peterbrittain/asciimatics/issues
+You can report bugs and submit enhancement requests at
+https://github.com/peterbrittain/asciimatics/issues.
 
 Contributing to the project
 ---------------------------
 
-If you'd like to take part in this project (and see your name in the credits!), check out the guidance at
+If you'd like to take part in this project (and see your name in the credits!),
+check out the guidance at
 http://asciimatics.readthedocs.org/en/latest/intro.html#contributing-to-this-project.

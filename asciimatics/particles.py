@@ -5,7 +5,7 @@ from abc import ABCMeta, abstractmethod
 from builtins import object
 from builtins import range
 from copy import copy
-from math import pi, sin, cos, atan
+from math import pi, sin, cos
 from random import uniform, randint
 from future.utils import with_metaclass
 from asciimatics.effects import Effect
