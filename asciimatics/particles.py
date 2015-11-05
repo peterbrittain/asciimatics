@@ -116,7 +116,7 @@ class ParticleSystem(object):
     """
     A simple particle system to group together a set of :py:obj:`._Particle`
     objects to create a visual effect.  After initialization, the particle
-    system will be called once per frame to be displayed to te screen.
+    system will be called once per frame to be displayed on the Screen.
     """
 
     def __init__(self, screen, x, y, count, new_particle, spawn, life_time,
@@ -129,7 +129,11 @@ class ParticleSystem(object):
         :param new_particle: The function to call to spawn a new particle.
         :param spawn: The number of frames for which to spawn particles.
         :param life_time: The life time of the whole particle system.
-        :param blend: Whether to blend particles or not.  Defaults to False.
+        :param blend: Whether to blend particles or not.  A blended system
+            picks the colour based on the number of overlapping particles,
+            while an unblended one picks the colour based on a the state of
+            Each Particle individually as they are drawn.
+            Defaults to False.
         """
         super(ParticleSystem, self).__init__()
         self._screen = screen
@@ -192,6 +196,10 @@ class ParticleSystem(object):
 class ParticleEffect(with_metaclass(ABCMeta, Effect)):
     """
     An Effect that uses a :py:obj:`.ParticleSystem` to create the animation.
+
+    To define a new ParticleEffect, you must implement the reset() method to
+    construct a chain of ParticleSystems and append them to the internal
+    _active_systems list.
     """
 
     def __init__(self, screen, x, y, life_time, **kwargs):
