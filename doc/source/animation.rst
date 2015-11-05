@@ -53,3 +53,17 @@ The full declaration of a Sprite is therefore something like this.
         clear=False)
 
 For more examples of using Sprites, including dynamic Paths, see the samples directory.
+
+Particle Systems
+----------------
+A :py:obj:`.ParticleEffect` is a special Effect designed to draw a `particle system <https://en.m.wikipedia.org/wiki/Particle_system>`_.  It consists of one or more :py:obj:`.ParticleSystems` which in turn consists of one or more :py:obj:`.Particle` objects.
+
+The ParticleEffect defines a chain of ParticleSystems that spawn one or more Particles, each with a unique set of attributes - e.g. location, direction, colour, etc.  The ParticleEffect renders a frame by rendering each of these Particles and then updating them following the rules defined by the ParticleSystem.
+
+For example, consider the :py:obj:`.StarFirework` effect.  This is constructed as follows.
+
+1. The StarFirework constructs a Rocket.  This is a ParticleSystem that has just one Particle that shoots vertically up the Screen to hit a pre-defined end point.
+2. When this Particle hits this end-point, it expires and spawns a StarExplosion.  This is a ParticleSystem that spawns many Particles in such a way that they are explode outwards radially from where the Rocket expired.
+3. In turn, each of these StarExplosion Particles spawn a StarTrail on each new frame.  These are ParticleSystems that spawn a single Particle that just hovers for a few frames and fades away.
+
+Putting this all together (by playing the Effect) you have a classic exploding firework.  For more examples, see the other Effects in the particles and fireworks samples.
