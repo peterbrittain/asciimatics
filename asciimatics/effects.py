@@ -4,7 +4,6 @@ from __future__ import print_function
 from builtins import chr
 from builtins import object
 from builtins import range
-import copy
 from future.utils import with_metaclass
 from abc import ABCMeta, abstractmethod, abstractproperty
 from random import randint, random, choice
@@ -591,6 +590,13 @@ class Sprite(Effect):
         self._old_direction = None
         self._path.reset()
 
+    def last_position(self):
+        """
+        Returns the last position of this Sprite as a tuple
+        (x, y, width, height).
+        """
+        return self._old_x, self._old_y, self._old_width, self._old_height
+
     def overlaps(self, other, use_new_pos=False):
         """
         Check whether this Sprite overlaps another.
@@ -605,11 +611,7 @@ class Sprite(Effect):
         w = self._old_width
         h = self._old_height
 
-        # TODO: Consider exposing read only access to this data.
-        x2 = other._old_x
-        y2 = other._old_y
-        w2 = other._old_width
-        h2 = other._old_height
+        x2, y2, w2, h2 = other.last_position()
 
         if ((x > x2 + w2 - 1) or (x2 > x + w - 1) or
                 (y > y2 + h2 - 1) or (y2 > y + h - 1)):
