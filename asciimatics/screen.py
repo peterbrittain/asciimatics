@@ -1425,10 +1425,16 @@ else:
             elif key == curses.KEY_MOUSE:
                 # Handle a mouse event
                 _, x, y, _, bstate = curses.getmouse()
+                bstate &= 0xFFFF
+                self.print_at(str(bstate) + " ", 0, 0)
                 buttons = 0
-                if bstate & curses.BUTTON1_CLICKED != 0:
+                # Some Linux modes only report clicks, so check for any button
+                # down or click events.
+                if (bstate & curses.BUTTON1_PRESSED != 0 or
+                        bstate & curses.BUTTON1_CLICKED != 0):
                     buttons |= MouseEvent.LEFT_CLICK
-                if bstate & curses.BUTTON3_CLICKED != 0:
+                if (bstate & curses.BUTTON3_PRESSED != 0 or
+                        bstate & curses.BUTTON3_CLICKED != 0):
                     buttons |= MouseEvent.RIGHT_CLICK
                 if bstate & curses.BUTTON1_DOUBLE_CLICKED != 0:
                     buttons |= MouseEvent.DOUBLE_CLICK

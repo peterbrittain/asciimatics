@@ -17,5 +17,13 @@ Mouse support
 -------------
 Mouse support isn't fully enabled by default on all terminal types.  This will
 often require some extra extensions to be enabled as described `here
+<http://unix.stackexchange.com/questions/35021/how-to-configure-the-terminal
+-so-that-a-mouse-click-will-move-the-cursor-to-the>`_.  In addition, if you
+want 256 colours, you will need to mix modes as described `here
 <http://stackoverflow.com/questions/29020638/which-term-to-use-to-have-both
 -256-colors-and-mouse-move-events-in-python-curse>`_.
+
+Although it is possible to get Linux terminals to report all mouse movement,
+the reporting of mouse buttons along with movement appears to be highly
+erratic.  The best reporting appears to be using the button event mode - i.e.
+mixing `xterm-1002` withe `xterm-256color`.
