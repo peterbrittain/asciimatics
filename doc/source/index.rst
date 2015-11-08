@@ -15,6 +15,7 @@ Contents:
    io
    rendering
    animation
+   troubleshooting
    modules
 
 Indices and tables
