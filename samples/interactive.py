@@ -44,9 +44,15 @@ class MouseController(DynamicPath):
         if isinstance(event, MouseEvent):
             self._x = event.x
             self._y = event.y
-            if event.buttons & MouseEvent.LEFT_CLICK != 0:
+            if event.buttons & MouseEvent.DOUBLE_CLICK != 0:
                 # Try to whack the other sprites when mouse is clicked
-                self._sprite.whack()
+                self._sprite.whack("KERPOW!")
+            elif event.buttons & MouseEvent.LEFT_CLICK != 0:
+                # Try to whack the other sprites when mouse is clicked
+                self._sprite.whack("BANG!")
+            elif event.buttons & MouseEvent.RIGHT_CLICK != 0:
+                # Try to whack the other sprites when mouse is clicked
+                self._sprite.whack("CRASH!")
         else:
             return event
 
@@ -109,7 +115,7 @@ class CrossHairs(Sprite):
                 self, screen, screen.width // 2, screen.height // 2),
             colour=Screen.COLOUR_RED)
 
-    def whack(self):
+    def whack(self, sound):
         global arrow
 
         x, y = self._path.next_pos()
@@ -118,7 +124,7 @@ class CrossHairs(Sprite):
         else:
             self._scene.add_effect(Print(
                 self._screen,
-                SpeechBubble("BANG!"), y, x, clear=True, delete_count=50))
+                SpeechBubble(sound), y, x, clear=True, delete_count=50))
 
 
 def demo(screen):
