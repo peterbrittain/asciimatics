@@ -26,4 +26,4 @@ want 256 colours, you will need to mix modes as described `here
 Although it is possible to get Linux terminals to report all mouse movement,
 the reporting of mouse buttons along with movement appears to be highly
 erratic.  The best reporting appears to be using the button event mode - i.e.
-mixing `xterm-1002` withe `xterm-256color`.
+mixing `xterm-1002` with `xterm-256color`.
