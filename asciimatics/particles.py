@@ -154,7 +154,9 @@ class ParticleSystem(object):
         if self.time_left > 0:
             self.time_left -= 1
             for _ in range(self._count):
-                self.particles.append(self._new_particle())
+                new_particle = self._new_particle()
+                if new_particle is not None:
+                    self.particles.append(new_particle)
 
         # Now draw them all
         for particle in self.particles:
@@ -534,6 +536,56 @@ class ExplosionFlames(ParticleSystem):
         return particle.colours[0]
 
 
+class DropSystem(ParticleSystem):
+    """
+    Replicate the whole screen with Particles and then drop them a cell at a
+    time.
+    """
+
+    def __init__(self, screen, life_time):
+        """
+        :param screen: The Screen being used for this particle system.
+        :param life_time: The life time of this particle system.
+        """
+        super(DropSystem, self).__init__(
+            screen, 0, 0, 20, self._new_particle, life_time, life_time)
+        self._particles = None
+
+    def _new_particle(self):
+        # Find all particles on the Screen when we create our first particle.
+        if self._particles is None:
+            self._particles = []
+            for x in range(self._screen.width):
+                for y in range(self._screen.height):
+                    ch, fg, attr, bg = self._screen.get_from(x, y)
+                    if ch != 32:
+                        self._particles.insert(
+                            randint(0, len(self._particles)),
+                            (x, y, ch, fg, attr, bg))
+
+        # Stop now if there were no more particles to move.
+        if len(self._particles) == 0:
+            return None
+
+        # We got here, so there must still be some screen estate to move.
+        x, y, ch, fg, attr, bg = \
+            self._particles.pop(randint(0, len(self._particles) - 1))
+        return Particle(chr(ch), x, y,
+                        0.0,
+                        0.0,
+                        [(fg, attr, bg)],
+                        self._life_time,
+                        self._move)
+
+    @staticmethod
+    def _move(particle):
+        result = int(particle.x), int(particle.y)
+        particle.x += particle.dx
+        particle.y += particle.dy
+        particle.dy += 0.15
+        return result
+
+
 class StarFirework(ParticleEffect):
     """
     Classic rocket with star explosion.
@@ -654,3 +706,21 @@ class Explosion(ParticleEffect):
         self._active_systems = []
         self._active_systems.append(
             ExplosionFlames(self._screen, self._x, self._y, self._life_time))
+
+
+class DropScreen(ParticleEffect):
+    """
+    Drop all the text on the screen as if it was subject to gravity.
+    """
+
+    def __init__(self, screen, life_time, **kwargs):
+        """
+        See :py:obj:`.ParticleEffect` for details of the parameters.
+        """
+        # No need for an origin as this uses the whole screen.
+        super(DropScreen, self).__init__(screen, 0, 0, life_time, **kwargs)
+
+    def reset(self):
+        self._active_systems = []
+        self._active_systems.append(
+            DropSystem(self._screen, self._life_time))

@@ -1,5 +1,7 @@
 from random import randint
-from asciimatics.particles import Explosion
+from asciimatics.effects import Print
+from asciimatics.particles import Explosion, StarFirework, DropScreen
+from asciimatics.renderers import SpeechBubble, FigletText, Rainbow
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError
@@ -8,6 +10,32 @@ import sys
 
 def demo(screen):
     scenes = []
+
+    # First scene: title page
+    effects = [
+        Print(screen,
+              Rainbow(screen, FigletText("ASCIIMATICS", font="big")),
+              y=screen.height // 4 - 5,
+              stop_frame=30),
+        Print(screen,
+              FigletText("Particle System"),
+              screen.height // 2 - 3,
+              stop_frame=30),
+        Print(screen,
+              FigletText("Effects Demo"),
+              screen.height * 3 // 4 - 3,
+              stop_frame=30),
+        DropScreen(screen, 200, start_frame=50),
+        Print(screen,
+              SpeechBubble("Press SPACE to continue..."),
+              screen.height - 6,
+              speed=1,
+              transparent=False,
+              start_frame=70)
+    ]
+    scenes.append(Scene(effects, -1))
+
+    # Next scene: explosions
     effects = []
     for i in range(20):
         effects.append(
@@ -16,6 +44,29 @@ def demo(screen):
                       randint(1, screen.height - 2),
                       randint(20, 30),
                       start_frame=randint(0, 250)))
+    effects.append(Print(screen,
+                         SpeechBubble("Press SPACE to continue..."),
+                         screen.height - 6,
+                         speed=1,
+                         transparent=False,
+                         start_frame=100))
+    scenes.append(Scene(effects, -1))
+
+    # Next scene: fireworks
+    effects = []
+    for i in range(20):
+        effects.append(
+            StarFirework(screen,
+                         randint(3, screen.width - 4),
+                         randint(1, screen.height - 2),
+                         randint(20, 30),
+                         start_frame=randint(0, 250)))
+    effects.append(Print(screen,
+                         SpeechBubble("Press SPACE to continue..."),
+                         screen.height - 6,
+                         speed=1,
+                         transparent=False,
+                         start_frame=100))
     scenes.append(Scene(effects, -1))
 
     screen.play(scenes, stop_on_resize=True)
