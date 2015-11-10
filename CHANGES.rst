@@ -4,8 +4,8 @@ CHANGE HISTORY
 1.5.0
 -----
 - Created the ParticleEffect and associated classes.
-- Implemented the StarFirework, RingFirework, SerpentFirework, PalmFirework
-  and Explosion effects.
+- Implemented the StarFirework, RingFirework, SerpentFirework, PalmFirework,
+  Explosion and DropScreen effects.
 - Added background colour options to BarChart renderer.
 
 1.4.2
