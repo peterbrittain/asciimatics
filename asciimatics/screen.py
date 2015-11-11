@@ -1425,8 +1425,6 @@ else:
             elif key == curses.KEY_MOUSE:
                 # Handle a mouse event
                 _, x, y, _, bstate = curses.getmouse()
-                bstate &= 0xFFFF
-                self.print_at(str(bstate) + " ", 0, 0)
                 buttons = 0
                 # Some Linux modes only report clicks, so check for any button
                 # down or click events.

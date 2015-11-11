@@ -947,14 +947,18 @@ class RandomNoise(Effect):
             start_x = start_y = 0
             text, colours = "", []
 
-        for x in range(self._screen.width):
-            for y in range(self._screen.height):
+        for y in range(self._screen.height):
+            if self._strength < 1.0:
+                offset = randint(0, int(6 - 6 * self._strength))
+            else:
+                offset = 0
+            for x in range(self._screen.width):
                 ix = x - start_x
                 iy = y - start_y
                 if (self._signal and random() <= self._strength and
                         x >= start_x and y >= start_y and
-                        iy < len(text) and ix < len(text[iy])):
-                    self._screen.paint(text[iy][ix],
+                        iy < len(text) and ix + offset < len(text[iy])):
+                    self._screen.paint(text[iy][ix + offset],
                                        x, y,
                                        colour_map=[colours[iy][ix]])
                 else:
