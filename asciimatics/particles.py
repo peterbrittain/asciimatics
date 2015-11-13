@@ -582,7 +582,7 @@ class DropSystem(ParticleSystem):
         result = int(particle.x), int(particle.y)
         particle.x += particle.dx
         particle.y += particle.dy
-        particle.dy += 0.15
+        particle.dy += 0.3
         return result
 
 

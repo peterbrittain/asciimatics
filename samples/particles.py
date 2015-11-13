@@ -15,25 +15,32 @@ def demo(screen):
     effects = [
         Print(screen,
               Rainbow(screen, FigletText("ASCIIMATICS", font="big")),
-              y=screen.height // 4 - 5,
-              stop_frame=30),
+              y=screen.height // 4 - 5),
         Print(screen,
               FigletText("Particle System"),
-              screen.height // 2 - 3,
-              stop_frame=30),
+              screen.height // 2 - 3),
         Print(screen,
               FigletText("Effects Demo"),
-              screen.height * 3 // 4 - 3,
-              stop_frame=30),
-        DropScreen(screen, 200, start_frame=50),
+              screen.height * 3 // 4 - 3),
         Print(screen,
               SpeechBubble("Press SPACE to continue..."),
-              screen.height - 6,
-              speed=1,
+              screen.height - 3,
               transparent=False,
               start_frame=70)
     ]
     scenes.append(Scene(effects, -1))
+
+    # Next scene: sub-heading.
+    effects = [
+        DropScreen(screen, 100),
+        Print(screen,
+              Rainbow(screen, FigletText("Explosions", font="doom")),
+              y=screen.height // 2 - 5,
+              start_frame=80,
+              stop_frame=110),
+        DropScreen(screen, 100, start_frame=110)
+    ]
+    scenes.append(Scene(effects, 160, clear=False))
 
     # Next scene: explosions
     effects = []
@@ -51,6 +58,16 @@ def demo(screen):
                          transparent=False,
                          start_frame=100))
     scenes.append(Scene(effects, -1))
+
+    # Next scene: sub-heading.
+    effects = [
+        Print(screen,
+              Rainbow(screen, FigletText("Fireworks", font="doom")),
+              y=screen.height // 2 - 5,
+              stop_frame=30),
+        DropScreen(screen, 100, start_frame=30)
+    ]
+    scenes.append(Scene(effects, 80))
 
     # Next scene: fireworks
     effects = []
