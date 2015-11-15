@@ -1,6 +1,6 @@
 from random import randint
 from asciimatics.effects import Print
-from asciimatics.particles import Explosion, StarFirework, DropScreen
+from asciimatics.particles import Explosion, StarFirework, DropScreen, Rain
 from asciimatics.renderers import SpeechBubble, FigletText, Rainbow
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
@@ -57,6 +57,28 @@ def demo(screen):
                          speed=1,
                          transparent=False,
                          start_frame=100))
+    scenes.append(Scene(effects, -1))
+
+    # Next scene: sub-heading.
+    effects = [
+        Print(screen,
+              Rainbow(screen, FigletText("Rain", font="doom")),
+              y=screen.height // 2 - 5,
+              stop_frame=30),
+        DropScreen(screen, 100, start_frame=30)
+    ]
+    scenes.append(Scene(effects, 80))
+
+    # Next scene: rain storm.
+    effects = [
+        Rain(screen, 200),
+        Print(screen,
+              SpeechBubble("Press SPACE to continue..."),
+              screen.height - 6,
+              speed=1,
+              transparent=False,
+              start_frame=100)
+    ]
     scenes.append(Scene(effects, -1))
 
     # Next scene: sub-heading.
