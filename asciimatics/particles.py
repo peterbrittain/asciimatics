@@ -586,6 +586,40 @@ class DropSystem(ParticleSystem):
         return result
 
 
+class RainSource(ParticleSystem):
+    """
+    Source of the raindrops for a rain storm effect.
+    """
+
+    def __init__(self, screen, life_time, on_each):
+        """
+        :param screen: The Screen being used for this particle system.
+        :param life_time: The life time of this particle system.
+        :param on_each: Function to call on each iteration of the particle.
+        """
+        super(RainSource, self).__init__(
+            screen, 0, 0, 4, self._new_particle, life_time, life_time)
+        self._particles = None
+        self._on_each = on_each
+
+    def _new_particle(self):
+        speed = randint(1, 2)
+        return Particle(" `\\"[speed],
+                        randint(-self._screen.height, self._screen.width), 0,
+                        speed,
+                        speed,
+                        [(Screen.COLOUR_CYAN, 0, 0)],
+                        self._life_time,
+                        self._move,
+                        on_each=self._on_each)
+
+    @staticmethod
+    def _move(particle):
+        particle.x += particle.dx
+        particle.y += particle.dy
+        return int(particle.x), int(particle.y)
+
+
 class StarFirework(ParticleEffect):
     """
     Classic rocket with star explosion.
@@ -724,3 +758,37 @@ class DropScreen(ParticleEffect):
         self._active_systems = []
         self._active_systems.append(
             DropSystem(self._screen, self._life_time))
+
+
+class Rain(ParticleEffect):
+    """
+    Rain storm effect.
+    """
+
+    def __init__(self, screen, life_time, **kwargs):
+        """
+        See :py:obj:`.ParticleEffect` for details of the parameters.
+        """
+        # No need for an origin as this uses the whole screen.
+        super(Rain, self).__init__(screen, 0, 0, life_time, **kwargs)
+
+    def reset(self):
+        self._active_systems = []
+        self._active_systems.append(
+            RainSource(self._screen, self._life_time, self._collision))
+
+    def _collision(self, particle):
+        # Already calculated new position, so go back in history
+        _, x, y, _, _, _ = particle.last()
+        current_char = None
+        for dx in range(particle.dx):
+            next_point = self._screen.get_from(particle.x, particle.y)
+            if next_point is None:
+                current_char = None
+                break
+            current_char = next_point[0]
+            if current_char != 32:
+                break
+
+        if current_char not in [32, None, ord("`"), ord("\\")]:
+            self._screen.print_at("SPLAT {}   ".format(chr(current_char)), 0, 0)
