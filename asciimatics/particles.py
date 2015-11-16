@@ -112,11 +112,11 @@ class Particle(object):
         return self._last
 
 
-class ParticleSystem(object):
+class ParticleEmitter(object):
     """
-    A simple particle system to group together a set of :py:obj:`._Particle`
-    objects to create a visual effect.  After initialization, the particle
-    system will be called once per frame to be displayed on the Screen.
+    An emitter for a particle system to create a set of :py:obj:`._Particle`
+    objects for a :py:obj:`.ParticleEffect`.  After initialization, the
+    emitter will be called once per frame to be displayed on the Screen.
     """
 
     def __init__(self, screen, x, y, count, new_particle, spawn, life_time,
@@ -135,7 +135,7 @@ class ParticleSystem(object):
             Each Particle individually as they are drawn.
             Defaults to False.
         """
-        super(ParticleSystem, self).__init__()
+        super(ParticleEmitter, self).__init__()
         self._screen = screen
         self._x = x
         self._y = y
@@ -197,10 +197,10 @@ class ParticleSystem(object):
 
 class ParticleEffect(with_metaclass(ABCMeta, Effect)):
     """
-    An Effect that uses a :py:obj:`.ParticleSystem` to create the animation.
+    An Effect that uses a :py:obj:`.ParticleEmitter` to create the animation.
 
     To define a new ParticleEffect, you must implement the reset() method to
-    construct a chain of ParticleSystems and append them to the internal
+    construct a chain of ParticleEmitter objects and append them to the internal
     _active_systems list.
     """
 
@@ -241,7 +241,7 @@ class ParticleEffect(with_metaclass(ABCMeta, Effect)):
         return self._stop_frame
 
 
-class Rocket(ParticleSystem):
+class Rocket(ParticleEmitter):
     """
     A rocket being launched from the ground.
     """
@@ -281,7 +281,7 @@ class Rocket(ParticleSystem):
         return int(particle.x), int(particle.y)
 
 
-class RingExplosion(ParticleSystem):
+class RingExplosion(ParticleEmitter):
     """
     A classic firework explosion in a simple ring.
     """
@@ -321,7 +321,7 @@ class RingExplosion(ParticleSystem):
         return int(particle.x), int(particle.y)
 
 
-class SerpentExplosion(ParticleSystem):
+class SerpentExplosion(ParticleEmitter):
     """
     A firework explosion where each trail changes direction.
     """
@@ -363,7 +363,7 @@ class SerpentExplosion(ParticleSystem):
         return int(particle.x), int(particle.y)
 
 
-class StarExplosion(ParticleSystem):
+class StarExplosion(ParticleEmitter):
     """
     A classic firework explosion to a Peony shape with trails.
     """
@@ -408,7 +408,7 @@ class StarExplosion(ParticleSystem):
         return int(particle.x), int(particle.y)
 
 
-class StarTrail(ParticleSystem):
+class StarTrail(ParticleEmitter):
     """
     A trail for a :py:obj:`.StarExplosion`.
     """
@@ -446,7 +446,7 @@ class StarTrail(ParticleSystem):
         return int(particle.x), int(particle.y)
 
 
-class PalmExplosion(ParticleSystem):
+class PalmExplosion(ParticleEmitter):
     """
     A classic firework explosion into a palm shape.
     """
@@ -489,7 +489,7 @@ class PalmExplosion(ParticleSystem):
         return int(particle.x), int(particle.y)
 
 
-class ExplosionFlames(ParticleSystem):
+class ExplosionFlames(ParticleEmitter):
     """
     An explosion of flame and smoke.
     """
@@ -536,7 +536,7 @@ class ExplosionFlames(ParticleSystem):
         return particle.colours[0]
 
 
-class DropSystem(ParticleSystem):
+class DropSystem(ParticleEmitter):
     """
     Replicate the whole screen with Particles and then drop them a cell at a
     time.
@@ -586,9 +586,11 @@ class DropSystem(ParticleSystem):
         return result
 
 
-class RainSource(ParticleSystem):
+class RainSource(ParticleEmitter):
     """
-    Source of the raindrops for a rain storm effect.
+    Source of the raindrops for a rain storm effect.  This emits rain drops
+    from a single line at the top of the screen (starting sufficiently off-
+    screen to ensure that it can cover all the screen due to horizontal motion).
     """
 
     def __init__(self, screen, life_time, on_each):
@@ -603,11 +605,11 @@ class RainSource(ParticleSystem):
         self._on_each = on_each
 
     def _new_particle(self):
-        speed = randint(1, 2)
-        return Particle(" `\\"[speed],
+        speed = randint(1, 3)
+        return Particle(" ``\\"[speed],
                         randint(-self._screen.height, self._screen.width), 0,
-                        speed,
-                        speed,
+                        (speed + 1) / 2.0,
+                        (speed + 1) / 2.0,
                         [(Screen.COLOUR_CYAN, 0, 0)],
                         self._life_time,
                         self._move,
@@ -617,6 +619,31 @@ class RainSource(ParticleSystem):
     def _move(particle):
         particle.x += particle.dx
         particle.y += particle.dy
+        return int(particle.x), int(particle.y)
+
+
+class Splash(ParticleEmitter):
+    """
+    Splash effect for falling rain.
+    """
+
+    def __init__(self, screen, x, y):
+        """
+        :param screen: The Screen being used for this particle system.
+        """
+        super(Splash, self).__init__(
+            screen, x, y, 1, self._new_particle, 1, 3)
+
+    def _new_particle(self):
+        return Particle("v",
+                        self._x, self._y,
+                        0, 0,
+                        [(Screen.COLOUR_CYAN, 0, 0)],
+                        self._life_time,
+                        self._splash)
+
+    @staticmethod
+    def _splash(particle):
         return int(particle.x), int(particle.y)
 
 
@@ -780,9 +807,11 @@ class Rain(ParticleEffect):
     def _collision(self, particle):
         # Already calculated new position, so go back in history
         _, x, y, _, _, _ = particle.last()
+
+        # Note that dx = dy, so simply calculation of next point to check.
         current_char = None
-        for dx in range(particle.dx):
-            next_point = self._screen.get_from(particle.x, particle.y)
+        for dx in range(min(1, int(particle.dx))):
+            next_point = self._screen.get_from(int(x + dx), int(y + dx))
             if next_point is None:
                 current_char = None
                 break
@@ -790,5 +819,9 @@ class Rain(ParticleEffect):
             if current_char != 32:
                 break
 
-        if current_char not in [32, None, ord("`"), ord("\\")]:
-            self._screen.print_at("SPLAT {}   ".format(chr(current_char)), 0, 0)
+        # If there's a collision, kill this drop and make a splash.
+        if (current_char not in [32, None, ord("`"), ord("\\"), ord("v")] or
+                particle.y + dx >= self._screen.height):
+            particle.time = particle.life_time
+            self._active_systems.append(
+                Splash(self._screen, x + dx - 1, y + dx - 1))

@@ -5,29 +5,56 @@ Animation
 
 Scenes and Effects
 ------------------
-The asciimatics package gets its name from a storyboard technique in films ('animatics') where simple animations and mock-ups are used to get a better feel for the planned film.  Much like these storyboards, you need two key elements for your animation.
+The asciimatics package gets its name from a storyboard technique in films
+('animatics') where simple animations and mock-ups are used to get a better
+feel for the planned film.  Much like these storyboards, you need two key
+elements for your animation.
 
-1. One or more :py:obj:`.Scene` objects that encompass the key stages of you animation.  
-2. One or more :py:obj:`.Effect` objects in each Scene that actually display something on the Screen. 
+1. One or more :py:obj:`.Scene` objects that encompass the key stages of your
+   animation.
+2. One or more :py:obj:`.Effect` objects in each Scene that actually display
+   something on the Screen.
 
-An Effect is basically an object that encodes something to be displayed on the Screen.  It can be anything from :py:obj:`.Print` that just displays some rendered text at a specific location for a certain time to :py:obj:`.Snow` that adds dynamically generated falling snow to the Scene.  These are the building blocks of your animation and will be rendered in the strict order that they appear in the Scene, so most of the time you want to put foreground Effects last to ensure they overwrite anything else.
+An Effect is basically an object that encodes something to be displayed on the
+Screen.  It can be anything from :py:obj:`.Print` that just displays some
+rendered text at a specific location for a certain time to :py:obj:`.Snow` that
+adds dynamically generated falling snow to the Scene.  These are the building
+blocks of your animation and will be rendered in the strict order that they
+appear in the Scene, so most of the time you want to put foreground Effects
+last to ensure they overwrite anything else.
 
-There is no hard and fast rule of how to divide up your Scenes, though there is normally a natural cut where you want to move between effects or clear the Screen, much like you'd need to move to a different cell in a comic strip.  These cuts are where you should consider creating a new Scene.
+There is no hard and fast rule of how to divide up your Scenes, though there is
+normally a natural cut where you want to move between effects or clear the
+Screen, much like you'd need to move to a different cell in a comic strip.
+These cuts are where you should consider creating a new Scene.
 
-Once you have built up a set of Effects into a list of one or more Scenes, you can pass this list to :py:meth:`.play` which will run through the Scenes in order, or stop playing if the user exits by pressing 'q'.
+Once you have built up a set of Effects into a list of one or more Scenes, you
+can pass this list to :py:meth:`.play` which will run through the Scenes in
+order, or stop playing if the user exits by pressing 'q'.
 
 Sprites and Paths
 -----------------
-A :py:obj:`.Sprite` is a special Effect designed to move some rendered text around the Screen, thus creating an animated character.  As such, they work like any other Effect, needing to be placed in a Scene and passed to the Screen (through the play() method) to be displayed.  They typically take:
+A :py:obj:`.Sprite` is a special Effect designed to move some rendered text
+around the Screen, thus creating an animated character.  As such, they work
+like any other Effect, needing to be placed in a Scene and passed to the Screen
+(through the play() method) to be displayed.  They typically take:
 
-- a set of Renderers to animate the motion of the character when moving in any direction
+- a set of Renderers to animate the motion of the character when moving in any
+  direction
 - a default Renderer (to be used when standing still)
 - a path to define where the Sprite moves.
 
 Much like Renderers, the paths come in 2 flavours:
 
-1. A :py:obj:`.Path` is a pre-defined path that can be fully determined at the start of the program.  This provides 4 methods - jump_to, wait, move_straight_to and move_round_to - to define the path.  Just decide on the path and script it by chaining these methods together.
-2. A :py:obj:`.DynamicPath` which depends on the program state and so can only be calculated when needed - e.g. because it depends on what key the user is pressing.  These provide an abstract method - process_key - that must be overridden to handle any keys and Update the current coordinates of the Path, to be returned the next time the Sprite asks for an update.
+1. A :py:obj:`.Path` is a pre-defined path that can be fully determined at the
+   start of the program.  This provides 4 methods - jump_to, wait,
+   move_straight_to and move_round_to - to define the path.  Just decide on the
+   path and script it by chaining these methods together.
+2. A :py:obj:`.DynamicPath` which depends on the program state and so can only
+   be calculated when needed - e.g. because it depends on what key the user is
+   pressing.  These provide an abstract method - process_key - that must be
+   overridden to handle any keys and Update the current coordinates of the
+   Path, to be returned the next time the Sprite asks for an update.
 
 The full declaration of a Sprite is therefore something like this.
 
@@ -52,18 +79,35 @@ The full declaration of a Sprite is therefore something like this.
         colour=Screen.COLOUR_RED,
         clear=False)
 
-For more examples of using Sprites, including dynamic Paths, see the samples directory.
+For more examples of using Sprites, including dynamic Paths, see the samples
+directory.
 
 Particle Systems
 ----------------
-A :py:obj:`.ParticleEffect` is a special Effect designed to draw a `particle system <https://en.m.wikipedia.org/wiki/Particle_system>`_.  It consists of one or more :py:obj:`.ParticleSystems` which in turn consists of one or more :py:obj:`.Particle` objects.
+A :py:obj:`.ParticleEffect` is a special Effect designed to draw a `particle
+system <https://en.m.wikipedia.org/wiki/Particle_system>`_.  It consists of one
+or more :py:obj:`.ParticleEmitter` objects which in turn consists of one or
+more :py:obj:`.Particle` objects.
 
-The ParticleEffect defines a chain of ParticleSystems that spawn one or more Particles, each with a unique set of attributes - e.g. location, direction, colour, etc.  The ParticleEffect renders a frame by rendering each of these Particles and then updating them following the rules defined by the ParticleSystem.
+The ParticleEffect defines a chain of ParticleEmitter objects that spawn one or
+more Particles, each with a unique set of attributes - e.g. location, direction,
+colour, etc.  The ParticleEffect renders a frame by rendering each of these
+Particles and then updating them following the rules defined by the
+ParticleEmitter.
 
-For example, consider the :py:obj:`.StarFirework` effect.  This is constructed as follows.
+For example, consider the :py:obj:`.StarFirework` effect.  This is constructed
+as follows.
 
-1. The StarFirework constructs a Rocket.  This is a ParticleSystem that has just one Particle that shoots vertically up the Screen to hit a pre-defined end point.
-2. When this Particle hits this end-point, it expires and spawns a StarExplosion.  This is a ParticleSystem that spawns many Particles in such a way that they are explode outwards radially from where the Rocket expired.
-3. In turn, each of these StarExplosion Particles spawn a StarTrail on each new frame.  These are ParticleSystems that spawn a single Particle that just hovers for a few frames and fades away.
+1. The StarFirework constructs a Rocket.  This is a ParticleEmitter that has
+   just one Particle that shoots vertically up the Screen to hit a pre-defined
+   end point.
+2. When this Particle hits this end-point, it expires and spawns a
+   StarExplosion.  This is a ParticleEmitter that spawns many Particles in such
+   a way that they are explode outwards radially from where the Rocket expired.
+3. In turn, each of these StarExplosion Particles spawn a StarTrail on each new
+   frame.  These are ParticleSystems that spawn a single Particle that just
+   hovers for a few frames and fades away.
 
-Putting this all together (by playing the Effect) you have a classic exploding firework.  For more examples, see the other Effects in the particles and fireworks samples.
+Putting this all together (by playing the Effect) you have a classic exploding
+firework.  For more examples, see the other Effects in the particles and
+fireworks samples.
