@@ -30,17 +30,22 @@ def demo(screen):
     ]
     scenes.append(Scene(effects, -1))
 
+    # Next scene: just dissolve the title.
+    effects = [
+        DropScreen(screen, 100),
+    ]
+    scenes.append(Scene(effects, 80, clear=False))
+
     # Next scene: sub-heading.
     effects = [
         DropScreen(screen, 100),
         Print(screen,
               Rainbow(screen, FigletText("Explosions", font="doom")),
               y=screen.height // 2 - 5,
-              start_frame=80,
-              stop_frame=110),
-        DropScreen(screen, 100, start_frame=110)
+              stop_frame=30),
+        DropScreen(screen, 100, start_frame=30)
     ]
-    scenes.append(Scene(effects, 160, clear=False))
+    scenes.append(Scene(effects, 80))
 
     # Next scene: explosions
     effects = []
