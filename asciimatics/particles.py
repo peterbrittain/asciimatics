@@ -5,7 +5,7 @@ from abc import ABCMeta, abstractmethod
 from builtins import object
 from builtins import range
 from copy import copy
-from math import pi, sin, cos
+from math import pi, sin, cos, sqrt
 from random import uniform, randint
 from future.utils import with_metaclass
 from asciimatics.effects import Effect
@@ -536,7 +536,7 @@ class ExplosionFlames(ParticleEmitter):
         return particle.colours[0]
 
 
-class DropSystem(ParticleEmitter):
+class DropEmitter(ParticleEmitter):
     """
     Replicate the whole screen with Particles and then drop them a cell at a
     time.
@@ -547,7 +547,7 @@ class DropSystem(ParticleEmitter):
         :param screen: The Screen being used for this particle system.
         :param life_time: The life time of this particle system.
         """
-        super(DropSystem, self).__init__(
+        super(DropEmitter, self).__init__(
             screen, 0, 0, 20, self._new_particle, life_time, life_time)
         self._particles = None
 
@@ -568,8 +568,7 @@ class DropSystem(ParticleEmitter):
             return None
 
         # We got here, so there must still be some screen estate to move.
-        x, y, ch, fg, attr, bg = \
-            self._particles.pop(randint(0, len(self._particles) - 1))
+        x, y, ch, fg, attr, bg = self._particles.pop()
         return Particle(chr(ch), x, y,
                         0.0,
                         0.0,
@@ -583,6 +582,65 @@ class DropSystem(ParticleEmitter):
         particle.x += particle.dx
         particle.y += particle.dy
         particle.dy += 0.3
+        return result
+
+
+class ShotEmitter(ParticleEmitter):
+    """
+    Replicate the whole screen with Particles and then explode the screen from
+    a given location.
+    """
+
+    def __init__(self, screen, x, y, life_time):
+        """
+        :param screen: The Screen being used for this particle system.
+        :param x: The x position of the origin of the explosion.
+        :param y: The y position of the origin of the explosion.
+        :param life_time: The life time of this particle system.
+        """
+        super(ShotEmitter, self).__init__(
+            screen, x, y, 50, self._new_particle, life_time, life_time)
+        self._particles = None
+
+    def _new_particle(self):
+        # Find all particles on the Screen when we create our first particle
+        # and sort by distance from the origin.
+        if self._particles is None:
+            self._particles = []
+            for x in range(self._screen.width):
+                for y in range(self._screen.height):
+                    ch, fg, attr, bg = self._screen.get_from(x, y)
+                    if ch != 32:
+                        self._particles.append((x, y, ch, fg, attr, bg))
+            self._particles = sorted(
+                self._particles, key=self._sort, reverse=True)
+
+        # Stop now if there were no more particles to move.
+        if len(self._particles) == 0:
+            return None
+
+        # We got here, so there must still be some screen estate to move.
+        x, y, ch, fg, attr, bg = self._particles.pop()
+        r = min(10,
+                max(0.001,
+                    sqrt(((x - self._x) ** 2) + ((y - self._y) ** 2))))
+        return Particle(chr(ch), x, y,
+                        (x - self._x) * 40.0 / r ** 2,
+                        (y - self._y) * 20.0 / r ** 2,
+                        [(fg, attr, bg)],
+                        self._life_time,
+                        self._move)
+
+    def _sort(self, data):
+        dx = data[0] - self._x
+        dy = data[1] - self._y
+        return (dx * dx / 4.0) + (dy * dy)
+
+    @staticmethod
+    def _move(particle):
+        result = int(particle.x), int(particle.y)
+        particle.x += particle.dx
+        particle.y += particle.dy
         return result
 
 
@@ -784,7 +842,25 @@ class DropScreen(ParticleEffect):
     def reset(self):
         self._active_systems = []
         self._active_systems.append(
-            DropSystem(self._screen, self._life_time))
+            DropEmitter(self._screen, self._life_time))
+
+
+class ShootScreen(ParticleEffect):
+    """
+    Shoot the screen out like a massive gunshot.
+    """
+
+    def __init__(self, screen, x, y, life_time, **kwargs):
+        """
+        See :py:obj:`.ParticleEffect` for details of the parameters.
+        """
+        # No need for an origin as this uses the whole screen.
+        super(ShootScreen, self).__init__(screen, x, y, life_time, **kwargs)
+
+    def reset(self):
+        self._active_systems = []
+        self._active_systems.append(
+            ShotEmitter(self._screen, self._x, self._y, self._life_time))
 
 
 class Rain(ParticleEffect):
@@ -810,6 +886,7 @@ class Rain(ParticleEffect):
 
         # Note that dx = dy, so simply calculation of next point to check.
         current_char = None
+        dx = 0
         for dx in range(min(1, int(particle.dx))):
             next_point = self._screen.get_from(int(x + dx), int(y + dx))
             if next_point is None:
