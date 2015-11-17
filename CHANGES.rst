@@ -7,6 +7,7 @@ CHANGE HISTORY
 - Implemented the StarFirework, RingFirework, SerpentFirework, PalmFirework,
   Explosion, DropScreen, ShootScreen and Rain effects.
 - Added background colour options to BarChart renderer.
+- Added set_title() method to set title for window that owns the Screen.
 
 1.4.2
 -----

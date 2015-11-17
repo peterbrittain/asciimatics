@@ -10,6 +10,8 @@ import sys
 
 
 def demo(screen):
+    screen.set_title("ASCIIMATICS demo")
+
     scenes = []
 
     # First scene: title page
