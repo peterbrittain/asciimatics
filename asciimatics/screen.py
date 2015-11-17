@@ -993,6 +993,14 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
         Scroll the window up one line.
         """
 
+    @abstractmethod
+    def set_title(self, title):
+        """
+        Set the title for this terminal/console session.  This will typically
+        change the text displayed in the window title bar.
+
+        :param title: The title to be set.
+        """
 
 if sys.platform == "win32":
     import win32console
@@ -1274,6 +1282,16 @@ if sys.platform == "win32":
                 u" ", box_size, win32console.PyCOORDType(0, 0))
             self._stdout.SetConsoleCursorPosition(
                 win32console.PyCOORDType(0, 0))
+
+        def set_title(self, title):
+            """
+            Set the title for this terminal/console session.  This will typically
+            change the text displayed in the window title bar.
+
+            :param title: The title to be set.
+            """
+            win32console.SetConsoleTitle(title)
+
 else:
     # UNIX compatible platform - use curses
     import curses
