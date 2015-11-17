@@ -27,3 +27,10 @@ Although it is possible to get Linux terminals to report all mouse movement,
 the reporting of mouse buttons along with movement appears to be highly
 erratic.  The best reporting appears to be using the button event mode - i.e.
 mixing `xterm-1002` with `xterm-256color`.
+
+Windows title
+-------------
+Much like mouse support, the commands to set the window title is not supported
+on all terminal types.  Windows should work without any changes.  Other systems
+may need to use a similar method as above to mix modes to add status line
+support as described `here <https://gist.github.com/KevinGoodsell/744284>`_.
