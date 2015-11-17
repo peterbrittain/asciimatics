@@ -1285,8 +1285,8 @@ if sys.platform == "win32":
 
         def set_title(self, title):
             """
-            Set the title for this terminal/console session.  This will typically
-            change the text displayed in the window title bar.
+            Set the title for this terminal/console session.  This will
+            typically change the text displayed in the window title bar.
 
             :param title: The title to be set.
             """
@@ -1381,6 +1381,11 @@ else:
             self._move_y_x = curses.tigetstr("cup")
             self._fg_color = curses.tigetstr("setaf")
             self._bg_color = curses.tigetstr("setab")
+            if curses.tigetflag("hs"):
+                self._start_title = curses.tigetstr("tsl").decode("utf-8")
+                self._end_title = curses.tigetstr("fsl").decode("utf-8")
+            else:
+                self._start_title = self._end_title = None
             self._a_normal = curses.tigetstr("sgr0").decode("utf-8")
             self._a_bold = curses.tigetstr("bold").decode("utf-8")
             self._a_reverse = curses.tigetstr("rev").decode("utf-8")
@@ -1518,6 +1523,17 @@ else:
             # position.
             sys.stdout.write(msg)
 
+        def set_title(self, title):
+            """
+            Set the title for this terminal/console session.  This will
+            typically change the text displayed in the window title bar.
+
+            :param title: The title to be set.
+            """
+            if self._start_line is not None:
+                sys.stdout.write("{}{}{}".format(self._start_title, title,
+                                                 self._end_title))
+
     class _BlessedScreen(_BufferedScreen):
         """
         Blessed screen implementation.  This is deprecated as it doesn't support
@@ -1649,3 +1665,12 @@ else:
             Clear the terminal.
             """
             sys.stdout.write(self._terminal.clear())
+
+        def set_title(self, title):
+            """
+            Set the title for this terminal/console session.  This will
+            typically change the text displayed in the window title bar.
+
+            :param title: The title to be set.
+            """
+            pass
