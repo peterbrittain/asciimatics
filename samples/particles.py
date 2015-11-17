@@ -1,6 +1,7 @@
 from random import randint
 from asciimatics.effects import Print
-from asciimatics.particles import Explosion, StarFirework, DropScreen, Rain
+from asciimatics.particles import Explosion, StarFirework, DropScreen, Rain, \
+    ShootScreen
 from asciimatics.renderers import SpeechBubble, FigletText, Rainbow
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
@@ -32,9 +33,9 @@ def demo(screen):
 
     # Next scene: just dissolve the title.
     effects = [
-        DropScreen(screen, 100),
+        ShootScreen(screen, screen.width // 2, screen.height // 2, 100),
     ]
-    scenes.append(Scene(effects, 80, clear=False))
+    scenes.append(Scene(effects, 40, clear=False))
 
     # Next scene: sub-heading.
     effects = [
