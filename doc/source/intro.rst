@@ -34,17 +34,28 @@ work for any other platform with a working curses implementation.
 Installation
 ------------
 
-To install asciimatics, simply:
+Asciimatics supports Python versions 2 & 3.  For a list of the precise
+list of tested versions, see `here <https://pypi.python.org/pypi/asciimatics>`_.
+
+To install asciimatics, simply install with `pip`.  You can get it from
+`here <http://pip.readthedocs.org/en/stable/installing/>`_ and then just run:
 
 .. code-block:: bash
 
     $ pip install asciimatics
 
+This should install all your dependencies for you.  If you don't use pip
+or it fails to install them, you can install the dependencies directly
+using the packages listed in `requirements.txt
+<https://github.com/peterbrittain/asciimatics/blob/master/requirements.txt>`_.
+Additionally, Windows users will need to install `pypiwin32`.
+
 Quick start guide
 -----------------
 
-Create a :py:obj:`.Screen`, put together a :py:obj:`.Scene`
-using some :py:obj:`.Effect` objects and then get the Screen to play it.  An Effect
+Once you have installed asciimatics as per the instructions above, simply
+create a :py:obj:`.Screen`, put together a :py:obj:`.Scene` using some
+:py:obj:`.Effect` objects and then get the Screen to play it.  An Effect
 will typically need to display some pre-formatted text.  This is usually
 provided by a :py:obj:`.Renderer`.  For example:
 

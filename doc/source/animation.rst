@@ -37,7 +37,7 @@ Sprites and Paths
 A :py:obj:`.Sprite` is a special Effect designed to move some rendered text
 around the Screen, thus creating an animated character.  As such, they work
 like any other Effect, needing to be placed in a Scene and passed to the Screen
-(through the play() method) to be displayed.  They typically take:
+(through the ``play()`` method) to be displayed.  They typically take:
 
 - a set of Renderers to animate the motion of the character when moving in any
   direction
@@ -47,14 +47,14 @@ like any other Effect, needing to be placed in a Scene and passed to the Screen
 Much like Renderers, the paths come in 2 flavours:
 
 1. A :py:obj:`.Path` is a pre-defined path that can be fully determined at the
-   start of the program.  This provides 4 methods - jump_to, wait,
-   move_straight_to and move_round_to - to define the path.  Just decide on the
-   path and script it by chaining these methods together.
+   start of the program.  This provides 4 methods - ``jump_to()``, ``wait()``,
+   ``move_straight_to()`` and ``move_round_to()`` - to define the path.  Just
+   decide on the path and script it by chaining these methods together.
 2. A :py:obj:`.DynamicPath` which depends on the program state and so can only
    be calculated when needed - e.g. because it depends on what key the user is
-   pressing.  These provide an abstract method - process_key - that must be
-   overridden to handle any keys and Update the current coordinates of the
-   Path, to be returned the next time the Sprite asks for an update.
+   pressing.  These provide an abstract method - ``process_event()`` - that
+   must be overridden to handle any keys and Update the current coordinates
+   of the Path, to be returned the next time the Sprite asks for an update.
 
 The full declaration of a Sprite is therefore something like this.
 
@@ -86,27 +86,29 @@ Particle Systems
 ----------------
 A :py:obj:`.ParticleEffect` is a special Effect designed to draw a `particle
 system <https://en.m.wikipedia.org/wiki/Particle_system>`_.  It consists of one
-or more :py:obj:`.ParticleEmitter` objects which in turn consists of one or
+or more :py:obj:`.ParticleEmitter` objects which in turn contains one or
 more :py:obj:`.Particle` objects.
 
-The ParticleEffect defines a chain of ParticleEmitter objects that spawn one or
-more Particles, each with a unique set of attributes - e.g. location, direction,
-colour, etc.  The ParticleEffect renders a frame by rendering each of these
-Particles and then updating them following the rules defined by the
-ParticleEmitter.
+The ``ParticleEffect`` defines a chain of ``ParticleEmitter``\ s that
+spawn one or more ``Particle``\ s, each with a unique set of attributes - e.g.
+location, direction, colour, etc.  The ``ParticleEffect`` renders a frame by
+rendering each of these ``Particle``\ s and then updating them following the
+rules defined by the ``ParticleEmitter``.
 
-For example, consider the :py:obj:`.StarFirework` effect.  This is constructed
+It all sounds a bit convoluted, doesn't it?  Let's try a concrete example to
+clarify it...  Consider the :py:obj:`.StarFirework` effect.  This is constructed
 as follows.
 
-1. The StarFirework constructs a Rocket.  This is a ParticleEmitter that has
-   just one Particle that shoots vertically up the Screen to hit a pre-defined
-   end point.
-2. When this Particle hits this end-point, it expires and spawns a
-   StarExplosion.  This is a ParticleEmitter that spawns many Particles in such
-   a way that they are explode outwards radially from where the Rocket expired.
-3. In turn, each of these StarExplosion Particles spawn a StarTrail on each new
-   frame.  These are ParticleSystems that spawn a single Particle that just
-   hovers for a few frames and fades away.
+1. The ``StarFirework`` constructs a ``Rocket``.  This is a ``ParticleEmitter``
+   that has just one ``Particle`` that shoots vertically up the Screen to hit a
+   pre-defined end point.
+2. When this ``Particle`` hits its end-point, it expires and spawns a
+   ``StarExplosion``.  This is a ``ParticleEmitter`` that spawns many
+   ``Particle``\ s in such a way that they are explode outwards radially from
+   where the ``Rocket`` expired.
+3. In turn, each of these ``Particle``\ s from the ``StarExplosion`` spawns a
+   ``StarTrail`` on each new frame.  These are ``ParticleSystem``\ s that spawn
+   a single ``Particle`` which just hovers for a few frames and fades away.
 
 Putting this all together (by playing the Effect) you have a classic exploding
 firework.  For more examples, see the other Effects in the particles and
