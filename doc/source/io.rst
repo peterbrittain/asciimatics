@@ -31,9 +31,22 @@ displays `Hello world!` at (0, 0) which is the top left of the screen.
 
 Colours
 ^^^^^^^
-Common colours are defined by the `COLOUR_xxx` constants in the Screen class,
-e.g. `COLOUR_RED`.  If you have a display capable of handling more than these
-(e.g. 256 colour xterm) you can use the indexes of the colours for that display
+Common colours are defined by the `COLOUR_xxx` constants in the Screen class.
+The full list is as follows:
+
+.. code-block:: python
+
+    COLOUR_BLACK = 0
+    COLOUR_RED = 1
+    COLOUR_GREEN = 2
+    COLOUR_YELLOW = 3
+    COLOUR_BLUE = 4
+    COLOUR_MAGENTA = 5
+    COLOUR_CYAN = 6
+    COLOUR_WHITE = 7
+
+If you have a display capable of handling more than these (e.g. 256 colour
+xterm) you can use the indexes of the colours for that display
 directly instead.  When creating effects that use these extra colours, it is
 recommended that you also support a reduced colour mode, using just the
 8 common colours.  For an example of how to do this, see the :py:obj:`.Rainbow`
@@ -46,11 +59,20 @@ early hardware terminals supported before they had colours.  Most
 systems don't use hardware terminals any more, but the concept persists in
 all native console APIs and so is also used here.
 
-Supported attributes are defined by the `A_xxx` constants in the Screen class,
-e.g. `A_BOLD`.  Most systems will support bold (a.k.a bright), normal and
-reverse attributes.  Others are capable of more, but you will have
-difficulties using them in a cross-platform manner and so they are deprecated.
-The attribute is just another parameter to `print_at`.  For example:
+Supported attributes are defined by the `A_xxx` constants in the Screen class.
+The full list is as follows:
+
+.. code-block:: python
+
+    A_BOLD = 1
+    A_NORMAL = 2
+    A_REVERSE = 3
+    A_UNDERLINE = 4
+
+Most systems will support bold (a.k.a bright), normal and reverse attributes.
+Others are capable of more, but you will have difficulties using them in a
+cross-platform manner and so they are deprecated. The attribute is just
+another parameter to `print_at`.  For example:
 
 .. code-block:: python
 
@@ -61,14 +83,14 @@ Multicoloured strings
 ^^^^^^^^^^^^^^^^^^^^^
 If you want to do something more complex, you can use the :py:meth:`.paint`
 method to specify a colour map for each character to be displayed.  This must
-be a list of paired colour/attribute values (tuples or lists) that is at least
+be a list of colour/attribute values (tuples or lists) that is at least
 as long as the text to be displayed.  This method is typically used for
 displaying complex, multi-coloured text from a Renderer.  See
 :ref:`animation-ref` for more details.
 
 Refreshing the Screen
 ---------------------
-Just using the above method to output to screen isn't quite enough.
+Just using the above methods to output to screen isn't quite enough.
 The Screen maintains a buffer of what is to be displayed and will only actually
 display it once the :py:meth:`.refresh` method is called.  This is done to
 reduce flicker on the display device as new content is created.  
@@ -84,7 +106,7 @@ Input
 To handle user input, use the :py:meth:`.get_event` method.  This instantly
 returns the latest key-press or mouse event, without waiting for a new line and
 without echoing it to screen (for keyboard events).  If there is no event
-available, this will return `None`.
+available, it will return `None`.
 
 The exact class returned depends on the event.  It will be either
 :py:obj:`.KeyboardEvent` or :py:obj:`.MouseEvent`.  Handling of each is covered
@@ -93,21 +115,23 @@ below.
 KeyboardEvent
 ^^^^^^^^^^^^^
 This event is triggered for any key-press, including auto repeat when keys are
-held down.  The :py:obj:`key_code` is the ordinal representation
-of the key (taking into account keyboard state - e.g. caps lock) if possible,
-or an extended key code (the `KEY_xxx` constants in the Screen class) where not.
+held down.  ``key_code`` is the ordinal representation of the key (taking
+into account keyboard state - e.g. caps lock) if possible,
+or an extended key code (the ``KEY_xxx`` constants in the Screen class) where
+not.
 
-For example, if you press 'a' normally `get_key` will return 97, which is
-`ord('a')`.  If you press the same key with caps lock on, you will get 65,
-which is `ord('A')`.  If you press 'F7' you will get `KEY_F7` instead.
+For example, if you press 'a' normally ``get_key`` will return 97, which is
+``ord('a')``.  If you press the same key with caps lock on, you will get 65,
+which is ``ord('A')``.  If you press 'F7' you will always get ``KEY_F7``
+irrespective of the caps lock.
 
 MouseEvent
 ^^^^^^^^^^
 This event is triggered for any mouse movement or button click.  The current
-coordinates of the mouse on the Screen are stored in the :py:obj:`x`
-and :py:obj:`y` properties.  If a button was clicked, this is
-tracked by the :py:obj:`buttons` property.  Allowed values for the
-buttons are LEFT_CLICK, RIGHT_CLICK and DOUBLE_CLICK.
+coordinates of the mouse on the Screen are stored in the ``x`` and ``y``
+properties.  If a button was clicked, this is tracked by the ``buttons``
+property.  Allowed values for the buttons are ``LEFT_CLICK``, ``RIGHT_CLICK``
+and ``DOUBLE_CLICK``.
 
 .. warning::
 
@@ -118,10 +142,11 @@ buttons are LEFT_CLICK, RIGHT_CLICK and DOUBLE_CLICK.
     function is just to report button clicks.  If you need your application
     to handle mouse move events too, you will need to use a terminal that
     supports the additional extensions - e.g. the xterm-1003 terminal type.
+    See :ref:`mouse-issues-ref` for more details on how to fix this.
 
 Screen Resizing
 ---------------
-It is not possible to change the Screen size programmatically.  However, the
+It is not possible to change the Screen size through your program.  However, the
 user may resize their terminal or console while your program is running.
 
 You can read the current  size from the :py:obj:`.dimensions` property of the
@@ -131,9 +156,9 @@ tell you if the dimensions have been changed by the user at any time since it
 was last called.
 
 In addition, you can tell the Screen to throw an exception if this happens
-while you are playing a Scene by specifying `stop_on_resize=True`.  This should
-then allow your program to redefine the Scenes as needed and then re-start
-playing it.
+while you are playing a Scene by specifying ``stop_on_resize=True``.  This
+should then allow your program to redefine the Scenes as needed and then pass
+the new Scenes to the Screen to play them instead.
 
 Scraping Text
 -------------
@@ -158,7 +183,7 @@ move the drawing cursor to the specified coordinates and then the
 :py:meth:`.draw` method will draw a straight line from the current cursor
 location to the specified coordinates.
 
-You can override the anti-aliasing with the `char` parameter.  This is most
+You can override the anti-aliasing with the ``char`` parameter.  This is most
 useful when trying to clear what was already drawn.  For example:
 
 .. code-block:: python
@@ -172,5 +197,5 @@ useful when trying to clear what was already drawn.  For example:
     screen.draw(10, 10, char=' ')
 
 If the resulting line is too thick, you can also pick a thinner pen by
-specifying `thin=True`.  Examples of both styles can be found in the Clock
+specifying ``thin=True``.  Examples of both styles can be found in the Clock
 sample code.
