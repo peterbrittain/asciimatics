@@ -53,5 +53,5 @@ setup(
         'pyfiglet >= 0.7.2',
         'Pillow >= 2.7.0',
         'future',
-    ] + ['pypiwin32'] if sys.platform == 'win32' else [],
+    ] + (['pypiwin32'] if sys.platform == 'win32' else []),
 )
