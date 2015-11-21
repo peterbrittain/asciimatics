@@ -97,7 +97,7 @@ More examples of what you can do are available in the project samples
 directory, hosted on GitHub.  See
 https://github.com/peterbrittain/asciimatics/tree/master/samples.
 
-To run them, simply download these files and then simply run them directly
+To view them, simply download these files and then simply run them directly
 with `python`.  Note that most can run on any platform, apart from:
 
 * `not_curses.py` which is a demo of the deprecated `blessed` support on Linux
