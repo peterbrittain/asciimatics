@@ -23,11 +23,30 @@ class Frame(Effect):
         """
         super(Frame, self).__init__()
         self._screen = screen
-        self._widgets = []
+        self._layouts = []
+
+    def add_layout(self, layout):
+        """
+        Add a Layout to the Frame.
+
+        :param layout: The Layout to be added.
+        """
+        layout.register_frame(self)
+        self._layouts.append(layout)
+
+    def fix(self):
+        """
+        Fix the layouts and calculate the locations of all the widgets.  This
+        should be called once all Layouts have been added to the Frame and all
+        widgets added to the Layouts.
+        """
+        y = 0
+        for layout in self._layouts:
+            y = layout.fix(y)
 
     def _update(self, frame_no):
-        for widget in self._widgets:
-            widget.update(frame_no)
+        for layout in self._layouts:
+            layout.update(frame_no)
 
     @property
     def stop_frame(self):
@@ -42,28 +61,121 @@ class Frame(Effect):
         return self._screen
 
     def reset(self):
-        for widget in self._widgets:
-            widget.reset()
-
-    def add(self, widget):
-        """
-        Add a widget to the Frame.
-
-        :param widget: The Widget to be added.
-        """
-        widget.register_frame(self)
-        self._widgets.append(widget)
+        for layout in self._layouts:
+            layout.reset()
 
     def process_event(self, event):
-        for widget in self._widgets:
-            event = widget.process_event(event)
+        for layout in self._layouts:
+            event = layout.process_event(event)
             if event is None:
                 break
         return event
 
-    def resize(self):
-        # @@@TODO: handle dynamic sizing
-        pass
+
+class Layout(object):
+    """
+    Widget layout handler.  All Widgets must be contained within a Layout within
+    a Frame.  The Layout class is responsible for deciding the exact size and
+    location of the widgets.  The logic uses similar ideas as used in modern
+    web frameworks and is as follows.
+
+    1.  The Frame owns one or more Layouts.  The Layouts stack one above each
+        other when displayed - i.e. the first Layout in the Frame is above the
+        second, etc.
+    2.  Each Layout defines the horizontal constraints by defining columns
+        as a percentage of the full screen width.
+    3.  The Widgets are assigned a column within the Layout that owns them.
+    4.  The Layout then decides the exact size and location to make the
+        Widget best fit the screen as constrained by the above.
+    """
+
+    def __init__(self, columns):
+        """
+        :param columns: A list of numbers specifying the width of each column
+                        in this layout.
+
+        The Layout will automatically normalize the units used for the columns,
+        e.g. converting [2, 6, 2] to [20%, 60%, 20%] of the available screen.
+        """
+        total_size = sum(columns)
+        self._column_sizes = [x / total_size for x in columns]
+        self._columns = [[] for _ in columns]
+        self._frame = None
+
+    def register_frame(self, frame):
+        """
+        Register the Frame that owns this Widget.
+
+        :param frame: The owning Frame.
+        """
+        self._frame = frame
+        for column in self._columns:
+            for widget in column:
+                widget.register_frame(self._frame)
+
+    def add_widget(self, widget, column=0):
+        """
+        Add a widget to this Layout.
+
+        :param widget: The widget to be added.
+        :param column: The column within the widget for this widget.  Defaults
+                       to zero.
+        """
+        self._columns[column].append(widget)
+        widget.register_frame(self._frame)
+
+    def fix(self, start_y):
+        """
+        Fix the location and size of all the Widgets in this Layout.
+
+        :param start_y: The start line for the Layout.
+        :returns: The next line to be used for any further Layouts.
+        """
+        x = 0
+        max_y = start_y
+        for i, column in enumerate(self._columns):
+            y = start_y
+            w = int(self._frame.screen.width * self._column_sizes[i])
+            for widget in column:
+                h = widget.required_height
+                widget.set_position(x, y, w, h)
+                y += h
+            max_y = max(max_y, y)
+            x += w
+        return max_y
+
+    def process_event(self, event):
+        """
+        Process any input event.
+
+        :param event: The event that was triggered.
+        :returns: None if the Effect processed the event, else the original
+                  event.
+        """
+        for column in self._columns:
+            for widget in column:
+                event = widget.process_event(event)
+                if event is None:
+                    break
+        return event
+
+    def update(self, frame_no):
+        """
+        Redraw the widgets inside this Layout.
+
+        :param frame_no: The current frame to be drawn.
+        """
+        for column in self._columns:
+            for widget in column:
+                widget.update(frame_no)
+
+    def reset(self):
+        """
+        Reset this Layout and the Widgets it contains.
+        """
+        for column in self._columns:
+            for widget in column:
+                widget.reset()
 
 
 class Widget(with_metaclass(ABCMeta, object)):
@@ -79,6 +191,8 @@ class Widget(with_metaclass(ABCMeta, object)):
         self._label = label
         self._frame = None
         self._value = None
+        self._x = self._y = 0
+        self._w = self._h = 0
 
     def register_frame(self, frame):
         """
@@ -86,6 +200,15 @@ class Widget(with_metaclass(ABCMeta, object)):
         :param frame: The owning Frame.
         """
         self._frame = frame
+
+    def set_position(self, x, y, w, h):
+        """
+        Set the size and position of the Widget.
+        """
+        self._x = x
+        self._y = y
+        self._w = w
+        self._h = h
 
     @abstractmethod
     def update(self, frame_no):
@@ -119,6 +242,11 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         return self._value
 
+    @abstractproperty
+    def required_height(self):
+        """
+        The minimum required height for this widget.
+        """
 
 class TextBox(Widget):
     """
@@ -139,21 +267,16 @@ class TextBox(Widget):
         self._start_line = 0
         self._start_column = 0
 
-        # @@@TODO: Fix hack!
-        self._x = 20
-        self._y = 5
-        self._width = 40
-        self._height = 10
-
-        # Create box rendered text now.
-        self._box = Box(self._width, self._height).rendered_text
 
     def update(self, frame_no):
         # Calculate new visible limits if needed.
-        self._start_line = max(0, max(self._line - self._height + 3,
+        self._start_line = max(0, max(self._line - self._h + 3,
                                       min(self._start_line, self._line)))
-        self._start_column = max(0, max(self._column - self._width + 3,
+        self._start_column = max(0, max(self._column - self._w + 3,
                                         min(self._start_column, self._column)))
+
+        # Create box rendered text now.
+        self._box = Box(self._w, self._h).rendered_text
 
         # Redraw the frame and label if needed.
         for (i, line) in enumerate(self._box[0]):
@@ -165,9 +288,9 @@ class TextBox(Widget):
 
         # Render visible portion of the text.
         for i, text in enumerate(self._value):
-            if self._start_line <= i < self._start_line + self._height - 2:
+            if self._start_line <= i < self._start_line + self._h - 2:
                 self._frame.screen.print_at(
-                    text[self._start_column:self._start_column + self._width-2],
+                    text[self._start_column:self._start_column + self._w - 2],
                     self._x + 1,
                     self._y + i + 1 - self._start_line)
 
@@ -259,3 +382,8 @@ class TextBox(Widget):
         else:
             # Ignore non-keyboard events
             return event
+
+    @property
+    def required_height(self):
+        # A text box must be at least 3 lines for the box and 1 line of input.
+        return 3
