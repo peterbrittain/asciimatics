@@ -316,9 +316,10 @@ class TextBox(Widget):
     framed box with option label.  It can take multi-line input.
     """
 
-    def __init__(self, text, label=None):
+    def __init__(self, text, height, label=None):
         """
         :param text: The initial text to put in the TextBox.
+        :param height: The required number of input lines for this TextBox.
         :param label: The label for the TextBox.
         """
         super(TextBox, self).__init__(label)
@@ -327,6 +328,7 @@ class TextBox(Widget):
         self._column = 0
         self._start_line = 0
         self._start_column = 0
+        self._required_height = height
 
 
     def update(self, frame_no):
@@ -448,5 +450,5 @@ class TextBox(Widget):
 
     @property
     def required_height(self):
-        # A text box must be at least 3 lines for the box and 1 line of input.
-        return 3
+        # Allow for extra bordeer lines
+        return self._required_height + 2
