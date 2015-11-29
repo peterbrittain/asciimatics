@@ -1171,7 +1171,7 @@ if sys.platform == "win32":
             Check for any event without waiting.
             """
             # Look for a new event and consume it if there is one.
-            if len(self._stdin.PeekConsoleInput(1)) > 0:
+            while len(self._stdin.PeekConsoleInput(1)) > 0:
                 event = self._stdin.ReadConsoleInput(1)[0]
                 if (event.EventType == win32console.KEY_EVENT and
                         event.KeyDown):
@@ -1200,6 +1200,9 @@ if sys.platform == "win32":
                     return MouseEvent(event.MousePosition.X,
                                       event.MousePosition.Y,
                                       button)
+
+            # If we get here, we've fully processed the event queue and found
+            # nothing interesting.
             return None
 
         def has_resized(self):
