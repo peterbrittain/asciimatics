@@ -23,6 +23,7 @@ class Frame(Effect):
         """
         super(Frame, self).__init__()
         self._screen = screen
+        self._focus = 0
         self._layouts = []
 
     def add_layout(self, layout):
@@ -43,6 +44,7 @@ class Frame(Effect):
         y = 0
         for layout in self._layouts:
             y = layout.fix(y)
+        self._layouts[self._focus].focus()
 
     def _update(self, frame_no):
         for layout in self._layouts:
@@ -65,10 +67,21 @@ class Frame(Effect):
             layout.reset()
 
     def process_event(self, event):
-        for layout in self._layouts:
-            event = layout.process_event(event)
-            if event is None:
-                break
+        # Give the current widget in focus first chance to process the event.
+        event = self._layouts[self._focus].process_event(event)
+
+        # If the underlying widgets did not process the event, try processing
+        # it now.
+        if event is not None:
+            if isinstance(event, KeyboardEvent):
+                if event.key_code == Screen.KEY_TAB:
+                    # Move on to next widget.
+                    self._layouts[self._focus].blur()
+                    self._focus += 1
+                    if self._focus >= len(self._layouts):
+                        self._focus = 0
+                    self._layouts[self._focus].focus()
+                    event = None
         return event
 
 
@@ -101,6 +114,9 @@ class Layout(object):
         self._column_sizes = [x / total_size for x in columns]
         self._columns = [[] for _ in columns]
         self._frame = None
+        self._has_focus = False
+        self._live_col = 0
+        self._live_widget = 0
 
     def register_frame(self, frame):
         """
@@ -123,6 +139,20 @@ class Layout(object):
         """
         self._columns[column].append(widget)
         widget.register_frame(self._frame)
+
+    def focus(self):
+        """
+        Call this to give this Layout the input focus.
+        """
+        self._has_focus = True
+        self._columns[self._live_col][self._live_widget].focus()
+
+    def blur(self):
+        """
+        Call this to give take the input focus from this Layout.
+        """
+        self._has_focus = False
+        self._columns[self._live_col][self._live_widget].blur()
 
     def fix(self, start_y):
         """
@@ -152,11 +182,29 @@ class Layout(object):
         :returns: None if the Effect processed the event, else the original
                   event.
         """
-        for column in self._columns:
-            for widget in column:
-                event = widget.process_event(event)
-                if event is None:
-                    break
+        # Give the active widget the first refusal for this event.
+        event = self._columns[
+            self._live_col][self._live_widget].process_event(event)
+
+        # Check for any movement keys if the widget refused them.
+        if event is not None:
+            if isinstance(event, KeyboardEvent):
+                if event.key_code == Screen.KEY_TAB:
+                    # Move on to next widget, unless it is the last in the
+                    # Layout.
+                    self._columns[self._live_col][self._live_widget].blur()
+                    self._live_widget += 1
+                    if self._live_widget >= len(self._columns[self._live_col]):
+                        self._live_widget = 0
+                        self._live_col += 1
+                    if self._live_col >= len(self._columns):
+                        self._live_col = 0
+                        # Now pass on up to Frame to move on to next Layout.
+                        return event
+
+                    # If we got here, we still should have the focus.
+                    self._columns[self._live_col][self._live_widget].focus()
+                    event = None
         return event
 
     def update(self, frame_no):
@@ -191,6 +239,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         self._label = label
         self._frame = None
         self._value = None
+        self._has_focus = False
         self._x = self._y = 0
         self._w = self._h = 0
 
@@ -209,6 +258,18 @@ class Widget(with_metaclass(ABCMeta, object)):
         self._y = y
         self._w = w
         self._h = h
+
+    def focus(self):
+        """
+        Call this to give this Widget the input focus.
+        """
+        self._has_focus = True
+
+    def blur(self):
+        """
+        Call this to give take the input focus from this Widget.
+        """
+        self._has_focus = False
 
     @abstractmethod
     def update(self, frame_no):
@@ -294,19 +355,21 @@ class TextBox(Widget):
                     self._x + 1,
                     self._y + i + 1 - self._start_line)
 
-        # Since we switch off the standard cursor, we need to emulate our own.
-        cursor = " "
-        if frame_no % 10 < 5:
-            attr = Screen.A_REVERSE
-        else:
-            attr = 0
-            if self._column < len(self.value[self._line]):
-                cursor = self.value[self._line][self._column]
-        self._frame.screen.print_at(
-            cursor,
-            self._x + self._column + 1 - self._start_column,
-            self._y + self._line + 1 - self._start_line,
-            attr=attr)
+        # Since we switch off the standard cursor, we need to emulate our own
+        # if we have the input focus.
+        if self._has_focus:
+            cursor = " "
+            if frame_no % 10 < 5:
+                attr = Screen.A_REVERSE
+            else:
+                attr = 0
+                if self._column < len(self.value[self._line]):
+                    cursor = self.value[self._line][self._column]
+            self._frame.screen.print_at(
+                cursor,
+                self._x + self._column + 1 - self._start_column,
+                self._y + self._line + 1 - self._start_line,
+                attr=attr)
 
     def reset(self):
         # Reset to original data and move to end of the text.
