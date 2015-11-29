@@ -309,6 +309,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         The minimum required height for this widget.
         """
 
+
 class TextBox(Widget):
     """
     A TextBox is a simple widget for recording and displaying the text that has
@@ -330,7 +331,6 @@ class TextBox(Widget):
         self._start_column = 0
         self._required_height = height
 
-
     def update(self, frame_no):
         # Calculate new visible limits if needed.
         self._start_line = max(0, max(self._line - self._h + 3,
@@ -339,10 +339,10 @@ class TextBox(Widget):
                                         min(self._start_column, self._column)))
 
         # Create box rendered text now.
-        self._box = Box(self._w, self._h).rendered_text
+        box = Box(self._w, self._h).rendered_text
 
         # Redraw the frame and label if needed.
-        for (i, line) in enumerate(self._box[0]):
+        for (i, line) in enumerate(box[0]):
             self._frame.screen.paint(
                 line, self._x, self._y + i, transparent=False)
         if self._label is not None:
@@ -450,5 +450,5 @@ class TextBox(Widget):
 
     @property
     def required_height(self):
-        # Allow for extra bordeer lines
+        # Allow for extra border lines
         return self._required_height + 2
