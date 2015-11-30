@@ -86,6 +86,7 @@ class Screen(with_metaclass(ABCMeta, object)):
     KEY_PAGE_DOWN = -208
     KEY_BACK = -300
     KEY_TAB = -301
+    KEY_BACK_TAB = -302
     KEY_NUMPAD0 = -400
     KEY_NUMPAD1 = -401
     KEY_NUMPAD2 = -402
@@ -1344,6 +1345,7 @@ else:
             curses.KEY_NPAGE: Screen.KEY_PAGE_DOWN,
             curses.KEY_BACKSPACE: Screen.KEY_BACK,
             9: Screen.KEY_TAB,
+            curses.KEY_BTAB: Screen.KEY_BACK_TAB,
             # Terminals translate keypad keys, so no need for a special
             # mapping here.
 
@@ -1466,8 +1468,10 @@ else:
             else:
                 # Handle a genuine key press.
                 if key in self._KEY_MAP:
+                    # self.print_at(str(self._KEY_MAP[key]) + "  ", 0, 30)
                     return KeyboardEvent(self._KEY_MAP[key])
                 elif key != -1:
+                    # self.print_at(str(key) + "  ", 0, 30)
                     return KeyboardEvent(key)
             return None
 
