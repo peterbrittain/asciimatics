@@ -80,7 +80,15 @@ class Frame(Effect):
                     self._focus += 1
                     if self._focus >= len(self._layouts):
                         self._focus = 0
-                    self._layouts[self._focus].focus()
+                    self._layouts[self._focus].focus(force_first=True)
+                    event = None
+                elif event.key_code == Screen.KEY_BACK_TAB:
+                    # Move on to previous widget.
+                    self._layouts[self._focus].blur()
+                    self._focus -= 1
+                    if self._focus < 0:
+                        self._focus = len(self._layouts) - 1
+                    self._layouts[self._focus].focus(force_last=True)
                     event = None
         return event
 
@@ -140,11 +148,20 @@ class Layout(object):
         self._columns[column].append(widget)
         widget.register_frame(self._frame)
 
-    def focus(self):
+    def focus(self, force_first=False, force_last=False):
         """
         Call this to give this Layout the input focus.
+
+        :param force_first: Optional parameter to force focus to first widget.
+        :param force_last: Optional parameter to force focus to last widget.
         """
         self._has_focus = True
+        if force_first:
+            self._live_col = 0
+            self._live_widget = 0
+        elif force_last:
+            self._live_col = len(self._columns) - 1
+            self._live_widget = len(self._columns[self._live_col]) - 1
         self._columns[self._live_col][self._live_widget].focus()
 
     def blur(self):
@@ -201,6 +218,26 @@ class Layout(object):
                         self._live_col = 0
                         # Now pass on up to Frame to move on to next Layout.
                         return event
+
+                    # If we got here, we still should have the focus.
+                    self._columns[self._live_col][self._live_widget].focus()
+                    event = None
+                elif event.key_code == Screen.KEY_BACK_TAB:
+                    # Move on to previous widget, unless it is the first in the
+                    # Layout.
+                    self._columns[self._live_col][self._live_widget].blur()
+                    self._live_widget -= 1
+                    if self._live_widget < 0:
+                        self._live_col -= 1
+                        if self._live_col < 0:
+                            self._live_col = len(self._columns) - 1
+                        self._live_widget = \
+                            len(self._columns[self._live_col]) - 1
+
+                        # Now pass on up to Frame to move on to next Layout if
+                        # we've wrapped.
+                        if self._live_col == len(self._columns) - 1:
+                            return event
 
                     # If we got here, we still should have the focus.
                     self._columns[self._live_col][self._live_widget].focus()
@@ -435,7 +472,7 @@ class TextBox(Widget):
             elif event.key_code == Screen.KEY_END:
                 # Go to the end of this line
                 self._column = len(self._value[self._line])
-            elif event.key_code >= ord(" "):
+            elif 32 <= event.key_code < 256:
                 # Insert any visible text at the current cursor position.
                 self._value[self._line] = chr(event.key_code).join([
                     self._value[self._line][:self._column],
