@@ -191,6 +191,27 @@ class Layout(object):
             x += w
         return max_y
 
+    def _find_next_widget(self, direction):
+        """
+        Find the next widget to get the focus, stopping at the start/end of the
+        list if hit.
+
+        :param direction: The direction to move through the widgets
+        """
+        while 0 <= self._live_col < len(self._columns):
+            self._live_widget += direction
+            while 0 <= self._live_widget < len(self._columns[self._live_col]):
+                if self._columns[self._live_col][self._live_widget].is_tab_stop:
+                    break
+                self._live_widget += direction
+            if (0 <= self._live_widget < len(self._columns[self._live_col]) and
+                    self._columns[
+                        self._live_col][self._live_widget].is_tab_stop):
+                break
+            self._live_col += direction
+            self._live_widget = \
+                -1 if direction > 0 else len(self._columns[self._live_col])
+
     def process_event(self, event):
         """
         Process any input event.
@@ -210,13 +231,10 @@ class Layout(object):
                     # Move on to next widget, unless it is the last in the
                     # Layout.
                     self._columns[self._live_col][self._live_widget].blur()
-                    self._live_widget += 1
-                    if self._live_widget >= len(self._columns[self._live_col]):
-                        self._live_widget = 0
-                        self._live_col += 1
+                    self._find_next_widget(1)
                     if self._live_col >= len(self._columns):
                         self._live_col = 0
-                        # Now pass on up to Frame to move on to next Layout.
+                        self._live_widget = 0
                         return event
 
                     # If we got here, we still should have the focus.
@@ -226,18 +244,11 @@ class Layout(object):
                     # Move on to previous widget, unless it is the first in the
                     # Layout.
                     self._columns[self._live_col][self._live_widget].blur()
-                    self._live_widget -= 1
-                    if self._live_widget < 0:
-                        self._live_col -= 1
-                        if self._live_col < 0:
-                            self._live_col = len(self._columns) - 1
-                        self._live_widget = \
-                            len(self._columns[self._live_col]) - 1
-
-                        # Now pass on up to Frame to move on to next Layout if
-                        # we've wrapped.
-                        if self._live_col == len(self._columns) - 1:
-                            return event
+                    self._find_next_widget(-1)
+                    if self._live_col < 0:
+                        self._live_col = len(self._columns) - 1
+                        self._live_widget = len(self._columns[self._live_col]) - 1
+                        return event
 
                     # If we got here, we still should have the focus.
                     self._columns[self._live_col][self._live_widget].focus()
@@ -268,17 +279,23 @@ class Widget(with_metaclass(ABCMeta, object)):
     A Widget is a re-usable component that can be used to create a simple GUI.
     """
 
-    def __init__(self, label):
+    def __init__(self, name, tab_stop=True):
         """
-        :param label: The label for this Widget.
+        :param name: The name of this Widget.
+        :param tab_stop: Whether this widget should take focus or not when
+                         tabbing around the Frame.
         """
         super(Widget, self).__init__()
-        self._label = label
+        # Internal properties
+        self._name = name
         self._frame = None
         self._value = None
         self._has_focus = False
         self._x = self._y = 0
         self._w = self._h = 0
+
+        # Public properties
+        self.is_tab_stop = tab_stop
 
     def register_frame(self, frame):
         """
@@ -347,6 +364,35 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
 
 
+class Label(Widget):
+    """
+    A simple text label.
+    """
+
+    def __init__(self, label):
+        """
+        :param label: The label for the TextBox.
+        """
+        # Labels have no value and so should have no name for look-ups either.
+        super(Label, self).__init__(None, tab_stop=False)
+        self._label = label
+
+    def process_event(self, event):
+        # Labels have no user interactions
+        return event
+
+    def update(self, frame_no):
+        self._frame.screen.print_at(self._label, self._x, self._y + 1)
+
+    def reset(self):
+        pass
+
+    @property
+    def required_height(self):
+        # Allow one line for text and a blank spacer before it.
+        return 2
+
+
 class TextBox(Widget):
     """
     A TextBox is a simple widget for recording and displaying the text that has
@@ -354,13 +400,13 @@ class TextBox(Widget):
     framed box with option label.  It can take multi-line input.
     """
 
-    def __init__(self, text, height, label=None):
+    def __init__(self, text, height, name=None):
         """
         :param text: The initial text to put in the TextBox.
         :param height: The required number of input lines for this TextBox.
-        :param label: The label for the TextBox.
+        :param name: The name for the TextBox.
         """
-        super(TextBox, self).__init__(label)
+        super(TextBox, self).__init__(name)
         self._text = text
         self._line = 0
         self._column = 0
@@ -382,9 +428,10 @@ class TextBox(Widget):
         for (i, line) in enumerate(box[0]):
             self._frame.screen.paint(
                 line, self._x, self._y + i, transparent=False)
-        if self._label is not None:
-            self._frame.screen.paint(
-                " {} ".format(self._label), self._x + 2, self._y)
+        # TODO: Consider if still needed with standalone labels
+        # if self._label is not None:
+        #     self._frame.screen.paint(
+        #         " {} ".format(self._label), self._x + 2, self._y)
 
         # Render visible portion of the text.
         for i, text in enumerate(self._value):
