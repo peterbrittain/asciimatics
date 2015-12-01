@@ -1180,9 +1180,18 @@ if sys.platform == "win32":
                     key_code = ord(event.Char)
                     if event.VirtualKeyCode in self._KEY_MAP:
                         key_code = self._KEY_MAP[event.VirtualKeyCode]
+
+                    # Sadly, we are limited to Linux terminal input and so can't
+                    # return modifier states in a cross-platform way.  If the
+                    # user decided not to be cross-platform, so be it, otherwise
+                    # map some standard bindings for extended keys.
                     if (self._map_all and
                             event.VirtualKeyCode in self._EXTRA_KEY_MAP):
                         key_code = self._EXTRA_KEY_MAP[event.VirtualKeyCode]
+                    else:
+                        if (event.VirtualKeyCode == win32con.VK_TAB and
+                                event.ControlKeyState & win32con.SHIFT_PRESSED):
+                            key_code = Screen.KEY_BACK_TAB
                     return KeyboardEvent(key_code)
                 elif event.EventType == win32console.MOUSE_EVENT:
                     # Translate into a MouseEvent object.
