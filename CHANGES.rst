@@ -1,6 +1,10 @@
 CHANGE HISTORY
 ==============
 
+1.6.0
+-----
+- Added `attr` option to Print Effect.
+
 1.5.0
 -----
 - Created the ParticleEffect and associated classes.
