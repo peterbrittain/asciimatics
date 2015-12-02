@@ -236,7 +236,8 @@ class Layout(object):
                     self._find_next_widget(1)
                     if self._live_col >= len(self._columns):
                         self._live_col = 0
-                        self._live_widget = 0
+                        self._live_widget = -1
+                        self._find_next_widget(1)
                         return event
 
                     # If we got here, we still should have the focus.
@@ -249,7 +250,8 @@ class Layout(object):
                     self._find_next_widget(-1)
                     if self._live_col < 0:
                         self._live_col = len(self._columns) - 1
-                        self._live_widget = len(self._columns[self._live_col]) - 1
+                        self._live_widget = len(self._columns[self._live_col])
+                        self._find_next_widget(-1)
                         return event
 
                     # If we got here, we still should have the focus.
