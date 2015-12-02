@@ -124,7 +124,7 @@ class Layout(object):
         self._frame = None
         self._has_focus = False
         self._live_col = 0
-        self._live_widget = 0
+        self._live_widget = -1
 
     def register_frame(self, frame):
         """
@@ -158,10 +158,12 @@ class Layout(object):
         self._has_focus = True
         if force_first:
             self._live_col = 0
-            self._live_widget = 0
+            self._live_widget = -1
+            self._find_next_widget(1)
         elif force_last:
             self._live_col = len(self._columns) - 1
-            self._live_widget = len(self._columns[self._live_col]) - 1
+            self._live_widget = len(self._columns[self._live_col])
+            self._find_next_widget(-1)
         self._columns[self._live_col][self._live_widget].focus()
 
     def blur(self):
@@ -269,9 +271,15 @@ class Layout(object):
         """
         Reset this Layout and the Widgets it contains.
         """
+        # Reset all the widgets
         for column in self._columns:
             for widget in column:
                 widget.reset()
+
+        # Find the focus for the first widget
+        self._live_widget = -1
+        self._find_next_widget(1)
+
 
 
 class Widget(with_metaclass(ABCMeta, object)):
@@ -371,7 +379,7 @@ class Label(Widget):
 
     def __init__(self, label):
         """
-        :param label: The label for the TextBox.
+        :param label: The text to be displayed for the Label.
         """
         # Labels have no value and so should have no name for look-ups either.
         super(Label, self).__init__(None, tab_stop=False)
@@ -391,6 +399,135 @@ class Label(Widget):
     def required_height(self):
         # Allow one line for text and a blank spacer before it.
         return 2
+
+
+class Divider(Widget):
+    """
+    A simple divider to break up a group of widgets.
+    """
+
+    def __init__(self, draw_line=True, height=1):
+        """
+        :param draw_line: Whether to draw a line in the centre of the gap.
+        :param height: The required vertical gap.
+        """
+        # Dividers have no value and so should have no name for look-ups either.
+        super(Divider, self).__init__(None, tab_stop=False)
+        self._draw_line = draw_line
+        self._required_height = height
+
+    def process_event(self, event):
+        # Dividers have no user interactions
+        return event
+
+    def update(self, frame_no):
+        if self._draw_line:
+            self._frame.screen.print_at("-" * self._w,
+                                        self._x,
+                                        self._y + (self._required_height // 2))
+
+    def reset(self):
+        pass
+
+    @property
+    def required_height(self):
+        # Allow one line for text and a blank spacer before it.
+        return self._required_height
+
+
+class Text(Widget):
+    """
+    A Text widget is a single line input field.  It consists of an optional
+    label and an entry box.
+    """
+
+    def __init__(self, text, label=None, name=None):
+        """
+        :param text: The initial text to put in the widget.
+        :param label: An optional label for the widget.
+        :param name: The name for the widget.
+        """
+        super(Text, self).__init__(name)
+        self._text = text
+        self._label = label
+        self._column = 0
+        self._start_column = 0
+
+    def update(self, frame_no):
+        # TODO: Sort out layouts with labels
+        offset = 0
+        width = self._w
+        if self._label is not None:
+            self._frame.screen.paint(self._label, self._x, self._y)
+            offset = 10
+            width -= 10
+
+        # Calculate new visible limits if needed.
+        self._start_column = max(0, max(self._column - width + 1,
+                                        min(self._start_column, self._column)))
+
+        # Render visible portion of the text.
+        self._frame.screen.print_at(
+            self._value[self._start_column:self._start_column + width],
+            self._x + offset,
+            self._y)
+
+        # Since we switch off the standard cursor, we need to emulate our own
+        # if we have the input focus.
+        if self._has_focus:
+            cursor = " "
+            if frame_no % 10 < 5:
+                attr = Screen.A_REVERSE
+            else:
+                attr = 0
+            if self._column < len(self._value):
+                cursor = self._value[self._column]
+            self._frame.screen.print_at(
+                cursor,
+                self._x + offset + self._column - self._start_column,
+                self._y,
+                attr=attr)
+
+    def reset(self):
+        # Reset to original data and move to end of the text.
+        self._value = self._text
+        self._column = len(self._text)
+
+    def process_event(self, event):
+        if isinstance(event, KeyboardEvent):
+            if event.key_code == Screen.KEY_BACK:
+                if self._column > 0:
+                    # Delete character in front of cursor.
+                    self._value = "".join([
+                        self._value[:self._column - 1],
+                        self._value[self._column:]])
+                    self._column -= 1
+            elif event.key_code == Screen.KEY_LEFT:
+                self._column -= 1
+                self._column = max(self._column, 0)
+            elif event.key_code == Screen.KEY_RIGHT:
+                self._column += 1
+                self._column = min(len(self._value), self._column)
+            elif event.key_code == Screen.KEY_HOME:
+                self._column = 0
+            elif event.key_code == Screen.KEY_END:
+                self._column = len(self._value)
+            elif 32 <= event.key_code < 256:
+                # Insert any visible text at the current cursor position.
+                self._value = chr(event.key_code).join([
+                    self._value[:self._column],
+                    self._value[self._column:]])
+                self._column += 1
+            else:
+                # Ignore any other key press.
+                return event
+        else:
+            # Ignore non-keyboard events
+            return event
+
+    @property
+    def required_height(self):
+        return 1
 
 
 class TextBox(Widget):

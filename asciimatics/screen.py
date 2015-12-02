@@ -9,8 +9,13 @@ from abc import ABCMeta, abstractmethod
 import copy
 import sys
 import signal
+import pywintypes
 from asciimatics.event import KeyboardEvent, MouseEvent
 from .exceptions import ResizeScreenError
+
+
+# Keep track of last known screen output buffer so we can resize correctly.
+_last_screen_buffer = None
 
 
 class Screen(with_metaclass(ABCMeta, object)):
@@ -445,13 +450,20 @@ class Screen(with_metaclass(ABCMeta, object)):
         :param height: The buffer height for this window (if using scrolling).
         """
         if sys.platform == "win32":
+            # I don't like this, but we need to track the last screen for
+            # resizing commands in Windows 10.
+            global _last_screen_buffer
+
             # Clone the standard output buffer so that we can do whatever we
             # need for the application, but restore the buffer at the end.
             # Note that we need to resize the clone to ensure that it is the
             # same size as the original in some versions of Windows.
             old_out = win32console.PyConsoleScreenBufferType(
                 win32console.GetStdHandle(win32console.STD_OUTPUT_HANDLE))
-            info = old_out.GetConsoleScreenBufferInfo()
+            if _last_screen_buffer is None:
+                info = old_out.GetConsoleScreenBufferInfo()
+            else:
+                info = _last_screen_buffer.GetConsoleScreenBufferInfo()
             win_out = win32console.CreateConsoleScreenBuffer()
             win_out.SetConsoleScreenBufferSize(info['Size'])
             win_out.SetConsoleActiveScreenBuffer()
@@ -484,6 +496,9 @@ class Screen(with_metaclass(ABCMeta, object)):
                 old_out.SetConsoleActiveScreenBuffer()
                 win_out = old_out
             finally:
+                # Remember the last window buffer just in case.
+                _last_screen_buffer = win_out
+
                 # Reset the original screen settings.
                 win_out.SetConsoleCursorInfo(size, visible)
                 win_out.SetConsoleMode(out_mode)
@@ -1258,16 +1273,21 @@ if sys.platform == "win32":
             :param x: The x coordinate
             :param y: The Y coordinate
             """
-            # Move the cursor if necessary
-            if x != self._x or y != self._y:
-                self._stdout.SetConsoleCursorPosition(
-                    win32console.PyCOORDType(x, y))
+            # We can throw temporary errors on resizing, so catch and ignore
+            # them on the assumption that we'll resize shortly.
+            try:
+                # Move the cursor if necessary
+                if x != self._x or y != self._y:
+                    self._stdout.SetConsoleCursorPosition(
+                        win32console.PyCOORDType(x, y))
 
-            # Print the text at the required location and update the current
-            # position.
-            self._stdout.WriteConsole(text)
-            self._x = x + len(text)
-            self._y = y
+                # Print the text at the required location and update the current
+                # position.
+                self._stdout.WriteConsole(text)
+                self._x = x + len(text)
+                self._y = y
+            except pywintypes.error:
+                pass
 
         def _scroll(self):
             """
