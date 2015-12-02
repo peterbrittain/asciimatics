@@ -1,5 +1,6 @@
 from asciimatics.effects import Julia
-from asciimatics.widgets import Frame, TextBox, Layout, Label, Divider, Text
+from asciimatics.widgets import Frame, TextBox, Layout, Label, Divider, Text, \
+    CheckBox
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError
@@ -27,9 +28,9 @@ class DemoFrame(Frame):
         layout2.add_widget(Divider())
         layout3 = Layout([1, 1, 1])
         self.add_layout(layout3)
-        layout3.add_widget(TextBox("Hello world!", 1, name="A"), 0)
-        layout3.add_widget(TextBox("Hello world!", 2, name="B"), 1)
-        layout3.add_widget(TextBox("Hello world!", 3, name="C"), 2)
+        layout3.add_widget(CheckBox("Field 1:", label="Fields", name="A"), 1)
+        layout3.add_widget(CheckBox("Field 2:", name="B"), 1)
+        layout3.add_widget(CheckBox("Field 3:", name="C"), 1)
         self.fix()
 
 
