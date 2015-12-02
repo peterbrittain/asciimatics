@@ -530,6 +530,60 @@ class Text(Widget):
         return 1
 
 
+class CheckBox(Widget):
+    """
+    A CheckBox widget is used to ask for simple Boolean (i.e. yes/no) input.  It
+    consists of an optional label (typically used for teh first in a group of
+    CheckBoxes), the box and a field name.
+    """
+
+    def __init__(self, text, label=None, name=None):
+        """
+        :param text: The text to explain this specific field to the user.
+        :param label: An optional label for the widget.
+        :param name: The internal name for the widget.
+        """
+        super(CheckBox, self).__init__(name)
+        self._text = text
+        self._label = label
+        self._column = 0
+        self._start_column = 0
+
+    def update(self, frame_no):
+        # TODO: Sort out layouts with labels
+        offset = 0
+        width = self._w
+        if self._label is not None:
+            self._frame.screen.paint(self._label, self._x, self._y)
+            offset = 10
+            width -= 10
+
+        # Render visible portion of the text.
+        self._frame.screen.print_at(
+            "[{}] {}".format("X" if self._value else " ", self._text),
+            self._x + offset,
+            self._y,
+            attr=Screen.A_BOLD if self._has_focus else Screen.A_NORMAL)
+
+    def reset(self):
+        self._value = False
+
+    def process_event(self, event):
+        if isinstance(event, KeyboardEvent):
+            if event.key_code in [ord(" "), 10, 13]:
+                self._value = not self._value
+            else:
+                # Ignore any other key press.
+                return event
+        else:
+            # Ignore non-keyboard events
+            return event
+
+    @property
+    def required_height(self):
+        return 1
+
+
 class TextBox(Widget):
     """
     A TextBox is a simple widget for recording and displaying the text that has
