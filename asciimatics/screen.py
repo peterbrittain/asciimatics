@@ -9,7 +9,6 @@ from abc import ABCMeta, abstractmethod
 import copy
 import sys
 import signal
-import pywintypes
 from asciimatics.event import KeyboardEvent, MouseEvent
 from .exceptions import ResizeScreenError
 
@@ -1021,6 +1020,7 @@ class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
 if sys.platform == "win32":
     import win32console
     import win32con
+    import pywintypes
 
     class _WindowsScreen(_BufferedScreen):
         """
