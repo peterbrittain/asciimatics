@@ -283,7 +283,6 @@ class Layout(object):
         self._find_next_widget(1)
 
 
-
 class Widget(with_metaclass(ABCMeta, object)):
     """
     A Widget is a re-usable component that can be used to create a simple GUI.
@@ -535,7 +534,7 @@ class Text(Widget):
 class CheckBox(Widget):
     """
     A CheckBox widget is used to ask for simple Boolean (i.e. yes/no) input.  It
-    consists of an optional label (typically used for teh first in a group of
+    consists of an optional label (typically used for the first in a group of
     CheckBoxes), the box and a field name.
     """
 
@@ -548,8 +547,6 @@ class CheckBox(Widget):
         super(CheckBox, self).__init__(name)
         self._text = text
         self._label = label
-        self._column = 0
-        self._start_column = 0
 
     def update(self, frame_no):
         # TODO: Sort out layouts with labels
@@ -560,7 +557,7 @@ class CheckBox(Widget):
             offset = 10
             width -= 10
 
-        # Render visible portion of the text.
+        # Render this checkbox.
         self._frame.screen.print_at(
             "[{}] {}".format("X" if self._value else " ", self._text),
             self._x + offset,
@@ -584,6 +581,73 @@ class CheckBox(Widget):
     @property
     def required_height(self):
         return 1
+
+
+class RadioButtons(Widget):
+    """
+    A RadioButtons widget is used to ask for one of a list of values to be
+    selected by the user. It consists of an optional label and then a list of
+    selection bullets with field names.
+    """
+
+    def __init__(self, options, label=None, name=None):
+        """
+        :param options: A list of (text, value) tuples for each radio button.
+        :param label: An optional label for the widget.
+        :param name: The internal name for the widget.
+        """
+        super(RadioButtons, self).__init__(name)
+        self._options = options
+        self._label = label
+        self._selection = 0
+        self._start_column = 0
+
+    def update(self, frame_no):
+        # TODO: Sort out layouts with labels
+        offset = 0
+        width = self._w
+        if self._label is not None:
+            self._frame.screen.paint(self._label, self._x, self._y)
+            offset = 10
+            width -= 10
+
+        # Render the list of check-boxes
+        for i, (text, _) in enumerate(self._options):
+            check = " "
+            attr = Screen.A_NORMAL
+            if i == self._selection:
+                check = "X"
+                if self._has_focus:
+                    attr = Screen.A_BOLD
+            self._frame.screen.print_at(
+                "({}) {}".format(check, text),
+                self._x + offset,
+                self._y + i,
+                attr=attr)
+
+    def reset(self):
+        self._selection = 0
+        self._value = self._options[self._selection]
+
+    def process_event(self, event):
+        if isinstance(event, KeyboardEvent):
+            if event.key_code == Screen.KEY_UP:
+                self._selection = max(self._selection - 1, 0)
+                self._value = self._options[self._selection]
+            elif event.key_code == Screen.KEY_DOWN:
+                self._selection = min(self._selection + 1,
+                                      len(self._options) - 1)
+                self._value = self._options[self._selection]
+            else:
+                # Ignore any other key press.
+                return event
+        else:
+            # Ignore non-keyboard events
+            return event
+
+    @property
+    def required_height(self):
+        return len(self._options)
 
 
 class TextBox(Widget):
