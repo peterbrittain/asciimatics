@@ -2,7 +2,6 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from builtins import object
-from builtins import range
 from future.utils import with_metaclass
 from abc import ABCMeta, abstractmethod
 from asciimatics.effects import Effect
@@ -403,6 +402,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         :param width: The total width of the widget, including labels.
         """
 
+
 class Label(Widget):
     """
     A simple text label.
@@ -578,7 +578,6 @@ class CheckBox(Widget):
             self._frame.screen.paint(self._label, self._x, self._y)
 
         # Render this checkbox.
-        width = self._w - self._offset
         self._frame.screen.print_at(
             "[{}] {}".format("X" if self._value else " ", self._text),
             self._x + self._offset,
