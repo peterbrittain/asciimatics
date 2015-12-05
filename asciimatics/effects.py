@@ -931,7 +931,7 @@ class RandomNoise(Effect):
         super(RandomNoise, self).__init__(**kwargs)
         self._screen = screen
         self._signal = signal
-        self._strength = None
+        self._strength = 0.0
         self._step = None
 
     def reset(self):
