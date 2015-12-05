@@ -4,7 +4,7 @@ from __future__ import print_function
 from builtins import object
 from builtins import range
 from future.utils import with_metaclass
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent
 from asciimatics.renderers import Box
@@ -183,11 +183,23 @@ class Layout(object):
         x = 0
         max_y = start_y
         for i, column in enumerate(self._columns):
+            # For each column determine if we need a tab offset for labels.
+            # Only allow labels to take up 1/3 of the column.
+            if len(column) > 0:
+                offset = max([0 if w.label is None else len(w.label) + 1
+                              for w in column])
+            else:
+                offset = 0
+            offset = int(min(offset,
+                         self._frame.screen.width * self._column_sizes[i] // 3))
+
+            # Now go through each widget getting them to resize to the required
+            # width and label offset.
             y = start_y
             w = int(self._frame.screen.width * self._column_sizes[i])
             for widget in column:
-                h = widget.required_height
-                widget.set_position(x, y, w, h)
+                h = widget.required_height(offset, w)
+                widget.set_layout(x, y, offset, w, h)
                 y += h
             max_y = max(max_y, y)
             x += w
@@ -297,11 +309,13 @@ class Widget(with_metaclass(ABCMeta, object)):
         super(Widget, self).__init__()
         # Internal properties
         self._name = name
+        self._label = None
         self._frame = None
         self._value = None
         self._has_focus = False
         self._x = self._y = 0
         self._w = self._h = 0
+        self._offset = 0
 
         # Public properties
         self.is_tab_stop = tab_stop
@@ -313,12 +327,19 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         self._frame = frame
 
-    def set_position(self, x, y, w, h):
+    def set_layout(self, x, y, offset, w, h):
         """
         Set the size and position of the Widget.
+
+        :param x: The x position of the widget.
+        :param y: The y position of the widget.
+        :param offset: The allowed label size for the widget.
+        :param x: The width of the widget.
+        :param x: The height of the widget.
         """
         self._x = x
         self._y = y
+        self._offset = offset
         self._w = w
         self._h = h
 
@@ -360,18 +381,27 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
 
     @property
+    def label(self):
+        """
+        The label for this widget.  Can be `None`.
+        """
+        return self._label
+
+    @property
     def value(self):
         """
         The value to return for this widget based on the user's input.
         """
         return self._value
 
-    @abstractproperty
-    def required_height(self):
+    @abstractmethod
+    def required_height(self, offset, width):
         """
-        The minimum required height for this widget.
-        """
+        Calculate the minimum required height for this widget.
 
+        :param offset: The allowed width for any labels.
+        :param width: The total width of the widget, including labels.
+        """
 
 class Label(Widget):
     """
@@ -384,20 +414,21 @@ class Label(Widget):
         """
         # Labels have no value and so should have no name for look-ups either.
         super(Label, self).__init__(None, tab_stop=False)
-        self._label = label
+        # Although this is a label, we don't want it to contribute to the layout
+        # tab calculations, so leave internal `_label` value as None.
+        self._text = label
 
     def process_event(self, event):
         # Labels have no user interactions
         return event
 
     def update(self, frame_no):
-        self._frame.screen.print_at(self._label, self._x, self._y + 1)
+        self._frame.screen.print_at(self._text, self._x, self._y + 1)
 
     def reset(self):
         pass
 
-    @property
-    def required_height(self):
+    def required_height(self, offset, width):
         # Allow one line for text and a blank spacer before it.
         return 2
 
@@ -430,8 +461,7 @@ class Divider(Widget):
     def reset(self):
         pass
 
-    @property
-    def required_height(self):
+    def required_height(self, offset, width):
         # Allow one line for text and a blank spacer before it.
         return self._required_height
 
@@ -455,22 +485,18 @@ class Text(Widget):
         self._start_column = 0
 
     def update(self, frame_no):
-        # TODO: Sort out layouts with labels
-        offset = 0
-        width = self._w
         if self._label is not None:
             self._frame.screen.paint(self._label, self._x, self._y)
-            offset = 10
-            width -= 10
 
         # Calculate new visible limits if needed.
+        width = self._w - self._offset
         self._start_column = max(0, max(self._column - width + 1,
                                         min(self._start_column, self._column)))
 
         # Render visible portion of the text.
         self._frame.screen.print_at(
             self._value[self._start_column:self._start_column + width],
-            self._x + offset,
+            self._x + self._offset,
             self._y)
 
         # Since we switch off the standard cursor, we need to emulate our own
@@ -485,7 +511,7 @@ class Text(Widget):
                 cursor = self._value[self._column]
             self._frame.screen.print_at(
                 cursor,
-                self._x + offset + self._column - self._start_column,
+                self._x + self._offset + self._column - self._start_column,
                 self._y,
                 attr=attr)
 
@@ -526,8 +552,7 @@ class Text(Widget):
             # Ignore non-keyboard events
             return event
 
-    @property
-    def required_height(self):
+    def required_height(self, offset, width):
         return 1
 
 
@@ -549,18 +574,14 @@ class CheckBox(Widget):
         self._label = label
 
     def update(self, frame_no):
-        # TODO: Sort out layouts with labels
-        offset = 0
-        width = self._w
         if self._label is not None:
             self._frame.screen.paint(self._label, self._x, self._y)
-            offset = 10
-            width -= 10
 
         # Render this checkbox.
+        width = self._w - self._offset
         self._frame.screen.print_at(
             "[{}] {}".format("X" if self._value else " ", self._text),
-            self._x + offset,
+            self._x + self._offset,
             self._y,
             attr=Screen.A_BOLD if self._has_focus else Screen.A_NORMAL)
 
@@ -578,8 +599,7 @@ class CheckBox(Widget):
             # Ignore non-keyboard events
             return event
 
-    @property
-    def required_height(self):
+    def required_height(self, offset, width):
         return 1
 
 
@@ -603,15 +623,10 @@ class RadioButtons(Widget):
         self._start_column = 0
 
     def update(self, frame_no):
-        # TODO: Sort out layouts with labels
-        offset = 0
-        width = self._w
         if self._label is not None:
             self._frame.screen.paint(self._label, self._x, self._y)
-            offset = 10
-            width -= 10
 
-        # Render the list of check-boxes
+        # Render the list of radio buttons.
         for i, (text, _) in enumerate(self._options):
             check = " "
             attr = Screen.A_NORMAL
@@ -621,7 +636,7 @@ class RadioButtons(Widget):
                     attr = Screen.A_BOLD
             self._frame.screen.print_at(
                 "({}) {}".format(check, text),
-                self._x + offset,
+                self._x + self._offset,
                 self._y + i,
                 attr=attr)
 
@@ -645,8 +660,7 @@ class RadioButtons(Widget):
             # Ignore non-keyboard events
             return event
 
-    @property
-    def required_height(self):
+    def required_height(self, offset, width):
         return len(self._options)
 
 
@@ -657,14 +671,16 @@ class TextBox(Widget):
     framed box with option label.  It can take multi-line input.
     """
 
-    def __init__(self, text, height, name=None):
+    def __init__(self, text, height, label=None, name=None):
         """
         :param text: The initial text to put in the TextBox.
         :param height: The required number of input lines for this TextBox.
+        :param label: An optional label for the widget.
         :param name: The name for the TextBox.
         """
         super(TextBox, self).__init__(name)
         self._text = text
+        self._label = label
         self._line = 0
         self._column = 0
         self._start_line = 0
@@ -672,29 +688,29 @@ class TextBox(Widget):
         self._required_height = height
 
     def update(self, frame_no):
+        if self._label is not None:
+            self._frame.screen.paint(self._label, self._x, self._y)
+
         # Calculate new visible limits if needed.
+        width = self._w - self._offset
         self._start_line = max(0, max(self._line - self._h + 3,
                                       min(self._start_line, self._line)))
-        self._start_column = max(0, max(self._column - self._w + 3,
+        self._start_column = max(0, max(self._column - width + 3,
                                         min(self._start_column, self._column)))
 
         # Create box rendered text now.
-        box = Box(self._w, self._h).rendered_text
+        box = Box(width, self._h).rendered_text
 
         # Redraw the frame and label if needed.
         for (i, line) in enumerate(box[0]):
             self._frame.screen.paint(
                 line, self._x, self._y + i, transparent=False)
-        # TODO: Consider if still needed with standalone labels
-        # if self._label is not None:
-        #     self._frame.screen.paint(
-        #         " {} ".format(self._label), self._x + 2, self._y)
 
         # Render visible portion of the text.
         for i, text in enumerate(self._value):
             if self._start_line <= i < self._start_line + self._h - 2:
                 self._frame.screen.print_at(
-                    text[self._start_column:self._start_column + self._w - 2],
+                    text[self._start_column:self._start_column + width - 2],
                     self._x + 1,
                     self._y + i + 1 - self._start_line)
 
@@ -789,7 +805,6 @@ class TextBox(Widget):
             # Ignore non-keyboard events
             return event
 
-    @property
-    def required_height(self):
+    def required_height(self, offset, width):
         # Allow for extra border lines
         return self._required_height + 2
