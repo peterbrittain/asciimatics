@@ -244,7 +244,7 @@ class Print(Effect):
     the required location.
     """
 
-    def __init__(self, screen, renderer, y, x=None, colour=7, bg=0,
+    def __init__(self, screen, renderer, y, x=None, colour=7, attr=0, bg=0,
                  clear=False, transparent=True, speed=4, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
@@ -252,7 +252,8 @@ class Print(Effect):
         :param x: The column (x coordinate) for the start of the text.
                   If not specified, defaults to centring the text on screen.
         :param y: The line (y coordinate) for the start of the text.
-        :param colour: The colour attribute to use for the text.
+        :param colour: The foreground colour to use for the text.
+        :param attr: The colour attribute to use for the text.
         :param bg: The background colour to use for the text.
         :param clear: Whether to clear the text before stopping.
         :param speed: The refresh rate in frames between refreshes.
@@ -267,14 +268,17 @@ class Print(Effect):
         self._x = ((self._screen.width - renderer.max_width) // 2 if x is None
                    else x)
         self._colour = colour
+        self._attr = attr
         self._bg = bg
         self._clear = clear
         self._speed = speed
+        self._frame_no = 0
 
     def reset(self):
         pass  # Nothing required
 
     def _update(self, frame_no):
+        self._frame_no = frame_no
         if self._clear and \
                 (frame_no == self._stop_frame - 1) or (self._delete_count == 1):
             for i in range(0, self._renderer.max_height):
@@ -286,6 +290,7 @@ class Print(Effect):
             image, colours = self._renderer.rendered_text
             for (i, line) in enumerate(image):
                 self._screen.paint(line, self._x, self._y + i, self._colour,
+                                   attr=self._attr,
                                    bg=self._bg,
                                    transparent=self._transparent,
                                    colour_map=colours[i])
