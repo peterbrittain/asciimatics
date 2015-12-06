@@ -204,13 +204,15 @@ class Layout(object):
             x += w
         return max_y
 
-    def _find_next_widget(self, direction):
+    def _find_next_widget(self, direction, stay_in_col=False):
         """
         Find the next widget to get the focus, stopping at the start/end of the
         list if hit.
 
-        :param direction: The direction to move through the widgets
+        :param direction: The direction to move through the widgets.
+        :param stay_in_col: Whether to limit search to current column.
         """
+        current_widget = self._live_widget
         while 0 <= self._live_col < len(self._columns):
             self._live_widget += direction
             while 0 <= self._live_widget < len(self._columns[self._live_col]):
@@ -221,9 +223,14 @@ class Layout(object):
                     self._columns[
                         self._live_col][self._live_widget].is_tab_stop):
                 break
-            self._live_col += direction
-            self._live_widget = \
-                -1 if direction > 0 else len(self._columns[self._live_col])
+            if stay_in_col:
+                # Don't move to another column - just stay where we are.
+                self._live_widget = current_widget
+                break
+            else:
+                self._live_col += direction
+                self._live_widget = \
+                    -1 if direction > 0 else len(self._columns[self._live_col])
 
     def process_event(self, event):
         """
@@ -266,6 +273,19 @@ class Layout(object):
                         return event
 
                     # If we got here, we still should have the focus.
+                    self._columns[self._live_col][self._live_widget].focus()
+                    event = None
+                elif event.key_code == Screen.KEY_DOWN:
+                    # Move on to next widget in this column
+                    self._columns[self._live_col][self._live_widget].blur()
+                    self._find_next_widget(1, stay_in_col=True)
+                    self._columns[self._live_col][self._live_widget].focus()
+                    event = None
+                elif event.key_code == Screen.KEY_UP:
+                    # Move on to previous widget, unless it is the first in the
+                    # Layout.
+                    self._columns[self._live_col][self._live_widget].blur()
+                    self._find_next_widget(-1, stay_in_col=True)
                     self._columns[self._live_col][self._live_widget].focus()
                     event = None
         return event
