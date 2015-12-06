@@ -43,7 +43,7 @@ class DemoFrame(Frame):
 def demo(screen):
     scenes = []
     effects = [
-        # Julia(screen),
+        Julia(screen),
         DemoFrame(screen)
     ]
     scenes.append(Scene(effects, -1))
