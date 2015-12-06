@@ -439,12 +439,6 @@ class Screen(with_metaclass(ABCMeta, object)):
         """
         return _WindowsScreen(stdout, stdin, height)
 
-    @staticmethod
-    def _catch_interrupt(signal, frame):
-        # sys.exit(0)
-        print("Eek!")
-        return
-
     @classmethod
     def wrapper(cls, func, height=200, catch_interrupt=False):
         """
@@ -516,12 +510,10 @@ class Screen(with_metaclass(ABCMeta, object)):
                 win_out.SetConsoleTextAttribute(7)
                 win_in.SetConsoleMode(in_mode)
         else:
-            if catch_interrupt:
-                # Ignore SIGINT signals.
-                signal.signal(signal.SIGINT, signal.SIG_IGN)
-
             def _wrapper(win):
-                cur_screen = _CursesScreen(win, height)
+                cur_screen = _CursesScreen(win,
+                                           height,
+                                           catch_interrupt=catch_interrupt)
                 func(cur_screen)
 
             curses.wrapper(_wrapper)
@@ -735,7 +727,7 @@ class Screen(with_metaclass(ABCMeta, object)):
         The unhandled input function just takes one parameter - the input
         event that was not handled.
         """
-        # Set up default unhandled input hanlder if needed.
+        # Set up default unhandled input handler if needed.
         if unhandled_input is None:
             unhandled_input = self._unhandled_event_default
 
@@ -764,6 +756,7 @@ class Screen(with_metaclass(ABCMeta, object)):
                             while event is not None:
                                 event = scene.process_event(event)
                                 if event is not None:
+                                    self.print_at(str(event), 0, 9)
                                     unhandled_input(event)
                                 event = self.get_event()
                             re_sized = self.has_resized()
@@ -1424,11 +1417,12 @@ else:
             # there's no translation for them either.
         }
 
-        def __init__(self, win, height=200):
+        def __init__(self, win, height=200, catch_interrupt=False):
             """
             :param win: The window object as returned by the curses wrapper
                 method.
             :param height: The height of the screen buffer to be used.
+            :param catch_interrupt: Whether to catch SIGINT or not.
             """
             # Save off the screen details.
             super(_CursesScreen, self).__init__(
@@ -1448,6 +1442,11 @@ else:
             # Set up signal handler for screen resizing.
             self._re_sized = False
             signal.signal(signal.SIGWINCH, self._resize_handler)
+
+            # Catch SIGINTs and translated them to ctrl-c if needed.
+            if catch_interrupt:
+                # Ignore SIGINT signals.
+                signal.signal(signal.SIGINT, self._catch_interrupt)
 
             # Enable mouse events
             curses.mousemask(curses.ALL_MOUSE_EVENTS |
@@ -1512,6 +1511,16 @@ else:
                 sys.stdout.flush()
             except IOError:
                 pass
+
+        @staticmethod
+        def _catch_interrupt(signal, frame):
+            """
+            SIGINT handler.  We ignore the signal and frame info passed in.
+            """
+            # The OS already caught the ctrl-c, so inject it now for the next
+            # input.
+            curses.ungetch(3)
+            return
 
         def get_event(self):
             """
