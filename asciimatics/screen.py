@@ -17,7 +17,306 @@ from .exceptions import ResizeScreenError, StopApplication, NextScene
 _last_screen_buffer = None
 
 
-class Screen(with_metaclass(ABCMeta, object)):
+class _AbstractCanvas(with_metaclass(ABCMeta, object)):
+    """
+    Abstract class to handle screen buffering.
+    """
+
+    # Characters for anti-aliasing line drawing.
+    _line_chars = " ''^.|/7.\\|Ywbd#"
+
+    def __init__(self, height, width, buffer_height):
+        """
+        :param height: The buffer height for this object.
+        :param width: The buffer width for this object.
+        :param buffer_height: The buffer height for this window.
+        """
+        super(_AbstractCanvas, self).__init__()
+
+        # Create screen buffers.
+        self.height = height
+        self.width = width
+        self._buffer_height = buffer_height
+        self._screen_buffer = None
+        self._double_buffer = None
+        self._start_line = 0
+        self._x = 0
+        self._y = 0
+
+        # Reset the screen ready to go...
+        self.reset()
+
+    def reset(self):
+        """
+        Reset the internal buffers for the abstract canvas.
+        """
+        # Reset our screen buffer
+        self._start_line = 0
+        self._x = self._y = None
+        line = [(" ", Screen.COLOUR_WHITE, 0, 0) for _ in range(self.width)]
+        self._screen_buffer = [
+            copy.deepcopy(line) for _ in range(self._buffer_height)]
+        self._double_buffer = copy.deepcopy(self._screen_buffer)
+        self._reset()
+
+    def scroll(self):
+        """
+        Scroll the abstract canvas up one line.
+        """
+        self._start_line += 1
+
+    @abstractmethod
+    def _reset(self):
+        """
+        Internal implementation required to reset underlying drawing
+        interface.
+        """
+
+    @abstractmethod
+    def refresh(self):
+        """
+        Refresh this object - this will draw to the underlying display
+        interface.
+        """
+
+    def get_from(self, x, y):
+        """
+        Get the character at the specified location.
+
+        :param x: The column (x coord) of the character.
+        :param y: The row (y coord) of the character.
+
+        :return: A 4-tuple of (ascii code, foreground, attributes, background)
+                 for the character at the location.
+        """
+        if y < 0 or y >= self._buffer_height or x < 0 or x >= self.width:
+            return None
+        cell = self._double_buffer[y][x]
+        return ord(cell[0]), cell[1], cell[2], cell[3]
+
+    def print_at(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
+        """
+        Print the text at the specified location using the
+        specified colour and attributes.
+
+        :param text: The (single line) text to be printed.
+        :param x: The column (x coord) for the start of the text.
+        :param y: The line (y coord) for the start of the text.
+        :param colour: The colour of the text to be displayed.
+        :param attr: The cell attribute of the text to be displayed.
+        :param bg: The background colour of the text to be displayed.
+        :param transparent: Whether to print spaces or not, thus giving a
+            transparent effect.
+
+        The colours and attributes are the COLOUR_xxx and A_yyy constants
+        defined in the Screen class.
+        """
+        # Trim text to the buffer.
+        if y < 0 or y >= self._buffer_height:
+            return
+        if x < 0:
+            text = text[-x:]
+            x = 0
+        if x + len(text) >= self.width:
+            text = text[:self.width - x]
+
+        if len(text) > 0:
+            for i, c in enumerate(text):
+                if c != " " or not transparent:
+                    self._double_buffer[y][x + i] = (c, colour, attr, bg)
+
+    @property
+    def start_line(self):
+        """
+        :return: The start line of the top of the canvas.
+        """
+        return self._start_line
+
+    @property
+    def dimensions(self):
+        """
+        :return: The full dimensions of the canvas as a (height, width) tuple.
+        """
+        return self.height, self.width
+
+    def centre(self, text, y, colour=7, attr=0, colour_map=None):
+        """
+        Centre the text on the specified line (y) using the optional
+        colour and attributes.
+
+        :param text: The (single line) text to be printed.
+        :param y: The line (y coord) for the start of the text.
+        :param colour: The colour of the text to be displayed.
+        :param attr: The cell attribute of the text to be displayed.
+        :param colour_map: Colour/attribute list for multi-colour text.
+
+        The colours and attributes are the COLOUR_xxx and A_yyy constants
+        defined in the Screen class.
+        """
+        x = (self.width - len(text)) // 2
+        self.paint(text, x, y, colour, attr, colour_map=colour_map)
+
+    def paint(self, text, x, y, colour=7, attr=0, bg=0, transparent=False,
+              colour_map=None):
+        """
+        Paint multi-colour text at the defined location.
+
+        :param text: The (single line) text to be printed.
+        :param x: The column (x coord) for the start of the text.
+        :param y: The line (y coord) for the start of the text.
+        :param colour: The default colour of the text to be displayed.
+        :param attr: The default cell attribute of the text to be displayed.
+        :param bg: The default background colour of the text to be displayed.
+        :param transparent: Whether to print spaces or not, thus giving a
+            transparent effect.
+        :param colour_map: Colour/attribute list for multi-colour text.
+
+        The colours and attributes are the COLOUR_xxx and A_yyy constants
+        defined in the Screen class.
+        colour_map is a list of tuples (foreground, attribute, background) that
+        must be the same length as the passed in text (or None if no mapping is
+        required).
+        """
+        if colour_map is None:
+            self.print_at(text, x, y, colour, attr, bg, transparent)
+        else:
+            for i, c in enumerate(text):
+                if len(colour_map[i]) > 0 and colour_map[i][0] is not None:
+                    colour = colour_map[i][0]
+                if len(colour_map[i]) > 1 and colour_map[i][1] is not None:
+                    attr = colour_map[i][1]
+                if len(colour_map[i]) > 2 and colour_map[i][2] is not None:
+                    bg = colour_map[i][2]
+                self.print_at(c, x + i, y, colour, attr, bg, transparent)
+
+    def is_visible(self, x, y):
+        """
+        Return whether the specified location is on the visible screen.
+
+        :param x: The column (x coord) for the location to check.
+        :param y: The line (y coord) for the location to check.
+        """
+        return ((x >= 0) and
+                (x <= self.width) and
+                (y >= self._start_line) and
+                (y < self._start_line + self.height))
+
+    def move(self, x, y):
+        """
+        Move the drawing cursor to the specified position.
+
+        :param x: The column (x coord) for the location to check.
+        :param y: The line (y coord) for the location to check.
+        """
+        self._x = int(round(x, 1)) * 2
+        self._y = int(round(y, 1)) * 2
+
+    def draw(self, x, y, char=None, colour=7, bg=0, thin=False):
+        """
+        Draw a line from drawing cursor to the specified position.  This uses a
+        modified Bressenham algorithm, interpolating twice as many points to
+        render down to anti-aliased characters when no character is specified,
+        or uses standard algorithm plotting with the specified character.
+
+        :param x: The column (x coord) for the location to check.
+        :param y: The line (y coord) for the location to check.
+        :param char: Optional character to use to draw the line.
+        :param colour: Optional colour for plotting the line.
+        :param bg: Optional background colour for plotting the line.
+        :param thin: Optional width of anti-aliased line.
+        """
+        # Define line end points.
+        x0 = self._x
+        y0 = self._y
+        x1 = int(round(x, 1)) * 2
+        y1 = int(round(y, 1)) * 2
+
+        # Remember last point for next line.
+        self._x = x1
+        self._y = y1
+
+        dx = abs(x1 - x0)
+        dy = abs(y1 - y0)
+
+        sx = -1 if x0 > x1 else 1
+        sy = -1 if y0 > y1 else 1
+
+        x_range = range(0, 2) if sx > 0 else range(1, -1, -1)
+        y_range = range(0, 2) if sy > 0 else range(1, -1, -1)
+
+        x = x0
+        y = y0
+
+        if dx > dy:
+            err = dx
+            while x != x1:
+                next_chars = [0, 0]
+                px = x & ~1
+                py = y & ~1
+                for ix in x_range:
+                    if y >= py and y - py < 2:
+                        next_chars[0] |= 2 ** ix * 4 ** (y % 2)
+                    else:
+                        next_chars[1] |= 2 ** ix * 4 ** (y % 2)
+                    if not thin:
+                        if y + sy >= py and y + sy - py < 2:
+                            next_chars[0] |= 2 ** ix * 4 ** ((y + sy) % 2)
+                        else:
+                            next_chars[1] |= 2 ** ix * 4 ** ((y + sy) % 2)
+                    err -= 2 * dy
+                    if err < 0:
+                        y += sy
+                        err += 2 * dx
+                    x += sx
+
+                if char is None:
+                    self.print_at(self._line_chars[next_chars[0]], px//2, py//2,
+                                  colour, bg=bg)
+                    if next_chars[1] != 0:
+                        self.print_at(self._line_chars[next_chars[1]],
+                                      px // 2, py // 2 + sy, colour, bg=bg)
+                elif char == " ":
+                    self.print_at(char, px // 2, py // 2, bg=bg)
+                    self.print_at(char, px // 2, py // 2 + sy, bg=bg)
+                else:
+                    self.print_at(char, px // 2, py // 2, colour, bg=bg)
+        else:
+            err = dy
+            while y != y1:
+                next_chars = [0, 0]
+                px = x & ~1
+                py = y & ~1
+                for iy in y_range:
+                    if x >= px and x - px < 2:
+                        next_chars[0] |= 2 ** (x % 2) * 4 ** iy
+                    else:
+                        next_chars[1] |= 2 ** (x % 2) * 4 ** iy
+                    if not thin:
+                        if x + sx >= px and x + sx - px < 2:
+                            next_chars[0] |= 2 ** ((x + sx) % 2) * 4 ** iy
+                        else:
+                            next_chars[1] |= 2 ** ((x + sx) % 2) * 4 ** iy
+                    err -= 2 * dx
+                    if err < 0:
+                        x += sx
+                        err += 2 * dy
+                    y += sy
+
+                if char is None:
+                    self.print_at(self._line_chars[next_chars[0]], px//2, py//2,
+                                  colour, bg=bg)
+                    if next_chars[1] != 0:
+                        self.print_at(
+                            self._line_chars[next_chars[1]], px//2 + sx, py//2,
+                            colour, bg=bg)
+                elif char == " ":
+                    self.print_at(char, px // 2, py // 2, bg=bg)
+                    self.print_at(char, px // 2 + sx, py // 2, bg=bg)
+                else:
+                    self.print_at(char, px // 2, py // 2, colour, bg=bg)
+
+
+class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
     """
     Class to track basic state of the screen.  This constructs the necessary
     resources to allow us to do the ASCII animations.
@@ -385,20 +684,22 @@ class Screen(with_metaclass(ABCMeta, object)):
         0xee, 0xee, 0xee,
     ]
 
-    # Characters for anti-aliasing line drawing.
-    _line_chars = " ''^.|/7.\\|Ywbd#"
-
-    def __init__(self, height, width):
+    def __init__(self, height, width, buffer_height):
         """
         Don't call this constructor directly.
         """
+        super(Screen, self).__init__(height, width, buffer_height)
         # Initialize base class variables - e.g. those used for drawing.
         self.height = height
         self.width = width
         self.colours = 0
-        self._start_line = 0
-        self._x = 0
-        self._y = 0
+        self._last_start_line = 0
+
+        # Set up internal state for colours - used by children to determine
+        # changes to text colour when refreshing the screen.
+        self._colour = 0
+        self._attr = 0
+        self._bg = 0
 
     @classmethod
     def from_curses(cls, win, height=200):
@@ -425,7 +726,7 @@ class Screen(with_metaclass(ABCMeta, object)):
         return _BlessedScreen(terminal, height)
 
     @classmethod
-    def from_windows(cls, stdout, stdin, height=200):
+    def from_windows_windows(cls, stdout, stdin, height=200):
         """
         Construct a new Screen from a Windows console.
 
@@ -438,12 +739,6 @@ class Screen(with_metaclass(ABCMeta, object)):
         This method is deprecated.  Please use :py:meth:`.wrapper` instead.
         """
         return _WindowsScreen(stdout, stdin, height)
-
-    @staticmethod
-    def _catch_interrupt(signal, frame):
-        # sys.exit(0)
-        print("Eek!")
-        return
 
     @classmethod
     def wrapper(cls, func, height=200, catch_interrupt=False):
@@ -516,30 +811,13 @@ class Screen(with_metaclass(ABCMeta, object)):
                 win_out.SetConsoleTextAttribute(7)
                 win_in.SetConsoleMode(in_mode)
         else:
-            if catch_interrupt:
-                # Ignore SIGINT signals.
-                signal.signal(signal.SIGINT, signal.SIG_IGN)
-
             def _wrapper(win):
-                cur_screen = _CursesScreen(win, height)
+                cur_screen = _CursesScreen(win,
+                                           height,
+                                           catch_interrupt=catch_interrupt)
                 func(cur_screen)
 
             curses.wrapper(_wrapper)
-
-    @property
-    def start_line(self):
-        """
-        :return: The start line of the top of the window in the display buffer.
-        """
-        return self._start_line
-
-    @property
-    def dimensions(self):
-        """
-        :return: The full dimensions of the display buffer as a (height,
-            width) tuple.
-        """
-        return self.height, self.width
 
     @property
     def palette(self):
@@ -552,23 +830,41 @@ class Screen(with_metaclass(ABCMeta, object)):
         else:
             return self._256_palette
 
-    @abstractmethod
-    def scroll(self):
+    def _reset(self):
         """
-        Scroll the Screen up one line.
+        Reset the Screen.
         """
+        self._last_start_line = 0
+        self._colour = None
+        self._attr = None
+        self._bg = None
 
-    @abstractmethod
-    def clear(self):
-        """
-        Clear the Screen of all content.
-        """
-
-    @abstractmethod
     def refresh(self):
         """
         Refresh the screen.
         """
+        # Scroll the screen as required to minimize redrawing.
+        for _ in range(self._start_line - self._last_start_line):
+            self._scroll()
+        self._last_start_line = self._start_line
+
+        # Now draw any deltas to the scrolled screen.
+        for y in range(self.height):
+            for x in range(self.width):
+                new_cell = self._double_buffer[y + self._start_line][x]
+                if self._screen_buffer[y + self._start_line][x] != new_cell:
+                    self._change_colours(new_cell[1], new_cell[2], new_cell[3])
+                    self._print_at(new_cell[0], x, y)
+                    self._screen_buffer[y + self._start_line][x] = new_cell
+
+    def clear(self):
+        """
+        Clear the Screen of all content.
+        """
+        # Clear the actual terminal
+        self.reset()
+        self._change_colours(Screen.COLOUR_WHITE, 0, 0)
+        self._clear()
 
     def get_key(self):
         """
@@ -597,19 +893,6 @@ class Screen(with_metaclass(ABCMeta, object)):
         :returns: True when the screen has been re-sized since the last check.
         """
 
-    @abstractmethod
-    def get_from(self, x, y):
-        """
-        Get the character at the specified location.
-
-        :param x: The column (x coord) of the character.
-        :param y: The row (y coord) of the character.
-
-        :return: A tuple of the ASCII code of the character at the location
-                 and the colour attributes for that character.  The format
-                 is (<character>, <foreground>, <attribute>, <background>).
-        """
-
     def getch(self, x, y):
         """
         Get the character at a specified location..  This method is deprecated.
@@ -617,93 +900,12 @@ class Screen(with_metaclass(ABCMeta, object)):
         """
         return self.get_from(x, y)
 
-    @abstractmethod
-    def print_at(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
-        """
-        Print the text at the specified location using the
-        specified colour and attributes.
-
-        :param text: The (single line) text to be printed.
-        :param x: The column (x coord) for the start of the text.
-        :param y: The line (y coord) for the start of the text.
-        :param colour: The colour of the text to be displayed.
-        :param attr: The cell attribute of the text to be displayed.
-        :param bg: The background colour of the text to be displayed.
-        :param transparent: Whether to print spaces or not, thus giving a
-            transparent effect.
-
-        The colours and attributes are the COLOUR_xxx and A_yyy constants
-        defined in the Screen class.
-        """
-
     def putch(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
         """
         Print text at the specified location.  This method is deprecated.  Use
         :py:meth:`.print_at` instead.
         """
         self.putch(text, x, y, colour, attr, bg, transparent)
-
-    def centre(self, text, y, colour=7, attr=0, colour_map=None):
-        """
-        Centre the text on the specified line (y) using the optional
-        colour and attributes.
-
-        :param text: The (single line) text to be printed.
-        :param y: The line (y coord) for the start of the text.
-        :param colour: The colour of the text to be displayed.
-        :param attr: The cell attribute of the text to be displayed.
-        :param colour_map: Colour/attribute list for multi-colour text.
-
-        The colours and attributes are the COLOUR_xxx and A_yyy constants
-        defined in the Screen class.
-        """
-        x = (self.width - len(text)) // 2
-        self.paint(text, x, y, colour, attr, colour_map=colour_map)
-
-    def paint(self, text, x, y, colour=7, attr=0, bg=0, transparent=False,
-              colour_map=None):
-        """
-        Paint multi-colour text at the defined location.
-
-        :param text: The (single line) text to be printed.
-        :param x: The column (x coord) for the start of the text.
-        :param y: The line (y coord) for the start of the text.
-        :param colour: The default colour of the text to be displayed.
-        :param attr: The default cell attribute of the text to be displayed.
-        :param bg: The default background colour of the text to be displayed.
-        :param transparent: Whether to print spaces or not, thus giving a
-            transparent effect.
-        :param colour_map: Colour/attribute list for multi-colour text.
-
-        The colours and attributes are the COLOUR_xxx and A_yyy constants
-        defined in the Screen class.
-        colour_map is a list of tuples (foreground, attribute, background) that
-        must be the same length as the passed in text (or None if no mapping is
-        required).
-        """
-        if colour_map is None:
-            self.print_at(text, x, y, colour, attr, bg, transparent)
-        else:
-            for i, c in enumerate(text):
-                if len(colour_map[i]) > 0 and colour_map[i][0] is not None:
-                    colour = colour_map[i][0]
-                if len(colour_map[i]) > 1 and colour_map[i][1] is not None:
-                    attr = colour_map[i][1]
-                if len(colour_map[i]) > 2 and colour_map[i][2] is not None:
-                    bg = colour_map[i][2]
-                self.print_at(c, x + i, y, colour, attr, bg, transparent)
-
-    def is_visible(self, x, y):
-        """
-        Return whether the specified location is on the visible screen.
-
-        :param x: The column (x coord) for the location to check.
-        :param y: The line (y coord) for the location to check.
-        """
-        return ((x >= 0) and
-                (x <= self.width) and
-                (y >= self._start_line) and
-                (y < self._start_line + self.height))
 
     @staticmethod
     def _unhandled_event_default(event):
@@ -735,7 +937,7 @@ class Screen(with_metaclass(ABCMeta, object)):
         The unhandled input function just takes one parameter - the input
         event that was not handled.
         """
-        # Set up default unhandled input hanlder if needed.
+        # Set up default unhandled input handler if needed.
         if unhandled_input is None:
             unhandled_input = self._unhandled_event_default
 
@@ -764,6 +966,7 @@ class Screen(with_metaclass(ABCMeta, object)):
                             while event is not None:
                                 event = scene.process_event(event)
                                 if event is not None:
+                                    self.print_at(str(event), 0, 9)
                                     unhandled_input(event)
                                 event = self.get_event()
                             re_sized = self.has_resized()
@@ -779,244 +982,6 @@ class Screen(with_metaclass(ABCMeta, object)):
             except StopApplication:
                 # Time to stop  - just exit the function.
                 return
-
-    def move(self, x, y):
-        """ 
-        Move the drawing cursor to the specified position.
-
-        :param x: The column (x coord) for the location to check.
-        :param y: The line (y coord) for the location to check.
-        """
-        self._x = int(round(x, 1)) * 2
-        self._y = int(round(y, 1)) * 2
-
-    def draw(self, x, y, char=None, colour=7, bg=0, thin=False):
-        """
-        Draw a line from drawing cursor to the specified position.  This uses a
-        modified Bressenham algorithm, interpolating twice as many points to
-        render down to anti-aliased characters when no character is specified,
-        or uses standard algorithm plotting with the specified character.
-
-        :param x: The column (x coord) for the location to check.
-        :param y: The line (y coord) for the location to check.
-        :param char: Optional character to use to draw the line.
-        :param colour: Optional colour for plotting the line.
-        :param bg: Optional background colour for plotting the line.
-        :param thin: Optional width of anti-aliased line.
-        """
-        # Define line end points.
-        x0 = self._x
-        y0 = self._y
-        x1 = int(round(x, 1)) * 2
-        y1 = int(round(y, 1)) * 2
-
-        # Remember last point for next line.
-        self._x = x1
-        self._y = y1
-
-        dx = abs(x1 - x0)
-        dy = abs(y1 - y0)
-
-        sx = -1 if x0 > x1 else 1
-        sy = -1 if y0 > y1 else 1
-
-        x_range = range(0, 2) if sx > 0 else range(1, -1, -1)
-        y_range = range(0, 2) if sy > 0 else range(1, -1, -1)
-
-        x = x0
-        y = y0
-
-        if dx > dy:
-            err = dx
-            while x != x1:
-                next_chars = [0, 0]
-                px = x & ~1
-                py = y & ~1
-                for ix in x_range:
-                    if y >= py and y - py < 2:
-                        next_chars[0] |= 2 ** ix * 4 ** (y % 2)
-                    else:
-                        next_chars[1] |= 2 ** ix * 4 ** (y % 2)
-                    if not thin:
-                        if y + sy >= py and y + sy - py < 2:
-                            next_chars[0] |= 2 ** ix * 4 ** ((y + sy) % 2)
-                        else:
-                            next_chars[1] |= 2 ** ix * 4 ** ((y + sy) % 2)
-                    err -= 2 * dy
-                    if err < 0:
-                        y += sy
-                        err += 2 * dx
-                    x += sx
-
-                if char is None:
-                    self.print_at(self._line_chars[next_chars[0]], px//2, py//2,
-                                  colour, bg=bg)
-                    if next_chars[1] != 0:
-                        self.print_at(self._line_chars[next_chars[1]],
-                                      px // 2, py // 2 + sy, colour, bg=bg)
-                elif char == " ":
-                    self.print_at(char, px // 2, py // 2, bg=bg)
-                    self.print_at(char, px // 2, py // 2 + sy, bg=bg)
-                else:
-                    self.print_at(char, px // 2, py // 2, colour, bg=bg)
-        else:
-            err = dy
-            while y != y1:
-                next_chars = [0, 0]
-                px = x & ~1
-                py = y & ~1
-                for iy in y_range:
-                    if x >= px and x - px < 2:
-                        next_chars[0] |= 2 ** (x % 2) * 4 ** iy
-                    else:
-                        next_chars[1] |= 2 ** (x % 2) * 4 ** iy
-                    if not thin:
-                        if x + sx >= px and x + sx - px < 2:
-                            next_chars[0] |= 2 ** ((x + sx) % 2) * 4 ** iy
-                        else:
-                            next_chars[1] |= 2 ** ((x + sx) % 2) * 4 ** iy
-                    err -= 2 * dx
-                    if err < 0:
-                        x += sx
-                        err += 2 * dy
-                    y += sy
-
-                if char is None:
-                    self.print_at(self._line_chars[next_chars[0]], px//2, py//2,
-                                  colour, bg=bg)
-                    if next_chars[1] != 0:
-                        self.print_at(
-                            self._line_chars[next_chars[1]], px//2 + sx, py//2,
-                            colour, bg=bg)
-                elif char == " ":
-                    self.print_at(char, px // 2, py // 2, bg=bg)
-                    self.print_at(char, px // 2 + sx, py // 2, bg=bg)
-                else:
-                    self.print_at(char, px // 2, py // 2, colour, bg=bg)
-
-
-class _BufferedScreen(with_metaclass(ABCMeta, Screen)):
-    """
-    Abstract class to handle screen buffering when not using curses.
-    """
-
-    def __init__(self, height, width, buffer_height):
-        """
-        :param height: The buffer height for this window.
-        :param width: The buffer width for this window.
-        :param buffer_height: The buffer height for this window.
-        """
-        # Save off the screen details and se up the scrolling pad.
-        super(_BufferedScreen, self).__init__(height, width)
-
-        # Create screen buffers (required to reduce flicker).
-        self._screen_buffer = None
-        self._double_buffer = None
-        self._buffer_height = buffer_height
-
-        # Remember current state so we don't keep programming colours/attributes
-        # and move commands unnecessarily.
-        self._colour = None
-        self._attr = None
-        self._bg = None
-        self._x = None
-        self._y = None
-        self._last_start_line = 0
-
-        # Reset the screen ready to go...
-        self._reset()
-
-    def _reset(self):
-        """
-        Reset the internal buffers for the screen.
-        """
-        self._start_line = self._last_start_line = 0
-        self._x = self._y = None
-
-        # Reset our screen buffer
-        line = [(" ", 7, 0, 0) for _ in range(self.width)]
-        self._screen_buffer = [
-            copy.deepcopy(line) for _ in range(self._buffer_height)]
-        self._double_buffer = copy.deepcopy(self._screen_buffer)
-
-    def scroll(self):
-        """
-        Scroll the Screen up one line.
-        """
-        self._start_line += 1
-
-    def clear(self):
-        """
-        Clear the Screen of all content.
-        """
-        # Clear the actual terminal
-        self._change_colours(self.COLOUR_WHITE, 0, 0)
-        self._clear()
-        self._reset()
-
-    def refresh(self):
-        """
-        Refresh the screen.
-        """
-        # Scroll the screen as required to minimize redrawing.
-        for _ in range(self._start_line - self._last_start_line):
-            self._scroll()
-        self._last_start_line = self._start_line
-
-        # Now draw any deltas to the scrolled screen.
-        for y in range(self.height):
-            for x in range(self.width):
-                new_cell = self._double_buffer[y + self._start_line][x]
-                if self._screen_buffer[y + self._start_line][x] != new_cell:
-                    self._change_colours(new_cell[1], new_cell[2], new_cell[3])
-                    self._print_at(new_cell[0], x, y)
-                    self._screen_buffer[y + self._start_line][x] = new_cell
-
-    def get_from(self, x, y):
-        """
-        Get the character at the specified location.
-
-        :param x: The column (x coord) of the character.
-        :param y: The row (y coord) of the character.
-
-        :return: A 4-tuple of (ascii code, foreground, attributes, background)
-                 for the character at the location.
-        """
-        if y < 0 or y >= self._buffer_height or x < 0 or x >= self.width:
-            return None
-        cell = self._double_buffer[y][x]
-        return ord(cell[0]), cell[1], cell[2], cell[3]
-
-    def print_at(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
-        """
-        Print the text at the specified location using the
-        specified colour and attributes.
-
-        :param text: The (single line) text to be printed.
-        :param x: The column (x coord) for the start of the text.
-        :param y: The line (y coord) for the start of the text.
-        :param colour: The colour of the text to be displayed.
-        :param attr: The cell attribute of the text to be displayed.
-        :param bg: The background colour of the text to be displayed.
-        :param transparent: Whether to print spaces or not, thus giving a
-            transparent effect.
-
-        The colours and attributes are the COLOUR_xxx and A_yyy constants
-        defined in the Screen class.
-        """
-        # Trim text to the buffer.
-        if y < 0 or y >= self._buffer_height:
-            return
-        if x < 0:
-            text = text[-x:]
-            x = 0
-        if x + len(text) >= self.width:
-            text = text[:self.width - x]
-
-        if len(text) > 0:
-            for i, c in enumerate(text):
-                if c != " " or not transparent:
-                    self._double_buffer[y][x + i] = (c, colour, attr, bg)
 
     @abstractmethod
     def _change_colours(self, colour, attr, bg):
@@ -1064,7 +1029,7 @@ if sys.platform == "win32":
     import win32con
     import pywintypes
 
-    class _WindowsScreen(_BufferedScreen):
+    class _WindowsScreen(Screen):
         """
         Windows screen implementation.
         """
@@ -1371,7 +1336,7 @@ else:
     # UNIX compatible platform - use curses
     import curses
 
-    class _CursesScreen(_BufferedScreen):
+    class _CursesScreen(Screen):
         """
         Curses screen implementation.
         """
@@ -1424,11 +1389,12 @@ else:
             # there's no translation for them either.
         }
 
-        def __init__(self, win, height=200):
+        def __init__(self, win, height=200, catch_interrupt=False):
             """
             :param win: The window object as returned by the curses wrapper
                 method.
             :param height: The height of the screen buffer to be used.
+            :param catch_interrupt: Whether to catch SIGINT or not.
             """
             # Save off the screen details.
             super(_CursesScreen, self).__init__(
@@ -1448,6 +1414,11 @@ else:
             # Set up signal handler for screen resizing.
             self._re_sized = False
             signal.signal(signal.SIGWINCH, self._resize_handler)
+
+            # Catch SIGINTs and translated them to ctrl-c if needed.
+            if catch_interrupt:
+                # Ignore SIGINT signals.
+                signal.signal(signal.SIGINT, self._catch_interrupt)
 
             # Enable mouse events
             curses.mousemask(curses.ALL_MOUSE_EVENTS |
@@ -1512,6 +1483,16 @@ else:
                 sys.stdout.flush()
             except IOError:
                 pass
+
+        @staticmethod
+        def _catch_interrupt(signal, frame):
+            """
+            SIGINT handler.  We ignore the signal and frame info passed in.
+            """
+            # The OS already caught the ctrl-c, so inject it now for the next
+            # input.
+            curses.ungetch(3)
+            return
 
         def get_event(self):
             """
@@ -1612,7 +1593,7 @@ else:
                 sys.stdout.write("{}{}{}".format(self._start_title, title,
                                                  self._end_title))
 
-    class _BlessedScreen(_BufferedScreen):
+    class _BlessedScreen(Screen):
         """
         Blessed screen implementation.  This is deprecated as it doesn't support
         mouse input.
