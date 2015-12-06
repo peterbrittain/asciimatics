@@ -52,7 +52,7 @@ def demo(screen):
 
 while True:
     try:
-        Screen.wrapper(demo)
+        Screen.wrapper(demo, catch_interrupt=True)
         sys.exit(0)
     except ResizeScreenError:
         pass

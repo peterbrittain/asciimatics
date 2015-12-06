@@ -10,7 +10,7 @@ import copy
 import sys
 import signal
 from asciimatics.event import KeyboardEvent, MouseEvent
-from .exceptions import ResizeScreenError
+from .exceptions import ResizeScreenError, StopApplication, NextScene
 
 
 # Keep track of last known screen output buffer so we can resize correctly.
@@ -439,14 +439,22 @@ class Screen(with_metaclass(ABCMeta, object)):
         """
         return _WindowsScreen(stdout, stdin, height)
 
+    @staticmethod
+    def _catch_interrupt(signal, frame):
+        # sys.exit(0)
+        print("Eek!")
+        return
+
     @classmethod
-    def wrapper(cls, func, height=200):
+    def wrapper(cls, func, height=200, catch_interrupt=False):
         """
         Construct a new Screen for any platform.  This will initialize and tidy
         up the system as required around the underlying console subsystem.
 
         :param func: The function to call once the screen has been created.
         :param height: The buffer height for this window (if using scrolling).
+        :param catch_interrupt: Whether to catch and prevent keyboard
+            interrupts.  Defaults to False to maintain backwards compatibility.
         """
         if sys.platform == "win32":
             # I don't like this, but we need to track the last screen for
@@ -480,9 +488,13 @@ class Screen(with_metaclass(ABCMeta, object)):
             win_out.SetConsoleMode(
                 out_mode & ~ win32console.ENABLE_WRAP_AT_EOL_OUTPUT)
 
-            # Enable mouse input
+            # Enable mouse input and disable ctrl-c if needed.
             in_mode = win_in.GetConsoleMode()
-            win_in.SetConsoleMode(in_mode | win32console.ENABLE_MOUSE_INPUT)
+            new_mode = in_mode | win32console.ENABLE_MOUSE_INPUT
+            if catch_interrupt:
+                # Ignore ctrl-c handlers if specified.
+                new_mode &= ~win32console.ENABLE_PROCESSED_INPUT
+            win_in.SetConsoleMode(new_mode)
 
             try:
                 # Create the screen and invoke the wrapped function.
@@ -504,6 +516,10 @@ class Screen(with_metaclass(ABCMeta, object)):
                 win_out.SetConsoleTextAttribute(7)
                 win_in.SetConsoleMode(in_mode)
         else:
+            if catch_interrupt:
+                # Ignore SIGINT signals.
+                signal.signal(signal.SIGINT, signal.SIG_IGN)
+
             def _wrapper(win):
                 cur_screen = _CursesScreen(win, height)
                 func(cur_screen)
@@ -689,7 +705,19 @@ class Screen(with_metaclass(ABCMeta, object)):
                 (y >= self._start_line) and
                 (y < self._start_line + self.height))
 
-    def play(self, scenes, stop_on_resize=False):
+    @staticmethod
+    def _unhandled_event_default(event):
+        """
+        Default unhandled event handler for handling simple scene navigation.
+        """
+        if isinstance(event, KeyboardEvent):
+            c = event.key_code
+            if c in (ord("X"), ord("x"), ord("Q"), ord("q")):
+                raise StopApplication("User terminated app")
+            if c in (ord(" "), ord("\n")):
+                raise NextScene()
+
+    def play(self, scenes, stop_on_resize=False, unhandled_input=None):
         """
         Play a set of scenes.
 
@@ -697,49 +725,63 @@ class Screen(with_metaclass(ABCMeta, object)):
         :param stop_on_resize: Whether to stop when the screen is resized.
             Default is to carry on regardless - which will typically result
             in an error. This is largely done for back-compatibility.
+        :param unhandled_input: Function to call for any input not handled
+            by the Scenes/Effects being played.  Defaults to a function that
+            closes the application on "Q" or "X" being pressed.
 
         :raises ResizeScreenError: if the screen is resized (and allowed by
             stop_on_resize).
+
+        The unhandled input function just takes one parameter - the input
+        event that was not handled.
         """
+        # Set up default unhandled input hanlder if needed.
+        if unhandled_input is None:
+            unhandled_input = self._unhandled_event_default
+
+        # Mainline loop for animations
         self.clear()
         while True:
-            for scene in scenes:
-                frame = 0
-                if scene.clear:
-                    self.clear()
-                scene.reset()
-                re_sized = skipped = False
-                while (scene.duration < 0 or frame < scene.duration) and \
-                        not re_sized and not skipped:
-                    frame += 1
-                    for effect in scene.effects:
-                        effect.update(frame)
-                        if effect.delete_count is not None:
-                            effect.delete_count -= 1
-                            if effect.delete_count == 0:
-                                scene.remove_effect(effect)
-                    self.refresh()
-                    event = self.get_event()
-                    while event is not None:
-                        event = scene.process_event(event)
-                        if isinstance(event, KeyboardEvent):
-                            c = event.key_code
-                            if c in (ord("X"), ord("x"), ord("Q"), ord("q")):
-                                return
-                            if c in (ord(" "), ord("\n")):
-                                skipped = True
-                                break
-                        event = self.get_event()
-                    re_sized = self.has_resized()
-                    time.sleep(0.05)
+            try:
+                for scene in scenes:
+                    try:
+                        frame = 0
+                        if scene.clear:
+                            self.clear()
+                        scene.reset()
+                        re_sized = skipped = False
+                        while (scene.duration < 0 or frame < scene.duration) \
+                                and not re_sized and not skipped:
+                            frame += 1
+                            for effect in scene.effects:
+                                effect.update(frame)
+                                if effect.delete_count is not None:
+                                    effect.delete_count -= 1
+                                    if effect.delete_count == 0:
+                                        scene.remove_effect(effect)
+                            self.refresh()
+                            event = self.get_event()
+                            while event is not None:
+                                event = scene.process_event(event)
+                                if event is not None:
+                                    unhandled_input(event)
+                                event = self.get_event()
+                            re_sized = self.has_resized()
+                            time.sleep(0.05)
 
-                # Break out of the function if mandated by caller.
-                if re_sized:
-                    if stop_on_resize:
-                        raise ResizeScreenError("Resized terminal")
+                        # Break out of the function if mandated by caller.
+                        if re_sized:
+                            if stop_on_resize:
+                                raise ResizeScreenError("Resized terminal")
+                    except NextScene:
+                        # Just allow next iteration of loop
+                        pass
+            except StopApplication:
+                # Time to stop  - just exit the function.
+                return
 
     def move(self, x, y):
-        """
+        """ 
         Move the drawing cursor to the specified position.
 
         :param x: The column (x coord) for the location to check.
