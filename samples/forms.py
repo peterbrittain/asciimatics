@@ -9,13 +9,13 @@ import sys
 
 class DemoFrame(Frame):
     def __init__(self, screen):
-        super(DemoFrame, self).__init__(screen)
-        layout = Layout([2, 6, 2])
+        super(DemoFrame, self).__init__(screen,
+                                        int(screen.height * 2 // 3),
+                                        int(screen.width * 2 // 3))
+        layout = Layout([1, 6, 1])
         self.add_layout(layout)
         layout.add_widget(TextBox("Hello world!", 5, name="My First Box"), 1)
         layout.add_widget(TextBox("Hello world!", 2, name="Second"), 1)
-        layout.add_widget(TextBox("Hello world!", 6, name="Third"), 0)
-        layout.add_widget(TextBox("Hello world!", 1, name="Fourth"), 2)
         layout2 = Layout([100])
         self.add_layout(layout2)
         layout2.add_widget(Label("Group 1:"))
@@ -28,7 +28,7 @@ class DemoFrame(Frame):
         layout3.add_widget(Text("Value4", label="Text 4:", name="Text4"))
         layout3.add_widget(Text("Value5", label="Text 5:", name="Text5"))
         layout3.add_widget(Divider())
-        layout4 = Layout([1, 1, 1])
+        layout4 = Layout([1, 1])
         self.add_layout(layout4)
         layout4.add_widget(RadioButtons([("Option 1", 1),
                                          ("Option 2", 2),
