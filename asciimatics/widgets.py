@@ -7,7 +7,7 @@ from abc import ABCMeta, abstractmethod
 from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent
 from asciimatics.renderers import Box
-from asciimatics.screen import Screen
+from asciimatics.screen import Screen, Canvas
 
 
 class Frame(Effect):
@@ -16,14 +16,16 @@ class Frame(Effect):
     are GUI elements that can be used to create an application.
     """
 
-    def __init__(self, screen):
+    def __init__(self, screen, height, width):
         """
         :param screen: The Screen that owns this Frame.
+        :param width: The desired width of the Frame.
+        :param height: The desired height of the Frame.
         """
         super(Frame, self).__init__()
-        self._screen = screen
         self._focus = 0
         self._layouts = []
+        self._canvas = Canvas(screen, height, width)
 
     def add_layout(self, layout):
         """
@@ -43,11 +45,14 @@ class Frame(Effect):
         y = 0
         for layout in self._layouts:
             y = layout.fix(y)
-        self._layouts[self._focus].focus()
+        self._layouts[self._focus].focus(force_first=True)
 
     def _update(self, frame_no):
         for layout in self._layouts:
             layout.update(frame_no)
+        self._canvas.refresh()
+        # TODO: Need to look into slowdown from doing full reset each frame.
+        # self._canvas.reset()
 
     @property
     def stop_frame(self):
@@ -55,13 +60,14 @@ class Frame(Effect):
         return -1
 
     @property
-    def screen(self):
+    def canvas(self):
         """
-        The Screen that owns this Frame.
+        The Canvas that backs this Frame.
         """
-        return self._screen
+        return self._canvas
 
     def reset(self):
+        self._canvas.reset()
         for layout in self._layouts:
             layout.reset()
 
@@ -103,10 +109,10 @@ class Layout(object):
         other when displayed - i.e. the first Layout in the Frame is above the
         second, etc.
     2.  Each Layout defines the horizontal constraints by defining columns
-        as a percentage of the full screen width.
+        as a percentage of the full canvas width.
     3.  The Widgets are assigned a column within the Layout that owns them.
     4.  The Layout then decides the exact size and location to make the
-        Widget best fit the screen as constrained by the above.
+        Widget best fit the canvas as constrained by the above.
     """
 
     def __init__(self, columns):
@@ -115,7 +121,7 @@ class Layout(object):
                         in this layout.
 
         The Layout will automatically normalize the units used for the columns,
-        e.g. converting [2, 6, 2] to [20%, 60%, 20%] of the available screen.
+        e.g. converting [2, 6, 2] to [20%, 60%, 20%] of the available canvas.
         """
         total_size = sum(columns)
         self._column_sizes = [x / total_size for x in columns]
@@ -190,12 +196,12 @@ class Layout(object):
             else:
                 offset = 0
             offset = int(min(offset,
-                         self._frame.screen.width * self._column_sizes[i] // 3))
+                         self._frame.canvas.width * self._column_sizes[i] // 3))
 
             # Now go through each widget getting them to resize to the required
             # width and label offset.
             y = start_y
-            w = int(self._frame.screen.width * self._column_sizes[i])
+            w = int(self._frame.canvas.width * self._column_sizes[i])
             for widget in column:
                 h = widget.required_height(offset, w)
                 widget.set_layout(x, y, offset, w, h)
@@ -367,6 +373,9 @@ class Widget(with_metaclass(ABCMeta, object)):
         Call this to give this Widget the input focus.
         """
         self._has_focus = True
+        # TODO: FIx up logic to get widget into scope wherever it is.
+        if not self._frame.canvas.is_visible(self._x, self._y):
+            self._frame.canvas.scroll()
 
     def blur(self):
         """
@@ -443,7 +452,7 @@ class Label(Widget):
         return event
 
     def update(self, frame_no):
-        self._frame.screen.print_at(self._text, self._x, self._y + 1)
+        self._frame.canvas.print_at(self._text, self._x, self._y + 1)
 
     def reset(self):
         pass
@@ -474,7 +483,7 @@ class Divider(Widget):
 
     def update(self, frame_no):
         if self._draw_line:
-            self._frame.screen.print_at("-" * self._w,
+            self._frame.canvas.print_at("-" * self._w,
                                         self._x,
                                         self._y + (self._required_height // 2))
 
@@ -506,7 +515,7 @@ class Text(Widget):
 
     def update(self, frame_no):
         if self._label is not None:
-            self._frame.screen.paint(self._label, self._x, self._y)
+            self._frame.canvas.paint(self._label, self._x, self._y)
 
         # Calculate new visible limits if needed.
         width = self._w - self._offset
@@ -514,7 +523,7 @@ class Text(Widget):
                                         min(self._start_column, self._column)))
 
         # Render visible portion of the text.
-        self._frame.screen.print_at(
+        self._frame.canvas.print_at(
             self._value[self._start_column:self._start_column + width],
             self._x + self._offset,
             self._y)
@@ -529,7 +538,7 @@ class Text(Widget):
                 attr = 0
             if self._column < len(self._value):
                 cursor = self._value[self._column]
-            self._frame.screen.print_at(
+            self._frame.canvas.print_at(
                 cursor,
                 self._x + self._offset + self._column - self._start_column,
                 self._y,
@@ -595,10 +604,10 @@ class CheckBox(Widget):
 
     def update(self, frame_no):
         if self._label is not None:
-            self._frame.screen.paint(self._label, self._x, self._y)
+            self._frame.canvas.paint(self._label, self._x, self._y)
 
         # Render this checkbox.
-        self._frame.screen.print_at(
+        self._frame.canvas.print_at(
             "[{}] {}".format("X" if self._value else " ", self._text),
             self._x + self._offset,
             self._y,
@@ -643,7 +652,7 @@ class RadioButtons(Widget):
 
     def update(self, frame_no):
         if self._label is not None:
-            self._frame.screen.paint(self._label, self._x, self._y)
+            self._frame.canvas.paint(self._label, self._x, self._y)
 
         # Render the list of radio buttons.
         for i, (text, _) in enumerate(self._options):
@@ -653,7 +662,7 @@ class RadioButtons(Widget):
                 check = "X"
                 if self._has_focus:
                     attr = Screen.A_BOLD
-            self._frame.screen.print_at(
+            self._frame.canvas.print_at(
                 "({}) {}".format(check, text),
                 self._x + self._offset,
                 self._y + i,
@@ -708,7 +717,7 @@ class TextBox(Widget):
 
     def update(self, frame_no):
         if self._label is not None:
-            self._frame.screen.paint(self._label, self._x, self._y)
+            self._frame.canvas.paint(self._label, self._x, self._y)
 
         # Calculate new visible limits if needed.
         width = self._w - self._offset
@@ -722,13 +731,13 @@ class TextBox(Widget):
 
         # Redraw the frame and label if needed.
         for (i, line) in enumerate(box[0]):
-            self._frame.screen.paint(
+            self._frame.canvas.paint(
                 line, self._x, self._y + i, transparent=False)
 
         # Render visible portion of the text.
         for i, text in enumerate(self._value):
             if self._start_line <= i < self._start_line + self._h - 2:
-                self._frame.screen.print_at(
+                self._frame.canvas.print_at(
                     text[self._start_column:self._start_column + width - 2],
                     self._x + 1,
                     self._y + i + 1 - self._start_line)
@@ -743,7 +752,7 @@ class TextBox(Widget):
                 attr = 0
                 if self._column < len(self.value[self._line]):
                     cursor = self.value[self._line][self._column]
-            self._frame.screen.print_at(
+            self._frame.canvas.print_at(
                 cursor,
                 self._x + self._column + 1 - self._start_column,
                 self._y + self._line + 1 - self._start_line,

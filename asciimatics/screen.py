@@ -316,6 +316,42 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                     self.print_at(char, px // 2, py // 2, colour, bg=bg)
 
 
+class Canvas(_AbstractCanvas):
+    """
+    A Canvas is an object that can be used to draw to the screen. It maintains
+    its own buffer that will be flushed to the screen when `refresh()` is
+    called.
+    """
+
+    def __init__(self, screen, height, width):
+        """
+        :param screen: The underlying Screen that will be drawn to on refresh.
+        :param height: The height of the screen buffer to be used.
+        :param width: The width of the screen buffer to be used.
+        """
+        # Save off the screen details.
+        # TODO: Fix up buffer logic once and for all!
+        super(Canvas, self).__init__(height, width, 200)
+        self._screen = screen
+
+    def refresh(self):
+        """
+        Flush the canvas content to the underlying screen.
+        """
+        # TODO: Don't assume centred canvasses
+        dx = (self._screen.width - self.width) // 2
+        dy = (self._screen.height - self.height) // 2
+        for y in range(self.height):
+            for x in range(self.width):
+                cell = self._double_buffer[y + self._start_line][x]
+                self._screen.print_at(
+                    cell[0], x + dx, y + dy, cell[1], cell[2], cell[3])
+
+    def _reset(self):
+        # Nothing needed for a Canvas
+        pass
+
+
 class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
     """
     Class to track basic state of the screen.  This constructs the necessary
