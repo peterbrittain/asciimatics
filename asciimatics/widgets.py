@@ -48,11 +48,15 @@ class Frame(Effect):
         self._layouts[self._focus].focus(force_first=True)
 
     def _update(self, frame_no):
+        # Update all the widgets and then push to the screen.
         for layout in self._layouts:
             layout.update(frame_no)
         self._canvas.refresh()
-        # TODO: Need to look into slowdown from doing full reset each frame.
-        # self._canvas.reset()
+
+        # Reset the canvas - note that it's orders of magnitude faster to reset
+        # with a print like this instead of recreating the screen buffers.
+        for y in range(self._canvas.height):
+            self._canvas.print_at(" " * self._canvas.width, 0, y)
 
     @property
     def stop_frame(self):
@@ -373,9 +377,12 @@ class Widget(with_metaclass(ABCMeta, object)):
         Call this to give this Widget the input focus.
         """
         self._has_focus = True
-        # TODO: FIx up logic to get widget into scope wherever it is.
         if not self._frame.canvas.is_visible(self._x, self._y):
-            self._frame.canvas.scroll()
+            if self._y < self._frame.canvas.start_line:
+                self._frame.canvas.scroll_to(self._y)
+            else:
+                line = max(0, self._y - self._frame.canvas.height + self._h)
+                self._frame.canvas.scroll_to(line)
 
     def blur(self):
         """
