@@ -771,7 +771,7 @@ class TextBox(Widget):
         (colour, attr, bg) = self._frame.palette["borders"]
         for (i, line) in enumerate(box[0]):
             self._frame.canvas.paint(
-                line, self._x, self._y + i, colour, attr, bg)
+                line, self._x + self._offset, self._y + i, colour, attr, bg)
 
         # Render visible portion of the text.
         (colour, attr, bg) = self._frame.palette["edit_text"]
@@ -779,7 +779,7 @@ class TextBox(Widget):
             if self._start_line <= i < self._start_line + self._h - 2:
                 self._frame.canvas.print_at(
                     text[self._start_column:self._start_column + width - 2],
-                    self._x + 1,
+                    self._x + self._offset + 1,
                     self._y + i + 1 - self._start_line,
                     colour, attr, bg)
 
@@ -794,7 +794,7 @@ class TextBox(Widget):
                 cursor = self.value[self._line][self._column]
             self._frame.canvas.print_at(
                 cursor,
-                self._x + self._column + 1 - self._start_column,
+                self._x + self._offset + self._column + 1 - self._start_column,
                 self._y + self._line + 1 - self._start_line,
                 colour, attr, bg)
 
