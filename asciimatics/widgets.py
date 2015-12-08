@@ -16,6 +16,16 @@ class Frame(Effect):
     are GUI elements that can be used to create an application.
     """
 
+    # Colour palette for the widgets within te Frame.
+    palette = {
+        "background": (Screen.COLOUR_WHITE, 0, Screen.COLOUR_BLUE),
+        "label": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLUE),
+        "borders": (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLUE),
+        "edit_text": (Screen.COLOUR_WHITE, 0, Screen.COLOUR_CYAN),
+        "field": (Screen.COLOUR_WHITE, 0, Screen.COLOUR_BLUE),
+        "selected_field": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLUE),
+    }
+
     def __init__(self, screen, height, width):
         """
         :param screen: The Screen that owns this Frame.
@@ -46,17 +56,26 @@ class Frame(Effect):
         for layout in self._layouts:
             y = layout.fix(y)
         self._layouts[self._focus].focus(force_first=True)
+        self._clear()
+
+    def _clear(self):
+        """
+        Clear the current canvas.
+        """
+        # It's orders of magnitude faster to reset with a print like this
+        # instead of recreating the screen buffers.
+        (colour, attr, bg) = self.palette["background"]
+        # TODO: Fix internal use of buffer height.
+        for y in range(self._canvas._buffer_height):
+            self._canvas.print_at(
+                " " * self._canvas.width, 0, y, colour, attr, bg)
 
     def _update(self, frame_no):
         # Update all the widgets and then push to the screen.
         for layout in self._layouts:
             layout.update(frame_no)
         self._canvas.refresh()
-
-        # Reset the canvas - note that it's orders of magnitude faster to reset
-        # with a print like this instead of recreating the screen buffers.
-        for y in range(self._canvas.height):
-            self._canvas.print_at(" " * self._canvas.width, 0, y)
+        self._clear()
 
     @property
     def stop_frame(self):
@@ -390,6 +409,15 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         self._has_focus = False
 
+    def _draw_label(self):
+        """
+        Draw the label for this widget if needed.
+        """
+        if self._label is not None:
+            (colour, attr, bg) = self._frame.palette["label"]
+            self._frame.canvas.paint(
+                self._label, self._x, self._y, colour, attr, bg)
+
     @abstractmethod
     def update(self, frame_no):
         """
@@ -459,7 +487,9 @@ class Label(Widget):
         return event
 
     def update(self, frame_no):
-        self._frame.canvas.print_at(self._text, self._x, self._y + 1)
+        (colour, attr, bg) = self._frame.palette["label"]
+        self._frame.canvas.print_at(
+            self._text, self._x, self._y + 1, colour, attr, bg)
 
     def reset(self):
         pass
@@ -489,10 +519,12 @@ class Divider(Widget):
         return event
 
     def update(self, frame_no):
+        (colour, attr, bg) = self._frame.palette["borders"]
         if self._draw_line:
             self._frame.canvas.print_at("-" * self._w,
                                         self._x,
-                                        self._y + (self._required_height // 2))
+                                        self._y + (self._required_height // 2),
+                                        colour, attr, bg)
 
     def reset(self):
         pass
@@ -521,8 +553,7 @@ class Text(Widget):
         self._start_column = 0
 
     def update(self, frame_no):
-        if self._label is not None:
-            self._frame.canvas.paint(self._label, self._x, self._y)
+        self._draw_label()
 
         # Calculate new visible limits if needed.
         width = self._w - self._offset
@@ -530,26 +561,27 @@ class Text(Widget):
                                         min(self._start_column, self._column)))
 
         # Render visible portion of the text.
+        (colour, attr, bg) = self._frame.palette["edit_text"]
         self._frame.canvas.print_at(
             self._value[self._start_column:self._start_column + width],
             self._x + self._offset,
-            self._y)
+            self._y,
+            colour, attr, bg)
 
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
         if self._has_focus:
+            (colour, attr, bg) = self._frame.palette["edit_text"]
             cursor = " "
             if frame_no % 10 < 5:
-                attr = Screen.A_REVERSE
-            else:
-                attr = 0
+                attr |= Screen.A_REVERSE
             if self._column < len(self._value):
                 cursor = self._value[self._column]
             self._frame.canvas.print_at(
                 cursor,
                 self._x + self._offset + self._column - self._start_column,
                 self._y,
-                attr=attr)
+                colour, attr, bg)
 
     def reset(self):
         # Reset to original data and move to end of the text.
@@ -610,15 +642,16 @@ class CheckBox(Widget):
         self._label = label
 
     def update(self, frame_no):
-        if self._label is not None:
-            self._frame.canvas.paint(self._label, self._x, self._y)
+        self._draw_label()
 
         # Render this checkbox.
+        (colour, attr, bg) = self._frame.palette[
+            "selected_field" if self._has_focus else "field"]
         self._frame.canvas.print_at(
             "[{}] {}".format("X" if self._value else " ", self._text),
             self._x + self._offset,
             self._y,
-            attr=Screen.A_BOLD if self._has_focus else Screen.A_NORMAL)
+            colour, attr, bg)
 
     def reset(self):
         self._value = False
@@ -658,22 +691,21 @@ class RadioButtons(Widget):
         self._start_column = 0
 
     def update(self, frame_no):
-        if self._label is not None:
-            self._frame.canvas.paint(self._label, self._x, self._y)
+        self._draw_label()
 
         # Render the list of radio buttons.
         for i, (text, _) in enumerate(self._options):
             check = " "
-            attr = Screen.A_NORMAL
+            (colour, attr, bg) = self._frame.palette["field"]
             if i == self._selection:
                 check = "X"
                 if self._has_focus:
-                    attr = Screen.A_BOLD
+                    (colour, attr, bg) = self._frame.palette["selected_field"]
             self._frame.canvas.print_at(
                 "({}) {}".format(check, text),
                 self._x + self._offset,
                 self._y + i,
-                attr=attr)
+                colour, attr, bg)
 
     def reset(self):
         self._selection = 0
@@ -723,8 +755,7 @@ class TextBox(Widget):
         self._required_height = height
 
     def update(self, frame_no):
-        if self._label is not None:
-            self._frame.canvas.paint(self._label, self._x, self._y)
+        self._draw_label()
 
         # Calculate new visible limits if needed.
         width = self._w - self._offset
@@ -737,33 +768,35 @@ class TextBox(Widget):
         box = Box(width, self._h).rendered_text
 
         # Redraw the frame and label if needed.
+        (colour, attr, bg) = self._frame.palette["borders"]
         for (i, line) in enumerate(box[0]):
             self._frame.canvas.paint(
-                line, self._x, self._y + i, transparent=False)
+                line, self._x, self._y + i, colour, attr, bg)
 
         # Render visible portion of the text.
+        (colour, attr, bg) = self._frame.palette["edit_text"]
         for i, text in enumerate(self._value):
             if self._start_line <= i < self._start_line + self._h - 2:
                 self._frame.canvas.print_at(
                     text[self._start_column:self._start_column + width - 2],
                     self._x + 1,
-                    self._y + i + 1 - self._start_line)
+                    self._y + i + 1 - self._start_line,
+                    colour, attr, bg)
 
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
         if self._has_focus:
+            (colour, attr, bg) = self._frame.palette["edit_text"]
             cursor = " "
             if frame_no % 10 < 5:
-                attr = Screen.A_REVERSE
-            else:
-                attr = 0
-                if self._column < len(self.value[self._line]):
-                    cursor = self.value[self._line][self._column]
+                attr |= Screen.A_REVERSE
+            elif self._column < len(self.value[self._line]):
+                cursor = self.value[self._line][self._column]
             self._frame.canvas.print_at(
                 cursor,
                 self._x + self._column + 1 - self._start_column,
                 self._y + self._line + 1 - self._start_line,
-                attr=attr)
+                colour, attr, bg)
 
     def reset(self):
         # Reset to original data and move to end of the text.
