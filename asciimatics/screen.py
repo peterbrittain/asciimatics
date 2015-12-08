@@ -65,6 +65,14 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         """
         self._start_line += 1
 
+    def scroll_to(self, line):
+        """
+        Scroll the abstract canvas to make a specific line.
+
+        :param line: The line to scroll to.
+        """
+        self._start_line = line
+
     @abstractmethod
     def _reset(self):
         """
@@ -323,29 +331,33 @@ class Canvas(_AbstractCanvas):
     called.
     """
 
-    def __init__(self, screen, height, width):
+    def __init__(self, screen, height, width, x=None, y=None):
         """
         :param screen: The underlying Screen that will be drawn to on refresh.
         :param height: The height of the screen buffer to be used.
         :param width: The width of the screen buffer to be used.
+        :param x: The x position for the top left corner of the Canvas.
+        :param y: The y position for the top left corner of the Canvas.
+
+        If either of the x or y positions is not set, the Canvas will default
+        to centring within the current Screen for that location.
         """
         # Save off the screen details.
         # TODO: Fix up buffer logic once and for all!
         super(Canvas, self).__init__(height, width, 200)
         self._screen = screen
+        self._dx = (screen.width - width) // 2 if x is None else x
+        self._dy = (screen.height - height) // 2 if y is None else y
 
     def refresh(self):
         """
         Flush the canvas content to the underlying screen.
         """
-        # TODO: Don't assume centred canvasses
-        dx = (self._screen.width - self.width) // 2
-        dy = (self._screen.height - self.height) // 2
         for y in range(self.height):
             for x in range(self.width):
-                cell = self._double_buffer[y + self._start_line][x]
+                c = self._double_buffer[y + self._start_line][x]
                 self._screen.print_at(
-                    cell[0], x + dx, y + dy, cell[1], cell[2], cell[3])
+                    c[0], x + self._dx, y + self._dy, c[1], c[2], c[3])
 
     def _reset(self):
         # Nothing needed for a Canvas
@@ -880,9 +892,9 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         Refresh the screen.
         """
         # Scroll the screen as required to minimize redrawing.
-        for _ in range(self._start_line - self._last_start_line):
-            self._scroll()
-        self._last_start_line = self._start_line
+        if self._last_start_line != self._start_line:
+            self._scroll(self._start_line - self._last_start_line)
+            self._last_start_line = self._start_line
 
         # Now draw any deltas to the scrolled screen.
         for y in range(self.height):
@@ -1046,9 +1058,11 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         """
 
     @abstractmethod
-    def _scroll(self):
+    def _scroll(self, lines):
         """
-        Scroll the window up one line.
+        Scroll the window up or down.
+
+        :param lines: Number of lines to scroll.  Negative numbers scroll down.
         """
 
     @abstractmethod
@@ -1332,13 +1346,16 @@ if sys.platform == "win32":
             except pywintypes.error:
                 pass
 
-        def _scroll(self):
+        def _scroll(self, lines):
             """
-            Scroll up by one line.
+            Scroll the window up or down.
+
+            :param lines: Number of lines to scroll.  Negative numbers scroll
+                down.
             """
             # Scroll the visible screen up by one line
             info = self._stdout.GetConsoleScreenBufferInfo()['Window']
-            rectangle = win32console.PySMALL_RECTType(info.Left, info.Top + 1,
+            rectangle = win32console.PySMALL_RECTType(info.Left, info.Top+lines,
                                                       info.Right, info.Bottom)
             new_pos = win32console.PyCOORDType(0, info.Top)
             self._stdout.ScrollConsoleScreenBuffer(
@@ -1462,6 +1479,8 @@ else:
 
             # Lookup the necessary escape codes in the terminfo database.
             self._move_y_x = curses.tigetstr("cup")
+            self._up_line = curses.tigetstr("cuul")
+            self._down_line = curses.tigetstr("cudl")
             self._fg_color = curses.tigetstr("setaf")
             self._bg_color = curses.tigetstr("setab")
             if curses.tigetflag("hs"):
@@ -1496,12 +1515,21 @@ else:
             curses.initscr()
             self._re_sized = True
 
-        def _scroll(self):
+        def _scroll(self, lines):
             """
-            Scroll the Screen up one line.
+            Scroll the window up or down.
+
+            :param lines: Number of lines to scroll.  Negative numbers scroll
+                down.
             """
-            print(curses.tparm(
-                self._move_y_x, self.height - 1, 0).decode("utf-8"))
+            if lines < 0:
+                sys.stdout.write("{}{}".format(
+                    curses.tparm(self._move_y_x, 0, 0).decode("utf-8")),
+                    self._up_line * lines)
+            else:
+                sys.stdout.write("{}{}".format(curses.tparm(
+                    self._move_y_x, self.height - 1, 0).decode("utf-8")),
+                    self._down_line * lines)
 
         def _clear(self):
             """
@@ -1749,11 +1777,21 @@ else:
             self._x = x + len(text)
             self._y = y
 
-        def _scroll(self):
+        def _scroll(self, lines):
             """
-            Scroll up by one line.
+            Scroll the window up or down.
+
+            :param lines: Number of lines to scroll.  Negative numbers scroll
+                down.
             """
-            print(self._terminal.move(self.height - 1, 0))
+            if lines < 0:
+                sys.stdout.write("{}{}".format(
+                    self._terminal.move(0, 0),
+                    self._terminal.move_up() * lines))
+            else:
+                sys.stdout.write("{}{}".format(
+                    self._terminal.move(self.height - 1, 0),
+                    self._terminal.move_down() * lines))
 
         def _clear(self):
             """
