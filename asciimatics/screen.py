@@ -1479,8 +1479,8 @@ else:
 
             # Lookup the necessary escape codes in the terminfo database.
             self._move_y_x = curses.tigetstr("cup")
-            self._up_line = curses.tigetstr("cuul")
-            self._down_line = curses.tigetstr("cudl")
+            self._up_line = curses.tigetstr("ri").decode("utf-8")
+            self._down_line = curses.tigetstr("ind").decode("utf-8")
             self._fg_color = curses.tigetstr("setaf")
             self._bg_color = curses.tigetstr("setab")
             if curses.tigetflag("hs"):
@@ -1525,11 +1525,11 @@ else:
             if lines < 0:
                 sys.stdout.write("{}{}".format(
                     curses.tparm(self._move_y_x, 0, 0).decode("utf-8")),
-                    self._up_line * lines)
+                    self._up_line * -lines)
             else:
                 sys.stdout.write("{}{}".format(curses.tparm(
-                    self._move_y_x, self.height - 1, 0).decode("utf-8")),
-                    self._down_line * lines)
+                    self._move_y_x, self.height, 0).decode("utf-8"),
+                    self._down_line * lines))
 
         def _clear(self):
             """
@@ -1787,7 +1787,7 @@ else:
             if lines < 0:
                 sys.stdout.write("{}{}".format(
                     self._terminal.move(0, 0),
-                    self._terminal.move_up() * lines))
+                    self._terminal.move_up() * -lines))
             else:
                 sys.stdout.write("{}{}".format(
                     self._terminal.move(self.height - 1, 0),
