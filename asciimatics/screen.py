@@ -1562,33 +1562,39 @@ else:
             """
             Check for an event without waiting.
             """
+            # Spin through notifications until we find something we want.
             key = self._screen.getch()
-            if key == curses.KEY_RESIZE:
-                # Handle screen resize
-                self._re_sized = True
-            elif key == curses.KEY_MOUSE:
-                # Handle a mouse event
-                _, x, y, _, bstate = curses.getmouse()
-                buttons = 0
-                # Some Linux modes only report clicks, so check for any button
-                # down or click events.
-                if (bstate & curses.BUTTON1_PRESSED != 0 or
-                        bstate & curses.BUTTON1_CLICKED != 0):
-                    buttons |= MouseEvent.LEFT_CLICK
-                if (bstate & curses.BUTTON3_PRESSED != 0 or
-                        bstate & curses.BUTTON3_CLICKED != 0):
-                    buttons |= MouseEvent.RIGHT_CLICK
-                if bstate & curses.BUTTON1_DOUBLE_CLICKED != 0:
-                    buttons |= MouseEvent.DOUBLE_CLICK
-                return MouseEvent(x, y, buttons)
-            else:
-                # Handle a genuine key press.
-                if key in self._KEY_MAP:
-                    # self.print_at(str(self._KEY_MAP[key]) + "  ", 0, 30)
-                    return KeyboardEvent(self._KEY_MAP[key])
-                elif key != -1:
-                    # self.print_at(str(key) + "  ", 0, 30)
-                    return KeyboardEvent(key)
+            while key != -1:
+                if key == curses.KEY_RESIZE:
+                    # Handle screen resize
+                    self._re_sized = True
+                elif key == curses.KEY_MOUSE:
+                    # Handle a mouse event
+                    _, x, y, _, bstate = curses.getmouse()
+                    buttons = 0
+                    # Some Linux modes only report clicks, so check for any
+                    # button down or click events.
+                    if (bstate & curses.BUTTON1_PRESSED != 0 or
+                            bstate & curses.BUTTON1_CLICKED != 0):
+                        buttons |= MouseEvent.LEFT_CLICK
+                    if (bstate & curses.BUTTON3_PRESSED != 0 or
+                            bstate & curses.BUTTON3_CLICKED != 0):
+                        buttons |= MouseEvent.RIGHT_CLICK
+                    if bstate & curses.BUTTON1_DOUBLE_CLICKED != 0:
+                        buttons |= MouseEvent.DOUBLE_CLICK
+                    return MouseEvent(x, y, buttons)
+                else:
+                    # Handle a genuine key press.
+                    if key in self._KEY_MAP:
+                        # self.print_at(str(self._KEY_MAP[key]) + "  ", 0, 30)
+                        return KeyboardEvent(self._KEY_MAP[key])
+                    elif key != -1:
+                        # self.print_at(str(key) + "  ", 0, 30)
+                        return KeyboardEvent(key)
+
+                # Wasn't interesting - discard and look at the next event.
+                key = self._screen.getch()
+
             return None
 
         def has_resized(self):
