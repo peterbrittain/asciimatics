@@ -1,6 +1,6 @@
 from asciimatics.effects import Julia
 from asciimatics.widgets import Frame, TextBox, Layout, Label, Divider, Text, \
-    CheckBox, RadioButtons
+    CheckBox, RadioButtons, Button
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError
@@ -20,16 +20,22 @@ class DemoFrame(Frame):
         layout.add_widget(Text("Value2", label="Text2:", name="TC"), 1)
         layout.add_widget(Text("Value3", label="Text3:", name="TD"), 1)
         layout.add_widget(Divider(height=2), 1)
+        layout.add_widget(Label("Group 2:"), 1)
         layout.add_widget(RadioButtons([("Option 1", 1),
                                         ("Option 2", 2),
                                         ("Option 3", 3)],
-                                       label="Selection:", name="Things"), 1)
-        layout.add_widget(CheckBox("Field 1:", label="Fields:", name="CA"), 1)
-        layout.add_widget(CheckBox("Field 2:", name="CB"), 1)
-        layout.add_widget(CheckBox("Field 3:", name="CC"), 1)
-        # layout2 = Layout([100])
-        # self.add_layout(layout2)
-        # layout2.add_widget(Label("Empty!"))
+                                       label="A Longer Selection:",
+                                       name="Things"), 1)
+        layout.add_widget(CheckBox("Field 1",
+                                   label="A very silly long name for fields:",
+                                   name="CA"), 1)
+        layout.add_widget(CheckBox("Field 2", name="CB"), 1)
+        layout.add_widget(CheckBox("Field 3", name="CC"), 1)
+        layout.add_widget(Divider(height=3), 1)
+        layout2 = Layout([1, 1, 1, 1])
+        self.add_layout(layout2)
+        layout2.add_widget(Button("OK"), 0)
+        layout2.add_widget(Button("Cancel"), 3)
         self.fix()
 
 

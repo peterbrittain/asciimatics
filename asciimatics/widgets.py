@@ -21,17 +21,25 @@ class Frame(Effect):
         "background":
             (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
         "label":
-            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLUE),
+            (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLUE),
         "borders":
             (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLUE),
         "edit_text":
-            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_CYAN),
+            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
         "selected_edit_text":
             (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
         "field":
             (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
         "selected_field":
-            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLUE),
+            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
+        "button":
+            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "selected_button":
+            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
+        "control":
+            (Screen.COLOUR_YELLOW, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "selected_control":
+            (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_CYAN),
     }
 
     def __init__(self, screen, height, width):
@@ -372,6 +380,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         self._x = self._y = 0
         self._w = self._h = 0
         self._offset = 0
+        self._display_label = None
 
         # Public properties
         self.is_tab_stop = tab_stop
@@ -417,14 +426,56 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         self._has_focus = False
 
+    def _split(self, text, width, height):
+        """
+        Split text to required dimensions.  This will first try to split the
+        text into multiple lines, then put a "..." on the last 3 characters of
+        the last line if this still doesn't fit.
+
+        :param text: The text to split.
+        :param width: The maximum width for any line.
+        :param height: The maximum height for the resulting text.
+        :return: A list of strings of the broken up text.
+        """
+        tokens = text.split(" ")
+        result = []
+        current_line = ""
+        for token in tokens:
+            if len(current_line + token) > width:
+                result.append(current_line.rstrip())
+                current_line = token
+            else:
+                current_line += token + " "
+        else:
+            result.append(current_line.rstrip())
+
+        # Check for a height overrun and truncate.
+        if len(result) > height:
+            result = result[:height]
+            result[height - 1] = result[height - 1][:width-3] + "..."
+
+        # Very small columns could be shorter than individual words - truncate
+        # each line if necessary.
+        for i, line in enumerate(result):
+            if len(line) > width:
+                result[i] = line[:width-3] + "..."
+        return result
+
     def _draw_label(self):
         """
         Draw the label for this widget if needed.
         """
         if self._label is not None:
+            # Break the label up as required.
+            if self._display_label is None:
+                self._display_label = self._split(
+                    self._label, self._offset, self._h)
+
+            # Draw the  display label.
             (colour, attr, bg) = self._frame.palette["label"]
-            self._frame.canvas.paint(
-                self._label, self._x, self._y, colour, attr, bg)
+            for i, text in enumerate(self._display_label):
+                self._frame.canvas.paint(
+                    text, self._x, self._y + i, colour, attr, bg)
 
     @abstractmethod
     def update(self, frame_no):
@@ -657,10 +708,17 @@ class CheckBox(Widget):
 
         # Render this checkbox.
         (colour, attr, bg) = self._frame.palette[
+            "selected_control" if self._has_focus else "control"]
+        self._frame.canvas.print_at(
+            "[{}] ".format("X" if self._value else " "),
+            self._x + self._offset,
+            self._y,
+            colour, attr, bg)
+        (colour, attr, bg) = self._frame.palette[
             "selected_field" if self._has_focus else "field"]
         self._frame.canvas.print_at(
-            "[{}] {}".format("X" if self._value else " ", self._text),
-            self._x + self._offset,
+            self._text,
+            self._x + self._offset + 4,
             self._y,
             colour, attr, bg)
 
@@ -707,16 +765,23 @@ class RadioButtons(Widget):
         # Render the list of radio buttons.
         for i, (text, _) in enumerate(self._options):
             check = " "
-            (colour, attr, bg) = self._frame.palette["field"]
+            (fg, attr, bg) = self._frame.palette["control"]
+            (fg2, attr2, bg2) = self._frame.palette["field"]
             if i == self._selection:
                 check = "X"
                 if self._has_focus:
-                    (colour, attr, bg) = self._frame.palette["selected_field"]
+                    (fg, attr, bg) = self._frame.palette["selected_control"]
+                    (fg2, attr2, bg2) = self._frame.palette["selected_field"]
             self._frame.canvas.print_at(
-                "({}) {}".format(check, text),
+                "({}) ".format(check),
                 self._x + self._offset,
                 self._y + i,
-                colour, attr, bg)
+                fg, attr, bg)
+            self._frame.canvas.print_at(
+                text,
+                self._x + self._offset + 4,
+                self._y + i,
+                fg2, attr2, bg2)
 
     def reset(self):
         self._selection = 0
@@ -724,12 +789,13 @@ class RadioButtons(Widget):
 
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
-            if event.key_code == Screen.KEY_UP:
-                self._selection = max(self._selection - 1, 0)
+            # Don't swallow keys if at limits of the list.
+            if event.key_code == Screen.KEY_UP and self._selection > 0:
+                self._selection -= 1
                 self._value = self._options[self._selection]
-            elif event.key_code == Screen.KEY_DOWN:
-                self._selection = min(self._selection + 1,
-                                      len(self._options) - 1)
+            elif (event.key_code == Screen.KEY_DOWN and
+                    self._selection < len(self._options) - 1):
+                self._selection += 1
                 self._value = self._options[self._selection]
             else:
                 # Ignore any other key press.
@@ -903,3 +969,54 @@ class TextBox(Widget):
     def required_height(self, offset, width):
         # Allow for extra border lines
         return self._required_height + 2
+
+
+class Button(Widget):
+    """
+    A Button widget to be  displayed in a Frame.  It is typically used to
+    represent a desired action for te user to invoke (e.g. a submit button on
+    a form).
+    """
+
+    def __init__(self, text, label=None):
+        """
+        :param text: The text for the button.
+        :param label: An optional label for the widget.
+        """
+        super(Button, self).__init__(None)
+        self._text = text
+        self._label = label
+
+    def update(self, frame_no):
+        self._draw_label()
+
+        # Render this button centrally in the available space
+        button = "< {} >".format(self._text)
+        dx = max(0, (self._w - self._offset - len(button)) // 2)
+        (colour, attr, bg) = self._frame.palette[
+            "selected_button" if self._has_focus else "button"]
+        self._frame.canvas.print_at(
+            button,
+            self._x + self._offset + dx,
+            self._y,
+            colour, attr, bg)
+
+    def reset(self):
+        self._value = False
+
+    def process_event(self, event):
+        if isinstance(event, KeyboardEvent):
+            if event.key_code in [ord(" "), 10, 13]:
+                # TODO: Action on selection
+                pass
+            else:
+                # Ignore any other key press.
+                return event
+        else:
+            # Ignore non-keyboard events
+            return event
+
+    def required_height(self, offset, width):
+        return 1
+
+
