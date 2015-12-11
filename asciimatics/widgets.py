@@ -42,9 +42,10 @@ class Frame(Effect):
             (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_CYAN),
     }
 
-    def __init__(self, screen, height, width):
+    def __init__(self, screen, data, height, width):
         """
         :param screen: The Screen that owns this Frame.
+        :param data: The persistent data to use in this Frame.
         :param width: The desired width of the Frame.
         :param height: The desired height of the Frame.
         """
@@ -52,6 +53,7 @@ class Frame(Effect):
         self._focus = 0
         self._layouts = []
         self._canvas = Canvas(screen, height, width)
+        self._data = data
 
     def add_layout(self, layout):
         """
@@ -110,6 +112,14 @@ class Frame(Effect):
         for layout in self._layouts:
             layout.reset()
 
+    def save(self):
+        """
+        Save the current values in all the widgets back to the persistent data
+        storage.
+        """
+        for layout in self._layouts:
+            layout.save()
+
     def process_event(self, event):
         # Give the current widget in focus first chance to process the event.
         event = self._layouts[self._focus].process_event(event)
@@ -118,7 +128,7 @@ class Frame(Effect):
         # it now.
         if event is not None:
             if isinstance(event, KeyboardEvent):
-                if event.key_code == Screen.KEY_TAB:
+                if event.key_code in [Screen.KEY_TAB, Screen.KEY_DOWN]:
                     # Move on to next widget.
                     self._layouts[self._focus].blur()
                     self._focus += 1
@@ -126,7 +136,7 @@ class Frame(Effect):
                         self._focus = 0
                     self._layouts[self._focus].focus(force_first=True)
                     event = None
-                elif event.key_code == Screen.KEY_BACK_TAB:
+                elif event.key_code in [Screen.KEY_BACK_TAB, Screen.KEY_UP]:
                     # Move on to previous widget.
                     self._layouts[self._focus].blur()
                     self._focus -= 1
@@ -192,6 +202,10 @@ class Layout(object):
         self._columns[column].append(widget)
         widget.register_frame(self._frame)
 
+        # TODO: Fix this hack!
+        if widget.name in self._frame._data:
+            widget._value = self._frame._data[widget.name]
+
     def focus(self, force_first=False, force_last=False):
         """
         Call this to give this Layout the input focus.
@@ -249,33 +263,53 @@ class Layout(object):
             x += w
         return max_y
 
-    def _find_next_widget(self, direction, stay_in_col=False):
+    def _find_next_widget(self, direction, stay_in_col=False, start_at=None,
+                          wrap=False):
         """
         Find the next widget to get the focus, stopping at the start/end of the
         list if hit.
 
         :param direction: The direction to move through the widgets.
         :param stay_in_col: Whether to limit search to current column.
+        :param start_at: Optional starting point in current column.
+        :param wrap: Whether to wrap around columns when at the end.
         """
         current_widget = self._live_widget
-        while 0 <= self._live_col < len(self._columns):
-            self._live_widget += direction
-            while 0 <= self._live_widget < len(self._columns[self._live_col]):
-                if self._columns[self._live_col][self._live_widget].is_tab_stop:
-                    break
+        current_col = self._live_col
+        if start_at is not None:
+            self._live_widget = start_at
+        still_looking = True
+        while still_looking:
+            while 0 <= self._live_col < len(self._columns):
                 self._live_widget += direction
-            if (0 <= self._live_widget < len(self._columns[self._live_col]) and
-                    self._columns[
-                        self._live_col][self._live_widget].is_tab_stop):
-                break
-            if stay_in_col:
-                # Don't move to another column - just stay where we are.
-                self._live_widget = current_widget
-                break
-            else:
-                self._live_col += direction
-                self._live_widget = \
-                    -1 if direction > 0 else len(self._columns[self._live_col])
+                while 0 <= self._live_widget < len(
+                        self._columns[self._live_col]):
+                    if self._columns[
+                            self._live_col][self._live_widget].is_tab_stop:
+                        return
+                    self._live_widget += direction
+                if stay_in_col:
+                    # Don't move to another column - just stay where we are.
+                    self._live_widget = current_widget
+                    break
+                else:
+                    self._live_col += direction
+                    self._live_widget = -1 if direction > 0 else \
+                        len(self._columns[self._live_col])
+                    if self._live_col == current_col:
+                        # We've wrapped all the way back to the same column -
+                        # give up now and stay where we were.
+                        self._live_widget = current_widget
+                        return
+
+            # If we got here we hit the end of the columns - only keep on
+            # looking if we're allowed to wrap.
+            still_looking = wrap
+            if still_looking:
+                if self._live_col < 0:
+                    self._live_col = len(self._columns) - 1
+                else:
+                    self._live_col = 0
 
     def process_event(self, event):
         """
@@ -333,6 +367,21 @@ class Layout(object):
                     self._find_next_widget(-1, stay_in_col=True)
                     self._columns[self._live_col][self._live_widget].focus()
                     event = None
+                elif event.key_code == Screen.KEY_LEFT:
+                    # Move on to last widget in the previous column
+                    self._columns[self._live_col][self._live_widget].blur()
+                    self._find_next_widget(-1, start_at=0, wrap=True)
+                    self._columns[self._live_col][self._live_widget].focus()
+                    event = None
+                elif event.key_code == Screen.KEY_RIGHT:
+                    # Move on to first widget in the next column.
+                    self._columns[self._live_col][self._live_widget].blur()
+                    self._find_next_widget(
+                        1,
+                        start_at=len(self._columns[self._live_col]),
+                        wrap=True)
+                    self._columns[self._live_col][self._live_widget].focus()
+                    event = None
         return event
 
     def update(self, frame_no):
@@ -344,6 +393,17 @@ class Layout(object):
         for column in self._columns:
             for widget in column:
                 widget.update(frame_no)
+
+    def save(self):
+        """
+        Save the current values in all the widgets back to the persistent data
+        storage.
+        """
+        for column in self._columns:
+            for widget in column:
+                if widget.name is not None:
+                    # TODO: Fix this hack!
+                    self._frame._data[widget.name] = widget.value
 
     def reset(self):
         """
@@ -510,6 +570,14 @@ class Widget(with_metaclass(ABCMeta, object)):
         return self._label
 
     @property
+    def name(self):
+        """
+        The name for this widget (for reference in the persistent data).  Can
+        be `None`.
+        """
+        return self._name
+
+    @property
     def value(self):
         """
         The value to return for this widget based on the user's input.
@@ -599,14 +667,12 @@ class Text(Widget):
     label and an entry box.
     """
 
-    def __init__(self, text, label=None, name=None):
+    def __init__(self, label=None, name=None):
         """
-        :param text: The initial text to put in the widget.
         :param label: An optional label for the widget.
         :param name: The name for the widget.
         """
         super(Text, self).__init__(name)
-        self._text = text
         self._label = label
         self._column = 0
         self._start_column = 0
@@ -647,8 +713,7 @@ class Text(Widget):
 
     def reset(self):
         # Reset to original data and move to end of the text.
-        self._value = self._text
-        self._column = len(self._text)
+        self._column = len(self._value)
 
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
@@ -723,7 +788,8 @@ class CheckBox(Widget):
             colour, attr, bg)
 
     def reset(self):
-        self._value = False
+        # TODO: OK just to pass?
+        pass
 
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
@@ -784,19 +850,23 @@ class RadioButtons(Widget):
                 fg2, attr2, bg2)
 
     def reset(self):
-        self._selection = 0
-        self._value = self._options[self._selection]
+        for i, (_, value) in enumerate(self._options):
+            if self._value == value:
+                self._selection = i
+                break
+        else:
+            self._selection = 0
 
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
             # Don't swallow keys if at limits of the list.
             if event.key_code == Screen.KEY_UP and self._selection > 0:
                 self._selection -= 1
-                self._value = self._options[self._selection]
+                self._value = self._options[self._selection][1]
             elif (event.key_code == Screen.KEY_DOWN and
                     self._selection < len(self._options) - 1):
                 self._selection += 1
-                self._value = self._options[self._selection]
+                self._value = self._options[self._selection][1]
             else:
                 # Ignore any other key press.
                 return event
@@ -815,15 +885,13 @@ class TextBox(Widget):
     framed box with option label.  It can take multi-line input.
     """
 
-    def __init__(self, text, height, label=None, name=None):
+    def __init__(self, height, label=None, name=None):
         """
-        :param text: The initial text to put in the TextBox.
         :param height: The required number of input lines for this TextBox.
         :param label: An optional label for the widget.
         :param name: The name for the TextBox.
         """
         super(TextBox, self).__init__(name)
-        self._text = text
         self._label = label
         self._line = 0
         self._column = 0
@@ -893,7 +961,6 @@ class TextBox(Widget):
 
     def reset(self):
         # Reset to original data and move to end of the text.
-        self._value = self._text.split("\n")
         self._line = len(self._value) - 1
         self._column = len(self._value[self._line])
 

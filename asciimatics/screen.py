@@ -1023,10 +1023,12 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                         # Break out of the function if mandated by caller.
                         if re_sized:
                             if stop_on_resize:
+                                scene.exit()
                                 raise ResizeScreenError("Resized terminal")
                     except NextScene:
                         # Just allow next iteration of loop
                         pass
+                    scene.exit()
             except StopApplication:
                 # Time to stop  - just exit the function.
                 return
