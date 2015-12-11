@@ -34,6 +34,15 @@ class Scene(object):
         for effect in self._effects:
             effect.reset()
 
+    def exit(self):
+        """
+        Handle any tidy up required on the exit of the Scene.
+        """
+        # Save off any persistent state for each effect.
+        for effect in self._effects:
+            if hasattr(effect, "save"):
+                effect.save()
+
     def add_effect(self, effect):
         """
         Add an effect to the Scene.  This can be done at any time - event
