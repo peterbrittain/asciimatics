@@ -10,6 +10,42 @@ from asciimatics.renderers import Box
 from asciimatics.screen import Screen, Canvas
 
 
+def _split_text(text, width, height):
+    """
+    Split text to required dimensions.  This will first try to split the
+    text into multiple lines, then put a "..." on the last 3 characters of
+    the last line if this still doesn't fit.
+
+    :param text: The text to split.
+    :param width: The maximum width for any line.
+    :param height: The maximum height for the resulting text.
+    :return: A list of strings of the broken up text.
+    """
+    tokens = text.split(" ")
+    result = []
+    current_line = ""
+    for token in tokens:
+        if len(current_line + token) > width:
+            result.append(current_line.rstrip())
+            current_line = token
+        else:
+            current_line += token + " "
+    else:
+        result.append(current_line.rstrip())
+
+    # Check for a height overrun and truncate.
+    if len(result) > height:
+        result = result[:height]
+        result[height - 1] = result[height - 1][:width-3] + "..."
+
+    # Very small columns could be shorter than individual words - truncate
+    # each line if necessary.
+    for i, line in enumerate(result):
+        if len(line) > width:
+            result[i] = line[:width-3] + "..."
+    return result
+
+
 class Frame(Effect):
     """
     A Frame is a special Effect for controlling and displaying Widgets.  Widgets
@@ -486,41 +522,6 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         self._has_focus = False
 
-    def _split(self, text, width, height):
-        """
-        Split text to required dimensions.  This will first try to split the
-        text into multiple lines, then put a "..." on the last 3 characters of
-        the last line if this still doesn't fit.
-
-        :param text: The text to split.
-        :param width: The maximum width for any line.
-        :param height: The maximum height for the resulting text.
-        :return: A list of strings of the broken up text.
-        """
-        tokens = text.split(" ")
-        result = []
-        current_line = ""
-        for token in tokens:
-            if len(current_line + token) > width:
-                result.append(current_line.rstrip())
-                current_line = token
-            else:
-                current_line += token + " "
-        else:
-            result.append(current_line.rstrip())
-
-        # Check for a height overrun and truncate.
-        if len(result) > height:
-            result = result[:height]
-            result[height - 1] = result[height - 1][:width-3] + "..."
-
-        # Very small columns could be shorter than individual words - truncate
-        # each line if necessary.
-        for i, line in enumerate(result):
-            if len(line) > width:
-                result[i] = line[:width-3] + "..."
-        return result
-
     def _draw_label(self):
         """
         Draw the label for this widget if needed.
@@ -528,7 +529,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         if self._label is not None:
             # Break the label up as required.
             if self._display_label is None:
-                self._display_label = self._split(
+                self._display_label = _split_text(
                     self._label, self._offset, self._h)
 
             # Draw the  display label.
@@ -1074,8 +1075,8 @@ class Button(Widget):
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
             if event.key_code in [ord(" "), 10, 13]:
-                # TODO: Action on selection
-                pass
+                # TODO: Add real action on selection
+                self._frame._scene.add_effect(PopUpDialog(self._frame._canvas._screen, "boo", ["ok", "cancel"]))
             else:
                 # Ignore any other key press.
                 return event
@@ -1087,3 +1088,53 @@ class Button(Widget):
         return 1
 
 
+class PopUpDialog(Frame):
+    """
+    A fixed implementation Frame that simply provides a standard message box
+    dialog.
+    """
+
+    # Override standard palette for pop-ups
+    _normal = (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_RED)
+    _bold = (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_RED)
+    palette = {
+        "background": _normal,
+        "label": _bold,
+        "borders": _normal,
+        "edit_text": _normal,
+        "selected_edit_text": _bold,
+        "field": _normal,
+        "selected_field": _bold,
+        "button": _normal,
+        "selected_button": _bold,
+        "control": _normal,
+        "selected_control": _bold,
+    }
+
+    def __init__(self, screen, text, buttons):
+        """
+        :param screen: The Screen that owns this dialog.
+        :param text: The message text to display.
+        :param buttons: A list of button names to display.
+        """
+        # Always make the dialog 2/3 of the screen width.
+        width = screen.width * 2 // 3
+
+        # Figure out the necessary message and allow for buttons and borders
+        # when deciding on height.
+        self._message = _split_text(text, width, screen.height - 4)
+        height = len(self._message) + 3
+
+        # Construct the Frame
+        self._data = {"message": self._message}
+        super(PopUpDialog, self).__init__(screen, self._data, height, width)
+
+        # Build up the message box
+        layout = Layout([100])
+        self.add_layout(layout)
+        layout.add_widget(TextBox(len(self._message), name="message"))
+        layout2 = Layout([1 for _ in buttons])
+        self.add_layout(layout2)
+        for i, button in enumerate(buttons):
+            layout2.add_widget(Button(button), i)
+        self.fix()

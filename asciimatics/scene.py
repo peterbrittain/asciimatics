@@ -63,13 +63,14 @@ class Scene(object):
 
     def process_event(self, event):
         """
-        Process a new input event.
+        Process a new input event.  Pass this on to any Effects in reverse Z
+        order so that the top-most Effect has priority.
 
         :param event: The Event that has been triggered.
         :returns: None if the Scene processed the event, else the original
                   event.
         """
-        for effect in self._effects:
+        for effect in reversed(self._effects):
             event = effect.process_event(event)
             if event is None:
                 break
