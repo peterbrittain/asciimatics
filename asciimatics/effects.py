@@ -470,6 +470,8 @@ class _Trail(object):
     def update(self, reseed):
         """
         Update that trail!
+
+        :param reseed: Whether we are in the normal reseed cycle or not.
         """
         if self._clear:
             for i in range(0, 3):
@@ -725,6 +727,8 @@ class _Flake(object):
     def update(self, reseed):
         """
         Update that snowflake!
+
+        :param reseed: Whether we are in the normal reseed cycle or not.
         """
         self._screen.print_at(" ", self._x, self._y)
         current_char = None

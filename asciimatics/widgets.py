@@ -495,8 +495,8 @@ class Widget(with_metaclass(ABCMeta, object)):
         :param x: The x position of the widget.
         :param y: The y position of the widget.
         :param offset: The allowed label size for the widget.
-        :param x: The width of the widget.
-        :param x: The height of the widget.
+        :param w: The width of the widget.
+        :param h: The height of the widget.
         """
         self._x = x
         self._y = y
@@ -617,14 +617,14 @@ class Label(Widget):
     def update(self, frame_no):
         (colour, attr, bg) = self._frame.palette["label"]
         self._frame.canvas.print_at(
-            self._text, self._x, self._y + 1, colour, attr, bg)
+            self._text, self._x, self._y, colour, attr, bg)
 
     def reset(self):
         pass
 
     def required_height(self, offset, width):
         # Allow one line for text and a blank spacer before it.
-        return 2
+        return 1
 
 
 class Divider(Widget):
@@ -677,6 +677,7 @@ class Text(Widget):
         self._label = label
         self._column = 0
         self._start_column = 0
+        self._value = ""
 
     def update(self, frame_no):
         self._draw_label()
@@ -899,6 +900,7 @@ class TextBox(Widget):
         self._start_line = 0
         self._start_column = 0
         self._required_height = height
+        self._value = [""]
         # TODO: Fix up logic to either make edit fields have boxes that merge, or just delete this code.
         self._add_border = False
 
@@ -1039,6 +1041,81 @@ class TextBox(Widget):
         return self._required_height + 2
 
 
+class ListBox(Widget):
+    """
+    A ListBox is a simple widget for displaying a list of options from which
+    the user can select one option.
+    """
+
+    def __init__(self, height, label=None, name=None):
+        """
+        :param height: The required number of input lines for this TextBox.
+        :param label: An optional label for the widget.
+        :param name: The name for the TextBox.
+        """
+        super(ListBox, self).__init__(name)
+        self._label = label
+        self._line = 0
+        self._start_line = 0
+        self._required_height = height
+        self._value = [""]
+
+    def update(self, frame_no):
+        self._draw_label()
+
+        # Calculate new visible limits if needed.
+        width = self._w - self._offset
+        height = self._h
+        dx = dy = 0
+        self._start_line = max(0, max(self._line - height + 1,
+                                      min(self._start_line, self._line)))
+
+        # Clear out the existing box content
+        (colour, attr, bg) = self._frame.palette["field"]
+        for i in range(height):
+            self._frame.canvas.print_at(
+                " " * width,
+                self._x + self._offset + dx,
+                self._y + i + dy,
+                colour, attr, bg)
+
+        # Render visible portion of the text.
+        for i, text in enumerate(self._value):
+            if self._start_line <= i < self._start_line + height:
+                (colour, attr, bg) = self._frame.palette[
+                    "selected_field" if i == self._line else "field"]
+                self._frame.canvas.print_at(
+                    "{:{width}}".format(text, width=width),
+                    self._x + self._offset + dx,
+                    self._y + i + dy - self._start_line,
+                    colour, attr, bg)
+
+    def reset(self):
+        self._line = 0
+
+    def process_event(self, event):
+        if isinstance(event, KeyboardEvent):
+            if event.key_code in [10, 13]:
+                # todo: handle selection
+                pass
+            elif event.key_code == Screen.KEY_UP:
+                # Move up one line in text
+                self._line = max(0, self._line - 1)
+            elif event.key_code == Screen.KEY_DOWN:
+                # Move down one line in text
+                self._line = min(len(self._value) - 1, self._line + 1)
+            else:
+                # Ignore any other key press.
+                return event
+        else:
+            # Ignore non-keyboard events
+            return event
+
+    def required_height(self, offset, width):
+        # Allow for extra border lines
+        return self._required_height + 2
+
+
 class Button(Widget):
     """
     A Button widget to be  displayed in a Frame.  It is typically used to
@@ -1046,13 +1123,15 @@ class Button(Widget):
     a form).
     """
 
-    def __init__(self, text, label=None):
+    def __init__(self, text, on_click, label=None):
         """
         :param text: The text for the button.
+        :param on_click: The function to invoke when the button is clicked.
         :param label: An optional label for the widget.
         """
         super(Button, self).__init__(None)
         self._text = text
+        self._on_click = on_click
         self._label = label
 
     def update(self, frame_no):
@@ -1075,8 +1154,7 @@ class Button(Widget):
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
             if event.key_code in [ord(" "), 10, 13]:
-                # TODO: Add real action on selection
-                self._frame._scene.add_effect(PopUpDialog(self._frame._canvas._screen, "boo", ["ok", "cancel"]))
+                self._on_click()
             else:
                 # Ignore any other key press.
                 return event

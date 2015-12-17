@@ -943,8 +943,11 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
 
     def getch(self, x, y):
         """
-        Get the character at a specified location..  This method is deprecated.
+        Get the character at a specified location.  This method is deprecated.
         Use :py:meth:`.get_from` instead.
+
+        :param x: The x coordinate.
+        :param y: The y coordinate.
         """
         return self.get_from(x, y)
 
@@ -952,6 +955,15 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         """
         Print text at the specified location.  This method is deprecated.  Use
         :py:meth:`.print_at` instead.
+
+        :param text: The (single line) text to be printed.
+        :param x: The column (x coord) for the start of the text.
+        :param y: The line (y coord) for the start of the text.
+        :param colour: The colour of the text to be displayed.
+        :param attr: The cell attribute of the text to be displayed.
+        :param bg: The background colour of the text to be displayed.
+        :param transparent: Whether to print spaces or not, thus giving a
+            transparent effect.
         """
         self.putch(text, x, y, colour, attr, bg, transparent)
 
