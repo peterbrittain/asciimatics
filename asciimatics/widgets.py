@@ -459,8 +459,8 @@ class Widget(with_metaclass(ABCMeta, object)):
         :param x: The x position of the widget.
         :param y: The y position of the widget.
         :param offset: The allowed label size for the widget.
-        :param x: The width of the widget.
-        :param x: The height of the widget.
+        :param w: The width of the widget.
+        :param h: The height of the widget.
         """
         self._x = x
         self._y = y
