@@ -17,6 +17,7 @@ form_data = {
     "CC": False,
 }
 
+
 class DemoFrame(Frame):
     def __init__(self, screen):
         super(DemoFrame, self).__init__(screen,
