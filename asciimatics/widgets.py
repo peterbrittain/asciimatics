@@ -676,6 +676,7 @@ class Text(Widget):
         self._label = label
         self._column = 0
         self._start_column = 0
+        self._value = ""
 
     def update(self, frame_no):
         self._draw_label()
@@ -1121,13 +1122,15 @@ class Button(Widget):
     a form).
     """
 
-    def __init__(self, text, label=None):
+    def __init__(self, text, on_click, label=None):
         """
         :param text: The text for the button.
+        :param on_click: The function to invoke when the button is clicked.
         :param label: An optional label for the widget.
         """
         super(Button, self).__init__(None)
         self._text = text
+        self._on_click = on_click
         self._label = label
 
     def update(self, frame_no):
@@ -1150,8 +1153,7 @@ class Button(Widget):
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
             if event.key_code in [ord(" "), 10, 13]:
-                # TODO: Action on selection
-                pass
+                self._on_click()
             else:
                 # Ignore any other key press.
                 return event
