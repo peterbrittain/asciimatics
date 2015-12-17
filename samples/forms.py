@@ -1,6 +1,6 @@
 from asciimatics.effects import Julia
 from asciimatics.widgets import Frame, TextBox, Layout, Label, Divider, Text, \
-    CheckBox, RadioButtons, Button
+    CheckBox, RadioButtons, Button, PopUpDialog
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError
@@ -46,9 +46,17 @@ class DemoFrame(Frame):
         layout.add_widget(Divider(height=3), 1)
         layout2 = Layout([1, 1, 1, 1])
         self.add_layout(layout2)
-        layout2.add_widget(Button("OK"), 0)
-        layout2.add_widget(Button("Cancel"), 3)
+        layout2.add_widget(Button("OK", self._ok), 0)
+        layout2.add_widget(Button("Cancel", self._cancel), 3)
         self.fix()
+
+    def _ok(self):
+        self._scene.add_effect(
+            PopUpDialog(self._canvas._screen, "OK pressed", ["OK"]))
+
+    def _cancel(self):
+        self._scene.add_effect(
+            PopUpDialog(self._canvas._screen, "Cancel pressed", ["OK"]))
 
 
 def demo(screen):

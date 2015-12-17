@@ -52,7 +52,7 @@ class Frame(Effect):
     are GUI elements that can be used to create an application.
     """
 
-    # Colour palette for the widgets within te Frame.
+    # Colour palette for the widgets within the Frame.
     palette = {
         "background":
             (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
@@ -448,6 +448,11 @@ class Layout(object):
         # Reset all the widgets
         for column in self._columns:
             for widget in column:
+                # TODO: Fix this hack!
+                if widget.name in self._frame._data:
+                    widget._value = self._frame._data[widget.name]
+                else:
+                    widget._value = None
                 widget.reset()
 
         # Find the focus for the first widget
@@ -677,7 +682,6 @@ class Text(Widget):
         self._label = label
         self._column = 0
         self._start_column = 0
-        self._value = ""
 
     def update(self, frame_no):
         self._draw_label()
@@ -715,6 +719,8 @@ class Text(Widget):
 
     def reset(self):
         # Reset to original data and move to end of the text.
+        if self._value is None:
+            self._value = ""
         self._column = len(self._value)
 
     def process_event(self, event):
@@ -900,7 +906,6 @@ class TextBox(Widget):
         self._start_line = 0
         self._start_column = 0
         self._required_height = height
-        self._value = [""]
         # TODO: Fix up logic to either make edit fields have boxes that merge, or just delete this code.
         self._add_border = False
 
@@ -964,6 +969,8 @@ class TextBox(Widget):
 
     def reset(self):
         # Reset to original data and move to end of the text.
+        if self._value is None:
+            self._value = [""]
         self._line = len(self._value) - 1
         self._column = len(self._value[self._line])
 
@@ -1047,18 +1054,18 @@ class ListBox(Widget):
     the user can select one option.
     """
 
-    def __init__(self, height, label=None, name=None):
+    def __init__(self, height, options, label=None, name=None):
         """
         :param height: The required number of input lines for this TextBox.
         :param label: An optional label for the widget.
         :param name: The name for the TextBox.
         """
         super(ListBox, self).__init__(name)
+        self._options = options
         self._label = label
         self._line = 0
         self._start_line = 0
         self._required_height = height
-        self._value = [""]
 
     def update(self, frame_no):
         self._draw_label()
@@ -1080,7 +1087,7 @@ class ListBox(Widget):
                 colour, attr, bg)
 
         # Render visible portion of the text.
-        for i, text in enumerate(self._value):
+        for i, (text, id) in enumerate(self._options):
             if self._start_line <= i < self._start_line + height:
                 (colour, attr, bg) = self._frame.palette[
                     "selected_field" if i == self._line else "field"]
@@ -1092,6 +1099,7 @@ class ListBox(Widget):
 
     def reset(self):
         self._line = 0
+        self._value = self._options[self._line][1]
 
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
@@ -1101,9 +1109,11 @@ class ListBox(Widget):
             elif event.key_code == Screen.KEY_UP:
                 # Move up one line in text
                 self._line = max(0, self._line - 1)
+                self._value = self._options[self._line][1]
             elif event.key_code == Screen.KEY_DOWN:
                 # Move down one line in text
-                self._line = min(len(self._value) - 1, self._line + 1)
+                self._line = min(len(self._options) - 1, self._line + 1)
+                self._value = self._options[self._line][1]
             else:
                 # Ignore any other key press.
                 return event
@@ -1214,5 +1224,8 @@ class PopUpDialog(Frame):
         layout2 = Layout([1 for _ in buttons])
         self.add_layout(layout2)
         for i, button in enumerate(buttons):
-            layout2.add_widget(Button(button), i)
+            layout2.add_widget(Button(button, self._destroy), i)
         self.fix()
+
+    def _destroy(self):
+        self._scene.remove_effect(self)
