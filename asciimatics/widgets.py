@@ -78,18 +78,20 @@ class Frame(Effect):
             (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_CYAN),
     }
 
-    def __init__(self, screen, data, height, width):
+    def __init__(self, screen, data, height, width, on_load=None):
         """
         :param screen: The Screen that owns this Frame.
         :param data: The persistent data to use in this Frame.
         :param width: The desired width of the Frame.
         :param height: The desired height of the Frame.
+        :param on_load: optional function to call whenever the Frame reloads.
         """
         super(Frame, self).__init__()
         self._focus = 0
         self._layouts = []
         self._canvas = Canvas(screen, height, width)
         self._data = data
+        self._on_load = on_load
 
     def add_layout(self, layout):
         """
@@ -144,6 +146,11 @@ class Frame(Effect):
         return self._canvas
 
     def reset(self):
+        # Call the on_load function now if specified.
+        if self._on_load is not None:
+            self._on_load()
+
+        # Now reset the individual widgets.
         self._canvas.reset()
         for layout in self._layouts:
             layout.reset()
@@ -240,7 +247,7 @@ class Layout(object):
 
         # TODO: Fix this hack!
         if widget.name in self._frame._data:
-            widget._value = self._frame._data[widget.name]
+            widget.value = self._frame._data[widget.name]
 
     def focus(self, force_first=False, force_last=False):
         """
@@ -450,9 +457,9 @@ class Layout(object):
             for widget in column:
                 # TODO: Fix this hack!
                 if widget.name in self._frame._data:
-                    widget._value = self._frame._data[widget.name]
+                    widget.value = self._frame._data[widget.name]
                 else:
-                    widget._value = None
+                    widget.value = None
                 widget.reset()
 
         # Find the focus for the first widget
@@ -589,6 +596,10 @@ class Widget(with_metaclass(ABCMeta, object)):
         The value to return for this widget based on the user's input.
         """
         return self._value
+
+    @value.setter
+    def value(self, new_value):
+        self._value = new_value
 
     @abstractmethod
     def required_height(self, offset, width):
@@ -893,11 +904,13 @@ class TextBox(Widget):
     framed box with option label.  It can take multi-line input.
     """
 
-    def __init__(self, height, label=None, name=None):
+    def __init__(self, height, label=None, name=None, as_string=False):
         """
         :param height: The required number of input lines for this TextBox.
         :param label: An optional label for the widget.
         :param name: The name for the TextBox.
+        :param as_string: Use "\n" separated string instead of a list for the
+            value of this widget.
         """
         super(TextBox, self).__init__(name)
         self._label = label
@@ -906,6 +919,7 @@ class TextBox(Widget):
         self._start_line = 0
         self._start_column = 0
         self._required_height = height
+        self._as_string = as_string
         # TODO: Fix up logic to either make edit fields have boxes that merge, or just delete this code.
         self._add_border = False
 
@@ -959,8 +973,8 @@ class TextBox(Widget):
             cursor = " "
             if frame_no % 10 < 5:
                 attr |= Screen.A_REVERSE
-            elif self._column < len(self.value[self._line]):
-                cursor = self.value[self._line][self._column]
+            elif self._column < len(self._value[self._line]):
+                cursor = self._value[self._line][self._column]
             self._frame.canvas.print_at(
                 cursor,
                 self._x + self._offset + self._column + dx - self._start_column,
@@ -1046,6 +1060,23 @@ class TextBox(Widget):
     def required_height(self, offset, width):
         # Allow for extra border lines
         return self._required_height + 2
+
+    # TODO: Standardize the value interface for all widgets.
+    @property
+    def value(self):
+        """
+        The value to return for this widget based on the user's input.
+        """
+        return "\n".join(self._value) if self._as_string else self._value
+
+    @value.setter
+    def value(self, new_value):
+        if new_value is None:
+            self._value = [""]
+        elif self._as_string:
+            self._value = new_value.split("\n")
+        else:
+            self._value = new_value
 
 
 class ListBox(Widget):
