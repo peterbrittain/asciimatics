@@ -56,6 +56,8 @@ class Frame(Effect):
     palette = {
         "background":
             (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "disabled":
+            (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLUE),
         "label":
             (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLUE),
         "borders":
@@ -327,8 +329,8 @@ class Layout(object):
                 self._live_widget += direction
                 while 0 <= self._live_widget < len(
                         self._columns[self._live_col]):
-                    if self._columns[
-                            self._live_col][self._live_widget].is_tab_stop:
+                    widget = self._columns[self._live_col][self._live_widget]
+                    if widget.is_tab_stop and not widget.disabled:
                         return
                     self._live_widget += direction
                 if stay_in_col:
@@ -489,9 +491,26 @@ class Widget(with_metaclass(ABCMeta, object)):
         self._w = self._h = 0
         self._offset = 0
         self._display_label = None
+        self._is_tab_stop = tab_stop
+        self._is_disabled = False
 
-        # Public properties
-        self.is_tab_stop = tab_stop
+    @property
+    def is_tab_stop(self):
+        """
+        Whether this widget is a valid tab stop for keyboard navigation.
+        """
+        return self._is_tab_stop
+
+    @property
+    def disabled(self):
+        """
+        Whether this widget is disabled or not.
+        """
+        return self._is_disabled
+
+    @disabled.setter
+    def disabled(self, new_value):
+        self._is_disabled = new_value
 
     def register_frame(self, frame):
         """
@@ -549,6 +568,21 @@ class Widget(with_metaclass(ABCMeta, object)):
             for i, text in enumerate(self._display_label):
                 self._frame.canvas.paint(
                     text, self._x, self._y + i, colour, attr, bg)
+
+    def _pick_colours(self, palette_name):
+        """
+        Pick the rendering colour for a widget based on the current state.
+
+        :param palette_name: The stem name for the widget - e.g. "button".
+        :returns: A colour tuple (fg, attr, bg) to be used.
+        """
+        if self.disabled:
+            key = "disabled"
+        elif self._has_focus:
+            key = "selected_" + palette_name
+        else:
+            key = palette_name
+        return self._frame.palette[key]
 
     @abstractmethod
     def update(self, frame_no):
@@ -1085,7 +1119,7 @@ class ListBox(Widget):
     the user can select one option.
     """
 
-    def __init__(self, height, options, label=None, name=None):
+    def __init__(self, height, options, label=None, name=None, on_select=None):
         """
         :param height: The required number of input lines for this TextBox.
         :param label: An optional label for the widget.
@@ -1097,6 +1131,7 @@ class ListBox(Widget):
         self._line = 0
         self._start_line = 0
         self._required_height = height
+        self._on_select = on_select
 
     def update(self, frame_no):
         self._draw_label()
@@ -1130,21 +1165,21 @@ class ListBox(Widget):
 
     def reset(self):
         self._line = 0
-        self._value = self._options[self._line][1]
+        if len(self._options) > 0:
+            self._value = self._options[self._line][1]
+        else:
+            self._value = None
 
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
-            if event.key_code in [10, 13]:
-                # todo: handle selection
-                pass
-            elif event.key_code == Screen.KEY_UP:
-                # Move up one line in text
+            if len(self._options) > 0 and event.key_code == Screen.KEY_UP:
+                # Move up one line in text - use value to trigger on_select.
                 self._line = max(0, self._line - 1)
-                self._value = self._options[self._line][1]
-            elif event.key_code == Screen.KEY_DOWN:
-                # Move down one line in text
+                self.value = self._options[self._line][1]
+            elif len(self._options) > 0 and event.key_code == Screen.KEY_DOWN:
+                # Move down one line in text - use value to trigger on_select.
                 self._line = min(len(self._options) - 1, self._line + 1)
-                self._value = self._options[self._line][1]
+                self.value = self._options[self._line][1]
             else:
                 # Ignore any other key press.
                 return event
@@ -1155,6 +1190,19 @@ class ListBox(Widget):
     def required_height(self, offset, width):
         # Allow for extra border lines
         return self._required_height + 2
+
+    @property
+    def value(self):
+        """
+        The value to return for this widget based on the user's input.
+        """
+        return self._value
+
+    @value.setter
+    def value(self, new_value):
+        self._value = new_value
+        if self._on_select:
+            self._on_select()
 
 
 class Button(Widget):
@@ -1181,8 +1229,8 @@ class Button(Widget):
         # Render this button centrally in the available space
         button = "< {} >".format(self._text)
         dx = max(0, (self._w - self._offset - len(button)) // 2)
-        (colour, attr, bg) = self._frame.palette[
-            "selected_button" if self._has_focus else "button"]
+        # TODO: Fix all widgets to do the same.
+        (colour, attr, bg) = self._pick_colours("button")
         self._frame.canvas.print_at(
             button,
             self._x + self._offset + dx,

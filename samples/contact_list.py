@@ -29,22 +29,6 @@ class ContactModel(object):
         # Current contact when editing.
         self.current_id = None
 
-        # Add a dummy user
-        self.add({
-            "name": "Peter",
-            "phone": "5055555555",
-            "address": "Somewhere",
-            "email": "a@b.com",
-            "notes": "Some stuff"
-        })
-        self.add({
-            "name": "Paul",
-            "phone": "5055555555",
-            "address": "Somewhere",
-            "email": "a@c.com",
-            "notes": "Some stuff\nAnd some more"
-        })
-
     def add(self, contact):
         self._db.cursor().execute('''
             INSERT INTO contacts(name, phone, address, email, notes)
@@ -98,7 +82,11 @@ class ListView(Frame):
         self._model = model
 
         # Create the form for displaying the list of contacts.
-        self._list_view = ListBox(10, model.get_summary(), name="contacts")
+        self._list_view = ListBox(
+            10, model.get_summary(), name="contacts", on_select=self._on_pick)
+        self._add_button = Button("Add", self._add)
+        self._edit_button = Button("Edit", self._edit)
+        self._delete_button = Button("Delete", self._delete)
         layout = Layout([100])
         self.add_layout(layout)
         layout.add_widget(Label("Contact list:"))
@@ -107,20 +95,19 @@ class ListView(Frame):
         layout.add_widget(Divider())
         layout2 = Layout([1, 1, 1, 1, 1])
         self.add_layout(layout2)
-        layout2.add_widget(Button("Add", self._add), 1)
-        layout2.add_widget(Button("Edit", self._edit), 2)
-        layout2.add_widget(Button("Delete", self._delete), 3)
+        layout2.add_widget(self._add_button, 1)
+        layout2.add_widget(self._edit_button, 2)
+        layout2.add_widget(self._delete_button, 3)
         self.fix()
 
-    def reset(self):
-        # TODO: Fix this hack.
-        self._CACHE["contacts"] = self._model.get_summary()
-        self._data = self._CACHE
-        super(ListView, self).reset()
+    def _on_pick(self):
+        self._edit_button.disabled = self._list_view.value is None
+        self._delete_button.disabled = self._list_view.value is None
 
     def _reload_list(self):
         # TODO: Fix this hack.
         self._list_view._options = self._model.get_summary()
+        self._on_pick()
 
     def _add(self):
         self._model.current_id = None
