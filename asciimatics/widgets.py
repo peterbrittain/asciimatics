@@ -156,14 +156,19 @@ class Frame(Effect):
         return self._canvas
 
     def reset(self):
-        # Call the on_load function now if specified.
-        if self._on_load is not None:
-            self._on_load()
-
         # Now reset the individual widgets.
         self._canvas.reset()
         for layout in self._layouts:
             layout.reset()
+            layout.blur()
+
+        # Set up active widget.
+        self._focus = 0
+        self._layouts[self._focus].focus(force_first=True)
+
+        # Call the on_load function now if specified.
+        if self._on_load is not None:
+            self._on_load()
 
     def save(self):
         """
@@ -471,6 +476,7 @@ class Layout(object):
                 else:
                     widget.value = None
                 widget.reset()
+                widget.blur()
 
         # Find the focus for the first widget
         self._live_widget = -1
@@ -1166,11 +1172,12 @@ class ListBox(Widget):
                     colour, attr, bg)
 
     def reset(self):
+        # Reset selection - use value to trigger on_select
         self._line = 0
         if len(self._options) > 0:
-            self._value = self._options[self._line][1]
+            self.value = self._options[self._line][1]
         else:
-            self._value = None
+            self.value = None
 
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
