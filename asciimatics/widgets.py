@@ -64,20 +64,28 @@ class Frame(Effect):
             (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLUE),
         "edit_text":
             (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
-        "selected_edit_text":
-            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
-        "field":
-            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
-        "selected_field":
+        "focus_edit_text":
             (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
         "button":
             (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
-        "selected_button":
+        "focus_button":
             (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
         "control":
             (Screen.COLOUR_YELLOW, Screen.A_NORMAL, Screen.COLOUR_BLUE),
         "selected_control":
+            (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLUE),
+        "focus_control":
+            (Screen.COLOUR_YELLOW, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "selected_focus_control":
             (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_CYAN),
+        "field":
+            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "selected_field":
+            (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLUE),
+        "focus_field":
+            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "selected_focus_field":
+            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
     }
 
     def __init__(self, screen, data, height, width, on_load=None):
@@ -569,19 +577,23 @@ class Widget(with_metaclass(ABCMeta, object)):
                 self._frame.canvas.paint(
                     text, self._x, self._y + i, colour, attr, bg)
 
-    def _pick_colours(self, palette_name):
+    def _pick_colours(self, palette_name, selected=False):
         """
         Pick the rendering colour for a widget based on the current state.
 
         :param palette_name: The stem name for the widget - e.g. "button".
+        :param selected: Whether this item is selected or not.
         :returns: A colour tuple (fg, attr, bg) to be used.
         """
         if self.disabled:
             key = "disabled"
-        elif self._has_focus:
-            key = "selected_" + palette_name
         else:
-            key = palette_name
+            if self._has_focus:
+                key = "focus_" + palette_name
+            else:
+                key = palette_name
+            if selected:
+                key = "selected_" + key
         return self._frame.palette[key]
 
     @abstractmethod
@@ -737,8 +749,7 @@ class Text(Widget):
                                         min(self._start_column, self._column)))
 
         # Render visible portion of the text.
-        (colour, attr, bg) = self._frame.palette[
-            "selected_edit_text" if self._has_focus else "edit_text"]
+        (colour, attr, bg) = self._pick_colours("edit_text")
         text = self._value[self._start_column:self._start_column + width]
         text += " " * (width - len(text))
         self._frame.canvas.print_at(
@@ -750,7 +761,7 @@ class Text(Widget):
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
         if self._has_focus:
-            (colour, attr, bg) = self._frame.palette["selected_edit_text"]
+            (colour, attr, bg) = self._frame.palette["focus_edit_text"]
             cursor = " "
             if frame_no % 10 < 5:
                 attr |= Screen.A_REVERSE
@@ -825,15 +836,13 @@ class CheckBox(Widget):
         self._draw_label()
 
         # Render this checkbox.
-        (colour, attr, bg) = self._frame.palette[
-            "selected_control" if self._has_focus else "control"]
+        (colour, attr, bg) = self._pick_colours("control", self._has_focus)
         self._frame.canvas.print_at(
             "[{}] ".format("X" if self._value else " "),
             self._x + self._offset,
             self._y,
             colour, attr, bg)
-        (colour, attr, bg) = self._frame.palette[
-            "selected_field" if self._has_focus else "field"]
+        (colour, attr, bg) = self._pick_colours("field", self._has_focus)
         self._frame.canvas.print_at(
             self._text,
             self._x + self._offset + 4,
@@ -883,14 +892,9 @@ class RadioButtons(Widget):
 
         # Render the list of radio buttons.
         for i, (text, _) in enumerate(self._options):
-            check = " "
-            (fg, attr, bg) = self._frame.palette["control"]
-            (fg2, attr2, bg2) = self._frame.palette["field"]
-            if i == self._selection:
-                check = "X"
-                if self._has_focus:
-                    (fg, attr, bg) = self._frame.palette["selected_control"]
-                    (fg2, attr2, bg2) = self._frame.palette["selected_field"]
+            fg, attr, bg = self._pick_colours("control", i == self._selection)
+            fg2, attr2, bg2 = self._pick_colours("field", i == self._selection)
+            check = "X" if i == self._selection else " "
             self._frame.canvas.print_at(
                 "({}) ".format(check),
                 self._x + self._offset,
@@ -982,8 +986,7 @@ class TextBox(Widget):
                     line, self._x + self._offset, self._y + i, colour, attr, bg)
 
         # Clear out the existing box content
-        (colour, attr, bg) = self._frame.palette[
-            "selected_edit_text" if self._has_focus else "edit_text"]
+        (colour, attr, bg) = self._pick_colours("edit_text")
         for i in range(height):
             self._frame.canvas.print_at(
                 " " * width,
@@ -1003,7 +1006,7 @@ class TextBox(Widget):
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
         if self._has_focus:
-            (colour, attr, bg) = self._frame.palette["selected_edit_text"]
+            (colour, attr, bg) = self._frame.palette["focus_edit_text"]
             cursor = " "
             if frame_no % 10 < 5:
                 attr |= Screen.A_REVERSE
@@ -1155,8 +1158,7 @@ class ListBox(Widget):
         # Render visible portion of the text.
         for i, (text, id) in enumerate(self._options):
             if self._start_line <= i < self._start_line + height:
-                (colour, attr, bg) = self._frame.palette[
-                    "selected_field" if i == self._line else "field"]
+                colour, attr, bg = self._pick_colours("field", i == self._line)
                 self._frame.canvas.print_at(
                     "{:{width}}".format(text, width=width),
                     self._x + self._offset + dx,
@@ -1269,13 +1271,13 @@ class PopUpDialog(Frame):
         "label": _bold,
         "borders": _normal,
         "edit_text": _normal,
-        "selected_edit_text": _bold,
+        "focus_edit_text": _bold,
         "field": _normal,
-        "selected_field": _bold,
+        "focus_field": _bold,
         "button": _normal,
-        "selected_button": _bold,
+        "focus_button": _bold,
         "control": _normal,
-        "selected_control": _bold,
+        "focus_control": _bold,
     }
 
     def __init__(self, screen, text, buttons):
