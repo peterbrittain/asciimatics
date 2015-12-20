@@ -3,7 +3,7 @@ from asciimatics.widgets import Frame, ListBox, Layout, Label, Divider, Text, \
     CheckBox, RadioButtons, Button, TextBox
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
-from asciimatics.exceptions import ResizeScreenError, NextScene
+from asciimatics.exceptions import ResizeScreenError, NextScene, StopApplication
 import sys
 import sqlite3
 
@@ -66,6 +66,11 @@ class ContactModel(object):
                                       details)
             self._db.commit()
 
+    def delete_contact(self, id):
+        self._db.cursor().execute('''
+            DELETE FROM contacts WHERE id=:id''', {"id": id})
+        self._db.commit()
+
 
 class ListView(Frame):
 
@@ -84,7 +89,6 @@ class ListView(Frame):
         # Create the form for displaying the list of contacts.
         self._list_view = ListBox(
             10, model.get_summary(), name="contacts", on_select=self._on_pick)
-        self._add_button = Button("Add", self._add)
         self._edit_button = Button("Edit", self._edit)
         self._delete_button = Button("Delete", self._delete)
         layout = Layout([100])
@@ -93,11 +97,12 @@ class ListView(Frame):
         layout.add_widget(Divider())
         layout.add_widget(self._list_view)
         layout.add_widget(Divider())
-        layout2 = Layout([1, 1, 1, 1, 1])
+        layout2 = Layout([1, 1, 1, 1, 1, 1])
         self.add_layout(layout2)
-        layout2.add_widget(self._add_button, 1)
+        layout2.add_widget(Button("Add", self._add), 1)
         layout2.add_widget(self._edit_button, 2)
         layout2.add_widget(self._delete_button, 3)
+        layout2.add_widget(Button("Quit", self._quit), 4)
         self.fix()
 
     def _on_pick(self):
@@ -107,6 +112,7 @@ class ListView(Frame):
     def _reload_list(self):
         # TODO: Fix this hack.
         self._list_view._options = self._model.get_summary()
+        self._model.current_id = None
         self._on_pick()
 
     def _add(self):
@@ -119,8 +125,12 @@ class ListView(Frame):
         raise NextScene()
 
     def _delete(self):
-        # TODO: Remove the entry from the model.
-        raise RuntimeError("Not implemented yet!")
+        self.save()
+        self._model.delete_contact(self._CACHE["contacts"])
+        self._reload_list()
+
+    def _quit(self):
+        raise StopApplication("User pressed quit")
 
 
 class ContactView(Frame):
