@@ -80,8 +80,8 @@ class ListView(Frame):
     def __init__(self, screen, model):
         super(ListView, self).__init__(screen,
                                        self._CACHE,
-                                       screen.height,
-                                       screen.width,
+                                       screen.height * 2 // 3,
+                                       screen.width * 2 // 3,
                                        on_load=self._reload_list)
         # Save off the model that accesses the contacts database.
         self._model = model
@@ -97,12 +97,12 @@ class ListView(Frame):
         layout.add_widget(Divider())
         layout.add_widget(self._list_view)
         layout.add_widget(Divider())
-        layout2 = Layout([1, 1, 1, 1, 1, 1])
+        layout2 = Layout([1, 1, 1, 1])
         self.add_layout(layout2)
-        layout2.add_widget(Button("Add", self._add), 1)
-        layout2.add_widget(self._edit_button, 2)
-        layout2.add_widget(self._delete_button, 3)
-        layout2.add_widget(Button("Quit", self._quit), 4)
+        layout2.add_widget(Button("Add", self._add), 0)
+        layout2.add_widget(self._edit_button, 1)
+        layout2.add_widget(self._delete_button, 2)
+        layout2.add_widget(Button("Quit", self._quit), 3)
         self.fix()
 
     def _on_pick(self):
@@ -139,8 +139,8 @@ class ContactView(Frame):
     def __init__(self, screen, model):
         super(ContactView, self).__init__(screen,
                                           self._CACHE,
-                                          screen.height,
-                                          screen.width)
+                                          screen.height // 2,
+                                          screen.width // 2)
         # Save off the model that accesses the contacts database.
         self._model = model
 
@@ -175,7 +175,6 @@ class ContactView(Frame):
 
 
 def demo(screen):
-    contacts = ContactModel()
 
     scenes = [
         Scene([ListView(screen, contacts)], -1),
@@ -184,6 +183,7 @@ def demo(screen):
 
     screen.play(scenes, stop_on_resize=True)
 
+contacts = ContactModel()
 while True:
     try:
         Screen.wrapper(demo, catch_interrupt=True)
