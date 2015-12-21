@@ -767,7 +767,6 @@ class Text(Widget):
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
         if self._has_focus:
-            (colour, attr, bg) = self._frame.palette["focus_edit_text"]
             cursor = " "
             if frame_no % 10 < 5:
                 attr |= Screen.A_REVERSE
@@ -856,7 +855,6 @@ class CheckBox(Widget):
             colour, attr, bg)
 
     def reset(self):
-        # TODO: OK just to pass?
         pass
 
     def process_event(self, event):
@@ -1012,7 +1010,6 @@ class TextBox(Widget):
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
         if self._has_focus:
-            (colour, attr, bg) = self._frame.palette["focus_edit_text"]
             cursor = " "
             if frame_no % 10 < 5:
                 attr |= Screen.A_REVERSE
@@ -1149,8 +1146,6 @@ class ListBox(Widget):
         width = self._w - self._offset
         height = self._h
         dx = dy = 0
-        self._start_line = max(0, max(self._line - height + 1,
-                                      min(self._start_line, self._line)))
 
         # Clear out the existing box content
         (colour, attr, bg) = self._frame.palette["field"]
@@ -1161,7 +1156,13 @@ class ListBox(Widget):
                 self._y + i + dy,
                 colour, attr, bg)
 
+        # Don't bother with anything else if there are no options to render.
+        if len(self._options) <= 0:
+            return
+
         # Render visible portion of the text.
+        self._start_line = max(0, max(self._line - height + 1,
+                                      min(self._start_line, self._line)))
         for i, (text, id) in enumerate(self._options):
             if self._start_line <= i < self._start_line + height:
                 colour, attr, bg = self._pick_colours("field", i == self._line)
@@ -1173,10 +1174,11 @@ class ListBox(Widget):
 
     def reset(self):
         # Reset selection - use value to trigger on_select
-        self._line = 0
         if len(self._options) > 0:
+            self._line = 0
             self.value = self._options[self._line][1]
         else:
+            self._line = None
             self.value = None
 
     def process_event(self, event):
@@ -1210,8 +1212,28 @@ class ListBox(Widget):
     @value.setter
     def value(self, new_value):
         self._value = new_value
+        for i, (_, value) in enumerate(self._options):
+            if value == new_value:
+                self._line = i
+                break
+        else:
+            self._value = None
+            self._line = None
         if self._on_select:
             self._on_select()
+
+    @property
+    def options(self):
+        """
+        The list of options available for user selection - this is a list of
+        tuples (<human readable string>, <internal value>).
+        """
+        return self._options
+
+    @options.setter
+    def options(self, new_value):
+        self._options = new_value
+        self.value = self._options[0][1] if len(self._options) > 0 else None
 
 
 class Button(Widget):
@@ -1238,7 +1260,6 @@ class Button(Widget):
         # Render this button centrally in the available space
         button = "< {} >".format(self._text)
         dx = max(0, (self._w - self._offset - len(button)) // 2)
-        # TODO: Fix all widgets to do the same.
         (colour, attr, bg) = self._pick_colours("button")
         self._frame.canvas.print_at(
             button,
