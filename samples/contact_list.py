@@ -1,6 +1,5 @@
-from builtins import dict
 from asciimatics.widgets import Frame, ListBox, Layout, Label, Divider, Text, \
-    CheckBox, RadioButtons, Button, TextBox
+    Button, TextBox
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, NextScene, StopApplication
@@ -48,13 +47,7 @@ class ContactModel(object):
         if self.current_id is None:
             return {}
         else:
-            # TODO: Consider use of other data format.
-            # Convert DB Row to genuine dict for use in the forms.
-            result = dict()
-            contact = self.get_contact(self.current_id)
-            for key in contact.keys():
-                result[key] = contact[key]
-            return result
+            return self.get_contact(self.current_id)
 
     def update_current_contact(self, details):
         if self.current_id is None:
@@ -66,20 +59,15 @@ class ContactModel(object):
                                       details)
             self._db.commit()
 
-    def delete_contact(self, id):
+    def delete_contact(self, contact_id):
         self._db.cursor().execute('''
-            DELETE FROM contacts WHERE id=:id''', {"id": id})
+            DELETE FROM contacts WHERE id=:id''', {"id": contact_id})
         self._db.commit()
 
 
 class ListView(Frame):
-
-    #: Data cache for the list of contacts
-    _CACHE = {}
-
     def __init__(self, screen, model):
         super(ListView, self).__init__(screen,
-                                       self._CACHE,
                                        screen.height * 2 // 3,
                                        screen.width * 2 // 3,
                                        on_load=self._reload_list)
@@ -119,12 +107,12 @@ class ListView(Frame):
 
     def _edit(self):
         self.save()
-        self._model.current_id = self._CACHE["contacts"]
+        self._model.current_id = self.data["contacts"]
         raise NextScene()
 
     def _delete(self):
         self.save()
-        self._model.delete_contact(self._CACHE["contacts"])
+        self._model.delete_contact(self.data["contacts"])
         self._reload_list()
 
     def _quit(self):
@@ -132,15 +120,10 @@ class ListView(Frame):
 
 
 class ContactView(Frame):
-
-    #: Data cache for the list of contacts
-    _CACHE = {}
-
     def __init__(self, screen, model):
         super(ContactView, self).__init__(screen,
-                                          self._CACHE,
-                                          screen.height // 2,
-                                          screen.width // 2)
+                                          screen.height * 2 // 3,
+                                          screen.width * 2 // 3)
         # Save off the model that accesses the contacts database.
         self._model = model
 
@@ -160,14 +143,12 @@ class ContactView(Frame):
         self.fix()
 
     def reset(self):
-        # TODO: Fix this hack.
-        self._CACHE = self._model.get_current_contact()
-        self._data = self._CACHE
+        self.data = self._model.get_current_contact()
         super(ContactView, self).reset()
 
     def _ok(self):
         self.save()
-        self._model.update_current_contact(self._CACHE)
+        self._model.update_current_contact(self.data)
         raise NextScene()
 
     def _cancel(self):

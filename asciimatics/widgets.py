@@ -88,19 +88,20 @@ class Frame(Effect):
             (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
     }
 
-    def __init__(self, screen, data, height, width, on_load=None):
+    def __init__(self, screen, height, width, data=None, on_load=None):
         """
         :param screen: The Screen that owns this Frame.
-        :param data: The persistent data to use in this Frame.
         :param width: The desired width of the Frame.
         :param height: The desired height of the Frame.
+        :param data: optional data dict to initialize any widgets in the frame.
         :param on_load: optional function to call whenever the Frame reloads.
         """
         super(Frame, self).__init__()
         self._focus = 0
         self._layouts = []
         self._canvas = Canvas(screen, height, width)
-        self._data = data
+        self._data = None
+        self.data = data
         self._on_load = on_load
 
     def add_layout(self, layout):
@@ -142,6 +143,29 @@ class Frame(Effect):
             layout.update(frame_no)
         self._canvas.refresh()
         self._clear()
+
+    @property
+    def data(self):
+        """
+        Data dictionary containing values from the contained widgets.
+        """
+        # Make sure we have an up-to-date copy.
+        # TODO: Fix this if needed.
+        # self.save()
+        return self._data
+
+    @data.setter
+    def data(self, new_value):
+        # Do a key-by-key copy to allow for dictionary-like objects - e.g.
+        # sqlite3 Row class.
+        self._data = {}
+        if new_value is not None:
+            for key in new_value.keys():
+                self._data[key] = new_value[key]
+
+        # Now update any widgets as needed.
+        for layout in self._layouts:
+            layout.update_widgets()
 
     @property
     def stop_frame(self):
@@ -260,9 +284,8 @@ class Layout(object):
         self._columns[column].append(widget)
         widget.register_frame(self._frame)
 
-        # TODO: Fix this hack!
-        if widget.name in self._frame._data:
-            widget.value = self._frame._data[widget.name]
+        if widget.name in self._frame.data:
+            widget.value = self._frame.data[widget.name]
 
     def focus(self, force_first=False, force_last=False):
         """
@@ -463,18 +486,28 @@ class Layout(object):
                     # TODO: Fix this hack!
                     self._frame._data[widget.name] = widget.value
 
+    def update_widgets(self):
+        """
+        Reset te values for any Widgets in this Layout based on the current
+        Frame data store.
+        """
+        for column in self._columns:
+            for widget in column:
+                if widget.name in self._frame.data:
+                    widget.value = self._frame.data[widget.name]
+                else:
+                    widget.value = None
+
     def reset(self):
         """
         Reset this Layout and the Widgets it contains.
         """
-        # Reset all the widgets
+        # Ensure that the widgets are using the right values.
+        self.update_widgets()
+
+        # Reset all the widgets.
         for column in self._columns:
             for widget in column:
-                # TODO: Fix this hack!
-                if widget.name in self._frame._data:
-                    widget.value = self._frame._data[widget.name]
-                else:
-                    widget.value = None
                 widget.reset()
                 widget.blur()
 
@@ -1107,6 +1140,8 @@ class TextBox(Widget):
         """
         The value to return for this widget based on the user's input.
         """
+        if self._value is None:
+            self._value = [""]
         return "\n".join(self._value) if self._as_string else self._value
 
     @value.setter
