@@ -5,7 +5,7 @@ from builtins import object
 from future.utils import with_metaclass
 from abc import ABCMeta, abstractmethod
 from asciimatics.effects import Effect
-from asciimatics.event import KeyboardEvent
+from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.renderers import Box
 from asciimatics.screen import Screen, Canvas
 
@@ -202,6 +202,27 @@ class Frame(Effect):
         for layout in self._layouts:
             layout.save()
 
+    def switch_focus(self, layout, column, widget):
+        """
+        Switch focus to the specified widget.
+
+        :param layout: The layout that owns the widget.
+        :param column: The column the widget is in.
+        :param widget: The index of the widget to take the focus.
+        """
+        # Find the layout to own the focus.
+        for i, l in enumerate(self._layouts):
+            if l is layout:
+                break
+        else:
+            # No matching layout - give up now
+            return
+
+        self._layouts[self._focus].blur()
+        self._focus = i
+        self._layouts[self._focus].focus(force_column=column,
+                                         force_widget=widget)
+
     def process_event(self, event):
         # Give the current widget in focus first chance to process the event.
         event = self._layouts[self._focus].process_event(event)
@@ -226,6 +247,10 @@ class Frame(Effect):
                         self._focus = len(self._layouts) - 1
                     self._layouts[self._focus].focus(force_last=True)
                     event = None
+            elif isinstance(event, MouseEvent):
+                for layout in self._layouts:
+                    if layout.process_event(event) is None:
+                        return
         return event
 
 
@@ -287,15 +312,24 @@ class Layout(object):
         if widget.name in self._frame.data:
             widget.value = self._frame.data[widget.name]
 
-    def focus(self, force_first=False, force_last=False):
+    def focus(self, force_first=False, force_last=False, force_column=None,
+              force_widget=None):
         """
         Call this to give this Layout the input focus.
 
         :param force_first: Optional parameter to force focus to first widget.
         :param force_last: Optional parameter to force focus to last widget.
+        :param force_column: Optional parameter to mandate the new column index.
+        :param force_widget: Optional parameter to mandate the new widget index.
+
+        The force_column and force_widget parameters must both be set or unset
+        together.
         """
         self._has_focus = True
-        if force_first:
+        if force_widget is not None and force_column is not None:
+            self._live_col = force_column
+            self._live_widget = force_widget
+        elif force_first:
             self._live_col = 0
             self._live_widget = -1
             self._find_next_widget(1)
@@ -463,6 +497,22 @@ class Layout(object):
                         wrap=True)
                     self._columns[self._live_col][self._live_widget].focus()
                     event = None
+            elif isinstance(event, MouseEvent):
+                # Mouse event - rebase coordinates to Frame context.
+                # TODO: convert to formal function.  Also consider rebasing all mouse events.
+                new_event = event
+                new_event.x -= self._frame._canvas._dx
+                new_event.y -= self._frame._canvas._dy - self._frame._canvas._start_line
+                if event.buttons != 0:
+                    # Mouse click - look to move focus.
+                    for i, column in enumerate(self._columns):
+                        for j, widget in enumerate(column):
+                            # TODO: Formalise this test as API.
+                            if (widget._x <= event.x <= widget._x + widget._w and
+                                    widget._y <= event.y <= widget._y + widget._h):
+                                self._frame.switch_focus(self, i, j)
+                                return
+
         return event
 
     def update(self, frame_no):
@@ -615,6 +665,20 @@ class Widget(with_metaclass(ABCMeta, object)):
             for i, text in enumerate(self._display_label):
                 self._frame.canvas.paint(
                     text, self._x, self._y + i, colour, attr, bg)
+
+    def _draw_cursor(self, char, frame_no, x, y):
+        """
+        Draw a flashing cursor for this widget.
+
+        :param char: The character to use for the cursor (when not a block)
+        :param frame_no: The current frame number.
+        :param x: The x coordinate for the cursor.
+        :param y: The y coordinate for the cursor.
+        """
+        (colour, attr, bg) = self._pick_colours("edit_text")
+        if frame_no % 10 < 5:
+            attr |= Screen.A_REVERSE
+        self._frame.canvas.print_at(char, x, y, colour, attr, bg)
 
     def _pick_colours(self, palette_name, selected=False):
         """
@@ -800,16 +864,12 @@ class Text(Widget):
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
         if self._has_focus:
-            cursor = " "
-            if frame_no % 10 < 5:
-                attr |= Screen.A_REVERSE
-            if self._column < len(self._value):
-                cursor = self._value[self._column]
-            self._frame.canvas.print_at(
-                cursor,
+            self._draw_cursor(
+                " " if self._column >= len(self._value) else
+                self._value[self._column],
+                frame_no,
                 self._x + self._offset + self._column - self._start_column,
-                self._y,
-                colour, attr, bg)
+                self._y)
 
     def reset(self):
         # Reset to original data and move to end of the text.
@@ -1043,16 +1103,12 @@ class TextBox(Widget):
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
         if self._has_focus:
-            cursor = " "
-            if frame_no % 10 < 5:
-                attr |= Screen.A_REVERSE
-            elif self._column < len(self._value[self._line]):
-                cursor = self._value[self._line][self._column]
-            self._frame.canvas.print_at(
-                cursor,
+            self._draw_cursor(
+                " " if self._column >= len(self._value[self._line]) else
+                self._value[self._line][self._column],
+                frame_no,
                 self._x + self._offset + self._column + dx - self._start_column,
-                self._y + self._line + dy - self._start_line,
-                colour, attr, bg)
+                self._y + self._line + dy - self._start_line)
 
     def reset(self):
         # Reset to original data and move to end of the text.
@@ -1198,7 +1254,7 @@ class ListBox(Widget):
         # Render visible portion of the text.
         self._start_line = max(0, max(self._line - height + 1,
                                       min(self._start_line, self._line)))
-        for i, (text, id) in enumerate(self._options):
+        for i, (text, _) in enumerate(self._options):
             if self._start_line <= i < self._start_line + height:
                 colour, attr, bg = self._pick_colours("field", i == self._line)
                 self._frame.canvas.print_at(
