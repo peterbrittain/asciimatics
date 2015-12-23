@@ -2,6 +2,7 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from builtins import object
+from copy import copy
 from future.utils import with_metaclass
 from abc import ABCMeta, abstractmethod
 from asciimatics.effects import Effect
@@ -500,7 +501,7 @@ class Layout(object):
             elif isinstance(event, MouseEvent):
                 # Mouse event - rebase coordinates to Frame context.
                 # TODO: convert to formal function.  Also consider rebasing all mouse events.
-                new_event = event
+                new_event = copy(event)
                 new_event.x -= self._frame._canvas._dx
                 new_event.y -= self._frame._canvas._dy - self._frame._canvas._start_line
                 if event.buttons != 0:
@@ -508,11 +509,10 @@ class Layout(object):
                     for i, column in enumerate(self._columns):
                         for j, widget in enumerate(column):
                             # TODO: Formalise this test as API.
-                            if (widget._x <= event.x <= widget._x + widget._w and
-                                    widget._y <= event.y <= widget._y + widget._h):
+                            if (widget._x <= new_event.x < widget._x + widget._w and
+                                    widget._y <= new_event.y < widget._y + widget._h):
                                 self._frame.switch_focus(self, i, j)
                                 return
-
         return event
 
     def update(self, frame_no):

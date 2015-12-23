@@ -1026,7 +1026,6 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                             while event is not None:
                                 event = scene.process_event(event)
                                 if event is not None:
-                                    self.print_at(str(event), 0, 9)
                                     unhandled_input(event)
                                 event = self.get_event()
                             re_sized = self.has_resized()
