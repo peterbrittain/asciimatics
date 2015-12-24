@@ -224,6 +224,20 @@ class Frame(Effect):
         self._layouts[self._focus].focus(force_column=column,
                                          force_widget=widget)
 
+    def rebase_event(self, event):
+        """
+        Rebase the coordinates of the passed event to frame-relative
+        coordinates.
+
+        :returns: A new event object appropriately re-based.
+        """
+        new_event = copy(event)
+        if isinstance(new_event, MouseEvent):
+            origin = self._canvas.origin
+            new_event.x -= origin[0]
+            new_event.y -= origin[1] - self._canvas.start_line
+        return new_event
+
     def process_event(self, event):
         # Give the current widget in focus first chance to process the event.
         event = self._layouts[self._focus].process_event(event)
@@ -500,17 +514,12 @@ class Layout(object):
                     event = None
             elif isinstance(event, MouseEvent):
                 # Mouse event - rebase coordinates to Frame context.
-                # TODO: convert to formal function.  Also consider rebasing all mouse events.
-                new_event = copy(event)
-                new_event.x -= self._frame._canvas._dx
-                new_event.y -= self._frame._canvas._dy - self._frame._canvas._start_line
+                new_event = self._frame.rebase_event(event)
                 if event.buttons >= 0:
                     # Mouse click - look to move focus.
                     for i, column in enumerate(self._columns):
                         for j, widget in enumerate(column):
-                            # TODO: Formalise this test as API.
-                            if (widget._x <= new_event.x < widget._x + widget._w and
-                                    widget._y <= new_event.y < widget._y + widget._h):
+                            if widget.is_mouse_over(new_event):
                                 self._frame.switch_focus(self, i, j)
                                 widget.process_event(event)
                                 return
@@ -644,6 +653,27 @@ class Widget(with_metaclass(ABCMeta, object)):
             else:
                 line = max(0, self._y - self._frame.canvas.height + self._h)
                 self._frame.canvas.scroll_to(line)
+
+    def is_mouse_over(self, event, include_label=True):
+        """
+        Check if the specified mouse event is over this widget.
+
+        :param event: The MouseEvent to check.
+        :param include_label: Include space reserved for the label when
+            checking for .
+        :returns: True if the mouse is over the actiev parts of the widget.
+        """
+        # Disabled widgets should not react to the mouse.
+        if self._is_disabled:
+            return False
+
+        # Check for any overlap
+        if self._y <= event.y < self._y + self._h:
+            if ((include_label and self._x <= event.x < self._x + self._w) or
+                    (self._x + self._offset <= event.x < self._x + self._w)):
+                return True
+
+        return False
 
     def blur(self):
         """
@@ -908,19 +938,13 @@ class Text(Widget):
                 return event
         elif isinstance(event, MouseEvent):
             # Mouse event - rebase coordinates to Frame context.
-            # TODO: convert to formal function.  Also consider rebasing all mouse events.
-            new_event = copy(event)
-            new_event.x -= self._frame._canvas._dx
-            new_event.y -= self._frame._canvas._dy - self._frame._canvas._start_line
+            new_event = self._frame.rebase_event(event)
             if event.buttons != 0:
-                # Mouse click - move cursor.
-                # TODO: Formalise this test as API.
-                if (self._x <= new_event.x < self._x + self._w and
-                        self._y <= new_event.y < self._y + self._h):
-                    self._column = max(
-                        0,
-                        min(len(self._value),
-                            new_event.x - self._x - self._offset + self._start_column))
+                if self.is_mouse_over(new_event, include_label=False):
+                    self._column = min(
+                        len(self._value),
+                        new_event.x-self._x-self._offset+self._start_column)
+                    self._column = max(0, self._column)
                     return
             # Ignore other mouse events.
             return event
@@ -978,15 +1002,9 @@ class CheckBox(Widget):
                 return event
         elif isinstance(event, MouseEvent):
             # Mouse event - rebase coordinates to Frame context.
-            # TODO: convert to formal function.  Also consider rebasing all mouse events.
-            new_event = copy(event)
-            new_event.x -= self._frame._canvas._dx
-            new_event.y -= self._frame._canvas._dy - self._frame._canvas._start_line
+            new_event = self._frame.rebase_event(event)
             if event.buttons != 0:
-                # Mouse click - move cursor.
-                # TODO: Formalise this test as API.
-                if (self._x <= new_event.x < self._x + self._w and
-                        self._y <= new_event.y < self._y + self._h):
+                if self.is_mouse_over(new_event, include_label=False):
                     self._value = not self._value
                     return
             # Ignore other mouse events.
@@ -1060,16 +1078,9 @@ class RadioButtons(Widget):
                 return event
         elif isinstance(event, MouseEvent):
             # Mouse event - rebase coordinates to Frame context.
-            # TODO: convert to formal function.  Also consider rebasing all mouse events.
-            new_event = copy(event)
-            new_event.x -= self._frame._canvas._dx
-            new_event.y -= self._frame._canvas._dy - self._frame._canvas._start_line
+            new_event = self._frame.rebase_event(event)
             if event.buttons != 0:
-                # Mouse click - move cursor.
-                # TODO: Formalise this test as API.
-                if (self._x <= new_event.x < self._x + self._w and
-                        self._y <= new_event.y < self._y + self._h):
-                    self._selection = new_event.y - self._y
+                if self.is_mouse_over(new_event, include_label=False):
                     self._value = self._options[self._selection][1]
                     return
             # Ignore other mouse events.
@@ -1419,10 +1430,7 @@ class Button(Widget):
                 # Ignore any other key press.
                 return event
         elif isinstance(event, MouseEvent):
-            # TODO: convert to formal function.  Also consider rebasing all mouse events.
-            new_event = copy(event)
-            new_event.x -= self._frame._canvas._dx
-            new_event.y -= self._frame._canvas._dy - self._frame._canvas._start_line
+            new_event = self._frame.rebase_event(event)
             if event.buttons != 0:
                 if (self._x <= new_event.x < self._x + self._w and
                         self._y <= new_event.y < self._y + self._h):
