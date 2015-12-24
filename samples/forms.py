@@ -21,7 +21,6 @@ form_data = {
 class DemoFrame(Frame):
     def __init__(self, screen):
         super(DemoFrame, self).__init__(screen,
-                                        form_data,
                                         int(screen.height * 2 // 3),
                                         int(screen.width * 2 // 3))
         layout = Layout([1, 18, 1])
