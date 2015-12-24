@@ -363,6 +363,14 @@ class Canvas(_AbstractCanvas):
         # Nothing needed for a Canvas
         pass
 
+    @property
+    def origin(self):
+        """
+        The location of top left corner of the canvas on the Screen.
+
+        :returns: A tuple (x, y) of the location
+        """
+        return self._dx, self._dy
 
 class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
     """
