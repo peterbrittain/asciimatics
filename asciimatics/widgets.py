@@ -504,7 +504,7 @@ class Layout(object):
                 new_event = copy(event)
                 new_event.x -= self._frame._canvas._dx
                 new_event.y -= self._frame._canvas._dy - self._frame._canvas._start_line
-                if event.buttons != 0:
+                if event.buttons >= 0:
                     # Mouse click - look to move focus.
                     for i, column in enumerate(self._columns):
                         for j, widget in enumerate(column):
@@ -512,6 +512,7 @@ class Layout(object):
                             if (widget._x <= new_event.x < widget._x + widget._w and
                                     widget._y <= new_event.y < widget._y + widget._h):
                                 self._frame.switch_focus(self, i, j)
+                                widget.process_event(event)
                                 return
         return event
 
@@ -905,8 +906,26 @@ class Text(Widget):
             else:
                 # Ignore any other key press.
                 return event
+        elif isinstance(event, MouseEvent):
+            # Mouse event - rebase coordinates to Frame context.
+            # TODO: convert to formal function.  Also consider rebasing all mouse events.
+            new_event = copy(event)
+            new_event.x -= self._frame._canvas._dx
+            new_event.y -= self._frame._canvas._dy - self._frame._canvas._start_line
+            if event.buttons != 0:
+                # Mouse click - move cursor.
+                # TODO: Formalise this test as API.
+                if (self._x <= new_event.x < self._x + self._w and
+                        self._y <= new_event.y < self._y + self._h):
+                    self._column = max(
+                        0,
+                        min(len(self._value),
+                            new_event.x - self._x - self._offset + self._start_column))
+                    return
+            # Ignore other mouse events.
+            return event
         else:
-            # Ignore non-keyboard events
+            # Ignore other events
             return event
 
     def required_height(self, offset, width):
@@ -957,8 +976,23 @@ class CheckBox(Widget):
             else:
                 # Ignore any other key press.
                 return event
+        elif isinstance(event, MouseEvent):
+            # Mouse event - rebase coordinates to Frame context.
+            # TODO: convert to formal function.  Also consider rebasing all mouse events.
+            new_event = copy(event)
+            new_event.x -= self._frame._canvas._dx
+            new_event.y -= self._frame._canvas._dy - self._frame._canvas._start_line
+            if event.buttons != 0:
+                # Mouse click - move cursor.
+                # TODO: Formalise this test as API.
+                if (self._x <= new_event.x < self._x + self._w and
+                        self._y <= new_event.y < self._y + self._h):
+                    self._value = not self._value
+                    return
+            # Ignore other mouse events.
+            return event
         else:
-            # Ignore non-keyboard events
+            # Ignore other events
             return event
 
     def required_height(self, offset, width):
@@ -1024,6 +1058,22 @@ class RadioButtons(Widget):
             else:
                 # Ignore any other key press.
                 return event
+        elif isinstance(event, MouseEvent):
+            # Mouse event - rebase coordinates to Frame context.
+            # TODO: convert to formal function.  Also consider rebasing all mouse events.
+            new_event = copy(event)
+            new_event.x -= self._frame._canvas._dx
+            new_event.y -= self._frame._canvas._dy - self._frame._canvas._start_line
+            if event.buttons != 0:
+                # Mouse click - move cursor.
+                # TODO: Formalise this test as API.
+                if (self._x <= new_event.x < self._x + self._w and
+                        self._y <= new_event.y < self._y + self._h):
+                    self._selection = new_event.y - self._y
+                    self._value = self._options[self._selection][1]
+                    return
+            # Ignore other mouse events.
+            return event
         else:
             # Ignore non-keyboard events
             return event
@@ -1368,9 +1418,17 @@ class Button(Widget):
             else:
                 # Ignore any other key press.
                 return event
-        else:
-            # Ignore non-keyboard events
-            return event
+        elif isinstance(event, MouseEvent):
+            # TODO: convert to formal function.  Also consider rebasing all mouse events.
+            new_event = copy(event)
+            new_event.x -= self._frame._canvas._dx
+            new_event.y -= self._frame._canvas._dy - self._frame._canvas._start_line
+            if event.buttons != 0:
+                if (self._x <= new_event.x < self._x + self._w and
+                        self._y <= new_event.y < self._y + self._h):
+                    self._on_click()
+        # Ignore other events
+        return event
 
     def required_height(self, offset, width):
         return 1
