@@ -1081,6 +1081,7 @@ class RadioButtons(Widget):
             new_event = self._frame.rebase_event(event)
             if event.buttons != 0:
                 if self.is_mouse_over(new_event, include_label=False):
+                    self._selection = new_event.y - self._y
                     self._value = self._options[self._selection][1]
                     return
             # Ignore other mouse events.
@@ -1243,8 +1244,22 @@ class TextBox(Widget):
             else:
                 # Ignore any other key press.
                 return event
+        elif isinstance(event, MouseEvent):
+            # Mouse event - rebase coordinates to Frame context.
+            new_event = self._frame.rebase_event(event)
+            if event.buttons != 0:
+                if self.is_mouse_over(new_event, include_label=False):
+                    self._line = max(0, new_event.y-self._y+self._start_line)
+                    self._line = min(len(self._value) - 1, self._line)
+                    self._column = min(
+                        len(self._value[self._line]),
+                        new_event.x-self._x-self._offset+self._start_column)
+                    self._column = max(0, self._column)
+                    return
+            # Ignore other mouse events.
+            return event
         else:
-            # Ignore non-keyboard events
+            # Ignore other events
             return event
 
     def required_height(self, offset, width):
@@ -1346,8 +1361,18 @@ class ListBox(Widget):
             else:
                 # Ignore any other key press.
                 return event
+        elif isinstance(event, MouseEvent):
+            # Mouse event - rebase coordinates to Frame context.
+            new_event = self._frame.rebase_event(event)
+            if event.buttons != 0:
+                if self.is_mouse_over(new_event, include_label=False):
+                    self._line = new_event.y - self._y
+                    self._value = self._options[self._line][1]
+                    return
+            # Ignore other mouse events.
+            return event
         else:
-            # Ignore non-keyboard events
+            # Ignore other events
             return event
 
     def required_height(self, offset, width):
@@ -1435,6 +1460,7 @@ class Button(Widget):
                 if (self._x <= new_event.x < self._x + self._w and
                         self._y <= new_event.y < self._y + self._h):
                     self._on_click()
+                    return
         # Ignore other events
         return event
 
