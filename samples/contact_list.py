@@ -70,7 +70,8 @@ class ListView(Frame):
         super(ListView, self).__init__(screen,
                                        screen.height * 2 // 3,
                                        screen.width * 2 // 3,
-                                       on_load=self._reload_list)
+                                       on_load=self._reload_list,
+                                       hover_focus=True)
         # Save off the model that accesses the contacts database.
         self._model = model
 
@@ -123,7 +124,8 @@ class ContactView(Frame):
     def __init__(self, screen, model):
         super(ContactView, self).__init__(screen,
                                           screen.height * 2 // 3,
-                                          screen.width * 2 // 3)
+                                          screen.width * 2 // 3,
+                                          hover_focus=True)
         # Save off the model that accesses the contacts database.
         self._model = model
 

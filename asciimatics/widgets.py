@@ -89,13 +89,18 @@ class Frame(Effect):
             (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
     }
 
-    def __init__(self, screen, height, width, data=None, on_load=None):
+    def __init__(self, screen, height, width, data=None, on_load=None,
+                 has_border=True, hover_focus=False):
         """
         :param screen: The Screen that owns this Frame.
         :param width: The desired width of the Frame.
         :param height: The desired height of the Frame.
         :param data: optional data dict to initialize any widgets in the frame.
         :param on_load: optional function to call whenever the Frame reloads.
+        :param has_border: Whether the frame has a border box (and scroll bar).
+            Defaults to True.
+        :param hover_focus: Whether hovering a mouse over a widget (i.e. mouse
+            move events) should change the input focus.  Defaults to false.
         """
         super(Frame, self).__init__()
         self._focus = 0
@@ -104,6 +109,8 @@ class Frame(Effect):
         self._data = None
         self.data = data
         self._on_load = on_load
+        self._has_border = has_border
+        self._hover_focus = hover_focus
 
     def add_layout(self, layout):
         """
@@ -120,9 +127,9 @@ class Frame(Effect):
         should be called once all Layouts have been added to the Frame and all
         widgets added to the Layouts.
         """
-        y = 0
+        y = 1 if self._has_border else 0
         for layout in self._layouts:
-            y = layout.fix(y)
+            y = layout.fix(y, self._has_border)
         self._layouts[self._focus].focus(force_first=True)
         self._clear()
 
@@ -139,11 +146,31 @@ class Frame(Effect):
                 " " * self._canvas.width, 0, y, colour, attr, bg)
 
     def _update(self, frame_no):
-        # Update all the widgets and then push to the screen.
+        # Reset the canvas to prepare for next round of updates.
+        self._clear()
+
+        # Update all the widgets first.
         for layout in self._layouts:
             layout.update(frame_no)
+
+        # Draw any border if needed.
+        if self._has_border:
+            (colour, attr, bg) = self.palette["borders"]
+            for dy in range(self._canvas.height):
+                y = self._canvas.start_line + dy
+                if dy == 0 or dy == self._canvas.height - 1:
+                    self._canvas.print_at(
+                        "+" + ("-" * (self._canvas.width - 2)) + "+",
+                        0, y, colour, attr, bg)
+                else:
+                    self._canvas.print_at("|", 0, y, colour, attr, bg)
+                    self._canvas.print_at("|", self._canvas.width - 1, y,
+                                          colour, attr, bg)
+
+        # TODO: Handle scroll bar
+        
+        # Now push it all to screen.
         self._canvas.refresh()
-        self._clear()
 
     @property
     def data(self):
@@ -240,7 +267,8 @@ class Frame(Effect):
 
     def process_event(self, event):
         # Give the current widget in focus first chance to process the event.
-        event = self._layouts[self._focus].process_event(event)
+        event = self._layouts[self._focus].process_event(event,
+                                                         self._hover_focus)
 
         # If the underlying widgets did not process the event, try processing
         # it now.
@@ -264,7 +292,7 @@ class Frame(Effect):
                     event = None
             elif isinstance(event, MouseEvent):
                 for layout in self._layouts:
-                    if layout.process_event(event) is None:
+                    if layout.process_event(event, self._hover_focus) is None:
                         return
         return event
 
@@ -361,14 +389,22 @@ class Layout(object):
         self._has_focus = False
         self._columns[self._live_col][self._live_widget].blur()
 
-    def fix(self, start_y):
+    def fix(self, start_y, has_border):
         """
         Fix the location and size of all the Widgets in this Layout.
 
         :param start_y: The start line for the Layout.
+        :param has_border: Whether to allow for border in the canvas.
         :returns: The next line to be used for any further Layouts.
         """
-        x = 0
+        # Determine available space on canvas.
+        if has_border:
+            x = 1
+            width = self._frame.canvas.width - 2
+        else:
+            x = 0
+            width = self._frame.canvas.width
+
         max_y = start_y
         for i, column in enumerate(self._columns):
             # For each column determine if we need a tab offset for labels.
@@ -379,12 +415,12 @@ class Layout(object):
             else:
                 offset = 0
             offset = int(min(offset,
-                         self._frame.canvas.width * self._column_sizes[i] // 3))
+                         width * self._column_sizes[i] // 3))
 
             # Now go through each widget getting them to resize to the required
             # width and label offset.
             y = start_y
-            w = int(self._frame.canvas.width * self._column_sizes[i])
+            w = int(width * self._column_sizes[i])
             for widget in column:
                 h = widget.required_height(offset, w)
                 widget.set_layout(x, y, offset, w, h)
@@ -441,11 +477,12 @@ class Layout(object):
                 else:
                     self._live_col = 0
 
-    def process_event(self, event):
+    def process_event(self, event, hover_focus):
         """
         Process any input event.
 
         :param event: The event that was triggered.
+        :param hover_focus: Whether to trigger focus change on mouse moves.
         :returns: None if the Effect processed the event, else the original
                   event.
         """
@@ -515,7 +552,8 @@ class Layout(object):
             elif isinstance(event, MouseEvent):
                 # Mouse event - rebase coordinates to Frame context.
                 new_event = self._frame.rebase_event(event)
-                if event.buttons >= 0:
+                if ((hover_focus and event.buttons >= 0) or
+                        event.buttons > 0):
                     # Mouse click - look to move focus.
                     for i, column in enumerate(self._columns):
                         for j, widget in enumerate(column):
@@ -646,6 +684,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         Call this to give this Widget the input focus.
         """
+        # TODO: Fix to handle borders
         self._has_focus = True
         if not self._frame.canvas.is_visible(self._x, self._y):
             if self._y < self._frame.canvas.start_line:
@@ -1525,6 +1564,7 @@ class PopUpDialog(Frame):
         for i, button in enumerate(buttons):
             layout2.add_widget(Button(button, self._destroy), i)
         self.fix()
+        # TODO: Need to fix up modal nature of the pop-up.
 
     def _destroy(self):
         self._scene.remove_effect(self)
