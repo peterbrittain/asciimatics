@@ -1365,8 +1365,10 @@ class ListBox(Widget):
             # Mouse event - rebase coordinates to Frame context.
             new_event = self._frame.rebase_event(event)
             if event.buttons != 0:
-                if self.is_mouse_over(new_event, include_label=False):
-                    self._line = new_event.y - self._y
+                if (len(self._options) > 0 and
+                        self.is_mouse_over(new_event, include_label=False)):
+                    self._line = min(new_event.y - self._y,
+                                     len(self._options) - 1)
                     self._value = self._options[self._line][1]
                     return
             # Ignore other mouse events.
@@ -1427,20 +1429,25 @@ class Button(Widget):
         :param label: An optional label for the widget.
         """
         super(Button, self).__init__(None)
-        self._text = text
+        # We nly ever draw the button with borders, so calculate that once now.
+        self._text = "< {} >".format(text)
         self._on_click = on_click
         self._label = label
+
+    def set_layout(self, x, y, offset, w, h):
+        # Do the usual layout work. then recalculate exact x/w values for the
+        # rendered button.
+        super(Button, self).set_layout(x, y, offset, w, h)
+        self._x += max(0, (self._w - self._offset - len(self._text)) // 2)
+        self._w = min(self._w, len(self._text))
 
     def update(self, frame_no):
         self._draw_label()
 
-        # Render this button centrally in the available space
-        button = "< {} >".format(self._text)
-        dx = max(0, (self._w - self._offset - len(button)) // 2)
         (colour, attr, bg) = self._pick_colours("button")
         self._frame.canvas.print_at(
-            button,
-            self._x + self._offset + dx,
+            self._text,
+            self._x + self._offset,
             self._y,
             colour, attr, bg)
 
@@ -1507,7 +1514,7 @@ class PopUpDialog(Frame):
 
         # Construct the Frame
         self._data = {"message": self._message}
-        super(PopUpDialog, self).__init__(screen, self._data, height, width)
+        super(PopUpDialog, self).__init__(screen, height, width, self._data)
 
         # Build up the message box
         layout = Layout([100])
