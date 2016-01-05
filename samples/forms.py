@@ -50,10 +50,12 @@ class DemoFrame(Frame):
         self.fix()
 
     def _ok(self):
+        # TODO: Fix up direct access to canvas _screen property
         self._scene.add_effect(
             PopUpDialog(self._canvas._screen, "OK pressed", ["OK"]))
 
     def _cancel(self):
+        # TODO: Fix up direct access to canvas _screen property
         self._scene.add_effect(
             PopUpDialog(self._canvas._screen, "Cancel pressed", ["OK"]))
 
