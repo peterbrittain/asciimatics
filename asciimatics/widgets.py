@@ -7,7 +7,7 @@ from future.utils import with_metaclass
 from abc import ABCMeta, abstractmethod
 from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent, MouseEvent
-from asciimatics.renderers import Box
+from asciimatics.exceptions import Highlander
 from asciimatics.screen import Screen, Canvas
 
 
@@ -127,9 +127,44 @@ class Frame(Effect):
         should be called once all Layouts have been added to the Frame and all
         widgets added to the Layouts.
         """
-        y = 1 if self._has_border else 0
-        for layout in self._layouts:
-            y = layout.fix(y, self._has_border)
+        # Do up to 2 passes in case we have a variable height Layout.
+        fill_layout = None
+        fill_height = 0
+        for _ in range(2):
+            # Pick starting point/height - varies for borders.
+            if self._has_border:
+                x = y = 1
+                height = self._canvas.height - 2
+                width = self._canvas.width - 2
+            else:
+                x = y = 0
+                height = self._canvas.height
+                width = self._canvas.width
+
+            # Process each Layout in the Frame - getting required height for
+            # each.
+            for layout in self._layouts:
+                if layout.fill_frame:
+                    if fill_layout is None:
+                        # First pass - remember it for now.
+                        fill_layout = layout
+                    elif fill_layout == layout:
+                        # Second pass - pass in max height
+                        y = layout.fix(x, y, width, fill_height)
+                    else:
+                        # A second filler - this is a bug in the application.
+                        raise Highlander("Too many Layouts filling Frame")
+                else:
+                    y = layout.fix(x, y, width, height)
+
+            # If we hit a variable height Layout - figure out the available
+            # space and reset everything to the new values.
+            if fill_layout is None:
+                break
+            else:
+                fill_height = max(0, height - y + 1)
+
+        # Reset text
         self._layouts[self._focus].focus(force_first=True)
         self._clear()
 
@@ -168,7 +203,7 @@ class Frame(Effect):
                                           colour, attr, bg)
 
         # TODO: Handle scroll bar
-        
+
         # Now push it all to screen.
         self._canvas.refresh()
 
@@ -251,6 +286,37 @@ class Frame(Effect):
         self._layouts[self._focus].focus(force_column=column,
                                          force_widget=widget)
 
+    def move_to(self, x, y, h):
+        """
+        Make the specified location visible.  This is typically used by a widget
+        to scroll the canvas such that it is visiable.
+
+        :param x: The x location to make visible.
+        :param y: The y location to make visible.
+        :param h: The height of the location to make visisble.
+        """
+        if self._has_border:
+            start_x = 1
+            width = self.canvas.width - 2
+            start_y = self.canvas.start_line + 1
+            height = self.canvas.height - 2
+        else:
+            start_x = 0
+            width = self.canvas.width
+            start_y = self.canvas.start_line
+            height = self.canvas.height
+
+        if ((x >= start_x) and (x < start_x + width) and
+                (y >= start_y) and (y < start_y + height)):
+            # Already OK - quit now.
+            return
+
+        if y < start_y:
+            self.canvas.scroll_to(y - 1 if self._has_border else y)
+        else:
+            line = y + h - self.canvas.height + (1 if self._has_border else 0)
+            self.canvas.scroll_to(max(0, line))
+
     def rebase_event(self, event):
         """
         Rebase the coordinates of the passed event to frame-relative
@@ -314,10 +380,12 @@ class Layout(object):
         Widget best fit the canvas as constrained by the above.
     """
 
-    def __init__(self, columns):
+    def __init__(self, columns, fill_frame=False):
         """
         :param columns: A list of numbers specifying the width of each column
-                        in this layout.
+            in this layout.
+        :param fill_frame: Whether this Layout should attempt to fill the rest
+            of the Frame.  Defaults to False.
 
         The Layout will automatically normalize the units used for the columns,
         e.g. converting [2, 6, 2] to [20%, 60%, 20%] of the available canvas.
@@ -329,6 +397,14 @@ class Layout(object):
         self._has_focus = False
         self._live_col = 0
         self._live_widget = -1
+        self._fill_frame = fill_frame
+
+    @property
+    def fill_frame(self):
+        """
+        Whether this Layout is variable height or not.
+        """
+        return self._fill_frame
 
     def register_frame(self, frame):
         """
@@ -389,22 +465,19 @@ class Layout(object):
         self._has_focus = False
         self._columns[self._live_col][self._live_widget].blur()
 
-    def fix(self, start_y, has_border):
+    def fix(self, start_x, start_y, max_width, max_height):
         """
         Fix the location and size of all the Widgets in this Layout.
 
+        :param start_x: The start column for the Layout.
         :param start_y: The start line for the Layout.
-        :param has_border: Whether to allow for border in the canvas.
+        :param max_width: Max width to allow this layout.
+        :param max_height: Max height to allow this layout.
         :returns: The next line to be used for any further Layouts.
         """
-        # Determine available space on canvas.
-        if has_border:
-            x = 1
-            width = self._frame.canvas.width - 2
-        else:
-            x = 0
-            width = self._frame.canvas.width
-
+        x = start_x
+        width = max_width
+        y = w = 0
         max_y = start_y
         for i, column in enumerate(self._columns):
             # For each column determine if we need a tab offset for labels.
@@ -417,16 +490,41 @@ class Layout(object):
             offset = int(min(offset,
                          width * self._column_sizes[i] // 3))
 
-            # Now go through each widget getting them to resize to the required
-            # width and label offset.
-            y = start_y
-            w = int(width * self._column_sizes[i])
-            for widget in column:
-                h = widget.required_height(offset, w)
-                widget.set_layout(x, y, offset, w, h)
-                y += h
+            # Possibly do 2 passes to allow one widget to fill remaining space
+            # on the screen.
+            fill_widget = None
+            fill_height = 0
+            for _ in range(2):
+                # Now go through each widget getting them to resize to the
+                # required width and label offset.
+                y = start_y
+                w = int(width * self._column_sizes[i])
+                for widget in column:
+                    h = widget.required_height(offset, w)
+                    if h < 0:
+                        if fill_widget is None:
+                            # First pass - note down required filler.
+                            fill_widget = widget
+                        elif fill_widget == widget:
+                            # Second pass - resize to calculated size
+                            widget.set_layout(x, y, offset, w, fill_height)
+                            h = fill_height
+                        else:
+                            # First pass, but a second widget - this is a bug.
+                            raise Highlander("Too many Widgets filling Layout")
+                    else:
+                        widget.set_layout(x, y, offset, w, h)
+                    y += h
+                if fill_widget is None:
+                    # No variable height widget - stop iterating.
+                    break
+                else:
+                    # We need to figure out space left.
+                    fill_height = max(0, max_height - y)
             max_y = max(max_y, y)
             x += w
+        if self.fill_frame:
+            max_y = max(max_y, max_height)
         return max_y
 
     def _find_next_widget(self, direction, stay_in_col=False, start_at=None,
@@ -684,14 +782,8 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         Call this to give this Widget the input focus.
         """
-        # TODO: Fix to handle borders
         self._has_focus = True
-        if not self._frame.canvas.is_visible(self._x, self._y):
-            if self._y < self._frame.canvas.start_line:
-                self._frame.canvas.scroll_to(self._y)
-            else:
-                line = max(0, self._y - self._frame.canvas.height + self._h)
-                self._frame.canvas.scroll_to(line)
+        self._frame.move_to(self._x, self._y, self._h)
 
     def is_mouse_over(self, event, include_label=True):
         """
@@ -727,6 +819,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         if self._label is not None:
             # Break the label up as required.
             if self._display_label is None:
+                # noinspection PyTypeChecker
                 self._display_label = _split_text(
                     self._label, self._offset, self._h)
 
@@ -1156,8 +1249,6 @@ class TextBox(Widget):
         self._start_column = 0
         self._required_height = height
         self._as_string = as_string
-        # TODO: Fix up logic to either make edit fields have boxes that merge, or just delete this code.
-        self._add_border = False
 
     def update(self, frame_no):
         self._draw_label()
@@ -1166,22 +1257,10 @@ class TextBox(Widget):
         width = self._w - self._offset
         height = self._h
         dx = dy = 0
-        if self._add_border:
-            height -= 2
-            width -= 2
-            dx = dy = 1
         self._start_line = max(0, max(self._line - height + 1,
                                       min(self._start_line, self._line)))
         self._start_column = max(0, max(self._column - width + 1,
                                         min(self._start_column, self._column)))
-
-        # Redraw the box frame if needed.
-        if self._add_border:
-            (colour, attr, bg) = self._frame.palette["borders"]
-            box = Box(width + 2, height + 2).rendered_text
-            for (i, line) in enumerate(box[0]):
-                self._frame.canvas.paint(
-                    line, self._x + self._offset, self._y + i, colour, attr, bg)
 
         # Clear out the existing box content
         (colour, attr, bg) = self._pick_colours("edit_text")
@@ -1305,7 +1384,6 @@ class TextBox(Widget):
         # Allow for extra border lines
         return self._required_height + 2
 
-    # TODO: Standardize the value interface for all widgets.
     @property
     def value(self):
         """

@@ -372,6 +372,7 @@ class Canvas(_AbstractCanvas):
         """
         return self._dx, self._dy
 
+
 class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
     """
     Class to track basic state of the screen.  This constructs the necessary
@@ -782,7 +783,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         return _BlessedScreen(terminal, height)
 
     @classmethod
-    def from_windows_windows(cls, stdout, stdin, height=200):
+    def from_windows(cls, stdout, stdin, height=200):
         """
         Construct a new Screen from a Windows console.
 
@@ -1570,10 +1571,13 @@ else:
                 pass
 
         @staticmethod
-        def _catch_interrupt(signal, frame):
+        def _catch_interrupt(signal_no, frame):
             """
             SIGINT handler.  We ignore the signal and frame info passed in.
             """
+            # Stop pep-8 shouting at me for unused params I can't control.
+            del signal_no, frame
+
             # The OS already caught the ctrl-c, so inject it now for the next
             # input.
             curses.ungetch(3)

@@ -54,3 +54,14 @@ class NextScene(Exception):
         :param name: Next Scene to invoke.  Defaults to next in the list.
         """
         self._name = name
+
+
+class Highlander(Exception):
+    """
+    There can be only one Layout or Widget with certain options set (designed
+    to fill the rest of the screen).  If you hit this exception you have
+    a bug in your application.
+
+    If you don't get the name, take a look at this link:
+    https://en.wikipedia.org/wiki/Highlander_(film)
+    """

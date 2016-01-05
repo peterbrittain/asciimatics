@@ -77,10 +77,10 @@ class ListView(Frame):
 
         # Create the form for displaying the list of contacts.
         self._list_view = ListBox(
-            10, model.get_summary(), name="contacts", on_select=self._on_pick)
+            -3, model.get_summary(), name="contacts", on_select=self._on_pick)
         self._edit_button = Button("Edit", self._edit)
         self._delete_button = Button("Delete", self._delete)
-        layout = Layout([100])
+        layout = Layout([100], fill_frame=True)
         self.add_layout(layout)
         layout.add_widget(Label("Contact list:"))
         layout.add_widget(Divider())
@@ -130,14 +130,13 @@ class ContactView(Frame):
         self._model = model
 
         # Create the form for displaying the list of contacts.
-        layout = Layout([100])
+        layout = Layout([100], fill_frame=True)
         self.add_layout(layout)
         layout.add_widget(Text("Name:", "name"))
         layout.add_widget(Text("Address:", "address"))
         layout.add_widget(Text("Phone number:", "phone"))
         layout.add_widget(Text("Email address:", "email"))
         layout.add_widget(TextBox(5, "Notes:", "notes", as_string=True))
-        layout.add_widget(Divider())
         layout2 = Layout([1, 1, 1, 1])
         self.add_layout(layout2)
         layout2.add_widget(Button("OK", self._ok), 0)
