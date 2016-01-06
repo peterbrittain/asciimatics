@@ -1576,6 +1576,7 @@ class Button(Widget):
         if isinstance(event, KeyboardEvent):
             if event.key_code in [ord(" "), 10, 13]:
                 self._on_click()
+                return
             else:
                 # Ignore any other key press.
                 return event
