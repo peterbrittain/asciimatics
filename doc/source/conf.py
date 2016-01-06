@@ -48,6 +48,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'asciimatics'
+# noinspection PyShadowingBuiltins
 copyright = u'2015, Peter Brittain'
 
 # The version info for the project you're documenting, acts as replacement for

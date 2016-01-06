@@ -322,6 +322,7 @@ class Frame(Effect):
         Rebase the coordinates of the passed event to frame-relative
         coordinates.
 
+        :param event: The event to be rebased.
         :returns: A new event object appropriately re-based.
         """
         new_event = copy(event)
