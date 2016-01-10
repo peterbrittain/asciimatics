@@ -524,7 +524,7 @@ class Layout(object):
             max_y = max(max_y, y)
             x += w
         if self.fill_frame:
-            max_y = max(max_y, max_height)
+            max_y = max(max_y, start_y + max_height)
         return max_y
 
     def _find_next_widget(self, direction, stay_in_col=False, start_at=None,
