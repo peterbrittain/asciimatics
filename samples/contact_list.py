@@ -7,6 +7,9 @@ import sys
 import sqlite3
 
 
+# TODO: Wrap in Application object
+last_scene = last_data = None
+
 class ContactModel(object):
     def __init__(self):
         # Create a database in RAM
@@ -157,13 +160,19 @@ class ContactView(Frame):
 
 
 def demo(screen):
-
+    global last_scene, last_data
     scenes = [
         Scene([ListView(screen, contacts)], -1, name="Main"),
         Scene([ContactView(screen, contacts)], -1, name="Edit Contact")
     ]
 
-    screen.play(scenes, stop_on_resize=True)
+    try:
+        screen.play(scenes, stop_on_resize=True, start=last_scene, data=last_data)
+    except ResizeScreenError as e:
+        last_scene = e.name
+        if last_scene == "Edit Contact":
+            last_data = scenes[1].effects[0].data
+        raise
 
 contacts = ContactModel()
 while True:

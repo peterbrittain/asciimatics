@@ -684,7 +684,7 @@ class Layout(object):
 
     def update_widgets(self):
         """
-        Reset te values for any Widgets in this Layout based on the current
+        Reset the values for any Widgets in this Layout based on the current
         Frame data store.
         """
         for column in self._columns:
@@ -1462,7 +1462,7 @@ class ListBox(Widget):
             self._line = 0
             self.value = self._options[self._line][1]
         else:
-            self._line = None
+            self._line = -1
             self.value = None
 
     def process_event(self, event):
@@ -1514,7 +1514,7 @@ class ListBox(Widget):
                 break
         else:
             self._value = None
-            self._line = None
+            self._line = -1
         if self._on_select:
             self._on_select()
 

@@ -988,8 +988,9 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             if c in (ord(" "), ord("\n")):
                 raise NextScene()
 
+    # TODO: Remove data from this API - it's just wrong!
     def play(self, scenes, stop_on_resize=False, unhandled_input=None,
-             start=None):
+             start=None, data=None):
         """
         Play a set of scenes.
 
@@ -1029,7 +1030,12 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 frame = 0
                 if scene.clear:
                     self.clear()
-                scene.reset()
+                # TODO: Fix this egregious hack!
+                if start is None:
+                    scene.reset()
+                else:
+                    scene.effects[0].data = data
+                    start = None
                 re_sized = skipped = False
                 while (scene.duration < 0 or frame < scene.duration) \
                         and not re_sized and not skipped:
@@ -1054,7 +1060,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 if re_sized:
                     if stop_on_resize:
                         scene.exit()
-                        raise ResizeScreenError("Resized terminal")
+                        raise ResizeScreenError("Screen resized", scene.name)
             except NextScene as e:
                 if e.name is None:
                     # Just allow next iteration of loop
