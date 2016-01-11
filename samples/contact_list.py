@@ -104,12 +104,12 @@ class ListView(Frame):
 
     def _add(self):
         self._model.current_id = None
-        raise NextScene()
+        raise NextScene("Edit Contact")
 
     def _edit(self):
         self.save()
         self._model.current_id = self.data["contacts"]
-        raise NextScene()
+        raise NextScene("Edit Contact")
 
     def _delete(self):
         self.save()
@@ -150,17 +150,17 @@ class ContactView(Frame):
     def _ok(self):
         self.save()
         self._model.update_current_contact(self.data)
-        raise NextScene()
+        raise NextScene("Main")
 
     def _cancel(self):
-        raise NextScene()
+        raise NextScene("Main")
 
 
 def demo(screen):
 
     scenes = [
-        Scene([ListView(screen, contacts)], -1),
-        Scene([ContactView(screen, contacts)], -1)
+        Scene([ListView(screen, contacts)], -1, name="Main"),
+        Scene([ContactView(screen, contacts)], -1, name="Edit Contact")
     ]
 
     screen.play(scenes, stop_on_resize=True)

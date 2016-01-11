@@ -11,13 +11,14 @@ class Scene(object):
     Effect to understand the interaction between the two classes.
     """
 
-    def __init__(self, effects, duration=0, clear=True):
+    def __init__(self, effects, duration=0, clear=True, name=None):
         """
         :param effects: The list of effects to apply to this scene.
         :param duration: The number of frames in this Scene.  A value of 0
                          means that the Scene should query the Effects to find
                          the duration.  A value of -1 means don't stop.
         :param clear: Whether to clear the Screen at the start of the Scene.
+        :param name: Optional name to identify the scene.
         """
         self._effects = []
         for effect in effects:
@@ -26,6 +27,7 @@ class Scene(object):
         if duration == 0:
             self._duration = max([x.stop_frame for x in effects])
         self._clear = clear
+        self._name = name
 
     def reset(self):
         """
@@ -75,6 +77,13 @@ class Scene(object):
             if event is None:
                 break
         return event
+
+    @property
+    def name(self):
+        """
+        :return: The name of this Scene.  May be None.
+        """
+        return self._name
 
     @property
     def effects(self):

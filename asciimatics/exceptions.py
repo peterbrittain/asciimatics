@@ -55,6 +55,12 @@ class NextScene(Exception):
         """
         self._name = name
 
+    @property
+    def name(self):
+        """
+        The name of the next Scene to invoke.
+        """
+        return self._name
 
 class Highlander(Exception):
     """
