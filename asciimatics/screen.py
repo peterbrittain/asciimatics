@@ -988,7 +988,8 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             if c in (ord(" "), ord("\n")):
                 raise NextScene()
 
-    def play(self, scenes, stop_on_resize=False, unhandled_input=None):
+    def play(self, scenes, stop_on_resize=False, unhandled_input=None,
+             start=None):
         """
         Play a set of scenes.
 
@@ -999,6 +1000,8 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         :param unhandled_input: Function to call for any input not handled
             by the Scenes/Effects being played.  Defaults to a function that
             closes the application on "Q" or "X" being pressed.
+        :param start: Name of the Scene to use to start playing.  This must
+            match the name of one of the Scenes passed in.
 
         :raises ResizeScreenError: if the screen is resized (and allowed by
             stop_on_resize).
@@ -1010,48 +1013,71 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         if unhandled_input is None:
             unhandled_input = self._unhandled_event_default
 
+        # Find the starting scene.  Default to first if no match.
+        index = 0
+        if start is not None:
+            for i, scene in enumerate(scenes):
+                if scene.name == start:
+                    index = i
+                    break
+
         # Mainline loop for animations
         self.clear()
         while True:
+            scene = scenes[index]
             try:
-                for scene in scenes:
-                    try:
-                        frame = 0
-                        if scene.clear:
-                            self.clear()
-                        scene.reset()
-                        re_sized = skipped = False
-                        while (scene.duration < 0 or frame < scene.duration) \
-                                and not re_sized and not skipped:
-                            frame += 1
-                            for effect in scene.effects:
-                                effect.update(frame)
-                                if effect.delete_count is not None:
-                                    effect.delete_count -= 1
-                                    if effect.delete_count == 0:
-                                        scene.remove_effect(effect)
-                            self.refresh()
-                            event = self.get_event()
-                            while event is not None:
-                                event = scene.process_event(event)
-                                if event is not None:
-                                    unhandled_input(event)
-                                event = self.get_event()
-                            re_sized = self.has_resized()
-                            time.sleep(0.05)
+                frame = 0
+                if scene.clear:
+                    self.clear()
+                scene.reset()
+                re_sized = skipped = False
+                while (scene.duration < 0 or frame < scene.duration) \
+                        and not re_sized and not skipped:
+                    frame += 1
+                    for effect in scene.effects:
+                        effect.update(frame)
+                        if effect.delete_count is not None:
+                            effect.delete_count -= 1
+                            if effect.delete_count == 0:
+                                scene.remove_effect(effect)
+                    self.refresh()
+                    event = self.get_event()
+                    while event is not None:
+                        event = scene.process_event(event)
+                        if event is not None:
+                            unhandled_input(event)
+                        event = self.get_event()
+                    re_sized = self.has_resized()
+                    time.sleep(0.05)
 
-                        # Break out of the function if mandated by caller.
-                        if re_sized:
-                            if stop_on_resize:
-                                scene.exit()
-                                raise ResizeScreenError("Resized terminal")
-                    except NextScene:
-                        # Just allow next iteration of loop
-                        pass
-                    scene.exit()
+                # Break out of the function if mandated by caller.
+                if re_sized:
+                    if stop_on_resize:
+                        scene.exit()
+                        raise ResizeScreenError("Resized terminal")
+            except NextScene as e:
+                if e.name is None:
+                    # Just allow next iteration of loop
+                    index += 1
+                    if index >= len(scenes):
+                        index = 0
+                else:
+                    # Find the required scene.
+                    index = 0
+                    for i, scene in enumerate(scenes):
+                        if scene.name == e.name:
+                            index = i
+                            break
+                    else:
+                        raise RuntimeError(
+                            "Could not find Scene: '{}'".format(e.name))
+
             except StopApplication:
                 # Time to stop  - just exit the function.
                 return
+
+            # Next iteration if nothing else has exited by now.
+            scene.exit()
 
     @abstractmethod
     def _change_colours(self, colour, attr, bg):
