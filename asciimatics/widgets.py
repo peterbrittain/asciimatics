@@ -322,6 +322,7 @@ class Frame(Effect):
         Rebase the coordinates of the passed event to frame-relative
         coordinates.
 
+        :param event: The event to be rebased.
         :returns: A new event object appropriately re-based.
         """
         new_event = copy(event)
@@ -1575,6 +1576,7 @@ class Button(Widget):
         if isinstance(event, KeyboardEvent):
             if event.key_code in [ord(" "), 10, 13]:
                 self._on_click()
+                return
             else:
                 # Ignore any other key press.
                 return event
