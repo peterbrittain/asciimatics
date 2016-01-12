@@ -49,6 +49,7 @@ class Scene(object):
                     for old_effect in old_scene.effects:
                         if isinstance(old_effect, Frame):
                             # TODO: Fix this privacy abuse up.
+                            # TODO: Also fix case where name == None
                             if effect._name == old_effect._name:
                                 effect.data = old_effect.data
 
