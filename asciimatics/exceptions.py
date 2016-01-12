@@ -9,12 +9,12 @@ class ResizeScreenError(Exception):
     a Scene (and the Screen has been told not to ignore a resizing event).
     """
 
-    def __init__(self, message, name=None):
+    def __init__(self, message, scene=None):
         """
         :param message: Error message for this exception.
-        :param name: Next Scene to invoke.  Defaults to next in the list.
+        :param scene: Scene that was active at time of resize.
         """
-        self._name = name
+        self._scene = scene
         self._message = message
 
     def __str__(self):
@@ -24,11 +24,11 @@ class ResizeScreenError(Exception):
         return self._message
 
     @property
-    def name(self):
+    def scene(self):
         """
-        The name of the Scene that was running when the Screen resized.
+        The Scene that was running when the Screen resized.
         """
-        return self._name
+        return self._scene
 
 
 class StopApplication(Exception):

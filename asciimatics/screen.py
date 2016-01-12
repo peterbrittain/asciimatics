@@ -988,9 +988,8 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             if c in (ord(" "), ord("\n")):
                 raise NextScene()
 
-    # TODO: Remove data from this API - it's just wrong!
     def play(self, scenes, stop_on_resize=False, unhandled_input=None,
-             start=None, data=None):
+             start_scene=None):
         """
         Play a set of scenes.
 
@@ -1001,8 +1000,8 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         :param unhandled_input: Function to call for any input not handled
             by the Scenes/Effects being played.  Defaults to a function that
             closes the application on "Q" or "X" being pressed.
-        :param start: Name of the Scene to use to start playing.  This must
-            match the name of one of the Scenes passed in.
+        :param start_scene: The old Scene to start from.  This must have name
+            that matches the name of one of the Scenes passed in.
 
         :raises ResizeScreenError: if the screen is resized (and allowed by
             stop_on_resize).
@@ -1016,11 +1015,14 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
 
         # Find the starting scene.  Default to first if no match.
         index = 0
-        if start is not None:
+        if start_scene is not None:
             for i, scene in enumerate(scenes):
-                if scene.name == start:
+                if scene.name == start_scene.name:
                     index = i
                     break
+            else:
+                # No match - ignore the old Scene.
+                start_scene = None
 
         # Mainline loop for animations
         self.clear()
@@ -1030,12 +1032,11 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 frame = 0
                 if scene.clear:
                     self.clear()
-                # TODO: Fix this egregious hack!
-                if start is None:
-                    scene.reset()
-                else:
-                    scene.effects[0].data = data
-                    start = None
+                # Reset the Scene - only pass in the old scene once (otherwise
+                # we repeat the population when we loop through all the Scenes).
+                scene.reset(old_scene=start_scene)
+                if start_scene:
+                    start_scene = None
                 re_sized = skipped = False
                 while (scene.duration < 0 or frame < scene.duration) \
                         and not re_sized and not skipped:
@@ -1060,7 +1061,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 if re_sized:
                     if stop_on_resize:
                         scene.exit()
-                        raise ResizeScreenError("Screen resized", scene.name)
+                        raise ResizeScreenError("Screen resized", scene)
             except NextScene as e:
                 if e.name is None:
                     # Just allow next iteration of loop
