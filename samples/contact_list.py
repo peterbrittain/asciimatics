@@ -7,8 +7,8 @@ import sys
 import sqlite3
 
 
-# TODO: Wrap in Application object
-last_scene = last_data = None
+# TODO: Wrap in Application object?
+last_scene = None
 
 class ContactModel(object):
     def __init__(self):
@@ -160,24 +160,18 @@ class ContactView(Frame):
 
 
 def demo(screen):
-    global last_scene, last_data
+    global last_scene
     scenes = [
         Scene([ListView(screen, contacts)], -1, name="Main"),
         Scene([ContactView(screen, contacts)], -1, name="Edit Contact")
     ]
 
-    try:
-        screen.play(scenes, stop_on_resize=True, start=last_scene, data=last_data)
-    except ResizeScreenError as e:
-        last_scene = e.name
-        if last_scene == "Edit Contact":
-            last_data = scenes[1].effects[0].data
-        raise
+    screen.play(scenes, stop_on_resize=True, start_scene=last_scene)
 
 contacts = ContactModel()
 while True:
     try:
         Screen.wrapper(demo, catch_interrupt=True)
         sys.exit(0)
-    except ResizeScreenError:
-        pass
+    except ResizeScreenError as e:
+        last_scene = e.scene

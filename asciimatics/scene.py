@@ -2,6 +2,7 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from builtins import object
+from asciimatics.widgets import Frame
 
 
 class Scene(object):
@@ -29,12 +30,27 @@ class Scene(object):
         self._clear = clear
         self._name = name
 
-    def reset(self):
+    def reset(self, old_scene):
         """
         Reset the scene ready for playing.
+
+        :param old_scene: The previous version of this Scene that was running
+            before the application reset - e.g. due to a screen resize.
         """
+        # Always reset all the effects.
         for effect in self._effects:
             effect.reset()
+
+        # If we have an old Scene to recreate, get the data out of that and
+        # apply it where possible.
+        if old_scene:
+            for effect in self._effects:
+                if isinstance(effect, Frame):
+                    for old_effect in old_scene.effects:
+                        if isinstance(old_effect, Frame):
+                            # TODO: Fix this privacy abuse up.
+                            if effect._name == old_effect._name:
+                                effect.data = old_effect.data
 
     def exit(self):
         """

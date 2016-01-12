@@ -90,7 +90,7 @@ class Frame(Effect):
     }
 
     def __init__(self, screen, height, width, data=None, on_load=None,
-                 has_border=True, hover_focus=False):
+                 has_border=True, hover_focus=False, name=None):
         """
         :param screen: The Screen that owns this Frame.
         :param width: The desired width of the Frame.
@@ -101,16 +101,22 @@ class Frame(Effect):
             Defaults to True.
         :param hover_focus: Whether hovering a mouse over a widget (i.e. mouse
             move events) should change the input focus.  Defaults to false.
+        :param name: Optional name to identify the Frame.  This is used to
+            reset data as needed from on old copy after the screen resizes.
         """
         super(Frame, self).__init__()
         self._focus = 0
         self._layouts = []
         self._canvas = Canvas(screen, height, width)
         self._data = None
-        self.data = data
         self._on_load = on_load
         self._has_border = has_border
         self._hover_focus = hover_focus
+        self._name = name
+
+        # Now set up any passed data - use the public property to trigger any
+        # necessary updates.
+        self.data = data
 
     def add_layout(self, layout):
         """
@@ -680,7 +686,9 @@ class Layout(object):
         for column in self._columns:
             for widget in column:
                 if widget.name is not None:
-                    # TODO: Fix this hack!
+                    # This relies on the fact that we are passed the actual dict
+                    # and so can edit it directly.  In this case, that is all we
+                    # want - no need to update the widgets.
                     self._frame._data[widget.name] = widget.value
 
     def update_widgets(self):
