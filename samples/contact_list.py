@@ -10,6 +10,7 @@ import sqlite3
 # TODO: Wrap in Application object?
 last_scene = None
 
+
 class ContactModel(object):
     def __init__(self):
         # Create a database in RAM

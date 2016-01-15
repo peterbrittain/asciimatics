@@ -6,6 +6,9 @@ from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError
 import sys
 
+# TODO: Wrap in Application object?
+last_scene = None
+
 # Initial data for the form
 form_data = {
     "TA": ["Hello world!", "How are you?"],
@@ -61,6 +64,7 @@ class DemoFrame(Frame):
 
 
 def demo(screen):
+    global last_scene
     scenes = []
     effects = [
         Julia(screen),
@@ -68,11 +72,11 @@ def demo(screen):
     ]
     scenes.append(Scene(effects, -1))
 
-    screen.play(scenes, stop_on_resize=True)
+    screen.play(scenes, stop_on_resize=True, start_scene=last_scene)
 
 while True:
     try:
         Screen.wrapper(demo, catch_interrupt=False)
         sys.exit(0)
-    except ResizeScreenError:
-        pass
+    except ResizeScreenError as e:
+        last_scene = e.scene
