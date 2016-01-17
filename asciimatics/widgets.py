@@ -1025,7 +1025,10 @@ class Text(Widget):
 
         # Render visible portion of the text.
         (colour, attr, bg) = self._pick_colours("edit_text")
-        text = self._value[self._start_column:self._start_column + width]
+        if self._value:
+            text = self._value[self._start_column:self._start_column + width]
+        else:
+            text = ""
         text += " " * (width - len(text))
         self._frame.canvas.print_at(
             text,
