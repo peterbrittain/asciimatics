@@ -171,7 +171,13 @@ class Frame(Effect):
                 fill_height = max(0, height - y + 1)
 
         # Reset text
-        self._layouts[self._focus].focus(force_first=True)
+        while self._focus < len(self._layouts):
+            try:
+                self._layouts[self._focus].focus(force_first=True)
+                break
+            except IndexError:
+                # TODO: convert into a proper API to detect read-only layouts
+                self._focus += 1
         self._clear()
 
     def _clear(self):
@@ -257,7 +263,13 @@ class Frame(Effect):
 
         # Set up active widget.
         self._focus = 0
-        self._layouts[self._focus].focus(force_first=True)
+        while self._focus < len(self._layouts):
+            try:
+                self._layouts[self._focus].focus(force_first=True)
+                break
+            except IndexError:
+                # TODO: convert into a proper API to detect read-only layouts
+                self._focus += 1
 
         # Call the on_load function now if specified.
         if self._on_load is not None:
@@ -350,17 +362,33 @@ class Frame(Effect):
                 if event.key_code in [Screen.KEY_TAB, Screen.KEY_DOWN]:
                     # Move on to next widget.
                     self._layouts[self._focus].blur()
+                    old_focus = self._focus
                     self._focus += 1
-                    if self._focus >= len(self._layouts):
-                        self._focus = 0
+                    while self._focus != old_focus:
+                        try:
+                            self._layouts[self._focus].focus(force_first=True)
+                            break
+                        except IndexError:
+                            # TODO: convert into a proper API
+                            self._focus += 1
+                            if self._focus >= len(self._layouts):
+                                self._focus = 0
                     self._layouts[self._focus].focus(force_first=True)
                     event = None
                 elif event.key_code in [Screen.KEY_BACK_TAB, Screen.KEY_UP]:
                     # Move on to previous widget.
                     self._layouts[self._focus].blur()
+                    old_focus = self._focus
                     self._focus -= 1
-                    if self._focus < 0:
-                        self._focus = len(self._layouts) - 1
+                    while self._focus != old_focus:
+                        try:
+                            self._layouts[self._focus].focus(force_first=True)
+                            break
+                        except IndexError:
+                            # TODO: convert into a proper API
+                            self._focus -= 1
+                            if self._focus < 0:
+                                self._focus = len(self._layouts) - 1
                     self._layouts[self._focus].focus(force_last=True)
                     event = None
             elif isinstance(event, MouseEvent):
@@ -591,6 +619,10 @@ class Layout(object):
         :returns: None if the Effect processed the event, else the original
                   event.
         """
+        # Check whether this Layout is read-only - i.e. has no active focus.
+        if self._live_col < 0 or self._live_widget < 0:
+            return event
+
         # Give the active widget the first refusal for this event.
         event = self._columns[
             self._live_col][self._live_widget].process_event(event)
@@ -1626,6 +1658,7 @@ class PopUpDialog(Frame):
         "focus_button": _bold,
         "control": _normal,
         "focus_control": _bold,
+        "disabled": _bold,
     }
 
     def __init__(self, screen, text, buttons):
@@ -1640,7 +1673,7 @@ class PopUpDialog(Frame):
         # Figure out the necessary message and allow for buttons and borders
         # when deciding on height.
         self._message = _split_text(text, width, screen.height - 4)
-        height = len(self._message) + 3
+        height = len(self._message) + 6
 
         # Construct the Frame
         self._data = {"message": self._message}
@@ -1649,7 +1682,9 @@ class PopUpDialog(Frame):
         # Build up the message box
         layout = Layout([100])
         self.add_layout(layout)
-        layout.add_widget(TextBox(len(self._message), name="message"))
+        text_box = TextBox(len(self._message), name="message")
+        text_box.disabled = True
+        layout.add_widget(text_box)
         layout2 = Layout([1 for _ in buttons])
         self.add_layout(layout2)
         for i, button in enumerate(buttons):
