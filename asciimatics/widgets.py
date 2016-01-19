@@ -1667,6 +1667,10 @@ class PopUpDialog(Frame):
         :param text: The message text to display.
         :param buttons: A list of button names to display.
         """
+        # Remember parameters for cloning.
+        self._text = text
+        self._buttons = buttons
+
         # Always make the dialog 2/3 of the screen width.
         width = screen.width * 2 // 3
 
@@ -1694,3 +1698,11 @@ class PopUpDialog(Frame):
 
     def _destroy(self):
         self._scene.remove_effect(self)
+
+    def clone(self, screen):
+        """
+        Create a clone of the object into a new Screen.
+
+        :param screen: The new Screen object to cline into.
+        """
+        return PopUpDialog(screen, self._text, self._buttons)
