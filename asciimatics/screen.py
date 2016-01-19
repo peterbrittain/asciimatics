@@ -1034,7 +1034,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                     self.clear()
                 # Reset the Scene - only pass in the old scene once (otherwise
                 # we repeat the population when we loop through all the Scenes).
-                scene.reset(old_scene=start_scene)
+                scene.reset(old_scene=start_scene, screen=self)
                 if start_scene:
                     start_scene = None
                 re_sized = skipped = False

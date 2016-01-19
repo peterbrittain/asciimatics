@@ -2,7 +2,7 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from builtins import object
-from asciimatics.widgets import Frame
+from asciimatics.widgets import Frame, PopUpDialog
 
 
 class Scene(object):
@@ -30,12 +30,13 @@ class Scene(object):
         self._clear = clear
         self._name = name
 
-    def reset(self, old_scene):
+    def reset(self, old_scene=None, screen=None):
         """
         Reset the scene ready for playing.
 
         :param old_scene: The previous version of this Scene that was running
             before the application reset - e.g. due to a screen resize.
+        :param screen: New screen to use if old_scene is not None.
         """
         # Always reset all the effects.
         for effect in self._effects:
@@ -44,10 +45,13 @@ class Scene(object):
         # If we have an old Scene to recreate, get the data out of that and
         # apply it where possible.
         if old_scene:
-            for effect in self._effects:
-                if isinstance(effect, Frame):
-                    for old_effect in old_scene.effects:
-                        if isinstance(old_effect, Frame):
+            for old_effect in old_scene.effects:
+                # TODO: Fix up logic to use attributes rather than classes.
+                if isinstance(old_effect, PopUpDialog):
+                    self.add_effect(old_effect.clone(screen))
+                elif isinstance(old_effect, Frame):
+                    for effect in self._effects:
+                        if isinstance(effect, Frame):
                             # TODO: Fix this privacy abuse up.
                             # TODO: Also fix case where name == None
                             if effect._name == old_effect._name:
