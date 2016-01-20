@@ -1425,8 +1425,7 @@ class TextBox(Widget):
             return event
 
     def required_height(self, offset, width):
-        # Allow for extra border lines
-        return self._required_height + 2
+        return self._required_height
 
     @property
     def value(self):
@@ -1539,8 +1538,7 @@ class ListBox(Widget):
             return event
 
     def required_height(self, offset, width):
-        # Allow for extra border lines
-        return self._required_height + 2
+        return self._required_height
 
     @property
     def value(self):
@@ -1677,7 +1675,7 @@ class PopUpDialog(Frame):
         # Figure out the necessary message and allow for buttons and borders
         # when deciding on height.
         self._message = _split_text(text, width, screen.height - 4)
-        height = len(self._message) + 6
+        height = len(self._message) + 3
 
         # Construct the Frame
         self._data = {"message": self._message}
@@ -1694,7 +1692,11 @@ class PopUpDialog(Frame):
         for i, button in enumerate(buttons):
             layout2.add_widget(Button(button, self._destroy), i)
         self.fix()
-        # TODO: Need to fix up modal nature of the pop-up.
+
+    def process_event(self, event):
+        # Only allow this effect to handle events.
+        super(PopUpDialog, self).process_event(event)
+        return None
 
     def _destroy(self):
         self._scene.remove_effect(self)
