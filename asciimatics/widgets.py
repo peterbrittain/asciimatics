@@ -1670,19 +1670,19 @@ class PopUpDialog(Frame):
         self._buttons = buttons
 
         # Always make the dialog 2/3 of the screen width.
-        width = screen.width * 2 // 3
+        width = min(len(self._text) + 4, screen.width * 2 // 3)
 
         # Figure out the necessary message and allow for buttons and borders
         # when deciding on height.
         self._message = _split_text(text, width, screen.height - 4)
-        height = len(self._message) + 3
+        height = len(self._message) + 4
 
         # Construct the Frame
         self._data = {"message": self._message}
         super(PopUpDialog, self).__init__(screen, height, width, self._data)
 
         # Build up the message box
-        layout = Layout([100])
+        layout = Layout([100], fill_frame=True)
         self.add_layout(layout)
         text_box = TextBox(len(self._message), name="message")
         text_box.disabled = True
