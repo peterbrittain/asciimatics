@@ -6,9 +6,6 @@ from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError
 import sys
 
-# TODO: Wrap in Application object?
-last_scene = None
-
 # Initial data for the form
 form_data = {
     "TA": ["Hello world!", "How are you?"],
@@ -25,7 +22,8 @@ class DemoFrame(Frame):
     def __init__(self, screen):
         super(DemoFrame, self).__init__(screen,
                                         int(screen.height * 2 // 3),
-                                        int(screen.width * 2 // 3))
+                                        int(screen.width * 2 // 3),
+                                        data=form_data)
         layout = Layout([1, 18, 1])
         self.add_layout(layout)
         layout.add_widget(Label("Group 1:"), 1)
@@ -63,7 +61,7 @@ class DemoFrame(Frame):
             PopUpDialog(self._canvas._screen, "Cancel pressed", ["OK"]))
 
 
-def demo(screen):
+def demo(screen, scene):
     global last_scene
     scenes = []
     effects = [
@@ -72,11 +70,12 @@ def demo(screen):
     ]
     scenes.append(Scene(effects, -1))
 
-    screen.play(scenes, stop_on_resize=True, start_scene=last_scene)
+    screen.play(scenes, stop_on_resize=True, start_scene=scene)
 
+last_scene = None
 while True:
     try:
-        Screen.wrapper(demo, catch_interrupt=False)
+        Screen.wrapper(demo, catch_interrupt=False, arguments=[last_scene])
         sys.exit(0)
     except ResizeScreenError as e:
         last_scene = e.scene
