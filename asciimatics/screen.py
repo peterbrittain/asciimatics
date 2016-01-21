@@ -798,7 +798,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         return _WindowsScreen(stdout, stdin, height)
 
     @classmethod
-    def wrapper(cls, func, height=200, catch_interrupt=False):
+    def wrapper(cls, func, height=200, catch_interrupt=False, arguments=None):
         """
         Construct a new Screen for any platform.  This will initialize and tidy
         up the system as required around the underlying console subsystem.
@@ -807,6 +807,8 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         :param height: The buffer height for this window (if using scrolling).
         :param catch_interrupt: Whether to catch and prevent keyboard
             interrupts.  Defaults to False to maintain backwards compatibility.
+        :param arguments: Optional arguments list to pass to func (after the
+            Screen object).
         """
         if sys.platform == "win32":
             # I don't like this, but we need to track the last screen for
@@ -851,7 +853,10 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             try:
                 # Create the screen and invoke the wrapped function.
                 win_screen = _WindowsScreen(win_out, win_in, height)
-                func(win_screen)
+                if arguments:
+                    func(win_screen, *arguments)
+                else:
+                    func(win_screen)
 
                 # Only restore the screen if we are genuinely finished - and so
                 # have not raised an exception.  This stops the restore from
@@ -872,7 +877,10 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 cur_screen = _CursesScreen(win,
                                            height,
                                            catch_interrupt=catch_interrupt)
-                func(cur_screen)
+                if arguments:
+                    func(win_screen, *arguments)
+                else:
+                    func(cur_screen)
 
             curses.wrapper(_wrapper)
 
