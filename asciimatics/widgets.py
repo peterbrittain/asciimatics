@@ -63,6 +63,10 @@ class Frame(Effect):
             (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLUE),
         "borders":
             (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLUE),
+        "scroll":
+            (Screen.COLOUR_GREEN, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "title":
+            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLUE),
         "edit_text":
             (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
         "focus_edit_text":
@@ -90,7 +94,7 @@ class Frame(Effect):
     }
 
     def __init__(self, screen, height, width, data=None, on_load=None,
-                 has_border=True, hover_focus=False, name=None):
+                 has_border=True, hover_focus=False, name=None, title=None):
         """
         :param screen: The Screen that owns this Frame.
         :param width: The desired width of the Frame.
@@ -103,9 +107,11 @@ class Frame(Effect):
             move events) should change the input focus.  Defaults to false.
         :param name: Optional name to identify the Frame.  This is used to
             reset data as needed from on old copy after the screen resizes.
+        :param title: Optional title to display if has_border is True.
         """
         super(Frame, self).__init__()
         self._focus = 0
+        self._max_height = 0
         self._layouts = []
         self._canvas = Canvas(screen, height, width)
         self._data = None
@@ -113,6 +119,7 @@ class Frame(Effect):
         self._has_border = has_border
         self._hover_focus = hover_focus
         self._name = name
+        self._title = " " + title[0:width-4] + " " if title else ""
 
         # Now set up any passed data - use the public property to trigger any
         # necessary updates.
@@ -170,6 +177,9 @@ class Frame(Effect):
             else:
                 fill_height = max(0, height - y + 1)
 
+        # Remember the resulting height of the underlying Layouts.
+        self._max_height = y
+
         # Reset text
         while self._focus < len(self._layouts):
             try:
@@ -202,6 +212,7 @@ class Frame(Effect):
 
         # Draw any border if needed.
         if self._has_border:
+            # Draw the basic border first.
             (colour, attr, bg) = self.palette["borders"]
             for dy in range(self._canvas.height):
                 y = self._canvas.start_line + dy
@@ -214,7 +225,27 @@ class Frame(Effect):
                     self._canvas.print_at("|", self._canvas.width - 1, y,
                                           colour, attr, bg)
 
-        # TODO: Handle scroll bar
+            # Now the title
+            (colour, attr, bg) = self.palette["title"]
+            self._canvas.print_at(
+                self._title,
+                (self._canvas.width - len(self._title)) // 2,
+                self._canvas.start_line,
+                colour, attr, bg)
+
+            # And now the scroll bar
+            if self._canvas.height > 5:
+                sb_height = self._canvas.height - 4
+                sb_pos = (self._canvas.start_line /
+                          (self._max_height - self._canvas.height))
+                sb_pos = min(1, max(0, sb_pos))
+                sb_pos = max(int(sb_height * sb_pos) - 1, 0)
+                (colour, attr, bg) = self.palette["scroll"]
+                for dy in range(sb_height):
+                    y = self._canvas.start_line + dy + 2
+                    self._canvas.print_at("O" if dy == sb_pos else "|",
+                                          self._canvas.width - 1, y,
+                                          colour, attr, bg)
 
         # Now push it all to screen.
         self._canvas.refresh()
@@ -224,9 +255,6 @@ class Frame(Effect):
         """
         Data dictionary containing values from the contained widgets.
         """
-        # Make sure we have an up-to-date copy.
-        # TODO: Fix this if needed.
-        # self.save()
         return self._data
 
     @data.setter
@@ -307,11 +335,11 @@ class Frame(Effect):
     def move_to(self, x, y, h):
         """
         Make the specified location visible.  This is typically used by a widget
-        to scroll the canvas such that it is visiable.
+        to scroll the canvas such that it is visible.
 
         :param x: The x location to make visible.
         :param y: The y location to make visible.
-        :param h: The height of the location to make visisble.
+        :param h: The height of the location to make visible.
         """
         if self._has_border:
             start_x = 1
@@ -1650,6 +1678,7 @@ class PopUpDialog(Frame):
         "background": _normal,
         "label": _bold,
         "borders": _normal,
+        "title": _bold,
         "edit_text": _normal,
         "focus_edit_text": _bold,
         "field": _normal,
