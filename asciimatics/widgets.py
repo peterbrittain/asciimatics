@@ -89,7 +89,7 @@ class Frame(Effect):
             (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
     }
 
-    def __init__(self, screen, height, width, data=None, on_load=None,
+    def __init__(self, screen, height, width, data={}, on_load=None,
                  has_border=True, hover_focus=False, name=None):
         """
         :param screen: The Screen that owns this Frame.
@@ -113,10 +113,11 @@ class Frame(Effect):
         self._has_border = has_border
         self._hover_focus = hover_focus
         self._name = name
+        self._initial_data = data
 
         # Now set up any passed data - use the public property to trigger any
         # necessary updates.
-        self.data = data
+        self.data = self._initial_data
 
     def add_layout(self, layout):
         """
@@ -255,6 +256,9 @@ class Frame(Effect):
         return self._canvas
 
     def reset(self):
+        # Reset form to default state.
+        self.data = self._initial_data
+
         # Now reset the individual widgets.
         self._canvas.reset()
         for layout in self._layouts:
