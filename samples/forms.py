@@ -3,7 +3,7 @@ from asciimatics.widgets import Frame, TextBox, Layout, Label, Divider, Text, \
     CheckBox, RadioButtons, Button, PopUpDialog
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
-from asciimatics.exceptions import ResizeScreenError
+from asciimatics.exceptions import ResizeScreenError, NextScene
 import sys
 
 # TODO: Wrap in Application object?
@@ -46,21 +46,31 @@ class DemoFrame(Frame):
         layout.add_widget(CheckBox("Field 2", name="CB"), 1)
         layout.add_widget(CheckBox("Field 3", name="CC"), 1)
         layout.add_widget(Divider(height=3), 1)
-        layout2 = Layout([1, 1, 1, 1])
+        layout2 = Layout([1, 1, 1])
         self.add_layout(layout2)
-        layout2.add_widget(Button("OK", self._ok), 0)
-        layout2.add_widget(Button("Cancel", self._cancel), 3)
+        layout2.add_widget(Button("Reset", self._reset), 0)
+        layout2.add_widget(Button("View Data", self._view), 1)
+        layout2.add_widget(Button("Quit", self._quit), 2)
         self.fix()
 
-    def _ok(self):
-        # TODO: Fix up direct access to canvas _screen property
-        self._scene.add_effect(
-            PopUpDialog(self._canvas._screen, "OK pressed", ["OK"]))
+    def _reset(self):
+        self.reset()
+        raise NextScene()
 
-    def _cancel(self):
+    def _view(self):
+        # Buid result of this form and display it.
+        self.save()
+        message = "Values entered are:\n"
+        for key, value in self.data.iteritems():
+            message += "{}: {}\n".format(key, value)
         # TODO: Fix up direct access to canvas _screen property
         self._scene.add_effect(
-            PopUpDialog(self._canvas._screen, "Cancel pressed", ["OK"]))
+            PopUpDialog(self._canvas._screen, message, ["OK"]))
+
+    def _quit(self):
+        # TODO: Fix up direct access to canvas _screen property
+        self._scene.add_effect(
+            PopUpDialog(self._canvas._screen, "Are you sure?", ["Yes", "No"]))
 
 
 def demo(screen):
