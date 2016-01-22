@@ -7,10 +7,6 @@ import sys
 import sqlite3
 
 
-# TODO: Wrap in Application object?
-last_scene = None
-
-
 class ContactModel(object):
     def __init__(self):
         # Create a database in RAM
@@ -75,7 +71,8 @@ class ListView(Frame):
                                        screen.height * 2 // 3,
                                        screen.width * 2 // 3,
                                        on_load=self._reload_list,
-                                       hover_focus=True)
+                                       hover_focus=True,
+                                       title="Contact List")
         # Save off the model that accesses the contacts database.
         self._model = model
 
@@ -86,8 +83,6 @@ class ListView(Frame):
         self._delete_button = Button("Delete", self._delete)
         layout = Layout([100], fill_frame=True)
         self.add_layout(layout)
-        layout.add_widget(Label("Contact list:"))
-        layout.add_widget(Divider())
         layout.add_widget(self._list_view)
         layout.add_widget(Divider())
         layout2 = Layout([1, 1, 1, 1])
@@ -129,7 +124,8 @@ class ContactView(Frame):
         super(ContactView, self).__init__(screen,
                                           screen.height * 2 // 3,
                                           screen.width * 2 // 3,
-                                          hover_focus=True)
+                                          hover_focus=True,
+                                          title="Contact Details")
         # Save off the model that accesses the contacts database.
         self._model = model
 
@@ -160,19 +156,19 @@ class ContactView(Frame):
         raise NextScene("Main")
 
 
-def demo(screen):
-    global last_scene
+def demo(screen, scene):
     scenes = [
         Scene([ListView(screen, contacts)], -1, name="Main"),
         Scene([ContactView(screen, contacts)], -1, name="Edit Contact")
     ]
 
-    screen.play(scenes, stop_on_resize=True, start_scene=last_scene)
+    screen.play(scenes, stop_on_resize=True, start_scene=scene)
 
 contacts = ContactModel()
+last_scene = None
 while True:
     try:
-        Screen.wrapper(demo, catch_interrupt=True)
+        Screen.wrapper(demo, catch_interrupt=True, arguments=[last_scene])
         sys.exit(0)
     except ResizeScreenError as e:
         last_scene = e.scene
