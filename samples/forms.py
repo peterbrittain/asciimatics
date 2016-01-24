@@ -74,9 +74,9 @@ class DemoFrame(Frame):
                         on_close=self._quit_on_yes))
 
     @staticmethod
-    def _quit_on_yes(button):
+    def _quit_on_yes(selected):
         # Yes is the first button
-        if button == 0:
+        if selected == 0:
             raise StopApplication("User requested exit")
 
 def demo(screen, scene):
