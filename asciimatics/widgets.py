@@ -1,8 +1,10 @@
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
+from builtins import chr
+from builtins import range
 from builtins import object
-from copy import copy
+from copy import copy, deepcopy
 from future.utils import with_metaclass
 from abc import ABCMeta, abstractmethod
 from asciimatics.effects import Effect
@@ -124,7 +126,7 @@ class Frame(Effect):
 
         # Now set up any passed data - use the public property to trigger any
         # necessary updates.
-        self.data = self._initial_data
+        self.data = deepcopy(self._initial_data)
 
     def add_layout(self, layout):
         """
@@ -264,7 +266,7 @@ class Frame(Effect):
         # sqlite3 Row class.
         self._data = {}
         if new_value is not None:
-            for key in new_value.keys():
+            for key in list(new_value.keys()):
                 self._data[key] = new_value[key]
 
         # Now update any widgets as needed.
@@ -285,7 +287,7 @@ class Frame(Effect):
 
     def reset(self):
         # Reset form to default state.
-        self.data = self._initial_data
+        self.data = deepcopy(self._initial_data)
 
         # Now reset the individual widgets.
         self._canvas.reset()
@@ -1687,24 +1689,30 @@ class PopUpDialog(Frame):
         "field": _normal,
         "focus_field": _bold,
         "button": _normal,
-        "focus_button": _bold,
+        "focus_button":
+            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_YELLOW),
         "control": _normal,
         "focus_control": _bold,
         "disabled": _bold,
     }
 
-    def __init__(self, screen, text, buttons):
+    def __init__(self, screen, text, buttons, on_close=None):
         """
         :param screen: The Screen that owns this dialog.
         :param text: The message text to display.
         :param buttons: A list of button names to display.
+        :param on_close: Optional function to invoke on exit.  This MUST be a
+            static method to work across screen resizing.
         """
         # Remember parameters for cloning.
         self._text = text
         self._buttons = buttons
+        self._on_close = on_close
 
-        # Always make the dialog 2/3 of the screen width.
-        width = min(len(self._text) + 4, screen.width * 2 // 3)
+        # Decide on optimum width of the dialog.  Limit to 2/3 the screen width.
+        width = max(len(self._text) + 4,
+                    sum([len(x) + 4 for x in buttons]) + len(buttons) + 5)
+        width = min(width, screen.width * 2 // 3)
 
         # Figure out the necessary message and allow for buttons and borders
         # when deciding on height.
@@ -1734,6 +1742,9 @@ class PopUpDialog(Frame):
 
     def _destroy(self):
         self._scene.remove_effect(self)
+        if self._on_close:
+            # TODO: Fix up indexing of which button was pressed.
+            self._on_close(0)
 
     def clone(self, screen):
         """
@@ -1741,4 +1752,4 @@ class PopUpDialog(Frame):
 
         :param screen: The new Screen object to cline into.
         """
-        return PopUpDialog(screen, self._text, self._buttons)
+        return PopUpDialog(screen, self._text, self._buttons, self._on_close)

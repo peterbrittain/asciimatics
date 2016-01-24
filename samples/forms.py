@@ -3,7 +3,7 @@ from asciimatics.widgets import Frame, TextBox, Layout, Label, Divider, Text, \
     CheckBox, RadioButtons, Button, PopUpDialog
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
-from asciimatics.exceptions import ResizeScreenError, NextScene
+from asciimatics.exceptions import ResizeScreenError, NextScene, StopApplication
 import sys
 
 # Initial data for the form
@@ -56,10 +56,10 @@ class DemoFrame(Frame):
         raise NextScene()
 
     def _view(self):
-        # Buid result of this form and display it.
+        # Build result of this form and display it.
         self.save()
         message = "Values entered are:\n"
-        for key, value in self.data.iteritems():
+        for key, value in self.data.items():
             message += "{}: {}\n".format(key, value)
         # TODO: Fix up direct access to canvas _screen property
         self._scene.add_effect(
@@ -68,8 +68,16 @@ class DemoFrame(Frame):
     def _quit(self):
         # TODO: Fix up direct access to canvas _screen property
         self._scene.add_effect(
-            PopUpDialog(self._canvas._screen, "Are you sure?", ["Yes", "No"]))
+            PopUpDialog(self._canvas._screen,
+                        "Are you sure?",
+                        ["Yes", "No"],
+                        on_close=self._quit_on_yes))
 
+    @staticmethod
+    def _quit_on_yes(button):
+        # Yes is the first button
+        if button == 0:
+            raise StopApplication("User requested exit")
 
 def demo(screen, scene):
     global last_scene
