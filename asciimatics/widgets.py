@@ -149,11 +149,11 @@ class Frame(Effect):
         for _ in range(2):
             # Pick starting point/height - varies for borders.
             if self._has_border:
-                x = y = 1
+                x = y = start_y = 1
                 height = self._canvas.height - 2
                 width = self._canvas.width - 2
             else:
-                x = y = 0
+                x = y = start_y = 0
                 height = self._canvas.height
                 width = self._canvas.width
 
@@ -178,7 +178,7 @@ class Frame(Effect):
             if fill_layout is None:
                 break
             else:
-                fill_height = max(0, height - y + 1)
+                fill_height = max(0, start_y + height - y)
 
         # Remember the resulting height of the underlying Layouts.
         self._max_height = y
@@ -578,18 +578,19 @@ class Layout(object):
                             # Second pass - resize to calculated size
                             widget.set_layout(x, y, offset, w, fill_height)
                             h = fill_height
+                            y += h
                         else:
                             # First pass, but a second widget - this is a bug.
                             raise Highlander("Too many Widgets filling Layout")
                     else:
                         widget.set_layout(x, y, offset, w, h)
-                    y += h
+                        y += h
                 if fill_widget is None:
                     # No variable height widget - stop iterating.
                     break
                 else:
                     # We need to figure out space left.
-                    fill_height = max(0, max_height - y)
+                    fill_height = max(0, start_y + max_height - y)
             max_y = max(max_y, y)
             x += w
         if self.fill_frame:
