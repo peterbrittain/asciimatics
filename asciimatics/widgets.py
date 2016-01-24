@@ -6,6 +6,7 @@ from builtins import range
 from builtins import object
 from copy import copy, deepcopy
 from functools import partial
+import re
 from future.utils import with_metaclass
 from abc import ABCMeta, abstractmethod
 from asciimatics.effects import Effect
@@ -29,11 +30,12 @@ def _split_text(text, width, height):
     result = []
     current_line = ""
     for token in tokens:
-        if len(current_line + token) > width:
-            result.append(current_line.rstrip())
-            current_line = token
-        else:
-            current_line += token + " "
+        for i, line_token in enumerate(token.split("\n")):
+            if len(current_line + line_token) > width or i > 0:
+                result.append(current_line.rstrip())
+                current_line = line_token + " "
+            else:
+                current_line += line_token + " "
     else:
         result.append(current_line.rstrip())
 
@@ -1680,6 +1682,7 @@ class PopUpDialog(Frame):
     # Override standard palette for pop-ups
     _normal = (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_RED)
     _bold = (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_RED)
+    _focus = (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_YELLOW)
     palette = {
         "background": _normal,
         "label": _bold,
@@ -1691,8 +1694,7 @@ class PopUpDialog(Frame):
         "field": _normal,
         "focus_field": _bold,
         "button": _normal,
-        "focus_button":
-            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_YELLOW),
+        "focus_button": _focus,
         "control": _normal,
         "focus_control": _bold,
         "disabled": _bold,
@@ -1716,7 +1718,8 @@ class PopUpDialog(Frame):
         self._on_close = on_close
 
         # Decide on optimum width of the dialog.  Limit to 2/3 the screen width.
-        width = max(len(self._text) + 4,
+        width = max([len(x) for x in text.split("\n")])
+        width = max(width + 4,
                     sum([len(x) + 4 for x in buttons]) + len(buttons) + 5)
         width = min(width, screen.width * 2 // 3)
 
