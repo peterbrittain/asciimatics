@@ -5,6 +5,7 @@ from builtins import chr
 from builtins import range
 from builtins import object
 from copy import copy, deepcopy
+from functools import partial
 from future.utils import with_metaclass
 from abc import ABCMeta, abstractmethod
 from asciimatics.effects import Effect
@@ -1704,6 +1705,10 @@ class PopUpDialog(Frame):
         :param buttons: A list of button names to display.
         :param on_close: Optional function to invoke on exit.  This MUST be a
             static method to work across screen resizing.
+
+        The `on_close` method (if specified) will be called with one integer
+        parameter that corresponds to the index of the button passed in the
+        array of available `buttons`.
         """
         # Remember parameters for cloning.
         self._text = text
@@ -1733,7 +1738,8 @@ class PopUpDialog(Frame):
         layout2 = Layout([1 for _ in buttons])
         self.add_layout(layout2)
         for i, button in enumerate(buttons):
-            layout2.add_widget(Button(button, self._destroy), i)
+            func = partial(self._destroy, i)
+            layout2.add_widget(Button(button, func), i)
         self.fix()
 
     def process_event(self, event):
@@ -1741,11 +1747,10 @@ class PopUpDialog(Frame):
         super(PopUpDialog, self).process_event(event)
         return None
 
-    def _destroy(self):
+    def _destroy(self, selected):
         self._scene.remove_effect(self)
         if self._on_close:
-            # TODO: Fix up indexing of which button was pressed.
-            self._on_close(0)
+            self._on_close(selected)
 
     def clone(self, screen):
         """
