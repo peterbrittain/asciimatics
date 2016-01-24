@@ -58,9 +58,9 @@ class DemoFrame(Frame):
     def _view(self):
         # Build result of this form and display it.
         self.save()
-        message = "Values entered are:\n"
+        message = "Values entered are:\n\n"
         for key, value in self.data.items():
-            message += "{}: {}\n".format(key, value)
+            message += "- {}: {}\n".format(key, value)
         # TODO: Fix up direct access to canvas _screen property
         self._scene.add_effect(
             PopUpDialog(self._canvas._screen, message, ["OK"]))
