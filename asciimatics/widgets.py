@@ -418,7 +418,7 @@ class Frame(Effect):
                     self._focus -= 1
                     while self._focus != old_focus:
                         try:
-                            self._layouts[self._focus].focus(force_first=True)
+                            self._layouts[self._focus].focus(force_last=True)
                             break
                         except IndexError:
                             # TODO: convert into a proper API
