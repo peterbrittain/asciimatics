@@ -6,9 +6,8 @@ from builtins import range
 from builtins import object
 from copy import copy, deepcopy
 from functools import partial
-import re
 from future.utils import with_metaclass
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import Highlander
@@ -770,7 +769,7 @@ class Layout(object):
             for widget in column:
                 if widget.name in self._frame.data:
                     widget.value = self._frame.data[widget.name]
-                else:
+                elif widget.is_tab_stop:
                     widget.value = None
 
     def reset(self):
@@ -981,16 +980,11 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         return self._name
 
-    @property
+    @abstractproperty
     def value(self):
         """
         The value to return for this widget based on the user's input.
         """
-        return self._value
-
-    @value.setter
-    def value(self, new_value):
-        self._value = new_value
 
     @abstractmethod
     def required_height(self, offset, width):
@@ -1033,6 +1027,10 @@ class Label(Widget):
         # Allow one line for text and a blank spacer before it.
         return 1
 
+    @property
+    def value(self):
+        return self._value
+
 
 class Divider(Widget):
     """
@@ -1068,6 +1066,10 @@ class Divider(Widget):
         # Allow one line for text and a blank spacer before it.
         return self._required_height
 
+    @property
+    def value(self):
+        return self._value
+
 
 class Text(Widget):
     """
@@ -1095,10 +1097,7 @@ class Text(Widget):
 
         # Render visible portion of the text.
         (colour, attr, bg) = self._pick_colours("edit_text")
-        if self._value:
-            text = self._value[self._start_column:self._start_column + width]
-        else:
-            text = ""
+        text = self._value[self._start_column:self._start_column + width]
         text += " " * (width - len(text))
         self._frame.canvas.print_at(
             text,
@@ -1118,8 +1117,6 @@ class Text(Widget):
 
     def reset(self):
         # Reset to original data and move to end of the text.
-        if self._value is None:
-            self._value = ""
         self._column = len(self._value)
 
     def process_event(self, event):
@@ -1168,6 +1165,14 @@ class Text(Widget):
 
     def required_height(self, offset, width):
         return 1
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, new_value):
+        self._value = new_value if new_value else ""
 
 
 class CheckBox(Widget):
@@ -1230,6 +1235,14 @@ class CheckBox(Widget):
     def required_height(self, offset, width):
         return 1
 
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, new_value):
+        self._value = new_value if new_value else False
+
 
 class RadioButtons(Widget):
     """
@@ -1270,12 +1283,7 @@ class RadioButtons(Widget):
                 fg2, attr2, bg2)
 
     def reset(self):
-        for i, (_, value) in enumerate(self._options):
-            if self._value == value:
-                self._selection = i
-                break
-        else:
-            self._selection = 0
+        pass
 
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
@@ -1306,6 +1314,20 @@ class RadioButtons(Widget):
 
     def required_height(self, offset, width):
         return len(self._options)
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, new_value):
+        self._value = new_value
+        for i, (_, value) in enumerate(self._options):
+            if new_value == value:
+                self._selection = i
+                break
+        else:
+            self._selection = 0
 
 
 class TextBox(Widget):
@@ -1374,8 +1396,6 @@ class TextBox(Widget):
 
     def reset(self):
         # Reset to original data and move to end of the text.
-        if self._value is None:
-            self._value = [""]
         self._line = len(self._value) - 1
         self._column = len(self._value[self._line])
 
@@ -1467,9 +1487,6 @@ class TextBox(Widget):
 
     @property
     def value(self):
-        """
-        The value to return for this widget based on the user's input.
-        """
         if self._value is None:
             self._value = [""]
         return "\n".join(self._value) if self._as_string else self._value
@@ -1580,9 +1597,6 @@ class ListBox(Widget):
 
     @property
     def value(self):
-        """
-        The value to return for this widget based on the user's input.
-        """
         return self._value
 
     @value.setter
@@ -1671,6 +1685,14 @@ class Button(Widget):
 
     def required_height(self, offset, width):
         return 1
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, new_value):
+        self._value = new_value
 
 
 class PopUpDialog(Frame):
