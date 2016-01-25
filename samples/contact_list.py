@@ -144,8 +144,9 @@ class ContactView(Frame):
         self.fix()
 
     def reset(self):
-        self.data = self._model.get_current_contact()
+        # Do standard reset to clear out form, then populate with new data.
         super(ContactView, self).reset()
+        self.data = self._model.get_current_contact()
 
     def _ok(self):
         self.save()
