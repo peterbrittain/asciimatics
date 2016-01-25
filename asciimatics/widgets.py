@@ -68,7 +68,7 @@ class Frame(Effect):
         "borders":
             (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLUE),
         "scroll":
-            (Screen.COLOUR_GREEN, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+            (Screen.COLOUR_CYAN, Screen.A_NORMAL, Screen.COLOUR_BLUE),
         "title":
             (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLUE),
         "edit_text":
@@ -428,9 +428,26 @@ class Frame(Effect):
                     self._layouts[self._focus].focus(force_last=True)
                     event = None
             elif isinstance(event, MouseEvent):
+                # Give layouts/widgets first dibs on the mouse message.
                 for layout in self._layouts:
                     if layout.process_event(event, self._hover_focus) is None:
                         return
+
+                # If no joy, check whether the scroll bar was clicked.
+                if self._has_border:
+                    # Don't use rebase as this converts to scrolled coordinates.
+                    x = event.x - self._canvas.origin[0]
+                    y = event.y - self._canvas.origin[1]
+                    if (x == self.canvas.width - 1 and
+                            1 < y < self.canvas.height - 2):
+                        sb_height = self._canvas.height - 5
+                        sb_pos = (y - 2) / sb_height
+                        sb_pos *= self._max_height - self._canvas.height + 1
+                        sb_pos = int(max(0, sb_pos))
+                        self._canvas.print_at(str(sb_pos), 1, 1)
+                        self._canvas.scroll_to(sb_pos)
+                        return
+
         return event
 
 
