@@ -1045,9 +1045,9 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 scene.reset(old_scene=start_scene, screen=self)
                 if start_scene:
                     start_scene = None
-                re_sized = skipped = False
-                while (scene.duration < 0 or frame < scene.duration) \
-                        and not re_sized and not skipped:
+                re_sized = False
+                start_frame = frame
+                while not re_sized:
                     frame += 1
                     for effect in scene.effects:
                         effect.update(frame)
@@ -1063,6 +1063,9 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                             unhandled_input(event)
                         event = self.get_event()
                     re_sized = self.has_resized()
+                    if (scene.duration > 0 and
+                            frame >= scene.duration - start_frame):
+                        raise NextScene()
                     time.sleep(0.05)
 
                 # Break out of the function if mandated by caller.
