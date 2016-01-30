@@ -502,7 +502,7 @@ class BarChart(DynamicRenderer):
     def __init__(self, height, width, functions, char="#",
                  colour=Screen.COLOUR_GREEN, bg=Screen.COLOUR_BLACK,
                  gradient=None, scale=None, axes=Y_AXIS, intervals=None,
-                 labels=False, border=True):
+                 labels=False, border=True, keys=None):
         """
         :param height: The max height of the rendered image.
         :param width: The max width of the rendered image.
@@ -520,10 +520,11 @@ class BarChart(DynamicRenderer):
             will be truncated when drawn.  Defaults to the number of available
             characters in the chart.
         :param axes: Which axes to draw.
-        :param intervals: Units for interval markers on the mains axis.
+        :param intervals: Units for interval markers on the main axis.
             Defaults to none.
         :param labels: Whether to label the main axis.
         :param border: Whether to draw a border around the chart.
+        :param keys: Optional keys for each bar.
         """
         super(BarChart, self).__init__(height, width)
         self._functions = functions
@@ -536,6 +537,7 @@ class BarChart(DynamicRenderer):
         self._intervals = intervals
         self._labels = labels
         self._border = border
+        self._keys = keys
 
     def _render_now(self):
         super(BarChart, self)._render_now()
@@ -558,6 +560,13 @@ class BarChart(DynamicRenderer):
             int_w -= 6
             start_y += 2
             start_x += 3
+
+        # Make room for the keys if supplied.
+        if self._keys:
+            width = max([len(x) for x in self._keys])
+            key_x = start_x
+            int_w -= width + 1
+            start_x += width + 1
 
         # Now add the axes - resizing chart space as required...
         if (self._axes & BarChart.X_AXIS) > 0:
@@ -604,6 +613,12 @@ class BarChart(DynamicRenderer):
         for i, fn in enumerate(self._functions):
             bar_len = int(fn() * int_w / scale)
             y = start_y + (i * bar_size) + int(i * gap)
+
+            # First draw the key if supplied
+            if self._keys:
+                self._write(self._keys[i], key_x, y)
+
+            # Now draw the bar
             colour = self._colours[i % len(self._colours)]
             bg = self._bgs[i % len(self._bgs)]
             if self._gradient:

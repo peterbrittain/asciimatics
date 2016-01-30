@@ -4,6 +4,7 @@ CHANGE HISTORY
 1.6.0
 -----
 - Added `attr` option to Print Effect.
+- Added `keys` option to BarChart Renderer.
 
 1.5.0
 -----
