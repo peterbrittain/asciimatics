@@ -61,14 +61,12 @@ class DemoFrame(Frame):
         message = "Values entered are:\n\n"
         for key, value in self.data.items():
             message += "- {}: {}\n".format(key, value)
-        # TODO: Fix up direct access to canvas _screen property
         self._scene.add_effect(
-            PopUpDialog(self._canvas._screen, message, ["OK"]))
+            PopUpDialog(self._screen, message, ["OK"]))
 
     def _quit(self):
-        # TODO: Fix up direct access to canvas _screen property
         self._scene.add_effect(
-            PopUpDialog(self._canvas._screen,
+            PopUpDialog(self._screen,
                         "Are you sure?",
                         ["Yes", "No"],
                         on_close=self._quit_on_yes))
@@ -78,6 +76,7 @@ class DemoFrame(Frame):
         # Yes is the first button
         if selected == 0:
             raise StopApplication("User requested exit")
+
 
 def demo(screen, scene):
     global last_scene

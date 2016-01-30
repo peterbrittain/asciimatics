@@ -1,6 +1,7 @@
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
+from types import FunctionType
 from builtins import chr
 from builtins import range
 from builtins import object
@@ -117,6 +118,7 @@ class Frame(Effect):
         self._focus = 0
         self._max_height = 0
         self._layouts = []
+        self._screen = screen
         self._canvas = Canvas(screen, height, width)
         self._data = None
         self._on_load = on_load
@@ -191,7 +193,6 @@ class Frame(Effect):
                 self._layouts[self._focus].focus(force_first=True)
                 break
             except IndexError:
-                # TODO: convert into a proper API to detect read-only layouts
                 self._focus += 1
         self._clear()
 
@@ -202,7 +203,7 @@ class Frame(Effect):
         # It's orders of magnitude faster to reset with a print like this
         # instead of recreating the screen buffers.
         (colour, attr, bg) = self.palette["background"]
-        # TODO: Fix internal use of buffer height.
+        # TODO: Fix internal use of buffer height - wait until this is retired.
         for y in range(self._canvas._buffer_height):
             self._canvas.print_at(
                 " " * self._canvas.width, 0, y, colour, attr, bg)
@@ -304,7 +305,6 @@ class Frame(Effect):
                 self._layouts[self._focus].focus(force_first=True)
                 break
             except IndexError:
-                # TODO: convert into a proper API to detect read-only layouts
                 self._focus += 1
 
         # Call the on_load function now if specified.
@@ -405,7 +405,6 @@ class Frame(Effect):
                             self._layouts[self._focus].focus(force_first=True)
                             break
                         except IndexError:
-                            # TODO: convert into a proper API
                             self._focus += 1
                             if self._focus >= len(self._layouts):
                                 self._focus = 0
@@ -421,7 +420,6 @@ class Frame(Effect):
                             self._layouts[self._focus].focus(force_last=True)
                             break
                         except IndexError:
-                            # TODO: convert into a proper API
                             self._focus -= 1
                             if self._focus < 0:
                                 self._focus = len(self._layouts) - 1
@@ -529,8 +527,11 @@ class Layout(object):
         :param force_column: Optional parameter to mandate the new column index.
         :param force_widget: Optional parameter to mandate the new widget index.
 
-        The force_column and force_widget parameters must both be set or unset
-        together.
+        The force_column and force_widget parameters must both be set
+        together or they will otherwise be ignored.
+
+        :raises IndexError: if a force option specifies a bad column or widget,
+            or if the whole Layout is readonly.
         """
         self._has_focus = True
         if force_widget is not None and force_column is not None:
@@ -1751,6 +1752,9 @@ class PopUpDialog(Frame):
         parameter that corresponds to the index of the button passed in the
         array of available `buttons`.
         """
+        # Enforce API requirements
+        assert type(on_close) == FunctionType, "on_close must be a static fn"
+
         # Remember parameters for cloning.
         self._text = text
         self._buttons = buttons
