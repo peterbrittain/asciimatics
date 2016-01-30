@@ -98,7 +98,7 @@ class Frame(Effect):
             (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
     }
 
-    def __init__(self, screen, height, width, data={}, on_load=None,
+    def __init__(self, screen, height, width, data=None, on_load=None,
                  has_border=True, hover_focus=False, name=None, title=None):
         """
         :param screen: The Screen that owns this Frame.
@@ -125,7 +125,7 @@ class Frame(Effect):
         self._has_border = has_border
         self._hover_focus = hover_focus
         self._name = name
-        self._initial_data = data
+        self._initial_data = data if data else {}
         self._title = " " + title[0:width-4] + " " if title else ""
 
         # Now set up any passed data - use the public property to trigger any
@@ -149,7 +149,7 @@ class Frame(Effect):
         """
         # Do up to 2 passes in case we have a variable height Layout.
         fill_layout = None
-        fill_height = 0
+        fill_height = y = 0
         for _ in range(2):
             # Pick starting point/height - varies for borders.
             if self._has_border:

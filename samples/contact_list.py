@@ -1,4 +1,4 @@
-from asciimatics.widgets import Frame, ListBox, Layout, Label, Divider, Text, \
+from asciimatics.widgets import Frame, ListBox, Layout, Divider, Text, \
     Button, TextBox
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
@@ -115,7 +115,8 @@ class ListView(Frame):
         self._model.delete_contact(self.data["contacts"])
         self._reload_list()
 
-    def _quit(self):
+    @staticmethod
+    def _quit():
         raise StopApplication("User pressed quit")
 
 
@@ -153,7 +154,8 @@ class ContactView(Frame):
         self._model.update_current_contact(self.data)
         raise NextScene("Main")
 
-    def _cancel(self):
+    @staticmethod
+    def _cancel():
         raise NextScene("Main")
 
 

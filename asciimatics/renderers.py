@@ -545,7 +545,7 @@ class BarChart(DynamicRenderer):
         # Dimensions for the chart.
         int_h = self._height
         int_w = self._width
-        start_x = 0
+        start_x = key_x = 0
         start_y = 0
         scale = int_w if self._scale is None else self._scale
 
