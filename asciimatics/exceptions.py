@@ -71,6 +71,7 @@ class NextScene(Exception):
         """
         return self._name
 
+
 class Highlander(Exception):
     """
     There can be only one Layout or Widget with certain options set (designed

@@ -1081,7 +1081,6 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                         index = 0
                 else:
                     # Find the required scene.
-                    index = 0
                     for i, scene in enumerate(scenes):
                         if scene.name == e.name:
                             index = i
@@ -1718,8 +1717,12 @@ else:
             msg += text
 
             # Print the text at the required location and update the current
-            # position.
-            sys.stdout.write(msg)
+            # position.  Screen resize can throw IOErrors.  These can be safely
+            # ignored as the screen will be shortly reset anyway.
+            try:
+                sys.stdout.write(msg)
+            except IOError:
+                pass
 
         def set_title(self, title):
             """
