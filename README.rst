@@ -12,8 +12,8 @@ Why?
 ----
 
 Why not?  It brings a little joy to anyone who was programming in the 80s...
-Oh and it provides a single cross-platform Python class to do all the console
-function you could ask for, including:
+Oh and it provides a single cross-platform Python class to do all the low-level
+console function you could ask for, including:
 
 * Coloured/styled text - including 256 colour terminals
 * Cursor positioning
@@ -21,9 +21,14 @@ function you could ask for, including:
 * Mouse input (terminal permitting)
 * Detecting and handling when the console resizes
 * Screen scraping
+
+In addition, it provides some simple, high-level APIs to provide more complex
+features including:
+
 * Anti-aliased ASCII line-drawing
 * Image to ASCII conversion - including JPEG and GIF formats
 * Many animation effects - e.g. sprites, particle systems, banners, etc.
+* Various widgets for text UIs - e.g. buttons, text boxes, radio buttons, etc.
 
 Currently this API has been proven to work on CentOS 6 & 7, Raspbian (i.e.
 Debian wheezy), Ubuntu 14.04, Windows 7, 8 & 10 and OSX 10.11, though it should

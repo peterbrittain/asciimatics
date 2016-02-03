@@ -3,6 +3,17 @@ CHANGE HISTORY
 
 1.6.0
 -----
+- Added `widgets` sub-package, providing a Frame effect for encapsulating a User
+  Interface, a Layout to organise the content and the following widgets:
+  - Button
+  - CheckBox
+  - Divider
+  - Label
+  - ListBox
+  - RadioButtons
+  - Text
+  - TextBox
+- Added PopUpDialog for simple alerting in a UI.
 - Added `attr` option to Print Effect.
 - Added `keys` option to BarChart Renderer.
 
