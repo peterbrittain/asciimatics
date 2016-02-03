@@ -1753,7 +1753,8 @@ class PopUpDialog(Frame):
         array of available `buttons`.
         """
         # Enforce API requirements
-        assert type(on_close) == FunctionType, "on_close must be a static fn"
+        assert on_close is None or type(on_close) == FunctionType, \
+            "on_close must be a static fn"
 
         # Remember parameters for cloning.
         self._text = text
