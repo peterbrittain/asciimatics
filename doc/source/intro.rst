@@ -35,7 +35,8 @@ Installation
 ------------
 
 Asciimatics supports Python versions 2 & 3.  For a list of the precise
-list of tested versions, see `here <https://pypi.python.org/pypi/asciimatics>`_.
+list of tested versions, see
+`here <https://pypi.python.org/pypi/asciimatics>`__.
 
 To install asciimatics, simply install with `pip`.  You can get it from
 `here <http://pip.readthedocs.org/en/stable/installing/>`_ and then just run:

@@ -1360,8 +1360,8 @@ class TextBox(Widget):
         :param height: The required number of input lines for this TextBox.
         :param label: An optional label for the widget.
         :param name: The name for the TextBox.
-        :param as_string: Use "\n" separated string instead of a list for the
-            value of this widget.
+        :param as_string: Use string with newline separator instead of a list
+            for the value of this widget.
         """
         super(TextBox, self).__init__(name)
         self._label = label

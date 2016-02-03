@@ -92,8 +92,8 @@ Refreshing the Screen
 ---------------------
 Just using the above methods to output to screen isn't quite enough.
 The Screen maintains a buffer of what is to be displayed and will only actually
-display it once the :py:meth:`.refresh` method is called.  This is done to
-reduce flicker on the display device as new content is created.  
+display it once the :py:meth:`.Screen.refresh` method is called.  This is done
+to reduce flicker on the display device as new content is created.
 
 Applications are required to re-render everything that needs to be
 displayed and then call refresh when all the new content is ready.  
