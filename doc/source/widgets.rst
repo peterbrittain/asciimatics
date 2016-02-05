@@ -269,38 +269,26 @@ example, this will add a button to the middle first and last columns.
     layout2.add_widget(Button("OK", self._ok), 0)
     layout2.add_widget(Button("Cancel", self._cancel), 3)
 
-@@@TODO: Fix up the rest of this file to follow more task oriented structure.
+If you ant to put a standard label on all your input fields, that's fine too;
+asciimatics will decide how big your label needs to be across all fields in the
+same column and then indent them all to create a more aesthetically pleasing
+layout.  For example, this will provide a single column with labels for each
+fields, indenting all the fields to the same depth.
 
-Frames
-------
-As already noted at the start, the fundamental class you need to create your UI
-is a :py:obj:`.Frame`.  This is the :py:obj:`.Effect` that will draw all the
-visible widgets (using the Layouts that contain them) and routes any user
-input to the correct `Widget`.
+.. code-block:: python
 
-The `Frame` provides most of the generic configuration options for your text UI.
-In particular, it determines:
+    layout = Layout([100])
+    self.add_layout(layout)
+    layout.add_widget(Text("Name:", "name"))
+    layout.add_widget(Text("Address:", "address"))
+    layout.add_widget(Text("Phone number:", "phone"))
+    layout.add_widget(Text("Email address:", "email"))
+    layout.add_widget(TextBox(5, "Notes:", "notes", as_string=True))
 
-1. Your colour scheme - which is defined by the `palette` property.
-2. The dimensions of the window in which to display your UI.
-3. Whether the mouse will move focus by simply hovering over a `Widget` or by
-   clicking on it.
-4. What (if anything) to do when the Frame is loaded/reloaded, through the
-   `on_load` parameter.
-
-These options (and a few more that typically determine how the Frame itself is
-drawn) are all documented in the :py:obj:`.Frame` API reference.
-
-In addition, it also provides the `save()` method and `data` property.  These
-allow the Frame to save off all the data that the user has entered into the
-widgets inside this Frame and return them as a Python dictionary.
-
-Layouts
--------
-A `Layout` is simply a container.  All `Widgets` must be contained within a
-`Layout`.  The `Layout` class is responsible for deciding the exact size and
-location of the widgets.  The logic uses similar ideas as used in modern
-web frameworks and is as follows.
+Layouts in more detail
+~~~~~~~~~~~~~~~~~~~~~~
+If you need to do something more complex, you can use multiple Layouts.
+Asciimatics uses the following logic to determine the location of Widgets.
 
 1.  The `Frame` owns one or more `Layouts`.  The `Layouts` stack one above each
     other when displayed - i.e. the first `Layout` in the `Frame` is above the
@@ -340,27 +328,48 @@ of 3 columns of relative size 25:50:25.  The last actually contains some Widgets
 in the second column (though this is just for illustration purposes as we'd
 expect most Layouts to have some Widgets in them).
 
-Widgets
--------
-A `Widget` is a re-usable component for constructing a part of your text UI. As
-noted above, the idea is that you put a set of them inside a Layout in order to
-get some information from the end-user.
+Getting values
+--------------
+Now that you have a `Frame` with some `Widgets` in it and the user is filling
+them in, how do you find out what they entered?  There are 2 basic ways to do
+this:
 
-To that end, ALL Widgets MUST implement a `value` property that returns the
-current value the user has entered (which may be None for those where there is
-no value - e.g. buttons).  You can use this property at any time (even when the
-Frame is not active).
+1. You can query each Widget directly, using the `value` property.  This returns
+   the current value the user has entered at any time (even when the Frame is
+   not active).  Note that it may be `None` for those `Widgets` where there is
+   no value - e.g. buttons.
+2. You can query the `Frame`.   @@@ Add details
 
-Asciimatics provides the following basic widgets:
+@@@TODO: Fix up the rest of this file to follow more task oriented structure.
+
+Frames
+------
+As already noted at the start, the fundamental class you need to create your UI
+is a :py:obj:`.Frame`.  This is the :py:obj:`.Effect` that will draw all the
+visible widgets (using the Layouts that contain them) and routes any user
+input to the correct `Widget`.
+
+The `Frame` provides most of the generic configuration options for your text UI.
+In particular, it determines:
+
+1. Your colour scheme - which is defined by the `palette` property.
+2. The dimensions of the window in which to display your UI.
+3. Whether the mouse will move focus by simply hovering over a `Widget` or by
+   clicking on it.
+4. What (if anything) to do when the Frame is loaded/reloaded, through the
+   `on_load` parameter.
+
+These options (and a few more that typically determine how the Frame itself is
+drawn) are all documented in the :py:obj:`.Frame` API reference.
+
+In addition, it also provides the `save()` method and `data` property.  These
+allow the Frame to save off all the data that the user has entered into the
+widgets inside this Frame and return them as a Python dictionary.
+
 
 Colour schemes
 --------------
 @@@ TODO
-
-
-Getting values
---------------
-@@@ TODO - maybe move away from Frame/Layout/Widget structure?
 
 
 Common keys
