@@ -262,18 +262,18 @@ columns that are each 20 columns wide.
     frame.add_layout(layout)
 
 Once you have a Layout, you can add Widgets to the relevant column.  For
-example, this will add a button to the middle first and last columns.
+example, this will add a button to the first and last columns.
 
 .. code-block:: python
 
     layout2.add_widget(Button("OK", self._ok), 0)
     layout2.add_widget(Button("Cancel", self._cancel), 3)
 
-If you ant to put a standard label on all your input fields, that's fine too;
+If you want to put a standard label on all your input fields, that's fine too;
 asciimatics will decide how big your label needs to be across all fields in the
 same column and then indent them all to create a more aesthetically pleasing
 layout.  For example, this will provide a single column with labels for each
-fields, indenting all the fields to the same depth.
+field, indenting all of the fields to the same depth.
 
 .. code-block:: python
 
@@ -328,6 +328,75 @@ of 3 columns of relative size 25:50:25.  The last actually contains some Widgets
 in the second column (though this is just for illustration purposes as we'd
 expect most Layouts to have some Widgets in them).
 
+Filling the space
+~~~~~~~~~~~~~~~~~
+Once you've got the basic rows and columns for your UI sorted, you may want to
+use some strategic spacing.  At the simplest level, you can use the previously
+mentioned :py:obj:`.Divider` widget to create some extra vertical space or
+insert a visual section break.
+
+Moving up the complexity, you can pick different sizes for your Frames based
+on the size of your current Screen.  The Frame will be recreated when the 
+screen is resized and so you will use more or less real estate appropriately.
+
+Finally, you could also tell asciimatics to use an object to fill any
+remaining space.  This can be done in 2 ways:
+
+1. You can tell a Layout to fill any remaining space in the Frame, using
+   `fill_frame=True` on construction.
+2. @@@ formal API for widgets.  Replace -ive number logic.
+
+These two methods can be combined to tell a Layout to fill the Frame and a
+Widget to fill this Layout.  See the ListView class in the contact_list demo
+code.
+
+Large forms
+~~~~~~~~~~~
+If you have a very large form, you may find it is too big to fit into a
+standard screen.  If so, simply keep adding your Widgets to your Layout
+and asciimatics will automatically clip the content to the space available
+and scroll the content as required.
+
+If you do this it is recommended that you set `has_border=True`on the Frame
+so that the user can use the scroll bar provided to move around the former.
+
+Colour schemes
+~~~~~~~~~~~~~~
+The colours for any Widget are determined by the `palette` property of
+the Frame that contains the Widget.  If desired, it is possible to have a
+different palette for every Frame, however your users may prefer a more
+consistent approach.
+
+The palette is just a simple dictionary to map Widget components to a
+colour tuple.  The following table shows the required keys.
+
+========================  =============================================
+Key                       Usage
+========================  =============================================
+"background"              Frame background
+"disabled"                Any disabled Widget
+"label"                   Widget labels
+"borders"                 Frame border and Divider Widget
+"scroll"                  Frame scroll bar 
+"title"                   Frame title
+"edit_text"               Text and TextBox
+"focus_edit_text"         Text and TextBox with input focus     
+"button"                  Buttons
+"focus_button"            Buttons with input focus
+"control"                 Checkboxes and RadioButtons
+"selected_control"        Checkboxes and RadioButtons when selected
+"focus_control"           Checkboxes and RadioButtons with input focus
+"selected_focus_control"  Checkboxes and RadioButtons with both
+"field"                   Value of an option for a Checkbox, 
+                          RadioButton or Listbox
+"selected_field"          As above when selected
+"focus_field"             As above with input focus
+"selected_focus_field"    As above with both
+========================  =============================================
+
+Screen resizing
+~~~~~~~~~~~~~~~
+@@@ TODO
 Getting values
 --------------
 Now that you have a `Frame` with some `Widgets` in it and the user is filling
@@ -338,21 +407,13 @@ this:
    the current value the user has entered at any time (even when the Frame is
    not active).  Note that it may be `None` for those `Widgets` where there is
    no value - e.g. buttons.
-2. You can query the `Frame`.   @@@ Add details
+2. You can query the `Frame`by looking at the `data` property.  This will return
+   the value for every Widget in the former as a dictionary, using the Widget
+   `name` properties for the keys. 
 
 @@@TODO: Fix up the rest of this file to follow more task oriented structure.
 
-Frames
-------
-As already noted at the start, the fundamental class you need to create your UI
-is a :py:obj:`.Frame`.  This is the :py:obj:`.Effect` that will draw all the
-visible widgets (using the Layouts that contain them) and routes any user
-input to the correct `Widget`.
 
-The `Frame` provides most of the generic configuration options for your text UI.
-In particular, it determines:
-
-1. Your colour scheme - which is defined by the `palette` property.
 2. The dimensions of the window in which to display your UI.
 3. Whether the mouse will move focus by simply hovering over a `Widget` or by
    clicking on it.
@@ -381,10 +442,6 @@ Flow control
 ------------
 @@@ TODO - scene navigation, use of callbacks and pup-up dialogs.
 
-
-Screen resizing
----------------
-@@@ TODO
 
 
 Custom widgets
