@@ -357,8 +357,8 @@ standard screen.  If so, simply keep adding your Widgets to your Layout
 and asciimatics will automatically clip the content to the space available
 and scroll the content as required.
 
-If you do this it is recommended that you set `has_border=True`on the Frame
-so that the user can use the scroll bar provided to move around the former.
+If you do this, it is recommended that you set `has_border=True`on the Frame
+so that the user can use the scroll bar provided to move around the form.
 
 Colour schemes
 ~~~~~~~~~~~~~~
@@ -397,6 +397,7 @@ Key                       Usage
 Screen resizing
 ~~~~~~~~~~~~~~~
 @@@ TODO
+
 Getting values
 --------------
 Now that you have a `Frame` with some `Widgets` in it and the user is filling
@@ -411,32 +412,57 @@ this:
    the value for every Widget in the former as a dictionary, using the Widget
    `name` properties for the keys. 
 
-@@@TODO: Fix up the rest of this file to follow more task oriented structure.
+Input focus
+~~~~~~~~~~~
+As mentioned in the explanation of colour palettes, asciimatics has the concept
+of an input focus.  This is the Widget that will take any input from the
+keyboard.  Assuming you are using the default palette, the Widget with the
+input focus will be highlighted.  You can move the focus using the cursor keys,
+tab/backtab or by using the mouse.
 
-
-2. The dimensions of the window in which to display your UI.
-3. Whether the mouse will move focus by simply hovering over a `Widget` or by
-   clicking on it.
-4. What (if anything) to do when the Frame is loaded/reloaded, through the
-   `on_load` parameter.
-
-These options (and a few more that typically determine how the Frame itself is
-drawn) are all documented in the :py:obj:`.Frame` API reference.
-
-In addition, it also provides the `save()` method and `data` property.  These
-allow the Frame to save off all the data that the user has entered into the
-widgets inside this Frame and return them as a Python dictionary.
-
-
-Colour schemes
---------------
-@@@ TODO
-
+The exact way that the mouse moves the focus depends on a combination of the
+capabilities of your terminal/console and the settings of your Frame.  At a
+minimum, clicking on the Widget will always work.  If you specify
+`hover_focus=True` and your terminal supports reporting mouse move events, just
+hovering over the Widget with the mouse pointer will move the focus.
 
 Common keys
------------
-@@@ TODO
+~~~~~~~~~~~
+When navigating around a Frame, you can use the following keys.
 
+===================  ==========================================================
+Key                  Action
+===================  ==========================================================
+Tab                  Move to the next Widget in the Frame
+Backtab (shift+tab)  Move to the previous Widget in the Frame
+Up arrow             Move to the Widget above the current focus in the same
+                     column.
+Down arrow           Move to the Widget below the current focus in the same
+                     column.
+Left arrow           Move to the last Widget in the column to the left of
+                     the column with the current input focus.
+Right arrow          Move to the first Widget in the column to the right of
+                     the column with the current input focus.
+Space or Return      Select the current Widget - e.g. click a Button.
+===================  ==========================================================
+
+Note that the cursor keys will not traverse between Layouts.
+
+Inside the standard text edit Widgets, these default actions are overridden for
+the cursor keys and they will allow for normal navigation around the editable
+text.  In addition you can also use the followwing extra navigation keys.
+
+===================  ==========================================================
+Key                  Action
+===================  ==========================================================
+Home/End             Move to the start/end of the current line.
+Delete               Delete the character under the cursor.
+Backspace            Delete the character before the cursor.
+===================  ==========================================================
+
+Tab/backtab will still navigate out of text edit Widgets, but the rest of the
+keys (beyond those described above) will simply add to the text in the current
+line.
 
 Flow control
 ------------
