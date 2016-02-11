@@ -1,5 +1,5 @@
 from asciimatics.widgets import Frame, ListBox, Layout, Divider, Text, \
-    Button, TextBox
+    Button, TextBox, Widget
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, NextScene, StopApplication
@@ -78,7 +78,10 @@ class ListView(Frame):
 
         # Create the form for displaying the list of contacts.
         self._list_view = ListBox(
-            -3, model.get_summary(), name="contacts", on_select=self._on_pick)
+            Widget.FILL_FRAME,
+            model.get_summary(),
+            name="contacts",
+            on_select=self._on_pick)
         self._edit_button = Button("Edit", self._edit)
         self._delete_button = Button("Delete", self._delete)
         layout = Layout([100], fill_frame=True)
@@ -137,7 +140,8 @@ class ContactView(Frame):
         layout.add_widget(Text("Address:", "address"))
         layout.add_widget(Text("Phone number:", "phone"))
         layout.add_widget(Text("Email address:", "email"))
-        layout.add_widget(TextBox(5, "Notes:", "notes", as_string=True))
+        layout.add_widget(TextBox(
+            Widget.FILL_FRAME, "Notes:", "notes", as_string=True))
         layout2 = Layout([1, 1, 1, 1])
         self.add_layout(layout2)
         layout2.add_widget(Button("OK", self._ok), 0)
