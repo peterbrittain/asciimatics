@@ -25,6 +25,44 @@ occur - e.g. changes to values, buttons get clicked, etc. - and use these to
 trigger your application processing.  For an example, see the contact_list.py
 sample provided.
 
+Common keys
+~~~~~~~~~~~
+When navigating around a Frame, you can use the following keys.
+
+===================  ==========================================================
+Key                  Action
+===================  ==========================================================
+Tab                  Move to the next Widget in the Frame
+Backtab (shift+tab)  Move to the previous Widget in the Frame
+Up arrow             Move to the Widget above the current focus in the same
+                     column.
+Down arrow           Move to the Widget below the current focus in the same
+                     column.
+Left arrow           Move to the last Widget in the column to the left of
+                     the column with the current input focus.
+Right arrow          Move to the first Widget in the column to the right of
+                     the column with the current input focus.
+Space or Return      Select the current Widget - e.g. click a Button.
+===================  ==========================================================
+
+Note that the cursor keys will not traverse between Layouts.
+
+Inside the standard text edit Widgets, these default actions are overridden for
+the cursor keys and they will allow for normal navigation around the editable
+text.  In addition you can also use the following extra navigation keys.
+
+===================  ==========================================================
+Key                  Action
+===================  ==========================================================
+Home/End             Move to the start/end of the current line.
+Delete               Delete the character under the cursor.
+Backspace            Delete the character before the cursor.
+===================  ==========================================================
+
+Tab/backtab will still navigate out of text edit Widgets, but the rest of the
+keys (beyond those described above) will simply add to the text in the current
+line.
+
 Model/View Design
 -----------------
 Before we jump into exactly what all the objects are and what they do for you,
@@ -53,170 +91,188 @@ This consists of 3 basic classes:
    dictionaries would also suffice - but doesn't look as professional for a
    demo!
 
-.. code-block:: python
+.. container:: toggle
 
-    class ContactModel(object):
-        def __init__(self):
-            # Create a database in RAM
-            self._db = sqlite3.connect(':memory:')
-            self._db.row_factory = sqlite3.Row
+    .. container:: header
 
-            # Create the basic contact table.
-            self._db.cursor().execute('''
-                CREATE TABLE contacts(
-                    id INTEGER PRIMARY KEY,
-                    name TEXT,
-                    phone TEXT,
-                    address TEXT,
-                    email TEXT,
-                    notes TEXT)
-            ''')
-            self._db.commit()
+        **Show/hide code**
 
-            # Current contact when editing.
-            self.current_id = None
+    .. code-block:: python
 
-        def add(self, contact):
-            self._db.cursor().execute('''
-                INSERT INTO contacts(name, phone, address, email, notes)
-                VALUES(:name, :phone, :address, :email, :notes)''',
-                                      contact)
-            self._db.commit()
+        class ContactModel(object):
+            def __init__(self):
+                # Create a database in RAM
+                self._db = sqlite3.connect(':memory:')
+                self._db.row_factory = sqlite3.Row
 
-        def get_summary(self):
-            return self._db.cursor().execute(
-                "SELECT name, id from contacts").fetchall()
-
-        def get_contact(self, contact_id):
-            return self._db.cursor().execute(
-                "SELECT * from contacts where id=?", str(contact_id)).fetchone()
-
-        def get_current_contact(self):
-            if self.current_id is None:
-                return {}
-            else:
-                return self.get_contact(self.current_id)
-
-        def update_current_contact(self, details):
-            if self.current_id is None:
-                self.add(details)
-            else:
+                # Create the basic contact table.
                 self._db.cursor().execute('''
-                    UPDATE contacts SET name=:name, phone=:phone, address=:address,
-                    email=:email, notes=:notes WHERE id=:id''',
-                                          details)
+                    CREATE TABLE contacts(
+                        id INTEGER PRIMARY KEY,
+                        name TEXT,
+                        phone TEXT,
+                        address TEXT,
+                        email TEXT,
+                        notes TEXT)
+                ''')
                 self._db.commit()
 
-        def delete_contact(self, contact_id):
-            self._db.cursor().execute('''
-                DELETE FROM contacts WHERE id=:id''', {"id": contact_id})
-            self._db.commit()
+                # Current contact when editing.
+                self.current_id = None
+
+            def add(self, contact):
+                self._db.cursor().execute('''
+                    INSERT INTO contacts(name, phone, address, email, notes)
+                    VALUES(:name, :phone, :address, :email, :notes)''',
+                                          contact)
+                self._db.commit()
+
+            def get_summary(self):
+                return self._db.cursor().execute(
+                    "SELECT name, id from contacts").fetchall()
+
+            def get_contact(self, contact_id):
+                return self._db.cursor().execute(
+                    "SELECT * from contacts where id=?", str(contact_id)).fetchone()
+
+            def get_current_contact(self):
+                if self.current_id is None:
+                    return {}
+                else:
+                    return self.get_contact(self.current_id)
+
+            def update_current_contact(self, details):
+                if self.current_id is None:
+                    self.add(details)
+                else:
+                    self._db.cursor().execute('''
+                        UPDATE contacts SET name=:name, phone=:phone, address=:address,
+                        email=:email, notes=:notes WHERE id=:id''',
+                                              details)
+                    self._db.commit()
+
+            def delete_contact(self, contact_id):
+                self._db.cursor().execute('''
+                    DELETE FROM contacts WHERE id=:id''', {"id": contact_id})
+                self._db.commit()
 
 2. `ListView`: This is the main view.  It queries the `ContactModel` for the
    list of known contacts and displays them in a list, complete with some extra
    buttons to add/edit/delete contacts.
 
-..  code-block:: python
+.. container:: toggle
 
-    class ListView(Frame):
-        def __init__(self, screen, model):
-            super(ListView, self).__init__(screen,
-                                           screen.height * 2 // 3,
-                                           screen.width * 2 // 3,
-                                           on_load=self._reload_list,
-                                           hover_focus=True,
-                                           title="Contact List")
-            # Save off the model that accesses the contacts database.
-            self._model = model
+    .. container:: header
 
-            # Create the form for displaying the list of contacts.
-            self._list_view = ListBox(
-                Widget.FILL_FRAME,
-                model.get_summary(), name="contacts", on_select=self._on_pick)
-            self._edit_button = Button("Edit", self._edit)
-            self._delete_button = Button("Delete", self._delete)
-            layout = Layout([100], fill_frame=True)
-            self.add_layout(layout)
-            layout.add_widget(self._list_view)
-            layout.add_widget(Divider())
-            layout2 = Layout([1, 1, 1, 1])
-            self.add_layout(layout2)
-            layout2.add_widget(Button("Add", self._add), 0)
-            layout2.add_widget(self._edit_button, 1)
-            layout2.add_widget(self._delete_button, 2)
-            layout2.add_widget(Button("Quit", self._quit), 3)
-            self.fix()
+        **Show/hide code**
 
-        def _on_pick(self):
-            self._edit_button.disabled = self._list_view.value is None
-            self._delete_button.disabled = self._list_view.value is None
+    ..  code-block:: python
 
-        def _reload_list(self):
-            self._list_view.options = self._model.get_summary()
-            self._model.current_id = None
+        class ListView(Frame):
+            def __init__(self, screen, model):
+                super(ListView, self).__init__(screen,
+                                               screen.height * 2 // 3,
+                                               screen.width * 2 // 3,
+                                               on_load=self._reload_list,
+                                               hover_focus=True,
+                                               title="Contact List")
+                # Save off the model that accesses the contacts database.
+                self._model = model
 
-        def _add(self):
-            self._model.current_id = None
-            raise NextScene("Edit Contact")
+                # Create the form for displaying the list of contacts.
+                self._list_view = ListBox(
+                    Widget.FILL_FRAME,
+                    model.get_summary(), name="contacts", on_select=self._on_pick)
+                self._edit_button = Button("Edit", self._edit)
+                self._delete_button = Button("Delete", self._delete)
+                layout = Layout([100], fill_frame=True)
+                self.add_layout(layout)
+                layout.add_widget(self._list_view)
+                layout.add_widget(Divider())
+                layout2 = Layout([1, 1, 1, 1])
+                self.add_layout(layout2)
+                layout2.add_widget(Button("Add", self._add), 0)
+                layout2.add_widget(self._edit_button, 1)
+                layout2.add_widget(self._delete_button, 2)
+                layout2.add_widget(Button("Quit", self._quit), 3)
+                self.fix()
 
-        def _edit(self):
-            self.save()
-            self._model.current_id = self.data["contacts"]
-            raise NextScene("Edit Contact")
+            def _on_pick(self):
+                self._edit_button.disabled = self._list_view.value is None
+                self._delete_button.disabled = self._list_view.value is None
 
-        def _delete(self):
-            self.save()
-            self._model.delete_contact(self.data["contacts"])
-            self._reload_list()
+            def _reload_list(self):
+                self._list_view.options = self._model.get_summary()
+                self._model.current_id = None
 
-        @staticmethod
-        def _quit():
-            raise StopApplication("User pressed quit")
+            def _add(self):
+                self._model.current_id = None
+                raise NextScene("Edit Contact")
+
+            def _edit(self):
+                self.save()
+                self._model.current_id = self.data["contacts"]
+                raise NextScene("Edit Contact")
+
+            def _delete(self):
+                self.save()
+                self._model.delete_contact(self.data["contacts"])
+                self._reload_list()
+
+            @staticmethod
+            def _quit():
+                raise StopApplication("User pressed quit")
 
 3. `ContactView`: This is the detailed view.  It queries the `ContactModel` for
    the current contact to be displayed at the start (which may be none if the
    user is adding a contact) and writes any changes back to the model when the
    user clicks OK.
 
-.. code-block:: python
+.. container:: toggle
 
-    class ContactView(Frame):
-        def __init__(self, screen, model):
-            super(ContactView, self).__init__(screen,
-                                              screen.height * 2 // 3,
-                                              screen.width * 2 // 3,
-                                              hover_focus=True,
-                                              title="Contact Details")
-            # Save off the model that accesses the contacts database.
-            self._model = model
+    .. container:: header
 
-            # Create the form for displaying the list of contacts.
-            layout = Layout([100], fill_frame=True)
-            self.add_layout(layout)
-            layout.add_widget(Text("Name:", "name"))
-            layout.add_widget(Text("Address:", "address"))
-            layout.add_widget(Text("Phone number:", "phone"))
-            layout.add_widget(Text("Email address:", "email"))
-            layout.add_widget(TextBox(5, "Notes:", "notes", as_string=True))
-            layout2 = Layout([1, 1, 1, 1])
-            self.add_layout(layout2)
-            layout2.add_widget(Button("OK", self._ok), 0)
-            layout2.add_widget(Button("Cancel", self._cancel), 3)
-            self.fix()
+        **Show/hide code**
 
-        def reset(self):
-            # Do standard reset to clear out form, then populate with new data.
-            super(ContactView, self).reset()
-            self.data = self._model.get_current_contact()
+    .. code-block:: python
 
-        def _ok(self):
-            self.save()
-            self._model.update_current_contact(self.data)
-            raise NextScene("Main")
+        class ContactView(Frame):
+            def __init__(self, screen, model):
+                super(ContactView, self).__init__(screen,
+                                                  screen.height * 2 // 3,
+                                                  screen.width * 2 // 3,
+                                                  hover_focus=True,
+                                                  title="Contact Details")
+                # Save off the model that accesses the contacts database.
+                self._model = model
 
-        @staticmethod
-        def _cancel():
-            raise NextScene("Main")
+                # Create the form for displaying the list of contacts.
+                layout = Layout([100], fill_frame=True)
+                self.add_layout(layout)
+                layout.add_widget(Text("Name:", "name"))
+                layout.add_widget(Text("Address:", "address"))
+                layout.add_widget(Text("Phone number:", "phone"))
+                layout.add_widget(Text("Email address:", "email"))
+                layout.add_widget(TextBox(5, "Notes:", "notes", as_string=True))
+                layout2 = Layout([1, 1, 1, 1])
+                self.add_layout(layout2)
+                layout2.add_widget(Button("OK", self._ok), 0)
+                layout2.add_widget(Button("Cancel", self._cancel), 3)
+                self.fix()
+
+            def reset(self):
+                # Do standard reset to clear out form, then populate with new data.
+                super(ContactView, self).reset()
+                self.data = self._model.get_current_contact()
+
+            def _ok(self):
+                self.save()
+                self._model.update_current_contact(self.data)
+                raise NextScene("Main")
+
+            @staticmethod
+            def _cancel():
+                raise NextScene("Main")
 
 Displaying your UI
 ------------------
@@ -356,8 +412,10 @@ These two methods can be combined to tell a Layout to fill the Frame and a
 Widget to fill this Layout.  See the ListView class in the contact_list demo
 code.
 
-Note that you can only have one Layout and/or Widget that fills the Frame.
-Trying to set more than one will be rejected.
+.. warning::
+
+    Note that you can only have one Layout and/or Widget that fills the Frame.
+    Trying to set more than one will be rejected.
 
 Large forms
 ~~~~~~~~~~~
@@ -403,10 +461,6 @@ Key                       Usage
 "selected_focus_field"    As above with both
 ========================  =====================================================
 
-Screen resizing
-~~~~~~~~~~~~~~~
-@@@ TODO
-
 Getting values
 --------------
 Now that you have a `Frame` with some `Widgets` in it and the user is filling
@@ -420,6 +474,24 @@ this:
 2. You can query the `Frame`by looking at the `data` property.  This will return
    the value for every Widget in the former as a dictionary, using the Widget
    `name` properties for the keys. 
+
+For example:
+
+.. code-block:: python
+
+    # Form definition
+    layout = Layout([100])
+    frame.add_layout(layout)
+    layout.add_widget(Text("Name:", "name"))
+    layout.add_widget(Text("Address:", "address"))
+    layout.add_widget(TextBox(5, "Notes:", "notes", as_string=True))
+
+    # Sample frame.data after user has filled it in.
+    {
+        "name": "Peter",
+        "address": "Somewhere on earth",
+        "notes": "Some multi-line\ntext from the user."
+    }
 
 Input focus
 ~~~~~~~~~~~
@@ -435,50 +507,35 @@ minimum, clicking on the Widget will always work.  If you specify
 `hover_focus=True` and your terminal supports reporting mouse move events, just
 hovering over the Widget with the mouse pointer will move the focus.
 
-Common keys
-~~~~~~~~~~~
-When navigating around a Frame, you can use the following keys.
-
-===================  ==========================================================
-Key                  Action
-===================  ==========================================================
-Tab                  Move to the next Widget in the Frame
-Backtab (shift+tab)  Move to the previous Widget in the Frame
-Up arrow             Move to the Widget above the current focus in the same
-                     column.
-Down arrow           Move to the Widget below the current focus in the same
-                     column.
-Left arrow           Move to the last Widget in the column to the left of
-                     the column with the current input focus.
-Right arrow          Move to the first Widget in the column to the right of
-                     the column with the current input focus.
-Space or Return      Select the current Widget - e.g. click a Button.
-===================  ==========================================================
-
-Note that the cursor keys will not traverse between Layouts.
-
-Inside the standard text edit Widgets, these default actions are overridden for
-the cursor keys and they will allow for normal navigation around the editable
-text.  In addition you can also use the followwing extra navigation keys.
-
-===================  ==========================================================
-Key                  Action
-===================  ==========================================================
-Home/End             Move to the start/end of the current line.
-Delete               Delete the character under the cursor.
-Backspace            Delete the character before the cursor.
-===================  ==========================================================
-
-Tab/backtab will still navigate out of text edit Widgets, but the rest of the
-keys (beyond those described above) will simply add to the text in the current
-line.
-
 Flow control
 ------------
 @@@ TODO - scene navigation, use of callbacks and pup-up dialogs.
 
 
+Screen resizing
+~~~~~~~~~~~~~~~
+@@@ TODO
+
 
 Custom widgets
 --------------
-@@@ TODO
+To develop your own widget, you need to define a new class that inherits from
+:py:obj:`.Widget`.  You then have to implement the following functions.
+
+1. :py:meth:`~.Widget.reset` - This is where you should reset any state for your
+   widget.  It gets called whenever the owning Frame is initialised, which can
+   be when it is first displayed, when the user moves to a new Scene or when the
+   screen is resized.
+2. :py:meth:`~.Widget.update` - This is where you should put the logic to draw
+   your widget.  It gets called every time asciimatics needs to redraw the
+   screen (and so should always draw the entire widget).
+3. :py:meth:`~.Widget.process_event` - This is where you should put your code
+   to handle mouse and keyboard events.
+4. :py:obj:`~.Widget.value` - This must return the current value for the
+   widget.
+5. :py:meth:`~.Widget.required_height` - This returns the minimum required
+   height for your widget.  It is used by the owning Layout to determine the
+   size and location of your widget.
+
+With these all defined, you should now be able to add your new custom widget
+to a Layout like any of the standard ones delivered in this package.
