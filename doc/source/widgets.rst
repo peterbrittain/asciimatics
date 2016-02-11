@@ -507,10 +507,64 @@ minimum, clicking on the Widget will always work.  If you specify
 `hover_focus=True` and your terminal supports reporting mouse move events, just
 hovering over the Widget with the mouse pointer will move the focus.
 
-Flow control
-------------
-@@@ TODO - scene navigation, use of callbacks and pup-up dialogs.
+Flow of control
+---------------
+By this stage you should have a program with some Frames and can extract what
+your user has entered into any of them.  But how do you know when to act and
+move between Frames?  The answer is callbacks and exceptions.
 
+Callbacks
+~~~~~~~~~
+A callback is simply a function that you pass into another function to be
+called when the associated event occurs.  In asciimatics, they can usually be
+identified by the fact that they start with "on_" and correspond to a
+significant input action from the user, e.g. `on_click`.
+
+When writing your application, you simply need to decide which events you
+want to use to trigger some processing and create apropriate callbacks.  The
+simplest pattern is to use a `Button` and define an `on_click` callback.
+
+In addition, there are other events that can be triggered when widget values
+change.  These can be used to provide dynamic effects like enabling/disabling
+Buttons based on the current value of another Widget.
+
+Exceptions
+~~~~~~~~~~
+Asciimatics uses exceptions to tell the animation engine to move to a new Scene
+or stop the whole process.  Other exceptions are not caught and so can still be
+used as normal.  The details for the new exceptions are as follows:
+
+1. :py:obj:`.StopApplication` - This exception will stop the animation engine
+   and return flow to the function that called into the Screen.
+2. :py:obj:`.NextScene` - This exception tells the animation engine to move to
+   a new Scene.  The precise Scene is determined by the name passed into the
+   exception.  If none is specified, the engine will simply roundi robin to the
+   next available Scene.
+
+Note that the above logic requires each Scene to be given a unique name on
+construction.  For example:
+
+.. code-block:: python
+
+    scenes = [
+        Scene([ListView(screen, contacts)], -1, name="Main"),
+        Scene([ContactView(screen, contacts)], -1, name="Edit Contact")
+    ]
+    screen.play(scenes)
+
+Dynamic scenes
+--------------
+With everything above, you should now be able to create a fully working text
+UI.  There are just a few more final touches to consider.  These all touch on
+dynamically changing or reconstructing your Scene.
+
+Adding other effects
+~~~~~~~~~~~~~~~~~~~~
+@@@ TODO
+
+Pop-up dialogs
+~~~~~~~~~~~~~~
+@@@ TODO
 
 Screen resizing
 ~~~~~~~~~~~~~~~
