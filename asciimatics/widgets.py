@@ -182,7 +182,7 @@ class Frame(Effect):
             if fill_layout is None:
                 break
             else:
-                fill_height = max(0, start_y + height - y)
+                fill_height = max(1, start_y + height - y)
 
         # Remember the resulting height of the underlying Layouts.
         self._max_height = y
@@ -590,7 +590,7 @@ class Layout(object):
                 w = int(width * self._column_sizes[i])
                 for widget in column:
                     h = widget.required_height(offset, w)
-                    if h < 0:
+                    if h == Widget.FILL_FRAME:
                         if fill_widget is None:
                             # First pass - note down required filler.
                             fill_widget = widget
@@ -609,8 +609,10 @@ class Layout(object):
                     # No variable height widget - stop iterating.
                     break
                 else:
-                    # We need to figure out space left.
-                    fill_height = max(0, start_y + max_height - y)
+                    # We need to figure out space left.  The Screen might be so
+                    # small that there is no space, so make sure we always have
+                    # at least one line.
+                    fill_height = max(1, start_y + max_height - y)
             max_y = max(max_y, y)
             x += w
         if self.fill_frame:
@@ -812,6 +814,10 @@ class Widget(with_metaclass(ABCMeta, object)):
     """
     A Widget is a re-usable component that can be used to create a simple GUI.
     """
+
+    #: Widgets with this constant for the required height will be re-sized to
+    #: fit the available vertical space in the Layout.
+    FILL_FRAME = -135792468
 
     def __init__(self, name, tab_stop=True):
         """
@@ -1074,14 +1080,13 @@ class Divider(Widget):
         if self._draw_line:
             self._frame.canvas.print_at("-" * self._w,
                                         self._x,
-                                        self._y + (self._required_height // 2),
+                                        self._y + (self._h // 2),
                                         colour, attr, bg)
 
     def reset(self):
         pass
 
     def required_height(self, offset, width):
-        # Allow one line for text and a blank spacer before it.
         return self._required_height
 
     @property
@@ -1527,9 +1532,9 @@ class ListBox(Widget):
 
     def __init__(self, height, options, label=None, name=None, on_select=None):
         """
-        :param height: The required number of input lines for this TextBox.
+        :param height: The required number of input lines for this ListBox.
         :param label: An optional label for the widget.
-        :param name: The name for the TextBox.
+        :param name: The name for the ListBox.
         """
         super(ListBox, self).__init__(name)
         self._options = options

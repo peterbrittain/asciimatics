@@ -131,7 +131,8 @@ This consists of 3 basic classes:
 
             # Create the form for displaying the list of contacts.
             self._list_view = ListBox(
-                -3, model.get_summary(), name="contacts", on_select=self._on_pick)
+                Widget.FILL_FRAME,
+                model.get_summary(), name="contacts", on_select=self._on_pick)
             self._edit_button = Button("Edit", self._edit)
             self._delete_button = Button("Delete", self._delete)
             layout = Layout([100], fill_frame=True)
@@ -340,15 +341,23 @@ on the size of your current Screen.  The Frame will be recreated when the
 screen is resized and so you will use more or less real estate appropriately.
 
 Finally, you could also tell asciimatics to use an object to fill any
-remaining space.  This can be done in 2 ways:
+remaining space.  This allows for the sort of UI like you'd see in applications
+like top where you have a fixed header or footer, but then a variably sized
+part that contains the data to be displayed.
 
-1. You can tell a Layout to fill any remaining space in the Frame, using
+You can achieve this in 2 ways:
+
+1. You can tell a Layout to fill any remaining space in the Frame using
    `fill_frame=True` on construction.
-2. @@@ formal API for widgets.  Replace -ive number logic.
+2. You can tell some Widgets to fill any remaining space in the Frame using
+   a height of `Widget.FILL_FRAME` on construction.
 
 These two methods can be combined to tell a Layout to fill the Frame and a
 Widget to fill this Layout.  See the ListView class in the contact_list demo
 code.
+
+Note that you can only have one Layout and/or Widget that fills the Frame.
+Trying to set more than one will be rejected.
 
 Large forms
 ~~~~~~~~~~~
@@ -370,9 +379,9 @@ consistent approach.
 The palette is just a simple dictionary to map Widget components to a
 colour tuple.  The following table shows the required keys.
 
-========================  =============================================
+========================  =====================================================
 Key                       Usage
-========================  =============================================
+========================  =====================================================
 "background"              Frame background
 "disabled"                Any disabled Widget
 "label"                   Widget labels
@@ -387,12 +396,12 @@ Key                       Usage
 "selected_control"        Checkboxes and RadioButtons when selected
 "focus_control"           Checkboxes and RadioButtons with input focus
 "selected_focus_control"  Checkboxes and RadioButtons with both
-"field"                   Value of an option for a Checkbox, 
-                          RadioButton or Listbox
+"field"                   Value of an option for a Checkbox, RadioButton or
+                          Listbox
 "selected_field"          As above when selected
 "focus_field"             As above with input focus
 "selected_focus_field"    As above with both
-========================  =============================================
+========================  =====================================================
 
 Screen resizing
 ~~~~~~~~~~~~~~~
