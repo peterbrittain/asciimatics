@@ -47,9 +47,9 @@ Space or Return      Select the current Widget - e.g. click a Button.
 
 Note that the cursor keys will not traverse between Layouts.
 
-Inside the standard text edit Widgets, these default actions are overridden for
-the cursor keys and they will allow for normal navigation around the editable
-text.  In addition you can also use the following extra navigation keys.
+Inside the standard text edit Widgets, the cursor key actions are overridden and
+instead they will allow you to for navigate around the editable text as you
+would expect.  In addition you can also use the following extra keys.
 
 ===================  ==========================================================
 Key                  Action
@@ -277,8 +277,8 @@ This consists of 3 basic classes:
 Displaying your UI
 ------------------
 OK, so you want to do something a little more interactive with your user.  The
-first thing you have to decide is what information you want to get from them
-and how you're going to achieve that.  In short, you need to decide:
+first thing you need to decide is what information you want to get from them
+and how you're going to achieve that.  In short:
 
 1. What data you want them to be able to enter - e.g. their name.
 2. How you want to break that down into fields - e.g. first name, last name.
@@ -307,10 +307,10 @@ help.  All you need to do is decide how many columns you want for your fields
 and which fields should be in which columns.  To tell asciimatics what to do
 you create a `Layout` (or more than one if you want a more complex
 structure where different parts of the screen need differing column counts) and
-associate it with the `Frame` where you plan to display it.
+associate it with the `Frame` where you will display it.
 
 For example, this will create a Frame that is 80x20 characters and define 4
-columns that are each 20 columns wide.
+columns that are each 20 columns wide:
 
 .. code-block:: python
 
@@ -319,7 +319,7 @@ columns that are each 20 columns wide.
     frame.add_layout(layout)
 
 Once you have a Layout, you can add Widgets to the relevant column.  For
-example, this will add a button to the first and last columns.
+example, this will add a button to the first and last columns:
 
 .. code-block:: python
 
@@ -330,7 +330,7 @@ If you want to put a standard label on all your input fields, that's fine too;
 asciimatics will decide how big your label needs to be across all fields in the
 same column and then indent them all to create a more aesthetically pleasing
 layout.  For example, this will provide a single column with labels for each
-field, indenting all of the fields to the same depth.
+field, indenting all of the fields to the same depth:
 
 .. code-block:: python
 
@@ -501,7 +501,7 @@ keyboard.  Assuming you are using the default palette, the Widget with the
 input focus will be highlighted.  You can move the focus using the cursor keys,
 tab/backtab or by using the mouse.
 
-The exact way that the mouse moves the focus depends on a combination of the
+The exact way that the mouse affects the focus depends on a combination of the
 capabilities of your terminal/console and the settings of your Frame.  At a
 minimum, clicking on the Widget will always work.  If you specify
 `hover_focus=True` and your terminal supports reporting mouse move events, just
@@ -515,14 +515,14 @@ move between Frames?  The answer is callbacks and exceptions.
 
 Callbacks
 ~~~~~~~~~
-A callback is simply a function that you pass into another function to be
+A callback is just a function that you pass into another function to be
 called when the associated event occurs.  In asciimatics, they can usually be
 identified by the fact that they start with "on_" and correspond to a
 significant input action from the user, e.g. `on_click`.
 
 When writing your application, you simply need to decide which events you
 want to use to trigger some processing and create apropriate callbacks.  The
-simplest pattern is to use a `Button` and define an `on_click` callback.
+most common pattern is to use a `Button` and define an `on_click` callback.
 
 In addition, there are other events that can be triggered when widget values
 change.  These can be used to provide dynamic effects like enabling/disabling
@@ -560,7 +560,24 @@ dynamically changing or reconstructing your Scene.
 
 Adding other effects
 ~~~~~~~~~~~~~~~~~~~~
-@@@ TODO
+Since Frames are just another Effect, they can be combined with any other Effect
+in a Scene.  For example, this will put a simple input form over the top of the
+animated Julia set Effect:
+
+
+.. code-block:: python
+
+    scenes = []
+    effects = [
+        Julia(screen),
+        InputFormFrame(screen)
+    ]
+    scenes.append(Scene(effects, -1))
+    screen.play(scenes)
+
+The ordering is important.  The effects at the bottom of the list are at the top
+of the screen Z order and so will be displayed in preference to those lower in
+the Z order (i.e. those earlier in the list).
 
 Pop-up dialogs
 ~~~~~~~~~~~~~~
