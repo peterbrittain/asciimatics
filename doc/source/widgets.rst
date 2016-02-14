@@ -3,7 +3,7 @@ User Interfaces
 
 Introduction
 ------------
-The asciimatics package provides a `widgets` sub-package that allows you to
+Asciimatics provides a `widgets` sub-package that allows you to
 create interactive text user interfaces.  At its heart, the logic is quite
 simple, reusing concepts from standard web and desktop GUI frameworks.
 
@@ -420,9 +420,9 @@ code.
 Large forms
 ~~~~~~~~~~~
 If you have a very large form, you may find it is too big to fit into a
-standard screen.  If so, simply keep adding your Widgets to your Layout
-and asciimatics will automatically clip the content to the space available
-and scroll the content as required.
+standard screen.  This is not a problem.  You can keep adding your Widgets to
+your Layout and asciimatics will automatically clip the content to the space
+available and scroll the content as required.
 
 If you do this, it is recommended that you set `has_border=True`on the Frame
 so that the user can use the scroll bar provided to move around the form.
@@ -546,11 +546,15 @@ construction.  For example:
 
 .. code-block:: python
 
+    # Given this scene list...
     scenes = [
         Scene([ListView(screen, contacts)], -1, name="Main"),
         Scene([ContactView(screen, contacts)], -1, name="Edit Contact")
     ]
     screen.play(scenes)
+
+    # You can use this code to move back to the first scene at any time...
+    raise NextScene("Main")
 
 Dynamic scenes
 --------------
@@ -581,12 +585,30 @@ the Z order (i.e. those earlier in the list).
 
 Pop-up dialogs
 ~~~~~~~~~~~~~~
-@@@ TODO
+Along a similar line, you can also add a :py:obj:`.PopUpDialog` to your Scenes
+at any time.  These consist of a single text message and a set of buttons that
+you can define when creating the dialog.
+
+Owing to restrictions on how objects need to be rebuilt when the screen is
+resized, these should be limited to simple are confirmation or error cases -
+e.g. "Are you sure you want to quit?"  For more details on the restrictions,
+see the next section.
 
 Screen resizing
 ~~~~~~~~~~~~~~~
-@@@ TODO
+If you follow the standard application mainline logic as found in all the
+sample code, your application will want to resize all your Effects and Widgets
+whenever the user resizes the terminal.  To do this you need to get a new
+Screen then rebuild a new set of objects to use that Screen.
 
+Sound like a bit of a drag, huh?  This is it is recommended that you separate
+your presentation from the rest of your application logic.  If you do it right
+you will find that it actually just means you go through exactly the same
+initialization path as you did before to create your Scenes in the first
+place.  There are a couple of gotchas, though.
+
+@@@ TODO explain persistent state versus automatic state recreation
+@@@ TODO formalize clone and automatic data recovery API.
 
 Custom widgets
 --------------
