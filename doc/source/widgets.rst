@@ -350,7 +350,7 @@ Asciimatics uses the following logic to determine the location of Widgets.
 1.  The `Frame` owns one or more `Layouts`.  The `Layouts` stack one above each
     other when displayed - i.e. the first `Layout` in the `Frame` is above the
     second, etc.
-2.  Each `Layout` defines smoe horizontal constraints by defining columns as a
+2.  Each `Layout` defines some horizontal constraints by defining columns as a
     proportion of the full `Frame` width.
 3.  The `Widgets` are assigned a column within the `Layout` that owns them.
 4.  The `Layout` then decides the exact size and location to make each
@@ -507,6 +507,35 @@ minimum, clicking on the Widget will always work.  If you specify
 `hover_focus=True` and your terminal supports reporting mouse move events, just
 hovering over the Widget with the mouse pointer will move the focus.
 
+Global key handling
+~~~~~~~~~~~~~~~~~~~
+In addition to mouse control to switch focus, you can also set up a global
+event handler to navigate your forms.  This is useful for keyboard shortcuts
+- e.g. Ctrl+Q to quit your program.
+
+To set up this handler, you need to pass it into your screen on the `play()`
+Method.  For example
+
+.. code-block:: python
+
+    # Event handler for global keys
+    def global_shortcuts(event):
+        if isinstance(event, KeyboardEvent):
+            c = event.key_code
+            # Stop on ctrl+q or ctrl+x
+            if c in (17, 24):
+                raise StopApplication("User terminated app")
+
+    # Pass this to the screen...
+    screen.play(scenes, unhandled_input=global_shortcuts)
+
+.. warning::
+
+    Note that the global handler is only called if the focus does not proccess
+    the event.  Some widgets - e.g. TextBox - take any printable text and so
+    the only keys that always get to this handler are the control codes.
+    Others will sometimes get here depending on the type of Widget in focus.
+
 Flow of control
 ---------------
 By this stage you should have a program with some Frames and can extract what
@@ -601,11 +630,41 @@ sample code, your application will want to resize all your Effects and Widgets
 whenever the user resizes the terminal.  To do this you need to get a new
 Screen then rebuild a new set of objects to use that Screen.
 
-Sound like a bit of a drag, huh?  This is it is recommended that you separate
-your presentation from the rest of your application logic.  If you do it right
-you will find that it actually just means you go through exactly the same
-initialization path as you did before to create your Scenes in the first
+Sound like a bit of a drag, huh?  This is why it is recommended that you
+separate your presentation from the rest of your application logic.  If you do
+it right you will find that it actually just means you go through exactly the
+same initialization path as you did before to create your Scenes in the first
 place.  There are a couple of gotchas, though.
+
+First, you need to make sure that asciimatics will exit and recreate a new
+Screen when the terminal is resized.  You do that with this boilerplate code
+that is in most of the samples.
+
+.. code-block:: python
+
+    def main(screen, scene):
+        # Define your Scenes here
+        scenes = ...
+
+        # Run your program
+        screen.play(scenes, stop_on_resize=True, start_scene=scene)
+
+    last_scene = None
+    while True:
+        try:
+            Screen.wrapper(main, arguments=[last_scene])
+            sys.exit(0)
+        except ResizeScreenError as e:
+            last_scene = e.scene
+
+This will allow you to decide how all your UI should look whenever the screen
+is resized and will restart at the Scene that was playing at the time of the
+resizing.
+
+However, that is only half the story.  Now you need to ensure that you have
+recreated any state inside your application - e.g. any dynamic effects are
+added back in, your new Scene has the same internal state as the old, etc.
+Asciimatics provides two patterns to help you out here.
 
 @@@ TODO explain persistent state versus automatic state recreation
 @@@ TODO formalize clone and automatic data recovery API.
