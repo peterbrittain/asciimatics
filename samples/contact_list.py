@@ -81,7 +81,7 @@ class ListView(Frame):
             Widget.FILL_FRAME,
             model.get_summary(),
             name="contacts",
-            on_select=self._on_pick)
+            on_change=self._on_pick)
         self._edit_button = Button("Edit", self._edit)
         self._delete_button = Button("Delete", self._delete)
         layout = Layout([100], fill_frame=True)
@@ -95,6 +95,7 @@ class ListView(Frame):
         layout2.add_widget(self._delete_button, 2)
         layout2.add_widget(Button("Quit", self._quit), 3)
         self.fix()
+        self._on_pick()
 
     def _on_pick(self):
         self._edit_button.disabled = self._list_view.value is None
