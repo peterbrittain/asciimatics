@@ -1004,11 +1004,15 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         return self._name
 
-    @abstractproperty
-    def value(self):
-        """
-        The value to return for this widget based on the user's input.
-        """
+    # I need an abstract writable property - which bizarrely needs functions
+    # to be declared.  Use None for all of them to force errors if called.
+
+    #: The value to return for this widget based on the user's input.
+    value = abstractproperty(
+        None,
+        None,
+        None,
+        "The value to return for this widget based on the user's input.")
 
     @abstractmethod
     def required_height(self, offset, width):
