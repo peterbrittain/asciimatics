@@ -1100,15 +1100,17 @@ class Text(Widget):
     label and an entry box.
     """
 
-    def __init__(self, label=None, name=None):
+    def __init__(self, label=None, name=None, on_change=None):
         """
         :param label: An optional label for the widget.
         :param name: The name for the widget.
+        :param on_change: Optional function to call when text changes.
         """
         super(Text, self).__init__(name)
         self._label = label
         self._column = 0
         self._start_column = 0
+        self._on_change = on_change
 
     def update(self, frame_no):
         self._draw_label()
@@ -1146,8 +1148,9 @@ class Text(Widget):
         if isinstance(event, KeyboardEvent):
             if event.key_code == Screen.KEY_BACK:
                 if self._column > 0:
-                    # Delete character in front of cursor.
-                    self._value = "".join([
+                    # Delete character in front of cursor - use value to trigger
+                    # events.
+                    self.value = "".join([
                         self._value[:self._column - 1],
                         self._value[self._column:]])
                     self._column -= 1
@@ -1163,7 +1166,7 @@ class Text(Widget):
                 self._column = len(self._value)
             elif 32 <= event.key_code < 256:
                 # Insert any visible text at the current cursor position.
-                self._value = chr(event.key_code).join([
+                self.value = chr(event.key_code).join([
                     self._value[:self._column],
                     self._value[self._column:]])
                 self._column += 1
@@ -1195,7 +1198,11 @@ class Text(Widget):
 
     @value.setter
     def value(self, new_value):
+        # Only trigger the notification after we've changed the value.
+        old_value = self._value
         self._value = new_value if new_value else ""
+        if old_value != self._value and self._on_change:
+            self._on_change()
 
 
 class CheckBox(Widget):
@@ -1205,15 +1212,17 @@ class CheckBox(Widget):
     CheckBoxes), the box and a field name.
     """
 
-    def __init__(self, text, label=None, name=None):
+    def __init__(self, text, label=None, name=None, on_change=None):
         """
         :param text: The text to explain this specific field to the user.
         :param label: An optional label for the widget.
         :param name: The internal name for the widget.
+        :param on_change: Optional function to call when text changes.
         """
         super(CheckBox, self).__init__(name)
         self._text = text
         self._label = label
+        self._on_change = on_change
 
     def update(self, frame_no):
         self._draw_label()
@@ -1238,7 +1247,8 @@ class CheckBox(Widget):
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
             if event.key_code in [ord(" "), 10, 13]:
-                self._value = not self._value
+                # Use property to trigger events.
+                self.value = not self._value
             else:
                 # Ignore any other key press.
                 return event
@@ -1247,7 +1257,8 @@ class CheckBox(Widget):
             new_event = self._frame.rebase_event(event)
             if event.buttons != 0:
                 if self.is_mouse_over(new_event, include_label=False):
-                    self._value = not self._value
+                    # Use property to trigger events.
+                    self.value = not self._value
                     return
             # Ignore other mouse events.
             return event
@@ -1264,7 +1275,11 @@ class CheckBox(Widget):
 
     @value.setter
     def value(self, new_value):
+        # Only trigger the notification after we've changed the value.
+        old_value = self._value
         self._value = new_value if new_value else False
+        if old_value != self._value and self._on_change:
+            self._on_change()
 
 
 class RadioButtons(Widget):
@@ -1274,17 +1289,19 @@ class RadioButtons(Widget):
     selection bullets with field names.
     """
 
-    def __init__(self, options, label=None, name=None):
+    def __init__(self, options, label=None, name=None, on_change=None):
         """
         :param options: A list of (text, value) tuples for each radio button.
         :param label: An optional label for the widget.
         :param name: The internal name for the widget.
+        :param on_change: Optional function to call when text changes.
         """
         super(RadioButtons, self).__init__(name)
         self._options = options
         self._label = label
         self._selection = 0
         self._start_column = 0
+        self._on_change = on_change
 
     def update(self, frame_no):
         self._draw_label()
@@ -1312,12 +1329,14 @@ class RadioButtons(Widget):
         if isinstance(event, KeyboardEvent):
             # Don't swallow keys if at limits of the list.
             if event.key_code == Screen.KEY_UP and self._selection > 0:
+                # Use property to trigger events.
                 self._selection -= 1
-                self._value = self._options[self._selection][1]
+                self.value = self._options[self._selection][1]
             elif (event.key_code == Screen.KEY_DOWN and
                     self._selection < len(self._options) - 1):
+                # Use property to trigger events.
                 self._selection += 1
-                self._value = self._options[self._selection][1]
+                self.value = self._options[self._selection][1]
             else:
                 # Ignore any other key press.
                 return event
@@ -1326,8 +1345,9 @@ class RadioButtons(Widget):
             new_event = self._frame.rebase_event(event)
             if event.buttons != 0:
                 if self.is_mouse_over(new_event, include_label=False):
+                    # Use property to trigger events.
                     self._selection = new_event.y - self._y
-                    self._value = self._options[self._selection][1]
+                    self.value = self._options[self._selection][1]
                     return
             # Ignore other mouse events.
             return event
@@ -1344,6 +1364,8 @@ class RadioButtons(Widget):
 
     @value.setter
     def value(self, new_value):
+        # Only trigger the notification after we've changed the value.
+        old_value = self._value
         self._value = new_value
         for i, (_, value) in enumerate(self._options):
             if new_value == value:
@@ -1351,6 +1373,9 @@ class RadioButtons(Widget):
                 break
         else:
             self._selection = 0
+        self._value = new_value if new_value else False
+        if old_value != self._value and self._on_change:
+            self._on_change()
 
 
 class TextBox(Widget):
@@ -1360,13 +1385,15 @@ class TextBox(Widget):
     framed box with option label.  It can take multi-line input.
     """
 
-    def __init__(self, height, label=None, name=None, as_string=False):
+    def __init__(self, height, label=None, name=None, as_string=False,
+                 on_change=None):
         """
         :param height: The required number of input lines for this TextBox.
         :param label: An optional label for the widget.
         :param name: The name for the TextBox.
         :param as_string: Use string with newline separator instead of a list
             for the value of this widget.
+        :param on_change: Optional function to call when text changes.
         """
         super(TextBox, self).__init__(name)
         self._label = label
@@ -1376,6 +1403,7 @@ class TextBox(Widget):
         self._start_column = 0
         self._required_height = height
         self._as_string = as_string
+        self._on_change = on_change
 
     def update(self, frame_no):
         self._draw_label()
@@ -1424,6 +1452,7 @@ class TextBox(Widget):
 
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
+            old_value = copy(self._value)
             if event.key_code in [10, 13]:
                 # Split and insert line  on CR or LF.
                 self._value.insert(self._line + 1,
@@ -1487,6 +1516,11 @@ class TextBox(Widget):
             else:
                 # Ignore any other key press.
                 return event
+
+            # If we got here we might have changed the value...
+            if old_value != self._value and self._on_change:
+                self._on_change()
+
         elif isinstance(event, MouseEvent):
             # Mouse event - rebase coordinates to Frame context.
             new_event = self._frame.rebase_event(event)
@@ -1516,12 +1550,16 @@ class TextBox(Widget):
 
     @value.setter
     def value(self, new_value):
+        # Only trigger the notification after we've changed the value.
+        old_value = self._value
         if new_value is None:
             self._value = [""]
         elif self._as_string:
             self._value = new_value.split("\n")
         else:
             self._value = new_value
+        if old_value != self._value and self._on_change:
+            self._on_change()
 
 
 class ListBox(Widget):
@@ -1530,11 +1568,12 @@ class ListBox(Widget):
     the user can select one option.
     """
 
-    def __init__(self, height, options, label=None, name=None, on_select=None):
+    def __init__(self, height, options, label=None, name=None, on_change=None):
         """
         :param height: The required number of input lines for this ListBox.
         :param label: An optional label for the widget.
         :param name: The name for the ListBox.
+        :param on_change: Optional function to call when selection changes.
         """
         super(ListBox, self).__init__(name)
         self._options = options
@@ -1542,7 +1581,7 @@ class ListBox(Widget):
         self._line = 0
         self._start_line = 0
         self._required_height = height
-        self._on_select = on_select
+        self._on_change = on_change
 
     def update(self, frame_no):
         self._draw_label()
@@ -1605,9 +1644,10 @@ class ListBox(Widget):
             if event.buttons != 0:
                 if (len(self._options) > 0 and
                         self.is_mouse_over(new_event, include_label=False)):
+                    # Use property to trigger events.
                     self._line = min(new_event.y - self._y,
                                      len(self._options) - 1)
-                    self._value = self._options[self._line][1]
+                    self.value = self._options[self._line][1]
                     return
             # Ignore other mouse events.
             return event
@@ -1624,6 +1664,8 @@ class ListBox(Widget):
 
     @value.setter
     def value(self, new_value):
+        # Only trigger notification after we've changed selection
+        old_value = self._value
         self._value = new_value
         for i, (_, value) in enumerate(self._options):
             if value == new_value:
@@ -1632,8 +1674,8 @@ class ListBox(Widget):
         else:
             self._value = None
             self._line = -1
-        if self._on_select:
-            self._on_select()
+        if old_value != self._value and self._on_change:
+            self._on_change()
 
     @property
     def options(self):
