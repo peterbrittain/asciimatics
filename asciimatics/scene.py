@@ -43,19 +43,15 @@ class Scene(object):
             effect.reset()
 
         # If we have an old Scene to recreate, get the data out of that and
-        # apply it where possible.
+        # apply it where possible by cloning objects where appropriate.
         if old_scene:
             for old_effect in old_scene.effects:
-                # TODO: Fix up logic to use attributes rather than classes.
-                if isinstance(old_effect, PopUpDialog):
-                    self.add_effect(old_effect.clone(screen))
-                elif isinstance(old_effect, Frame):
-                    for effect in self._effects:
-                        if isinstance(effect, Frame):
-                            # TODO: Fix this privacy abuse up.
-                            # TODO: Also fix case where name == None
-                            if effect._name == old_effect._name:
-                                effect.data = old_effect.data
+                # Using the "easier to ask forgiveness..." mantra, just try
+                # cloning everything and ignore any AttributeErrors.
+                try:
+                    old_effect.clone(screen, self)
+                except AttributeError:
+                    pass
 
     def exit(self):
         """

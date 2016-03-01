@@ -110,7 +110,7 @@ class Frame(Effect):
             Defaults to True.
         :param hover_focus: Whether hovering a mouse over a widget (i.e. mouse
             move events) should change the input focus.  Defaults to false.
-        :param name: Optional name to identify the Frame.  This is used to
+        :param name: Optional name to identify this Frame.  This is used to
             reset data as needed from on old copy after the screen resizes.
         :param title: Optional title to display if has_border is True.
         """
@@ -124,9 +124,15 @@ class Frame(Effect):
         self._on_load = on_load
         self._has_border = has_border
         self._hover_focus = hover_focus
-        self._name = name
         self._initial_data = data if data else {}
         self._title = " " + title[0:width-4] + " " if title else ""
+
+        # A unique name is needed for cloning.  Try our best to get one!
+        self._name = title if name is None else name
+
+        # Flag to catch recursive calls inside the data setting.  This is
+        # typically caused by callbacks subsequently trying to re-use functions.
+        self._in_call = False
 
         # Now set up any passed data - use the public property to trigger any
         # necessary updates.
@@ -265,6 +271,11 @@ class Frame(Effect):
 
     @data.setter
     def data(self, new_value):
+        # Don't allow this function to recurse.
+        if self._in_call:
+            return
+        self._in_call = True
+
         # Do a key-by-key copy to allow for dictionary-like objects - e.g.
         # sqlite3 Row class.
         self._data = {}
@@ -275,6 +286,9 @@ class Frame(Effect):
         # Now update any widgets as needed.
         for layout in self._layouts:
             layout.update_widgets()
+
+        # All done - clear the recursion flag.
+        self._in_call = False
 
     @property
     def stop_frame(self):
@@ -287,6 +301,22 @@ class Frame(Effect):
         The Canvas that backs this Frame.
         """
         return self._canvas
+
+    def clone(self, screen, scene):
+        """
+        Create a clone of this Frame into a new Screen.
+
+        :param screen: The new Screen object to clone into.
+        :param scene: The new Scene object to clone into.
+        """
+        # Default implementation is to assume that the application creates a
+        # new set of Frames and so we need to match up the data from the old
+        # object to the new (using the name).
+        if self._name is not None:
+            for effect in scene.effects:
+                if isinstance(effect, Frame):
+                    if effect._name == self._name:
+                        effect.data = self.data
 
     def reset(self):
         # Reset form to default state.
@@ -315,7 +345,16 @@ class Frame(Effect):
         """
         Save the current values in all the widgets back to the persistent data
         storage.
+
+        Calling this while setting the `data` field (e.g. in a widget callback)
+        will have no effect.
         """
+        # Don't allow this function to be called if we are already updating the
+        # data for the form.
+        if self._in_call:
+            return
+
+        # We're clear - pass on to all layouts/widgets.
         for layout in self._layouts:
             layout.save()
 
@@ -1850,10 +1889,13 @@ class PopUpDialog(Frame):
         if self._on_close:
             self._on_close(selected)
 
-    def clone(self, screen):
+    def clone(self, screen, scene):
         """
-        Create a clone of the object into a new Screen.
+        Create a clone of this Dialog into a new Screen.
 
-        :param screen: The new Screen object to cline into.
+        :param screen: The new Screen object to clone into.
+        :param scene: The new Scene object to clone into.
         """
-        return PopUpDialog(screen, self._text, self._buttons, self._on_close)
+        # Just create the same dialog in the new Screen/Scene objects.
+        scene.add_effect(
+            PopUpDialog(screen, self._text, self._buttons, self._on_close))
