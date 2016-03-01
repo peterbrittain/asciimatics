@@ -24,7 +24,8 @@ class DemoFrame(Frame):
         super(DemoFrame, self).__init__(screen,
                                         int(screen.height * 2 // 3),
                                         int(screen.width * 2 // 3),
-                                        data=form_data)
+                                        data=form_data,
+                                        name="My Form")
         layout = Layout([1, 18, 1])
         self.add_layout(layout)
         self._reset_button = Button("Reset", self._reset)
@@ -68,10 +69,8 @@ class DemoFrame(Frame):
         self.save()
         for key, value in self.data.items():
             if key not in form_data or form_data[key] != value:
-                self._screen.print_at("{} {}    ".format(key, value), 0, 1)
                 changed = True
                 break
-        self._screen.print_at("{}    ".format(changed), 0, 0)
         self._reset_button.disabled = not changed
 
     def _reset(self):

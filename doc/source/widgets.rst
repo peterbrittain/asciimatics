@@ -673,13 +673,37 @@ This will allow you to decide how all your UI should look whenever the screen
 is resized and will restart at the Scene that was playing at the time of the
 resizing.
 
-However, that is only half the story.  Now you need to ensure that you have
-recreated any state inside your application - e.g. any dynamic effects are
+Restoring state
+~~~~~~~~~~~~~~~
+Recreating your view is only half the story.  Now you need to ensure that you
+have restored any state inside your application - e.g. any dynamic effects are
 added back in, your new Scene has the same internal state as the old, etc.
-Asciimatics provides two patterns to help you out here.
+Asciimatics provides a standard interface (the `clone` method) to help you out
+here.
 
-@@@ TODO explain persistent state versus automatic state recreation
-@@@ TODO formalize clone and automatic data recovery API.
+When the running `Scene` is resized (and passed back into the Screen as the
+start scene), the new `Scene` will run through all the `Effects` in the old
+copy looking for any with a `clone` method.  If it finds one, it will call it
+with 2 parameters: the new `Screen` and the new `Scene` to own the cloned
+`Effect`.  This allows you to take full control of how the new `Effect` is
+recreated.  Asciimatics uses this interface in 2 ways by default:
+
+1.  To ensure that any :py:obj:`~.Frame.data` is restored in the new `Scene`.
+2.  To duplicate any dynamically added :py:obj:`.PopUpDialog` objects in the
+    new `Scene`.
+
+You could override this processing to handle your own custom cloning logic.  The
+formal definition of the API is defined as follows.
+
+.. code-block:: python
+
+    def clone(self, screen, scene):
+        """
+        Create a clone of this Effect into a new Screen.
+
+        :param screen: The new Screen object to clone into.
+        :param scene: The new Scene object to clone into.
+        """
 
 Custom widgets
 --------------
