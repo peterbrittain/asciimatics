@@ -536,6 +536,18 @@ Method.  For example
     the only keys that always get to this handler are the control codes.
     Others will sometimes get here depending on the type of Widget in focus.
 
+Dealing with Ctrl+C
+~~~~~~~~~~~~~~~~~~~
+A lot of modern UIs want to be able to use Ctrl+C to do something other than
+kill the application.  The problem for Python is that this normally triggers a
+`KeyboardInterrupt`  - which typically kills the application.
+
+If you want to prevent this and use Ctrl+C for another purpose, you can tell
+asciimatics to catch the low-level signals to prevent this interrupt from being
+generated (and so return the keypress to your application).  This is done by
+specifying `catch_interrupt=True` when you create the `Screen` by calling
+:py:meth:`.wrapper`.
+
 Flow of control
 ---------------
 By this stage you should have a program with some Frames and can extract what
