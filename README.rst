@@ -100,7 +100,7 @@ More examples
 
 More examples of what you can do are available in the project samples
 directory, hosted on GitHub.  See
-https://github.com/peterbrittain/asciimatics/tree/master/samples.
+https://github.com/peterbrittain/asciimatics/tree/v1.6/samples.
 
 To view them, simply download these files and then simply run them directly
 with `python`.  Note that most can run on any platform, apart from:
