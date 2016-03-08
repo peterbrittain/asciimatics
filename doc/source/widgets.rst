@@ -536,13 +536,14 @@ Method.  For example
     the only keys that always get to this handler are the control codes.
     Others will sometimes get here depending on the type of Widget in focus.
 
-Dealing with Ctrl+C
-~~~~~~~~~~~~~~~~~~~
-A lot of modern UIs want to be able to use Ctrl+C to do something other than
+Dealing with Ctrl+C and Ctrl+Z
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+A lot of modern UIs want to be able to use Ctrl+C/Z to do something other than
 kill the application.  The problem for Python is that this normally triggers a
-`KeyboardInterrupt`  - which typically kills the application.
+`KeyboardInterrupt`  - which typically kills the application - or causes the
+operating system to suspend the process (on UNIX variants).
 
-If you want to prevent this and use Ctrl+C for another purpose, you can tell
+If you want to prevent this and use Ctrl+C/Z for another purpose, you can tell
 asciimatics to catch the low-level signals to prevent this interrupt from being
 generated (and so return the keypress to your application).  This is done by
 specifying `catch_interrupt=True` when you create the `Screen` by calling
