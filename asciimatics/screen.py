@@ -1535,8 +1535,9 @@ else:
 
             # Catch SIGINTs and translated them to ctrl-c if needed.
             if catch_interrupt:
-                # Ignore SIGINT signals.
+                # Ignore SIGINT (ctrl-c) and SIGTSTP (ctrl-z) signals.
                 signal.signal(signal.SIGINT, self._catch_interrupt)
+                signal.signal(signal.SIGTSTP, self._catch_interrupt)
 
             # Enable mouse events
             curses.mousemask(curses.ALL_MOUSE_EVENTS |
@@ -1619,11 +1620,14 @@ else:
             SIGINT handler.  We ignore the signal and frame info passed in.
             """
             # Stop pep-8 shouting at me for unused params I can't control.
-            del signal_no, frame
+            del frame
 
             # The OS already caught the ctrl-c, so inject it now for the next
             # input.
-            curses.ungetch(3)
+            if signal_no == signal.SIGINT:
+                curses.ungetch(3)
+            elif signal_no == signal.SIGTSTP:
+                curses.ungetch(26)
             return
 
         def get_event(self):
