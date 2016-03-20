@@ -36,3 +36,18 @@ Much like mouse support, the commands to set the window title is not supported
 on all terminal types.  Windows should work without any changes.  Other systems
 may need to use a similar method as above to mix modes to add status line
 support as described `here <https://gist.github.com/KevinGoodsell/744284>`_.
+
+.. _ctrl-s-issues-ref:
+
+Ctrl+S does not work
+--------------------
+In order to maintain legacy support for real terminal systems, most
+terminals/consoles still support software flow control using Ctrl+S/Ctrl+Q.
+You can switch this off on Linux by typing ``stty -ixon`` in your shell before
+you start asciimatics as explained `here <http://unix.stackexchange.com/
+questions/12107/how-to-unfreeze-after-accidentally-pressing-ctrl-s-in-a-
+terminal>`__. Sadly, there is nothing that can be done on Windows to
+prevent this as it is built in to the operating system, so you will never be
+able to detect the Ctrl+S key.  See `here
+<http://stackoverflow.com/questions/26436581/is-it-possible-to-disable-system-
+console-xoff-xon-flow-control-processing-in-my>`__ for details.

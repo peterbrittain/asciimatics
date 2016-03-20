@@ -544,10 +544,22 @@ kill the application.  The problem for Python is that this normally triggers a
 operating system to suspend the process (on UNIX variants).
 
 If you want to prevent this and use Ctrl+C/Z for another purpose, you can tell
-asciimatics to catch the low-level signals to prevent this interrupt from being
-generated (and so return the keypress to your application).  This is done by
-specifying `catch_interrupt=True` when you create the `Screen` by calling
+asciimatics to catch the low-level signals to prevent these interrupts from
+being generated (and so return the keypress to your application).  This is done
+by specifying `catch_interrupt=True` when you create the `Screen` by calling
 :py:meth:`.wrapper`.
+
+Dealing with Ctrl+S
+~~~~~~~~~~~~~~~~~~~
+Back in the days when terminals really were separate machines connected over
+wires to a computer, it was necessary to be able to signal that the terminal
+needed time to catch up.  This was done using software flow control, using the
+Ctrl+S/Ctrl+Q control codes to tell the computer to stop/restart sending text.
+
+These days, it's not really necessary, but is still a supported feature on most
+terminals.  On some systems you can switch this off so you get access to Ctrl+S,
+but it is not possible on them all.  See :ref:`ctrl-s-issues-ref` for details
+on how to fix this.
 
 Flow of control
 ---------------
