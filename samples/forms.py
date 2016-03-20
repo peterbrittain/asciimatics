@@ -106,7 +106,7 @@ class ClockFrame(Frame):
                                          has_border=False,
                                          name="Clock",
                                          x=screen.width - 26, y=0)
-        self.add_effect(Clock(self._canvas, 13, 7, 13, Screen.COLOUR_BLUE))
+        self.add_effect(Clock(self._canvas, 13, 7, 7, Screen.COLOUR_BLUE))
         self.fix()
 
 def demo(screen, scene):
