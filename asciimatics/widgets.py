@@ -54,8 +54,10 @@ def _split_text(text, width, height):
 
 class Frame(Effect):
     """
-    A Frame is a special Effect for controlling and displaying Widgets.  Widgets
-    are GUI elements that can be used to create an application.
+    A Frame is a special Effect for controlling and displaying Widgets and
+    is similar to a window as used in native GUI applications.  Widgets
+    are text UI elements that can be used to create an interactive application
+    within your Frame.
     """
 
     # Colour palette for the widgets within the Frame.
@@ -99,7 +101,8 @@ class Frame(Effect):
     }
 
     def __init__(self, screen, height, width, data=None, on_load=None,
-                 has_border=True, hover_focus=False, name=None, title=None):
+                 has_border=True, hover_focus=False, name=None, title=None,
+                 x=None, y=None):
         """
         :param screen: The Screen that owns this Frame.
         :param width: The desired width of the Frame.
@@ -113,13 +116,16 @@ class Frame(Effect):
         :param name: Optional name to identify this Frame.  This is used to
             reset data as needed from on old copy after the screen resizes.
         :param title: Optional title to display if has_border is True.
+        :param x: Optional x position for the top left corner of the Frame.
+        :param y: Optionl y position for the top left corner of the Frame.
         """
         super(Frame, self).__init__()
         self._focus = 0
         self._max_height = 0
         self._layouts = []
+        self._effects = []
         self._screen = screen
-        self._canvas = Canvas(screen, height, width)
+        self._canvas = Canvas(screen, height, width, x, y)
         self._data = None
         self._on_load = on_load
         self._has_border = has_border
@@ -146,6 +152,15 @@ class Frame(Effect):
         """
         layout.register_frame(self)
         self._layouts.append(layout)
+
+    def add_effect(self, effect):
+        """
+        Add an Effect to the Frame.
+
+        :param effect: The Effect to be added.
+        """
+        effect.register_scene(self._scene)
+        self._effects.append(effect)
 
     def fix(self):
         """
@@ -221,6 +236,10 @@ class Frame(Effect):
         # Update all the widgets first.
         for layout in self._layouts:
             layout.update(frame_no)
+
+        # Then update any effects as needed.
+        for effect in self._effects:
+            effect.update(frame_no)
 
         # Draw any border if needed.
         if self._has_border:
@@ -426,6 +445,24 @@ class Frame(Effect):
         return new_event
 
     def process_event(self, event):
+        # Claim the input focus if a mouse clicked on this Frame.
+        if isinstance(event, MouseEvent):
+            new_event = self.rebase_event(event)
+            if (0 <= new_event.x < self._canvas.width and
+                0 <= new_event.y < self._canvas.height and
+                    event.buttons > 0):
+                self._scene.remove_effect(self)
+                self._scene.add_effect(self)
+
+        # No need to do anything if this Frame has no Layouts - and hence no
+        # widgets.  Swallow all Keyboard events while we have focus.
+        # TODO: Is concept of Frame focus well defined?
+        if not self._layouts:
+            if event is not None and isinstance(event, KeyboardEvent):
+                return
+            else:
+                return event
+
         # Give the current widget in focus first chance to process the event.
         event = self._layouts[self._focus].process_event(event,
                                                          self._hover_focus)
@@ -591,7 +628,11 @@ class Layout(object):
         Call this to give take the input focus from this Layout.
         """
         self._has_focus = False
-        self._columns[self._live_col][self._live_widget].blur()
+        try:
+            self._columns[self._live_col][self._live_widget].blur()
+        except IndexError:
+            # don't worry if there are no active widgets in the Layout
+            pass
 
     def fix(self, start_x, start_y, max_width, max_height):
         """
