@@ -795,12 +795,13 @@ class Clock(Effect):
     An ASCII ticking clock (telling the correct local time).
     """
 
-    def __init__(self, screen, x, y, r, **kwargs):
+    def __init__(self, screen, x, y, r, bg=Screen.COLOUR_BLACK, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param x: X coordinate for the centre of the clock.
         :param y: Y coordinate for the centre of the clock.
         :param r: Radius of the clock.
+        :param bg: Background colour for the clock.
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
@@ -809,6 +810,7 @@ class Clock(Effect):
         self._x = x
         self._y = y
         self._r = r
+        self._bg = bg
         self._old_time = None
 
     def reset(self):
@@ -831,32 +833,32 @@ class Clock(Effect):
             self._screen.move(self._x, self._y)
             self._screen.draw(self._x + (self._r * sin(_hour_pos(ot))),
                               self._y - (self._r * cos(_hour_pos(ot)) / 2),
-                              char=" ")
+                              char=" ", bg=self._bg)
             self._screen.move(self._x, self._y)
             self._screen.draw(self._x + (self._r * sin(_min_pos(ot)) * 2),
                               self._y - (self._r * cos(_min_pos(ot))),
-                              char=" ")
+                              char=" ", bg=self._bg)
             self._screen.move(self._x, self._y)
             self._screen.draw(self._x + (self._r * sin(_sec_pos(ot)) * 2),
                               self._y - (self._r * cos(_sec_pos(ot))),
-                              char=" ")
+                              char=" ", bg=self._bg)
 
         # Draw new ones
         new_time = datetime.datetime.now().timetuple()
         self._screen.move(self._x, self._y)
         self._screen.draw(self._x + (self._r * sin(_hour_pos(new_time))),
                           self._y - (self._r * cos(_hour_pos(new_time)) / 2),
-                          colour=7)
+                          colour=Screen.COLOUR_WHITE, bg=self._bg)
         self._screen.move(self._x, self._y)
         self._screen.draw(self._x + (self._r * sin(_min_pos(new_time)) * 2),
                           self._y - (self._r * cos(_min_pos(new_time))),
-                          colour=7)
+                          colour=Screen.COLOUR_WHITE, bg=self._bg)
         self._screen.move(self._x, self._y)
         self._screen.draw(self._x + (self._r * sin(_sec_pos(new_time)) * 2),
                           self._y - (self._r * cos(_sec_pos(new_time))),
-                          colour=6, thin=True)
+                          colour=Screen.COLOUR_CYAN, bg=self._bg, thin=True)
         self._screen.print_at("o", self._x, self._y, Screen.COLOUR_YELLOW,
-                              Screen.A_BOLD)
+                              Screen.A_BOLD, bg=self._bg)
         self._old_time = new_time
 
     @property

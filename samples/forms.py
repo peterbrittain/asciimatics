@@ -1,4 +1,4 @@
-from asciimatics.effects import Julia
+from asciimatics.effects import Julia, Clock
 from asciimatics.widgets import Frame, TextBox, Layout, Label, Divider, Text, \
     CheckBox, RadioButtons, Button, PopUpDialog
 from asciimatics.scene import Scene
@@ -100,12 +100,22 @@ class DemoFrame(Frame):
             raise StopApplication("User requested exit")
 
 
+class ClockFrame(Frame):
+    def __init__(self, screen):
+        super(ClockFrame, self).__init__(screen, 13, 26,
+                                         has_border=False,
+                                         name="Clock",
+                                         x=screen.width - 26, y=0)
+        self.add_effect(Clock(self._canvas, 13, 7, 13, Screen.COLOUR_BLUE))
+        self.fix()
+
 def demo(screen, scene):
     global last_scene
     scenes = []
     effects = [
         Julia(screen),
-        DemoFrame(screen)
+        DemoFrame(screen),
+        ClockFrame(screen),
     ]
     scenes.append(Scene(effects, -1))
 
