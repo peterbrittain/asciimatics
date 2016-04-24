@@ -1,8 +1,9 @@
 ASCIIMATICS
 ===========
 
-Asciimatics is a package to help people create full-screen ASCII animations on
-any platform.  It is licensed under the Apache Software Foundation License 2.0.
+Asciimatics is a package to help people create full-screen text UIs (from 
+interactive forms to ASCII animations) on any platform.  It is licensed
+under the Apache Software Foundation License 2.0.
 
 It originated from some work that I did on PiConga to create a retro text
 credits roll for the project.  This worked so well, I re-used it for another
