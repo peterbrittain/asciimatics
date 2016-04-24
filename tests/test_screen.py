@@ -2,6 +2,7 @@ from random import randint
 import unittest
 from asciimatics.screen import Screen
 
+
 class TestScreen(unittest.TestCase):
     def test_wrapper(self):
         """
@@ -69,7 +70,8 @@ class TestScreen(unittest.TestCase):
         def internal_checks(screen):
             # Put a simple colour map to screen.
             screen.paint(
-                "Text", 0, 0, colour_map=((1, 0, 4), (2, 0, 3), (3, 0, 2), (4, 0, 1)))
+                "Text", 0, 0,
+                colour_map=((1, 0, 4), (2, 0, 3), (3, 0, 2), (4, 0, 1)))
 
             # Check it is rendered as expected.
             char, fg, _, bg = screen.get_from(0, 0)
@@ -78,7 +80,6 @@ class TestScreen(unittest.TestCase):
             char, fg, _, bg = screen.get_from(3, 0)
             self.assertEqual(fg, 4)
             self.assertEqual(bg, 1)
-
 
         Screen.wrapper(internal_checks)
 
