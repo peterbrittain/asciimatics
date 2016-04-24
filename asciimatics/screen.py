@@ -1,6 +1,7 @@
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
+From __future__ import unicode_literals
 from builtins import object
 from builtins import range
 from future.utils import with_metaclass
@@ -1437,7 +1438,7 @@ if sys.platform == "win32":
             self._stdout.FillConsoleOutputAttribute(
                 0, box_size, win32console.PyCOORDType(0, 0))
             self._stdout.FillConsoleOutputCharacter(
-                u" ", box_size, win32console.PyCOORDType(0, 0))
+                " ", box_size, win32console.PyCOORDType(0, 0))
             self._stdout.SetConsoleCursorPosition(
                 win32console.PyCOORDType(0, 0))
 
