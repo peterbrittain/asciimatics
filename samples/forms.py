@@ -109,6 +109,7 @@ class ClockFrame(Frame):
         self.add_effect(Clock(self._canvas, 13, 7, 7, Screen.COLOUR_BLUE))
         self.fix()
 
+
 def demo(screen, scene):
     global last_scene
     scenes = []
