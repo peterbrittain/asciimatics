@@ -983,7 +983,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         :param transparent: Whether to print spaces or not, thus giving a
             transparent effect.
         """
-        self.putch(text, x, y, colour, attr, bg, transparent)
+        self.print_at(text, x, y, colour, attr, bg, transparent)
 
     @staticmethod
     def _unhandled_event_default(event):
