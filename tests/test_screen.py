@@ -83,6 +83,82 @@ class TestScreen(unittest.TestCase):
 
         Screen.wrapper(internal_checks)
 
+    def test_limits(self):
+        """
+        Check that get_from and print_at limit checking works.
+        """
+        def internal_checks(screen):
+            # Check we have some canvas dimensions
+            self.assertEqual(screen.dimensions[1], screen.width)
+            self.assertEqual(screen.dimensions[0], screen.height)
+
+            # Basic limit checking
+            self.assertIsNone(screen.get_from(-1, -1))
+            self.assertIsNone(screen.get_from(screen.width, screen.height))
+
+            # Printing off-screen should not fail, but do nothing.
+            screen.print_at("hello", 0, -1)
+            screen.print_at("hello", 0, screen.height)
+
+            # Printing across screen edge should crop.
+            screen.print_at("12345", -1, 0)
+            char, fg, _, bg = screen.get_from(0, 0)
+            self.assertEqual(char, ord("2"))
+            self.assertEqual(fg, Screen.COLOUR_WHITE)
+            self.assertEqual(bg, Screen.COLOUR_BLACK)
+
+        Screen.wrapper(internal_checks)
+
+    def test_scroll(self):
+        """
+        Check that scrolling works as expected.
+        """
+        def internal_checks(screen):
+            # New screen is not scrolled.
+            self.assertEqual(screen.start_line, 0)
+
+            # Scroll and check it has moved
+            screen.scroll()
+            self.assertEqual(screen.start_line, 1)
+
+            # Scroll to specific location and check it has moved
+            screen.scroll_to(0)
+            self.assertEqual(screen.start_line, 0)
+
+        Screen.wrapper(internal_checks)
+
+    def test_centre(self):
+        """
+        Check that centre works as expected.
+        """
+        def internal_checks(screen):
+            screen.centre("1234", 0)
+            char, fg, _, bg = screen.get_from((screen.width - 4) // 2, 0)
+            self.assertEqual(char, ord("1"))
+            self.assertEqual(fg, Screen.COLOUR_WHITE)
+            self.assertEqual(bg, Screen.COLOUR_BLACK)
+
+        Screen.wrapper(internal_checks)
+
+    def test_draw(self):
+        """
+        Check that line drawing works as expected.
+        """
+        def internal_checks(screen):
+            # Horizontal thick line
+            screen.move(0, 0)
+            screen.draw(10, 0)
+            res = screen.get_from(0, 0)
+            self.assertEqual(res[0], ord("#"))
+
+            # Vertical thick line
+            screen.move(0, 0)
+            screen.draw(0, 10)
+            res = screen.get_from(0, 0)
+            self.assertEqual(res[0], ord("#"))
+
+        Screen.wrapper(internal_checks)
+
 
 if __name__ == '__main__':
     unittest.main()
