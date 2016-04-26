@@ -1,5 +1,8 @@
 from random import randint
 import unittest
+from asciimatics.effects import Effect
+from asciimatics.exceptions import StopApplication
+from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 
 
@@ -145,20 +148,139 @@ class TestScreen(unittest.TestCase):
         Check that line drawing works as expected.
         """
         def internal_checks(screen):
-            # Horizontal thick line
-            screen.move(0, 0)
-            screen.draw(10, 0)
-            res = screen.get_from(0, 0)
-            self.assertEqual(res[0], ord("#"))
+            # Draw thick and thin lines
+            for line_type in (True, False):
+                # Draw in opposite directions
+                for start in range(0, 11, 10):
+                    screen.print_at(str(start), 11, 2)
+                    # Horizontal line
+                    screen.move(start, 0)
+                    screen.draw(10 - start, 0, thin=line_type)
+                    res = screen.get_from(1, 0)
+                    self.assertEqual(res[0], ord("^" if line_type else "#"))
 
-            # Vertical thick line
-            screen.move(0, 0)
-            screen.draw(0, 10)
-            res = screen.get_from(0, 0)
-            self.assertEqual(res[0], ord("#"))
+                    # Check clearing works too
+                    screen.draw(start, 0, char=" ", thin=line_type)
+                    res = screen.get_from(1, 0)
+                    self.assertEqual(res[0], ord(" "))
+
+                    # Vertical line
+                    screen.move(0, start)
+                    screen.draw(0, 10 - start, thin=line_type)
+                    res = screen.get_from(0, 1)
+                    self.assertEqual(res[0], ord("|" if line_type else "#"))
+
+                    # Check clearing works too
+                    screen.draw(0, start, char=" ", thin=line_type)
+                    res = screen.get_from(0, 1)
+                    self.assertEqual(res[0], ord(" "))
+
+                    # Diagonal line
+                    screen.move(0, start)
+                    screen.draw(10, 10 - start, thin=line_type)
+                    res = screen.get_from(1, 9 if start else 1)
+                    if line_type:
+                        self.assertEqual(res[0], ord("/" if start else "\\"))
+                    else:
+                        self.assertEqual(res[0], ord("d" if start else "Y"))
+
+                    # Check clearing works too
+                    screen.move(0, start)
+                    screen.draw(10, 10 - start, char=" ", thin=line_type)
+                    res = screen.get_from(1, 9 if start else 1)
+                    self.assertEqual(res[0], ord(" "))
 
         Screen.wrapper(internal_checks)
 
+    def test_palette(self):
+        """
+        Check that we have a valid colour palette.
+        """
+        def internal_checks(screen):
+            # Check basic length
+            self.assertGreater(screen.colours, 0)
+            self.assertEqual(len(screen.palette), 256 * 3)
+
+            # Should always have fundamental console colours
+            for i, c in enumerate((0, 0, 0)):
+                self.assertEqual(screen.palette[i], c)
+            for i, c in enumerate((128, 0, 0)):
+                self.assertEqual(screen.palette[i+3], c)
+            for i, c in enumerate((0, 128, 0)):
+                self.assertEqual(screen.palette[i+6], c)
+            for i, c in enumerate((128, 128, 0)):
+                self.assertEqual(screen.palette[i+9], c)
+            for i, c in enumerate((0, 0, 128)):
+                self.assertEqual(screen.palette[i+12], c)
+            for i, c in enumerate((128, 0, 128)):
+                self.assertEqual(screen.palette[i+15], c)
+            for i, c in enumerate((0, 128, 128)):
+                self.assertEqual(screen.palette[i+18], c)
+            for i, c in enumerate((192, 192, 192)):
+                self.assertEqual(screen.palette[i+21], c)
+
+        Screen.wrapper(internal_checks)
+
+    def test_putch_and_getch(self):
+        """
+        Check deprecated features still work.
+        """
+        def internal_checks(screen):
+            for x in range(screen.width):
+                for y in range(screen.height):
+                    char = randint(0, 255)
+                    fg = randint(0, Screen.COLOUR_WHITE)
+                    bg = randint(0, Screen.COLOUR_WHITE)
+                    attr = randint(0, Screen.A_UNDERLINE)
+                    screen.putch(chr(char), x, y, fg, attr, bg)
+                    char2, fg2, attr2, bg2 = screen.getch(x, y)
+                    self.assertEqual(char, char2)
+                    self.assertEqual(fg, fg2)
+                    self.assertEqual(attr, attr2)
+                    self.assertEqual(bg, bg2)
+
+        Screen.wrapper(internal_checks)
+
+    def test_play(self):
+        """
+        Check that we can play a basic Effect in a Scene.
+        """
+        class TestEffect(Effect):
+            def __init__(self):
+                super(TestEffect, self).__init__()
+                self.stop_called = False
+                self.reset_called = False
+                self._count = 10
+
+            @property
+            def stop_frame(self):
+                self.stop_called = True
+                return 5
+
+            def _update(self, frame_no):
+                self._count -= 1
+                if self._count <= 0:
+                    raise StopApplication("End of test")
+
+            def reset(self):
+                self.reset_called = True
+
+        def internal_checks(screen):
+            # Since the Screen draws things, there's not too much we can do
+            # to genuinely verify this without verifying all Scene and Effect
+            # function too.  Just play a dummy Effect for now.
+            test_effect = TestEffect()
+            screen.play([Scene([test_effect], 0)])
+            self.assertTrue(test_effect.stop_called)
+            self.assertTrue(test_effect.reset_called)
+
+            # Now check that the desired duration is used.
+            test_effect = TestEffect()
+            screen.play([Scene([test_effect], 15)])
+            self.assertFalse(test_effect.stop_called)
+            self.assertTrue(test_effect.reset_called)
+
+        Screen.wrapper(internal_checks)
 
 if __name__ == '__main__':
     unittest.main()
