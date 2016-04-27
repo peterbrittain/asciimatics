@@ -1,3 +1,13 @@
+
+.. image:: https://travis-ci.org/peterbrittain/asciimatics.svg?branch=master
+    :target: https://travis-ci.org/peterbrittain/asciimatics
+
+.. image:: https://coveralls.io/repos/github/peterbrittain/asciimatics/badge.svg?branch=master
+    :target: https://coveralls.io/github/peterbrittain/asciimatics?branch=master
+
+.. image:: https://img.shields.io/pypi/v/nine.svg?maxAge=2592000?style=flat-square
+    :target: https://pypi.python.org/pypi/asciimatics
+
 ASCIIMATICS
 ===========
 
