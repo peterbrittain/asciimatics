@@ -5,7 +5,7 @@
 .. image:: https://coveralls.io/repos/github/peterbrittain/asciimatics/badge.svg?branch=master
     :target: https://coveralls.io/github/peterbrittain/asciimatics?branch=master
 
-.. image:: https://img.shields.io/pypi/v/nine.svg?maxAge=2592000?style=flat-square
+.. image:: https://img.shields.io/pypi/v/asciimatics.svg?maxAge=2592000?style=flat-square
     :target: https://pypi.python.org/pypi/asciimatics
 
 ASCIIMATICS
