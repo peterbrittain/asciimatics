@@ -1,9 +1,8 @@
 from random import randint
 import unittest
-from asciimatics.effects import Effect
-from asciimatics.exceptions import StopApplication
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
+from tests.mock_objects import MockEffect
 
 
 class TestScreen(unittest.TestCase):
@@ -245,40 +244,45 @@ class TestScreen(unittest.TestCase):
         """
         Check that we can play a basic Effect in a Scene.
         """
-        class TestEffect(Effect):
-            def __init__(self):
-                super(TestEffect, self).__init__()
-                self.stop_called = False
-                self.reset_called = False
-                self._count = 10
-
-            @property
-            def stop_frame(self):
-                self.stop_called = True
-                return 5
-
-            def _update(self, frame_no):
-                self._count -= 1
-                if self._count <= 0:
-                    raise StopApplication("End of test")
-
-            def reset(self):
-                self.reset_called = True
-
         def internal_checks(screen):
             # Since the Screen draws things, there's not too much we can do
             # to genuinely verify this without verifying all Scene and Effect
             # function too.  Just play a dummy Effect for now.
-            test_effect = TestEffect()
+            test_effect = MockEffect()
             screen.play([Scene([test_effect], 0)])
             self.assertTrue(test_effect.stop_called)
             self.assertTrue(test_effect.reset_called)
 
             # Now check that the desired duration is used.
-            test_effect = TestEffect()
+            test_effect = MockEffect(count=6)
             screen.play([Scene([test_effect], 15)])
             self.assertFalse(test_effect.stop_called)
             self.assertTrue(test_effect.reset_called)
+
+        Screen.wrapper(internal_checks)
+
+    def test_next_scene(self):
+        """
+        Check that we can play multiple Scenes.
+        """
+        def internal_checks(screen):
+            # First check that we can move between screens.
+            test_effect1 = MockEffect(stop=False)
+            test_effect2 = MockEffect(count=5)
+            screen.play([
+                Scene([test_effect1], 5),
+                Scene([test_effect2], 0)])
+            self.assertTrue(test_effect1.reset_called)
+            self.assertTrue(test_effect2.reset_called)
+
+            # Now check that we can start at the second scene.
+            test_effect1 = MockEffect(stop=False)
+            scene1 = Scene([test_effect1], 5, name="1")
+            test_effect2 = MockEffect(count=3)
+            scene2 = Scene([test_effect2], 0, name="2")
+            screen.play([scene1, scene2], start_scene=scene2)
+            self.assertFalse(test_effect1.reset_called)
+            self.assertTrue(test_effect2.reset_called)
 
         Screen.wrapper(internal_checks)
 
