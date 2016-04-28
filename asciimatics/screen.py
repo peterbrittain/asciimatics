@@ -1591,8 +1591,8 @@ else:
             """
             if lines < 0:
                 sys.stdout.write("{}{}".format(
-                    curses.tparm(self._move_y_x, 0, 0).decode("utf-8")),
-                    self._up_line * -lines)
+                    curses.tparm(self._move_y_x, 0, 0).decode("utf-8"),
+                    self._up_line * -lines))
             else:
                 sys.stdout.write("{}{}".format(curses.tparm(
                     self._move_y_x, self.height, 0).decode("utf-8"),
