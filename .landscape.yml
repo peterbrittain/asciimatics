@@ -13,3 +13,4 @@ pylint:
   disable:
     - redefined-builtin
     - too-many-arguments
+    - invalid-name
