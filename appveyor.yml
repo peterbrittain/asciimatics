@@ -7,15 +7,19 @@ environment:
     - PYTHON: "C:\\Python35"
 
 install:
-  # Upgrade to the latest version of pip to avoid it displaying warnings
-  # about it being out of date.
-  - "%PYTHON%\\python.exe -m pip install --disable-pip-version-check --user --upgrade pip"
-
-  # We need wheel installed to build wheels
-  - "%PYTHON%\\python.exe -m pip install wheel nose"
-
   # Prepend Python to the PATH of this build.
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+
+  # Upgrade to the latest version of pip to avoid it displaying warnings
+  # about it being out of date.
+  - "python.exe -m pip install --disable-pip-version-check --user --upgrade pip"
+
+  # General Python dev requirements
+  - "python.exe -m pip install wheel nose"
+
+  # Project requirements
+  - "python.exe -m pip install -r requirements.txt"
+  - "python.exe -m pip install pypiwin32"
 
 build: off
 
@@ -26,8 +30,7 @@ after_test:
   - "python.exe setup.py bdist_wheel"
 
 artifacts:
-  # bdist_wheel puts your built wheel in the dist directory
-  - path: dist\*
+  - path: .coverage
 
 #on_success:
 #  You can use this step to upload your artifacts to a public website.
