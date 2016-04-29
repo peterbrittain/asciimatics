@@ -15,7 +15,7 @@ install:
   - "python.exe -m pip install --disable-pip-version-check --user --upgrade pip"
 
   # General Python dev requirements
-  - "python.exe -m pip install wheel nose"
+  - "python.exe -m pip install wheel nose coverage"
 
   # Project requirements
   - "python.exe -m pip install -r requirements.txt"
