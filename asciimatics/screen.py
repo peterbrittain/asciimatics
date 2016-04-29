@@ -4,12 +4,16 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import object
 from builtins import range
+from win32console import STD_OUTPUT_HANDLE, STD_INPUT_HANDLE
+from win32file import GENERIC_READ, FILE_SHARE_READ, OPEN_ALWAYS, GENERIC_WRITE, \
+    FILE_SHARE_WRITE
 from future.utils import with_metaclass
 import time
 from abc import ABCMeta, abstractmethod
 import copy
 import sys
 import signal
+import win32file
 from asciimatics.event import KeyboardEvent, MouseEvent
 from .exceptions import ResizeScreenError, StopApplication, NextScene
 
@@ -821,18 +825,37 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             # Note that we need to resize the clone to ensure that it is the
             # same size as the original in some versions of Windows.
             old_out = win32console.PyConsoleScreenBufferType(
-                win32console.GetStdHandle(win32console.STD_OUTPUT_HANDLE))
-            if _last_screen_buffer is None:
-                info = old_out.GetConsoleScreenBufferInfo()
-            else:
-                info = _last_screen_buffer.GetConsoleScreenBufferInfo()
+                win32file.CreateFile("CONOUT$",
+                                     GENERIC_READ | GENERIC_WRITE,
+                                     FILE_SHARE_WRITE,
+                                     None,
+                                     OPEN_ALWAYS,
+                                     0,
+                                     None))
+            try:
+                if _last_screen_buffer is None:
+                    info = old_out.GetConsoleScreenBufferInfo()
+                else:
+                    info = _last_screen_buffer.GetConsoleScreenBufferInfo()
+            except pywintypes.error:
+                info = None
             win_out = win32console.CreateConsoleScreenBuffer()
-            win_out.SetConsoleScreenBufferSize(info['Size'])
+            if info:
+                win_out.SetConsoleScreenBufferSize(info['Size'])
+            else:
+                win_out.SetStdHandle(win32console.STD_OUTPUT_HANDLE)
             win_out.SetConsoleActiveScreenBuffer()
 
             # Get the standard input buffer.
             win_in = win32console.PyConsoleScreenBufferType(
-                win32console.GetStdHandle(win32console.STD_INPUT_HANDLE))
+                win32file.CreateFile("CONIN$",
+                                     GENERIC_READ | GENERIC_WRITE,
+                                     FILE_SHARE_READ,
+                                     None,
+                                     OPEN_ALWAYS,
+                                     0,
+                                     None))
+            win_in.SetStdHandle(STD_INPUT_HANDLE)
 
             # Hide the cursor.
             (size, visible) = win_out.GetConsoleCursorInfo()
