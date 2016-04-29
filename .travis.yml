@@ -7,9 +7,12 @@ python:
 # command to install dependencies
 install:
   - pip install -r requirements.txt
-  - pip install coveralls
+  - pip install coveralls appveyor-artifacts
 # command to run tests
 script:
   nosetests --with-coverage --cover-package=asciimatics
 after_success:
-  coveralls
+  - mv .coverage .coverage.travis
+  - appveyor-artifacts -m download
+  - coverage combine
+  - coveralls
