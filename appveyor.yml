@@ -1,0 +1,35 @@
+environment:
+
+  matrix:
+    - PYTHON: "C:\\Python27"
+    - PYTHON: "C:\\Python33"
+    - PYTHON: "C:\\Python34"
+    - PYTHON: "C:\\Python35"
+
+install:
+  # Upgrade to the latest version of pip to avoid it displaying warnings
+  # about it being out of date.
+  - "%PYTHON%\\python.exe -m pip install --disable-pip-version-check --user --upgrade pip"
+
+  # We need wheel installed to build wheels
+  - "%PYTHON%\\python.exe -m pip install wheel nose"
+
+  # Prepend Python to the PATH of this build.
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+
+build: off
+
+test_script:
+  - "nosetests --with-coverage --cover-package=asciimatics"
+
+after_test:
+  - "python.exe setup.py bdist_wheel"
+
+artifacts:
+  # bdist_wheel puts your built wheel in the dist directory
+  - path: dist\*
+
+#on_success:
+#  You can use this step to upload your artifacts to a public website.
+#  See Appveyor's documentation for more details. Or you can simply
+#  access your wheels from the Appveyor "artifacts" tab for your build.
