@@ -1,0 +1,16 @@
+doc-warnings: no
+test-warnings: no
+strictness: high
+max-line-length: 90
+autodetect: yes
+ignore-paths:
+    - docs
+    - tests
+python-targets:
+    - 2
+    - 3
+pylint:
+  disable:
+    - redefined-builtin
+    - too-many-arguments
+    - invalid-name

@@ -111,7 +111,6 @@ class ClockFrame(Frame):
 
 
 def demo(screen, scene):
-    global last_scene
     scenes = []
     effects = [
         Julia(screen),
