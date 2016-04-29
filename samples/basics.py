@@ -135,7 +135,7 @@ def demo(screen):
             (centre[0] + (screen.width / 4 * math.sin(i * math.pi / 5)),
              centre[1] - (screen.height / 4 * math.cos(i * math.pi / 5))))
     path2 = Path()
-    path2.jump_to(centre[0], centre[1] - screen.height // 4),
+    path2.jump_to(centre[0], centre[1] - screen.height // 4)
     path2.move_round_to(curve_path, 60)
 
     effects = [
