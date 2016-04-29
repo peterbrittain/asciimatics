@@ -4,16 +4,12 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import object
 from builtins import range
-from win32console import STD_OUTPUT_HANDLE, STD_INPUT_HANDLE
-from win32file import GENERIC_READ, FILE_SHARE_READ, OPEN_ALWAYS, GENERIC_WRITE, \
-    FILE_SHARE_WRITE
 from future.utils import with_metaclass
 import time
 from abc import ABCMeta, abstractmethod
 import copy
 import sys
 import signal
-import win32file
 from asciimatics.event import KeyboardEvent, MouseEvent
 from .exceptions import ResizeScreenError, StopApplication, NextScene
 
@@ -1167,6 +1163,10 @@ if sys.platform == "win32":
     import win32console
     import win32con
     import pywintypes
+    import win32file
+    from win32console import STD_OUTPUT_HANDLE, STD_INPUT_HANDLE
+    from win32file import GENERIC_READ, FILE_SHARE_READ, OPEN_ALWAYS, \
+        GENERIC_WRITE, FILE_SHARE_WRITE
 
     class _WindowsScreen(Screen):
         """
