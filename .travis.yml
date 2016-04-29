@@ -14,5 +14,5 @@ script:
 after_success:
   - mv .coverage .coverage.travis
   - appveyor-artifacts -m download
-  - coverage combine
+  - coverage combine .coverage.travis */.coverage
   - coveralls
