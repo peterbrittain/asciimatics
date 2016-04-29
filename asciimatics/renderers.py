@@ -783,16 +783,16 @@ class Fire(DynamicRenderer):
         self._clear()
         for x in range(self._width):
             for y in range(len(self._buffer)):
-                    if self._buffer[y][x] > 0:
-                        colour = self._colours[min(len(self._colours) - 1,
-                                                   self._buffer[y][x])]
-                        if self._bg_too:
-                            char = " "
-                            bg = colour[0]
-                        else:
-                            char = self._CHARS[min(len(self._CHARS) - 1,
+                if self._buffer[y][x] > 0:
+                    colour = self._colours[min(len(self._colours) - 1,
                                                self._buffer[y][x])]
-                            bg = 0
-                        self._write(char, x, y, colour[0], colour[1], bg)
+                    if self._bg_too:
+                        char = " "
+                        bg = colour[0]
+                    else:
+                        char = self._CHARS[min(len(self._CHARS) - 1,
+                                           self._buffer[y][x])]
+                        bg = 0
+                    self._write(char, x, y, colour[0], colour[1], bg)
 
         return self._plain_image, self._colour_map

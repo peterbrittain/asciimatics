@@ -22,7 +22,7 @@ def _credits(screen):
              centre[1] - (screen.height / 3 * math.cos(i * math.pi / 5))))
     path = Path()
     path.jump_to(-20, centre[1] - screen.height // 3)
-    path.move_straight_to(centre[0], centre[1] - screen.height // 3, 10),
+    path.move_straight_to(centre[0], centre[1] - screen.height // 3, 10)
     path.wait(30)
     path.move_round_to(curve_path, 80)
     path.wait(30)
