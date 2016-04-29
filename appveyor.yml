@@ -24,7 +24,8 @@ install:
 build: off
 
 test_script:
-  - "nosetests --with-coverage --cover-package=asciimatics"
+  # Start new shell to get valid console when testing.
+  - "cmd /C nosetests --with-coverage --cover-package=asciimatics"
 
 after_test:
   - "python.exe setup.py bdist_wheel"
