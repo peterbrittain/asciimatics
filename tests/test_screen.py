@@ -1,8 +1,17 @@
 from random import randint
 import unittest
+import sys
 from asciimatics.scene import Scene
-from asciimatics.screen import Screen
+from asciimatics.screen import Screen, Canvas
 from tests.mock_objects import MockEffect
+
+
+def check_screen_and_canvas(screen, fn):
+    """
+    Helper function to check that a Screen and Canvas work identically.
+    """
+    for test_object in (screen, Canvas(screen, screen.height, screen.width)):
+        fn(test_object)
 
 
 class TestScreen(unittest.TestCase):
@@ -46,7 +55,7 @@ class TestScreen(unittest.TestCase):
                     self.assertEqual(attr, attr2)
                     self.assertEqual(bg, bg2)
 
-        Screen.wrapper(internal_checks)
+        Screen.wrapper(check_screen_and_canvas, arguments=[internal_checks])
 
     def test_visible(self):
         """
@@ -63,7 +72,7 @@ class TestScreen(unittest.TestCase):
             self.assertFalse(screen.is_visible(
                 screen.width, screen.height))
 
-        Screen.wrapper(internal_checks)
+        Screen.wrapper(check_screen_and_canvas, arguments=[internal_checks])
 
     def test_paint(self):
         """
@@ -83,7 +92,7 @@ class TestScreen(unittest.TestCase):
             self.assertEqual(fg, 4)
             self.assertEqual(bg, 1)
 
-        Screen.wrapper(internal_checks)
+        Screen.wrapper(check_screen_and_canvas, arguments=[internal_checks])
 
     def test_limits(self):
         """
@@ -109,7 +118,7 @@ class TestScreen(unittest.TestCase):
             self.assertEqual(fg, Screen.COLOUR_WHITE)
             self.assertEqual(bg, Screen.COLOUR_BLACK)
 
-        Screen.wrapper(internal_checks)
+        Screen.wrapper(check_screen_and_canvas, arguments=[internal_checks])
 
     def test_scroll(self):
         """
@@ -189,7 +198,7 @@ class TestScreen(unittest.TestCase):
                     res = screen.get_from(1, 9 if start else 1)
                     self.assertEqual(res[0], ord(" "))
 
-        Screen.wrapper(internal_checks)
+        Screen.wrapper(check_screen_and_canvas, arguments=[internal_checks])
 
     def test_palette(self):
         """
@@ -237,6 +246,62 @@ class TestScreen(unittest.TestCase):
                     self.assertEqual(fg, fg2)
                     self.assertEqual(attr, attr2)
                     self.assertEqual(bg, bg2)
+
+        Screen.wrapper(internal_checks)
+
+    def test_old_start(self):
+        """
+        Check deprecated Screen constructors work.
+        """
+        def check_screen(local_screen):
+            # Old initializer requires we construct screen now for curses.
+            if sys.platform != "win32":
+                local_screen = Screen.from_curses(local_screen)
+
+            # If we get here there's not much new to test.  Check that we can
+            # draw something without hitting an Exception.
+            local_screen.print_at("Hello world!",
+                                  0, 0,
+                                  colour=Screen.COLOUR_CYAN,
+                                  attr=Screen.A_BOLD,
+                                  bg=Screen.COLOUR_BLUE)
+            local_screen.refresh()
+
+        if sys.platform == "win32":
+            import win32console
+            import pywintypes
+
+            win_stdout = win32console.PyConsoleScreenBufferType(
+                win32console.GetStdHandle(win32console.STD_OUTPUT_HANDLE))
+            win_stdin = win32console.PyConsoleScreenBufferType(
+                win32console.GetStdHandle(win32console.STD_INPUT_HANDLE))
+            try:
+                screen = Screen.from_windows(win_stdout, win_stdin)
+                check_screen(screen)
+            except pywintypes.error as e:
+                # STDIN and STDOUR are not valid - probably running inside an
+                # IDE - so ignore.
+                if e.winerror == 6:
+                    self.skipTest("Not running in valid console")
+                else:
+                    raise
+        else:
+            import curses
+            curses.wrapper(check_screen)
+
+    def test_refresh(self):
+        """
+        Check that refresh works.
+        """
+        def internal_checks(screen):
+            # Not much we can do here as refresh will draw to a screen we can't
+            # query. Check that we don't hit an Exception on refresh().
+            screen.print_at("Hello world!",
+                            0, 0,
+                            colour=Screen.COLOUR_CYAN,
+                            attr=Screen.A_BOLD,
+                            bg=Screen.COLOUR_BLUE)
+            screen.refresh()
 
         Screen.wrapper(internal_checks)
 
