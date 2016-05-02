@@ -2,6 +2,7 @@ import os
 from random import randint
 import unittest
 import sys
+from builtins import chr
 from asciimatics.event import KeyboardEvent
 from asciimatics.exceptions import StopApplication, NextScene
 from asciimatics.scene import Scene
@@ -475,7 +476,7 @@ class TestScreen(unittest.TestCase):
         if sys.platform == "win32":
             event = win32console.PyINPUT_RECORDType(win32console.KEY_EVENT)
             if char >= 0:
-                event.Char = unicode(chr(char))
+                event.Char = chr(char)
                 event.VirtualKeyCode = ord(chr(char).upper())
             else:
                 # Lookup in mapping dicts
