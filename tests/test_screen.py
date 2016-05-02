@@ -310,7 +310,7 @@ class TestScreen(unittest.TestCase):
             check_screen(screen)
         else:
             import curses
-            curses.wrapper(check_screen, height=15)
+            curses.wrapper(check_screen)
 
     def test_refresh(self):
         """
@@ -442,7 +442,7 @@ class TestScreen(unittest.TestCase):
                 self.assertEqual(ch.key_code, 26)
                 self.assertIsNone(screen.get_event())
 
-        Screen.wrapper(internal_checks, height=15, catch_interrupt=False)
+        Screen.wrapper(internal_checks, height=15, catch_interrupt=True)
 
     def test_scroll_redraw(self):
         """
@@ -491,7 +491,7 @@ class TestScreen(unittest.TestCase):
             event.KeyDown = 0
             screen._stdin.WriteConsoleInput([event])
         else:
-            curses.ungetch(ord(char))
+            curses.ungetch(char)
 
     def test_input(self):
         """
