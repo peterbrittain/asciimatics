@@ -6,7 +6,7 @@ class MockEffect(Effect):
     """
     Dummy Effect use for some UTs.
     """
-    def __init__(self, count=10, stop=True, swallow=False):
+    def __init__(self, count=10, stop=True, swallow=False, next_scene=None):
         """
         :param count: When to stop effect
         :param stop: Whether to stop the application or skip to next scene.
@@ -20,6 +20,7 @@ class MockEffect(Effect):
         self._count = count
         self._stop = stop
         self._swallow = swallow
+        self._next_scene = next_scene
 
     @property
     def stop_frame(self):
@@ -32,7 +33,7 @@ class MockEffect(Effect):
             if self._stop:
                 raise StopApplication("End of test")
             else:
-                raise NextScene()
+                raise NextScene(self._next_scene)
 
     def reset(self):
         self.reset_called = True

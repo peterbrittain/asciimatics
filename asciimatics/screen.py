@@ -934,7 +934,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             self._last_start_line = self._start_line
 
         # Now draw any deltas to the scrolled screen.
-        for y in range(self.height):
+        for y in range(min(self.height, self._buffer_height)):
             for x in range(self.width):
                 new_cell = self._double_buffer[y + self._start_line][x]
                 if self._screen_buffer[y + self._start_line][x] != new_cell:
@@ -1353,7 +1353,10 @@ if sys.platform == "win32":
                         if (event.VirtualKeyCode == win32con.VK_TAB and
                                 event.ControlKeyState & win32con.SHIFT_PRESSED):
                             key_code = Screen.KEY_BACK_TAB
-                    return KeyboardEvent(key_code)
+
+                    # Don't return anything if we didn't have a valid mapping.
+                    if key_code:
+                        return KeyboardEvent(key_code)
                 elif event.EventType == win32console.MOUSE_EVENT:
                     # Translate into a MouseEvent object.
                     button = 0
