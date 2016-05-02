@@ -416,7 +416,7 @@ class TestScreen(unittest.TestCase):
                 # we don't catch interrupts).  Still a good basic check for
                 # input, though.
                 event = win32console.PyINPUT_RECORDType(win32console.KEY_EVENT)
-                event.Char = "\03"
+                event.Char = u"\03"
                 event.KeyDown = 1
                 event.RepeatCount = 1
                 event.ControlKeyState = win32con.LEFT_CTRL_PRESSED
@@ -475,7 +475,7 @@ class TestScreen(unittest.TestCase):
         if sys.platform == "win32":
             event = win32console.PyINPUT_RECORDType(win32console.KEY_EVENT)
             if char >= 0:
-                event.Char = chr(char)
+                event.Char = unicode(char)
                 event.VirtualKeyCode = ord(chr(char).upper())
             else:
                 # Lookup in mapping dicts
