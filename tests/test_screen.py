@@ -475,7 +475,7 @@ class TestScreen(unittest.TestCase):
         if sys.platform == "win32":
             event = win32console.PyINPUT_RECORDType(win32console.KEY_EVENT)
             if char >= 0:
-                event.Char = unicode(char)
+                event.Char = unicode(chr(char))
                 event.VirtualKeyCode = ord(chr(char).upper())
             else:
                 # Lookup in mapping dicts
