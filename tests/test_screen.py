@@ -1,9 +1,18 @@
+import os
 from random import randint
 import unittest
 import sys
+from asciimatics.event import KeyboardEvent
+from asciimatics.exceptions import StopApplication, NextScene
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen, Canvas
 from tests.mock_objects import MockEffect
+if sys.platform == "win32":
+    import win32console
+    import win32con
+else:
+    import signal
+    import curses
 
 
 def check_screen_and_canvas(screen, fn):
@@ -43,7 +52,7 @@ class TestScreen(unittest.TestCase):
         """
         def internal_checks(screen):
             for x in range(screen.width):
-                for y in range(screen.height):
+                for y in range(15):
                     char = randint(0, 255)
                     fg = randint(0, Screen.COLOUR_WHITE)
                     bg = randint(0, Screen.COLOUR_WHITE)
@@ -55,7 +64,8 @@ class TestScreen(unittest.TestCase):
                     self.assertEqual(attr, attr2)
                     self.assertEqual(bg, bg2)
 
-        Screen.wrapper(check_screen_and_canvas, arguments=[internal_checks])
+        Screen.wrapper(
+            check_screen_and_canvas, height=15, arguments=[internal_checks])
 
     def test_visible(self):
         """
@@ -72,7 +82,8 @@ class TestScreen(unittest.TestCase):
             self.assertFalse(screen.is_visible(
                 screen.width, screen.height))
 
-        Screen.wrapper(check_screen_and_canvas, arguments=[internal_checks])
+        Screen.wrapper(
+            check_screen_and_canvas, height=15, arguments=[internal_checks])
 
     def test_paint(self):
         """
@@ -92,7 +103,8 @@ class TestScreen(unittest.TestCase):
             self.assertEqual(fg, 4)
             self.assertEqual(bg, 1)
 
-        Screen.wrapper(check_screen_and_canvas, arguments=[internal_checks])
+        Screen.wrapper(
+            check_screen_and_canvas, height=15, arguments=[internal_checks])
 
     def test_limits(self):
         """
@@ -118,7 +130,8 @@ class TestScreen(unittest.TestCase):
             self.assertEqual(fg, Screen.COLOUR_WHITE)
             self.assertEqual(bg, Screen.COLOUR_BLACK)
 
-        Screen.wrapper(check_screen_and_canvas, arguments=[internal_checks])
+        Screen.wrapper(
+            check_screen_and_canvas, height=15, arguments=[internal_checks])
 
     def test_scroll(self):
         """
@@ -136,7 +149,7 @@ class TestScreen(unittest.TestCase):
             screen.scroll_to(0)
             self.assertEqual(screen.start_line, 0)
 
-        Screen.wrapper(internal_checks)
+        Screen.wrapper(internal_checks, height=15)
 
     def test_centre(self):
         """
@@ -149,7 +162,7 @@ class TestScreen(unittest.TestCase):
             self.assertEqual(fg, Screen.COLOUR_WHITE)
             self.assertEqual(bg, Screen.COLOUR_BLACK)
 
-        Screen.wrapper(internal_checks)
+        Screen.wrapper(internal_checks, height=15)
 
     def test_draw(self):
         """
@@ -198,7 +211,8 @@ class TestScreen(unittest.TestCase):
                     res = screen.get_from(1, 9 if start else 1)
                     self.assertEqual(res[0], ord(" "))
 
-        Screen.wrapper(check_screen_and_canvas, arguments=[internal_checks])
+        Screen.wrapper(
+            check_screen_and_canvas, height=15, arguments=[internal_checks])
 
     def test_palette(self):
         """
@@ -227,7 +241,7 @@ class TestScreen(unittest.TestCase):
             for i, c in enumerate((192, 192, 192)):
                 self.assertEqual(screen.palette[i+21], c)
 
-        Screen.wrapper(internal_checks)
+        Screen.wrapper(internal_checks, height=15)
 
     def test_putch_and_getch(self):
         """
@@ -235,7 +249,7 @@ class TestScreen(unittest.TestCase):
         """
         def internal_checks(screen):
             for x in range(screen.width):
-                for y in range(screen.height):
+                for y in range(15):
                     char = randint(0, 255)
                     fg = randint(0, Screen.COLOUR_WHITE)
                     bg = randint(0, Screen.COLOUR_WHITE)
@@ -247,7 +261,7 @@ class TestScreen(unittest.TestCase):
                     self.assertEqual(attr, attr2)
                     self.assertEqual(bg, bg2)
 
-        Screen.wrapper(internal_checks)
+        Screen.wrapper(internal_checks, height=15)
 
     def test_old_start(self):
         """
@@ -269,25 +283,33 @@ class TestScreen(unittest.TestCase):
 
         if sys.platform == "win32":
             import win32console
-            import pywintypes
+            import win32file
+            from win32file import GENERIC_READ, FILE_SHARE_READ, OPEN_ALWAYS, \
+                GENERIC_WRITE, FILE_SHARE_WRITE
 
             win_stdout = win32console.PyConsoleScreenBufferType(
-                win32console.GetStdHandle(win32console.STD_OUTPUT_HANDLE))
+                win32file.CreateFile("CONOUT$",
+                                     GENERIC_READ | GENERIC_WRITE,
+                                     FILE_SHARE_WRITE,
+                                     None,
+                                     OPEN_ALWAYS,
+                                     0,
+                                     None))
+
+            # Get the standard input buffer.
             win_stdin = win32console.PyConsoleScreenBufferType(
-                win32console.GetStdHandle(win32console.STD_INPUT_HANDLE))
-            try:
-                screen = Screen.from_windows(win_stdout, win_stdin)
-                check_screen(screen)
-            except pywintypes.error as e:
-                # STDIN and STDOUR are not valid - probably running inside an
-                # IDE - so ignore.
-                if e.winerror == 6:
-                    self.skipTest("Not running in valid console")
-                else:
-                    raise
+                win32file.CreateFile("CONIN$",
+                                     GENERIC_READ | GENERIC_WRITE,
+                                     FILE_SHARE_READ,
+                                     None,
+                                     OPEN_ALWAYS,
+                                     0,
+                                     None))
+            screen = Screen.from_windows(win_stdout, win_stdin)
+            check_screen(screen)
         else:
             import curses
-            curses.wrapper(check_screen)
+            curses.wrapper(check_screen, height=15)
 
     def test_refresh(self):
         """
@@ -303,7 +325,18 @@ class TestScreen(unittest.TestCase):
                             bg=Screen.COLOUR_BLUE)
             screen.refresh()
 
-        Screen.wrapper(internal_checks)
+        Screen.wrapper(
+            check_screen_and_canvas, height=15, arguments=[internal_checks])
+
+    def test_origin(self):
+        """
+        Check that Canvas origin is correct.
+        """
+        def internal_checks(screen):
+            canvas = Canvas(screen, 5, 5, 1, 2)
+            self.assertEqual(canvas.origin, (1, 2))
+
+        Screen.wrapper(internal_checks, height=15)
 
     def test_play(self):
         """
@@ -324,7 +357,7 @@ class TestScreen(unittest.TestCase):
             self.assertFalse(test_effect.stop_called)
             self.assertTrue(test_effect.reset_called)
 
-        Screen.wrapper(internal_checks)
+        Screen.wrapper(internal_checks, height=15)
 
     def test_next_scene(self):
         """
@@ -349,7 +382,173 @@ class TestScreen(unittest.TestCase):
             self.assertFalse(test_effect1.reset_called)
             self.assertTrue(test_effect2.reset_called)
 
+            # Now check that we can move to named scenes.
+            test_effect1 = MockEffect(stop=False, next_scene="B")
+            test_effect2 = MockEffect(count=5)
+            screen.play([
+                Scene([test_effect1], 15, name="A"),
+                Scene([test_effect2], 0, name="B")])
+            self.assertTrue(test_effect1.reset_called)
+            self.assertTrue(test_effect2.reset_called)
+
+            # Now check that bad names cause an exception.
+            with self.assertRaises(RuntimeError):
+                test_effect1 = MockEffect(stop=False, next_scene="C")
+                test_effect2 = MockEffect(count=5)
+                screen.play([
+                    Scene([test_effect1], 15, name="A"),
+                    Scene([test_effect2], 0, name="B")])
+            self.assertTrue(test_effect1.reset_called)
+            self.assertFalse(test_effect2.reset_called)
+
+        Screen.wrapper(internal_checks, height=15)
+
+    def test_catch_exceptions(self):
+        """
+        Check that we can catch exceptions (e.g. for ctrl-c).
+        """
+        def internal_checks(screen):
+            # Not much we can do here as refresh will draw to a screen we can't
+            # query. Check that we don't hit an Exception on refresh().
+            if sys.platform == "win32":
+                # Strictly speaking, this doesn't test catching ctrl-c as
+                # it isn't possible to trigger the control handler (even if
+                # we don't catch interrupts).  Still a good basic check for
+                # input, though.
+                event = win32console.PyINPUT_RECORDType(win32console.KEY_EVENT)
+                event.Char = "\03"
+                event.KeyDown = 1
+                event.RepeatCount = 1
+                event.ControlKeyState = win32con.LEFT_CTRL_PRESSED
+                event.VirtualKeyCode = 67
+                event.VirtualScanCode = 46
+                screen._stdin.WriteConsoleInput([event])
+                event.KeyDown = 0
+                screen._stdin.WriteConsoleInput([event])
+                ch = screen.get_event()
+                self.assertEqual(ch.key_code, 3)
+                self.assertIsNone(screen.get_event())
+            else:
+                # Check Ctrl-c (and no other input)
+                os.kill(os.getpid(), signal.SIGINT)
+                ch = screen.get_event()
+                self.assertEqual(ch.key_code, 3)
+                self.assertIsNone(screen.get_event())
+
+                # Check Ctrl-z (and no other input)
+                os.kill(os.getpid(), signal.SIGTSTP)
+                ch = screen.get_event()
+                self.assertEqual(ch.key_code, 26)
+                self.assertIsNone(screen.get_event())
+
+        Screen.wrapper(internal_checks, height=15, catch_interrupt=False)
+
+    def test_scroll_redraw(self):
+        """
+        Check that scrolling works with screen locations.
+        """
+        def internal_checks(screen):
+            # New screen is not scrolled.
+            self.assertEqual(screen.start_line, 0)
+
+            # Scroll and check it has not moved
+            screen.print_at("Hello", 0, 1)
+            screen.scroll()
+            screen.refresh()
+            for i, c in enumerate("Hello"):
+                self.assertEqual(screen.get_from(i, 1)[0], ord(c))
+
+            # Scroll and check drawing off-screen works.
+            screen.print_at("World", 0, 0)
+            screen.scroll()
+            screen.refresh()
+            for i, c in enumerate("World"):
+                self.assertEqual(screen.get_from(i, 0)[0], ord(c))
+
         Screen.wrapper(internal_checks)
+
+    @staticmethod
+    def _inject(screen, char):
+        """
+        Inject a specified character into the input buffers.
+        """
+        if sys.platform == "win32":
+            event = win32console.PyINPUT_RECORDType(win32console.KEY_EVENT)
+            if char >= 0:
+                event.Char = chr(char)
+                event.VirtualKeyCode = ord(chr(char).upper())
+            else:
+                # Lookup in mapping dicts
+                reverse = dict((v, k) for k, v in
+                               screen._EXTRA_KEY_MAP.items())
+                event.VirtualKeyCode = reverse[char]
+            event.KeyDown = 1
+            event.RepeatCount = 1
+            event.ControlKeyState = 0
+            event.VirtualScanCode = 0
+            screen._stdin.WriteConsoleInput([event])
+            event.KeyDown = 0
+            screen._stdin.WriteConsoleInput([event])
+        else:
+            curses.ungetch(ord(char))
+
+    def test_input(self):
+        """
+        Check that keyboard input works.
+        """
+        def internal_checks(screen):
+            # Inject a letter and check it is picked up
+            self._inject(screen, ord("a"))
+            ch = screen.get_event()
+            self.assertEqual(ch.key_code, ord("a"))
+            self.assertIsNone(screen.get_event())
+
+            # Check that get_key also works.
+            self._inject(screen, ord("b"))
+            ch = screen.get_key()
+            self.assertEqual(ch, ord("b"))
+            self.assertIsNone(screen.get_key())
+
+        Screen.wrapper(internal_checks, height=15)
+
+    def test_windows_input(self):
+        """
+        Check that extended keyboard input works on Windows.
+        """
+        def internal_checks(screen):
+            if sys.platform != "win32":
+                self.skipTest("Only valid for Windows platforms")
+
+            # Test no mapping by default
+            self._inject(screen, Screen.KEY_NUMPAD0)
+            self.assertIsNone(screen.get_event())
+
+            # Test switching on mapping picks up keys
+            screen.map_all_keys(True)
+            self._inject(screen, Screen.KEY_NUMPAD0)
+            ch = screen.get_key()
+            self.assertEqual(ch, Screen.KEY_NUMPAD0)
+            self.assertIsNone(screen.get_key())
+
+        Screen.wrapper(internal_checks, height=15)
+
+    def test_unhandled_events(self):
+        """
+        Check that default handling of events works as documented.
+        """
+        def internal_checks(screen):
+            # Check for exit
+            for char in ("X", "x", "Q", "q"):
+                with self.assertRaises(StopApplication):
+                    event = KeyboardEvent(ord(char))
+                    screen._unhandled_event_default(event)
+
+            for char in (" ", "\n"):
+                with self.assertRaises(NextScene):
+                    event = KeyboardEvent(ord(char))
+                    screen._unhandled_event_default(event)
+
+        Screen.wrapper(internal_checks, height=15)
 
 if __name__ == '__main__':
     unittest.main()
