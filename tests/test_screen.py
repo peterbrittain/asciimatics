@@ -3,7 +3,7 @@ from random import randint
 import unittest
 import sys
 from builtins import chr
-from asciimatics.event import KeyboardEvent
+from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import StopApplication, NextScene
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen, Canvas
@@ -469,12 +469,15 @@ class TestScreen(unittest.TestCase):
         Screen.wrapper(internal_checks)
 
     @staticmethod
-    def _inject(screen, char):
+    def _inject_key(screen, char):
         """
         Inject a specified character into the input buffers.
         """
         if sys.platform == "win32":
             event = win32console.PyINPUT_RECORDType(win32console.KEY_EVENT)
+            event.RepeatCount = 1
+            event.ControlKeyState = 0
+            event.VirtualScanCode = 0
             if char >= 0:
                 event.Char = chr(char)
                 event.VirtualKeyCode = ord(chr(char).upper())
@@ -482,33 +485,110 @@ class TestScreen(unittest.TestCase):
                 # Lookup in mapping dicts
                 reverse = dict((v, k) for k, v in
                                screen._EXTRA_KEY_MAP.items())
-                event.VirtualKeyCode = reverse[char]
+                if char in reverse:
+                    event.VirtualKeyCode = reverse[char]
+                else:
+                    # Fudge key state required for BACK_TAB if needed.
+                    if char == Screen.KEY_BACK_TAB:
+                        char = Screen.KEY_TAB
+                        event.ControlKeyState = win32con.SHIFT_PRESSED
+                    reverse = dict((v, k) for k, v in
+                                   screen._KEY_MAP.items())
+                    event.VirtualKeyCode = reverse[char]
             event.KeyDown = 1
-            event.RepeatCount = 1
-            event.ControlKeyState = 0
-            event.VirtualScanCode = 0
             screen._stdin.WriteConsoleInput([event])
             event.KeyDown = 0
             screen._stdin.WriteConsoleInput([event])
         else:
             curses.ungetch(char)
 
-    def test_input(self):
+    @staticmethod
+    def _inject_mouse(screen, x, y, button):
+        """
+        Inject a mouse event into the input buffers.
+        """
+        if sys.platform == "win32":
+            event = win32console.PyINPUT_RECORDType(win32console.MOUSE_EVENT)
+            event.MousePosition.X = x
+            event.MousePosition.Y = y
+            if button & MouseEvent.LEFT_CLICK != 0:
+                event.ButtonState |= win32con.FROM_LEFT_1ST_BUTTON_PRESSED
+            if button & MouseEvent.RIGHT_CLICK != 0:
+                event.ButtonState |= win32con.RIGHTMOST_BUTTON_PRESSED
+            if button & MouseEvent.DOUBLE_CLICK != 0:
+                event.EventFlags |= win32con.DOUBLE_CLICK
+            screen._stdin.WriteConsoleInput([event])
+        else:
+            bstate = 0
+            if button & MouseEvent.LEFT_CLICK != 0:
+                bstate |= curses.BUTTON1_CLICKED
+            if button & MouseEvent.RIGHT_CLICK != 0:
+                bstate |= curses.BUTTON3_CLICKED
+            if button & MouseEvent.DOUBLE_CLICK != 0:
+                bstate |= curses.BUTTON1_DOUBLE_CLICKED
+            curses.ungetmouse(0, x, y, 0, bstate)
+
+    def test_key_input(self):
         """
         Check that keyboard input works.
         """
         def internal_checks(screen):
             # Inject a letter and check it is picked up
-            self._inject(screen, ord("a"))
+            self._inject_key(screen, ord("a"))
             ch = screen.get_event()
             self.assertEqual(ch.key_code, ord("a"))
             self.assertIsNone(screen.get_event())
 
+            # Inject a letter and check it is picked up
+            self._inject_key(screen, Screen.KEY_BACK_TAB)
+            ch = screen.get_event()
+            self.assertEqual(ch.key_code, Screen.KEY_BACK_TAB)
+            self.assertIsNone(screen.get_event())
+
             # Check that get_key also works.
-            self._inject(screen, ord("b"))
+            self._inject_key(screen, ord("b"))
             ch = screen.get_key()
             self.assertEqual(ch, ord("b"))
             self.assertIsNone(screen.get_key())
+
+        Screen.wrapper(internal_checks, height=15)
+
+    def test_mouse_input(self):
+        """
+        Check that mouse input works.
+        """
+        def internal_checks(screen):
+            # Inject a mouse move and check it is picked up
+            self._inject_mouse(screen, 1, 2, 0)
+            ev = screen.get_event()
+            self.assertEqual(ev.x, 1)
+            self.assertEqual(ev.y, 2)
+            self.assertEqual(ev.buttons, 0)
+            self.assertIsNone(screen.get_event())
+
+            # Check left click
+            self._inject_mouse(screen, 2, 3, MouseEvent.LEFT_CLICK)
+            ev = screen.get_event()
+            self.assertEqual(ev.x, 2)
+            self.assertEqual(ev.y, 3)
+            self.assertEqual(ev.buttons, MouseEvent.LEFT_CLICK)
+            self.assertIsNone(screen.get_event())
+
+            # Check right click
+            self._inject_mouse(screen, 0, 0, MouseEvent.RIGHT_CLICK)
+            ev = screen.get_event()
+            self.assertEqual(ev.x, 0)
+            self.assertEqual(ev.y, 0)
+            self.assertEqual(ev.buttons, MouseEvent.RIGHT_CLICK)
+            self.assertIsNone(screen.get_event())
+
+            # Check double click
+            self._inject_mouse(screen, 0, 0, MouseEvent.DOUBLE_CLICK)
+            ev = screen.get_event()
+            self.assertEqual(ev.x, 0)
+            self.assertEqual(ev.y, 0)
+            self.assertEqual(ev.buttons, MouseEvent.DOUBLE_CLICK)
+            self.assertIsNone(screen.get_event())
 
         Screen.wrapper(internal_checks, height=15)
 
@@ -521,12 +601,12 @@ class TestScreen(unittest.TestCase):
                 self.skipTest("Only valid for Windows platforms")
 
             # Test no mapping by default
-            self._inject(screen, Screen.KEY_NUMPAD0)
+            self._inject_key(screen, Screen.KEY_NUMPAD0)
             self.assertIsNone(screen.get_event())
 
             # Test switching on mapping picks up keys
             screen.map_all_keys(True)
-            self._inject(screen, Screen.KEY_NUMPAD0)
+            self._inject_key(screen, Screen.KEY_NUMPAD0)
             ch = screen.get_key()
             self.assertEqual(ch, Screen.KEY_NUMPAD0)
             self.assertIsNone(screen.get_key())
@@ -548,6 +628,17 @@ class TestScreen(unittest.TestCase):
                 with self.assertRaises(NextScene):
                     event = KeyboardEvent(ord(char))
                     screen._unhandled_event_default(event)
+
+        Screen.wrapper(internal_checks, height=15)
+
+    def test_title(self):
+        """
+        Check that we can change the screen title.
+        """
+        def internal_checks(screen):
+            # It's not possible to read values back, so just check code doesn't
+            # crash.
+            screen.set_title("Asciimatics test")
 
         Screen.wrapper(internal_checks, height=15)
 
