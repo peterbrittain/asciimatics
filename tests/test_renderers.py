@@ -19,8 +19,8 @@ class TestRenderers(unittest.TestCase):
 
         # Images should be the parsed versions of the original strings.
         images = renderer.images
-        self.assertEqual(images.__next__(), ["A", "B"])
-        self.assertEqual(images.__next__(), ["C  "])
+        self.assertEqual(next(images), ["A", "B"])
+        self.assertEqual(next(images), ["C  "])
 
         # String presentation should be the first image as a printable string.
         self.assertEqual(str(renderer), "A\nB")
