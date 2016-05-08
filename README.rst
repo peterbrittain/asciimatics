@@ -2,6 +2,9 @@
 .. image:: https://travis-ci.org/peterbrittain/asciimatics.svg?branch=master
     :target: https://travis-ci.org/peterbrittain/asciimatics
 
+.. image:: https://ci.appveyor.com/api/projects/status/n68nk47ku35pafru?svg=true&passingText=Windows%20-%20passing
+    :target: https://ci.appveyor.com/project/peterbrittain/asciimatics
+
 .. image:: https://landscape.io/github/peterbrittain/asciimatics/master/landscape.svg?style=flat
    :target: https://landscape.io/github/peterbrittain/asciimatics/master
    :alt: Code Health
