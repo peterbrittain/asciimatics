@@ -1,7 +1,8 @@
+import random
 import unittest
 import os
 from asciimatics.renderers import StaticRenderer, FigletText, ImageFile, \
-    ColourImageFile, SpeechBubble, Box
+    ColourImageFile, SpeechBubble, Box, Rainbow, BarChart, Fire
 from asciimatics.screen import Screen
 
 
@@ -176,6 +177,130 @@ class TestRenderers(unittest.TestCase):
                  '     ###########    '])
 
         Screen.wrapper(internal_checks, height=15)
+
+    def test_rainbow(self):
+        """
+        Check that the Rainbow renderer works.
+        """
+        def internal_checks(screen):
+            # Create a base renderer
+            plain_text = (".-------.\n" +
+                          "| hello |\n" +
+                          "`-------`\n")
+            renderer = SpeechBubble("hello")
+            self.assertEqual(str(renderer), plain_text)
+
+            # Pretend that we always have an 8 colour palette for the test.
+            screen.colours = 8
+
+            # Check that the Rainbow renderer doesn't change this.
+            rainbow = Rainbow(screen, renderer)
+            self.assertEqual(str(rainbow), plain_text)
+
+            # Check rainbow colour scheme.
+            self.assertEqual(
+                rainbow.rendered_text[1], [
+                    [(1, 1), (1, 1), (3, 1), (3, 1), (2, 1), (2, 1), (6, 1),
+                     (6, 1), (4, 1)],
+                    [(1, 1), (3, 1), (3, 1), (2, 1), (2, 1), (6, 1), (6, 1),
+                     (4, 1), (4, 1)],
+                    [(3, 1), (3, 1), (2, 1), (2, 1), (6, 1), (6, 1), (4, 1),
+                     (4, 1), (5, 1)],
+                    []])
+
+        Screen.wrapper(internal_checks, height=15)
+
+    def test_bar_chart(self):
+        """
+        Check that the BarChart renderer works.
+        """
+        # Internal test function for rendering
+        def fn():
+            return 10
+
+        # Check default implementation
+        renderer = BarChart(7, 20, [fn, fn])
+        self.assertEqual(
+            str(renderer),
+            "+------------------+\n" +
+            "|                  |\n" +
+            "|  |######         |\n" +
+            "|  |               |\n" +
+            "|  |######         |\n" +
+            "|                  |\n" +
+            "+------------------+")
+
+        # Switch on non-defaults
+        renderer = BarChart(5, 30, [fn, fn], scale=10.0, axes=BarChart.BOTH,
+                            intervals=2.5, labels=True, border=False,
+                            keys=["A", "B"])
+        self.assertEqual(
+            str(renderer),
+            "A |########################## \n" +
+            "  |      :      :     :       \n" +
+            "B |########################## \n" +
+            "  +------+------+-----+------ \n" +
+            "   0    2.5    5.0   7.5 10.0 ")
+
+        # Check gradients
+        renderer = BarChart(7, 20, [fn, fn], gradient=[(4, 1), (8, 2), (15, 2)])
+        self.assertEqual(
+            str(renderer),
+            "+------------------+\n" +
+            "|                  |\n" +
+            "|  |######         |\n" +
+            "|  |               |\n" +
+            "|  |######         |\n" +
+            "|                  |\n" +
+            "+------------------+")
+        self.assertEqual(
+            renderer.rendered_text[1][2],
+            [(7, 2, 0),
+             (None, 0, 0),
+             (None, 0, 0),
+             (7, 2, 0),
+             (1, 2, 0),
+             (1, 2, 0),
+             (2, 2, 0),
+             (2, 2, 0),
+             (2, 2, 0),
+             (2, 2, 0),
+             (None, 0, 0),
+             (None, 0, 0),
+             (None, 0, 0),
+             (None, 0, 0),
+             (None, 0, 0),
+             (None, 0, 0),
+             (None, 0, 0),
+             (None, 0, 0),
+             (None, 0, 0),
+             (7, 2, 0)])
+
+    def test_fire(self):
+        """
+        Check that the Fire renderer works.
+        """
+        # Seed random numbers to get a reproducible test.
+        random.seed(2016)
+
+        # Allow the fire to burn for a bit...
+        renderer = Fire(5, 10, "xxxxxxxx", 1.0, 20, 8)
+        output = None
+        for _ in range(100):
+            output = renderer.rendered_text
+
+        self.assertEqual(
+            "\n".join(output[0]),
+            "  .:...   \n" +
+            "  .::.    \n" +
+            " .:$$::.. \n" +
+            "..::$$$$. \n" +
+            " ..:$&&:  ")
+
+        # Check dimensions
+        self.assertEqual(renderer.max_height, 5)
+        self.assertEqual(renderer.max_width, 10)
+
 
 if __name__ == '__main__':
     unittest.main()
