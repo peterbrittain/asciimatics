@@ -482,7 +482,8 @@ class Rainbow(StaticRenderer):
                 for x, c in enumerate(line):
                     colour = (x + y) % len(palette)
                     new_image += '${%d,1}%s' % (palette[colour], c)
-                new_image += "\n"
+                if y < len(image) - 1:
+                    new_image += "\n"
             self._images.append(new_image)
 
 
