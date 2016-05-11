@@ -13,6 +13,7 @@ pylint:
   disable:
     - redefined-builtin
     - too-many-arguments
+    - too-many-instance-attributes
     - invalid-name
 mccabe:
   run: false

@@ -52,7 +52,7 @@ def demo(screen):
 
     # Next scene: explosions
     effects = []
-    for i in range(20):
+    for _ in range(20):
         effects.append(
             Explosion(screen,
                       randint(3, screen.width - 4),

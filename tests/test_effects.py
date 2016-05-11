@@ -1,5 +1,6 @@
 import unittest
-from asciimatics.effects import Print, Cycle, BannerText, Mirage
+from mock.mock import MagicMock
+from asciimatics.effects import Print, Cycle, BannerText, Mirage, Scroll
 from asciimatics.renderers import FigletText
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
@@ -8,6 +9,9 @@ from tests.mock_objects import MockEffect
 
 class TestEffects(unittest.TestCase):
     def test_text_effects(self):
+        """
+        Check effects can be played.        
+        """
         # A lot of effects are just about the visual output working when played
         # so check that playing a load of text effects doesn't crash.
         #
@@ -24,6 +28,21 @@ class TestEffects(unittest.TestCase):
 
         Screen.wrapper(internal_checks, height=25)
 
+    def test_scroll(self):
+        """
+        Check that Scroll works.
+        """
+        # Check that it will attempt to scroll the screen at the required rate.
+        screen = MagicMock(spec=Screen)
+        effect = Scroll(screen, 2)
+        effect.reset()
+        effect.update(1)
+        screen.scroll.assert_not_called()
+        effect.update(2)
+        screen.scroll.assert_called_once()
+
+        # Check there is no stop frame
+        self.assertEqual(effect.stop_frame, 0)
 
 if __name__ == '__main__':
     unittest.main()

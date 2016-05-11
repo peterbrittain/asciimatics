@@ -18,7 +18,7 @@ def demo(screen):
               y=screen.height - 3,
               start_frame=300)
     ]
-    for i in range(20):
+    for _ in range(20):
         fireworks = [
             (PalmFirework, 25, 30),
             (PalmFirework, 25, 30),

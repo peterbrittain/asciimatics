@@ -68,7 +68,7 @@ class Particle(object):
         each character.
         """
         return particle.chars[
-            (len(particle.chars)-1) * particle.time // particle.life_time]
+            (len(particle.chars) - 1) * particle.time // particle.life_time]
 
     @staticmethod
     def _default_next_colour(particle):
@@ -166,7 +166,7 @@ class ParticleEmitter(object):
                 char, x, y, fg, attr, bg = last
                 screen_data = self._screen.get_from(x, y)
                 if self._blend and screen_data:
-                    char2, fg2, attr2, bg2 = screen_data
+                    _, fg2, attr2, bg2 = screen_data
                     index = 0
                     for i, colours in enumerate(particle.colours):
                         if (fg2, attr2, bg2) == colours:
@@ -254,12 +254,12 @@ class Rocket(ParticleEmitter):
         :param on_destroy: The function to call when the rocket explodes.
         """
         super(Rocket, self).__init__(
-            screen, x, screen.height - 1, 1, self._new_particle, 1, life_time)
+            screen, x, screen.height - 1, 1, self._next_particle, 1, life_time)
         self._end_y = y
         self._acceleration = (self._end_y - self._y) // life_time
         self._on_destroy = on_destroy
 
-    def _new_particle(self):
+    def _next_particle(self):
         return Particle("|",
                         self._x,
                         self._y,
@@ -294,11 +294,11 @@ class RingExplosion(ParticleEmitter):
         :param life_time: The life time of this explosion.
         """
         super(RingExplosion, self).__init__(
-            screen, x, y, 30, self._new_particle, 1, life_time)
+            screen, x, y, 30, self._next_particle, 1, life_time)
         self._colour = randint(1, 7)
         self._acceleration = 1.0 - (1.0 / life_time)
 
-    def _new_particle(self):
+    def _next_particle(self):
         direction = uniform(0, 2 * pi)
         return Particle("***:. ",
                         self._x,
@@ -334,10 +334,10 @@ class SerpentExplosion(ParticleEmitter):
         :param life_time: The life time of this explosion.
         """
         super(SerpentExplosion, self).__init__(
-            screen, x, y, 8, self._new_particle, 2, life_time)
+            screen, x, y, 8, self._next_particle, 2, life_time)
         self._colour = randint(1, 7)
 
-    def _new_particle(self):
+    def _next_particle(self):
         direction = uniform(0, 2 * pi)
         acceleration = uniform(0, 2 * pi)
         return Particle("++++- ",
@@ -378,14 +378,14 @@ class StarExplosion(ParticleEmitter):
         :param on_each: The function to call to spawn a trail.
         """
         super(StarExplosion, self).__init__(
-            screen, x, y, points, self._new_particle, 1, life_time)
+            screen, x, y, points, self._next_particle, 1, life_time)
         self._colour = randint(1, 7)
         self._acceleration = 1.0 - (1.0 / life_time)
         self._on_each = on_each
         self._points = points
         self._point_count = 0
 
-    def _new_particle(self):
+    def _next_particle(self):
         direction = self._point_count * 2 * pi / self._points
         self._point_count += 1
         return Particle("+",
@@ -422,10 +422,10 @@ class StarTrail(ParticleEmitter):
         :param colour: The colour of this trail.
         """
         super(StarTrail, self).__init__(
-            screen, x, y, 1, self._new_particle, 1, life_time)
+            screen, x, y, 1, self._next_particle, 1, life_time)
         self._colour = colour
 
-    def _new_particle(self):
+    def _next_particle(self):
         return Particle("+:,. ",
                         self._x,
                         self._y,
@@ -460,13 +460,13 @@ class PalmExplosion(ParticleEmitter):
         :param on_each: The function to call to spawn a trail.
         """
         super(PalmExplosion, self).__init__(
-            screen, x, y, 6, self._new_particle, 2, life_time)
+            screen, x, y, 6, self._next_particle, 2, life_time)
         self._colour = randint(1, 7)
         self._on_each = on_each
         self._arc_start = uniform(pi / 6, pi / 3)
         self._arc_end = self._arc_start + uniform(pi / 6, pi / 2)
 
-    def _new_particle(self):
+    def _next_particle(self):
         direction = uniform(self._arc_start, self._arc_end)
         return Particle("* ",
                         self._x,
@@ -502,10 +502,10 @@ class ExplosionFlames(ParticleEmitter):
         :param life_time: The life time of this explosion.
         """
         super(ExplosionFlames, self).__init__(
-            screen, x, y, 30, self._new_particle, life_time - 10, life_time,
+            screen, x, y, 30, self._next_particle, life_time - 10, life_time,
             blend=True)
 
-    def _new_particle(self):
+    def _next_particle(self):
         direction = uniform(0, 2 * pi)
         d = self._life_time - 10
         r = uniform(0, sin(pi * (d - self.time_left) / (d * 2))) * 3.0
@@ -548,10 +548,10 @@ class DropEmitter(ParticleEmitter):
         :param life_time: The life time of this particle system.
         """
         super(DropEmitter, self).__init__(
-            screen, 0, 0, 20, self._new_particle, life_time, life_time)
+            screen, 0, 0, 20, self._next_particle, life_time, life_time)
         self._particles = None
 
-    def _new_particle(self):
+    def _next_particle(self):
         # Find all particles on the Screen when we create our first particle.
         if self._particles is None:
             self._particles = []
@@ -599,10 +599,10 @@ class ShotEmitter(ParticleEmitter):
         :param life_time: The life time of this particle system.
         """
         super(ShotEmitter, self).__init__(
-            screen, x, y, 50, self._new_particle, life_time, life_time)
+            screen, x, y, 50, self._next_particle, life_time, life_time)
         self._particles = None
 
-    def _new_particle(self):
+    def _next_particle(self):
         # Find all particles on the Screen when we create our first particle
         # and sort by distance from the origin.
         if self._particles is None:
@@ -658,11 +658,11 @@ class RainSource(ParticleEmitter):
         :param on_each: Function to call on each iteration of the particle.
         """
         super(RainSource, self).__init__(
-            screen, 0, 0, 4, self._new_particle, life_time, life_time)
+            screen, 0, 0, 4, self._next_particle, life_time, life_time)
         self._particles = None
         self._on_each = on_each
 
-    def _new_particle(self):
+    def _next_particle(self):
         speed = randint(1, 3)
         return Particle(" ``\\"[speed],
                         randint(-self._screen.height, self._screen.width), 0,
@@ -690,9 +690,9 @@ class Splash(ParticleEmitter):
         :param screen: The Screen being used for this particle system.
         """
         super(Splash, self).__init__(
-            screen, x, y, 1, self._new_particle, 1, 3)
+            screen, x, y, 1, self._next_particle, 1, 3)
 
-    def _new_particle(self):
+    def _next_particle(self):
         return Particle("v",
                         self._x, self._y,
                         0, 0,

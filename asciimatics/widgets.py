@@ -42,13 +42,13 @@ def _split_text(text, width, height):
     # Check for a height overrun and truncate.
     if len(result) > height:
         result = result[:height]
-        result[height - 1] = result[height - 1][:width-3] + "..."
+        result[height - 1] = result[height - 1][:width - 3] + "..."
 
     # Very small columns could be shorter than individual words - truncate
     # each line if necessary.
     for i, line in enumerate(result):
         if len(line) > width:
-            result[i] = line[:width-3] + "..."
+            result[i] = line[:width - 3] + "..."
     return result
 
 
@@ -131,7 +131,7 @@ class Frame(Effect):
         self._has_border = has_border
         self._hover_focus = hover_focus
         self._initial_data = data if data else {}
-        self._title = " " + title[0:width-4] + " " if title else ""
+        self._title = " " + title[0:width - 4] + " " if title else ""
 
         # A unique name is needed for cloning.  Try our best to get one!
         self._name = title if name is None else name
@@ -1264,7 +1264,7 @@ class Text(Widget):
                 if self.is_mouse_over(new_event, include_label=False):
                     self._column = min(
                         len(self._value),
-                        new_event.x-self._x-self._offset+self._start_column)
+                        new_event.x - self._x - self._offset + self._start_column)
                     self._column = max(0, self._column)
                     return
             # Ignore other mouse events.
@@ -1556,7 +1556,8 @@ class TextBox(Widget):
                         # Join this line with previous
                         self._line -= 1
                         self._column = len(self._value[self._line])
-                        self._value[self._line] += self._value.pop(self._line+1)
+                        self._value[self._line] += \
+                            self._value.pop(self._line + 1)
             elif event.key_code == Screen.KEY_UP:
                 # Move up one line in text
                 self._line = max(0, self._line - 1)
@@ -1610,11 +1611,12 @@ class TextBox(Widget):
             new_event = self._frame.rebase_event(event)
             if event.buttons != 0:
                 if self.is_mouse_over(new_event, include_label=False):
-                    self._line = max(0, new_event.y-self._y+self._start_line)
+                    self._line = max(0,
+                                     new_event.y - self._y + self._start_line)
                     self._line = min(len(self._value) - 1, self._line)
                     self._column = min(
                         len(self._value[self._line]),
-                        new_event.x-self._x-self._offset+self._start_column)
+                        new_event.x - self._x - self._offset + self._start_column)
                     self._column = max(0, self._column)
                     return
             # Ignore other mouse events.
