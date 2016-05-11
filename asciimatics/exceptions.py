@@ -14,6 +14,7 @@ class ResizeScreenError(Exception):
         :param message: Error message for this exception.
         :param scene: Scene that was active at time of resize.
         """
+        super(ResizeScreenError, self).__init__()
         self._scene = scene
         self._message = message
 
@@ -43,6 +44,7 @@ class StopApplication(Exception):
         """
         :param message: Error message for this exception.
         """
+        super(StopApplication, self).__init__()
         self._message = message
 
     def __str__(self):
@@ -62,6 +64,7 @@ class NextScene(Exception):
         """
         :param name: Next Scene to invoke.  Defaults to next in the list.
         """
+        super(NextScene, self).__init__()
         self._name = name
 
     @property

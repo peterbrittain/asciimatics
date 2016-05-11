@@ -65,7 +65,7 @@ class _AbstractPath(with_metaclass(ABCMeta, object)):
 class Path(_AbstractPath):
     """
     Class to record and play back the motion of a Sprite.
-    
+
     The Screen will reset() the Path before iterating through each position
     using next_pos() and checking whether it has reached the end using
     is_finished().
@@ -121,7 +121,7 @@ class Path(_AbstractPath):
 
         :param delay: The time to wait (in animation frames).
         """
-        for i in range(0, delay):
+        for _ in range(0, delay):
             self._add_step((self._rec_x, self._rec_y))
 
     def jump_to(self, x, y):
@@ -145,7 +145,7 @@ class Path(_AbstractPath):
         """
         start_x = self._rec_x
         start_y = self._rec_y
-        for i in range(1, steps+1):
+        for i in range(1, steps + 1):
             self._add_step((
                 int(start_x + (x - start_x) / float(steps) * i),
                 int(start_y + (y - start_y) / float(steps) * i)))
@@ -168,7 +168,7 @@ class Path(_AbstractPath):
         # Convert the points into an interpolated set of more detailed points.
         steps_per_spline = steps // (len(points) - 3)
         for j in range(1, len(points) - 2):
-            for t in range(1, steps_per_spline+1):
+            for t in range(1, steps_per_spline + 1):
                 y = _spline(float(t) / steps_per_spline,
                             float(points[j - 1][1]),
                             float(points[j][1]),

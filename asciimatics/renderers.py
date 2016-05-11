@@ -228,8 +228,8 @@ class DynamicRenderer(with_metaclass(ABCMeta, Renderer)):
         :param bg: The background colour of the text to add.
         """
         self._plain_image[y] = text.join(
-            [self._plain_image[y][:x], self._plain_image[y][x+len(text):]])
-        for i, c in enumerate(text):
+            [self._plain_image[y][:x], self._plain_image[y][x + len(text):]])
+        for i, _ in enumerate(text):
             self._colour_map[y][x + i] = (colour, attr, bg)
 
     @abstractmethod
@@ -327,7 +327,7 @@ class ImageFile(StaticRenderer):
                         ascii_image += " "
                     else:
                         if colours >= 256:
-                            ascii_image += "${%d}" % (232 + col * 23//256)
+                            ascii_image += "${%d}" % (232 + col * 23 // 256)
                         else:
                             ascii_image += "${%d,%d}" % (
                                 7 if col >= 85 else 0,
@@ -444,10 +444,10 @@ class Box(StaticRenderer):
         :param height: The desired height of the box.
         """
         super(Box, self).__init__()
-        box = "+" + "-" * (width-2) + "+\n"
-        for line in range(height-2):
-            box += "|" + " " * (width-2) + "|\n"
-        box += "+" + "-" * (width-2) + "+\n"
+        box = "+" + "-" * (width - 2) + "+\n"
+        for _ in range(height - 2):
+            box += "|" + " " * (width - 2) + "|\n"
+        box += "+" + "-" * (width - 2) + "+\n"
         self._images = [box]
 
 
@@ -552,11 +552,12 @@ class BarChart(DynamicRenderer):
 
         # Create  the box around the chart...
         if self._border:
-            self._write("+" + "-" * (self._width-2) + "+", 0, 0)
+            self._write("+" + "-" * (self._width - 2) + "+", 0, 0)
             for line in range(1, self._height):
                 self._write("|", 0, line)
                 self._write("|", self._width - 1, line)
-            self._write("+" + "-" * (self._width-2) + "+", 0, self._height - 1)
+            self._write(
+                "+" + "-" * (self._width - 2) + "+", 0, self._height - 1)
             int_h -= 4
             int_w -= 6
             start_y += 2
@@ -641,7 +642,7 @@ class BarChart(DynamicRenderer):
                             size = int_w
                         for line in range(bar_size):
                             self._write(
-                                self._char * (size-last),
+                                self._char * (size - last),
                                 start_x + last,
                                 y + line,
                                 colour,
