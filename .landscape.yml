@@ -14,3 +14,5 @@ pylint:
     - redefined-builtin
     - too-many-arguments
     - invalid-name
+mccabe:
+  run: false
