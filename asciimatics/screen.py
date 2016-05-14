@@ -349,6 +349,7 @@ class Canvas(_AbstractCanvas):
         self._screen = screen
         self._dx = (screen.width - width) // 2 if x is None else x
         self._dy = (screen.height - height) // 2 if y is None else y
+        self.colours = screen.colours
 
     def refresh(self):
         """
