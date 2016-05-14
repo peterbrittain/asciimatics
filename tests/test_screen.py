@@ -358,6 +358,16 @@ class TestScreen(unittest.TestCase):
             self.assertFalse(test_effect.stop_called)
             self.assertTrue(test_effect.reset_called)
 
+            # Now check that delete_count works.
+            test_effect = MockEffect(count=6)
+            test_effect2 = MockEffect(delete_count=3)
+            scene = Scene([test_effect, test_effect2], 15)
+            self.assertEqual(len(scene.effects), 2)
+            screen.play([scene])
+            self.assertEqual(len(scene.effects), 1)
+            self.assertEqual(scene.effects[0], test_effect)
+
+
         Screen.wrapper(internal_checks, height=15)
 
     def test_next_scene(self):

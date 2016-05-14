@@ -58,7 +58,7 @@ class Effect(with_metaclass(ABCMeta, object)):
 
         :param frame_no: The index of the frame being generated.
         """
-        if (frame_no > self._start_frame and
+        if (frame_no >= self._start_frame and
                 (self._stop_frame == 0 or frame_no < self._stop_frame)):
             self._update(frame_no)
 
@@ -226,7 +226,7 @@ class BannerText(Effect):
             colours[i].append((None, None))
             end_pos = min(
                 len(line),
-                self._text_pos + self._screen.width - self._scr_pos - 1)
+                self._text_pos + self._screen.width - self._scr_pos)
             self._screen.paint(line[self._text_pos:end_pos],
                                self._scr_pos,
                                self._y + i,
@@ -476,7 +476,7 @@ class _Trail(object):
         if self._clear:
             for i in range(0, 3):
                 self._screen.print_at(" ",
-                                      self._x,
+                                         self._x,
                                       self._screen.start_line + self._y + i)
             self._maybe_reseed(reseed)
         else:
