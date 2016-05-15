@@ -840,7 +840,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             if info:
                 win_out.SetConsoleScreenBufferSize(info['Size'])
             else:
-                win_out.SetStdHandle(win32console.STD_OUTPUT_HANDLE)
+                win_out.SetStdHandle(STD_OUTPUT_HANDLE)
             win_out.SetConsoleActiveScreenBuffer()
 
             # Get the standard input buffer.

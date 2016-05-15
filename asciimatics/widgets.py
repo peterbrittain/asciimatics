@@ -1264,7 +1264,8 @@ class Text(Widget):
                 if self.is_mouse_over(new_event, include_label=False):
                     self._column = min(
                         len(self._value),
-                        new_event.x - self._x - self._offset + self._start_column)
+                        new_event.x - self._x - self._offset +
+                        self._start_column)
                     self._column = max(0, self._column)
                     return
             # Ignore other mouse events.
@@ -1444,7 +1445,8 @@ class RadioButtons(Widget):
 
     @property
     def value(self):
-        return self._value
+        # The value is actually the value of the current selection.
+        return self._options[self._selection][1]
 
     @value.setter
     def value(self, new_value):
@@ -1457,7 +1459,7 @@ class RadioButtons(Widget):
                 break
         else:
             self._selection = 0
-        self._value = new_value if new_value else False
+        self._value = new_value if new_value else None
         if old_value != self._value and self._on_change:
             self._on_change()
 
@@ -1616,7 +1618,8 @@ class TextBox(Widget):
                     self._line = min(len(self._value) - 1, self._line)
                     self._column = min(
                         len(self._value[self._line]),
-                        new_event.x - self._x - self._offset + self._start_column)
+                        new_event.x - self._x - self._offset +
+                        self._start_column)
                     self._column = max(0, self._column)
                     return
             # Ignore other mouse events.

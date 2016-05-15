@@ -476,7 +476,7 @@ class _Trail(object):
         if self._clear:
             for i in range(0, 3):
                 self._screen.print_at(" ",
-                                         self._x,
+                                      self._x,
                                       self._screen.start_line + self._y + i)
             self._maybe_reseed(reseed)
         else:
