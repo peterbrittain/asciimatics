@@ -395,7 +395,5 @@ class TestEffects(unittest.TestCase):
         # Check there is no stop frame by default.
         self.assertEqual(effect.stop_frame, 0)
 
-
-
 if __name__ == '__main__':
     unittest.main()
