@@ -1,10 +1,11 @@
 import unittest
 from mock.mock import MagicMock
-from asciimatics.event import KeyboardEvent
+from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import NextScene, StopApplication
+from asciimatics.scene import Scene
 from asciimatics.screen import Screen, Canvas
 from asciimatics.widgets import Frame, Layout, Button, Label, TextBox, Text, \
-    Divider, RadioButtons, CheckBox, PopUpDialog
+    Divider, RadioButtons, CheckBox, PopUpDialog, ListBox, Widget
 
 
 class TestFrame(Frame):
@@ -13,7 +14,8 @@ class TestFrame(Frame):
                                         screen.height,
                                         screen.width,
                                         name="Test Form",
-                                        has_border=has_border)
+                                        has_border=has_border,
+                                        hover_focus=True)
         layout = Layout([1, 18, 1])
         self.add_layout(layout)
         self._reset_button = Button("Reset", self._reset)
@@ -78,15 +80,59 @@ class TestFrame(Frame):
     def _view(self):
         # Build result of this form and display it.
         self.save()
-        message = "Values entered are:\n\n"
-        for key, value in self.data.items():
-            message += "- {}: {}\n".format(key, value)
-        self._scene.add_effect(
-            PopUpDialog(self._screen, message, ["OK"]))
+        raise NextScene()
 
     @staticmethod
-    def _quit(self):
+    def _quit():
         raise StopApplication("User requested exit")
+
+
+class TestFrame2(Frame):
+    def __init__(self, screen, init_values):
+        super(TestFrame2, self).__init__(screen,
+                                         screen.height,
+                                         screen.width,
+                                         title="Test Frame 2")
+        # Create the form for displaying the list of contacts.
+        self._list_view = ListBox(
+            Widget.FILL_FRAME,
+            init_values,
+            name="contacts",
+            on_change=self._on_pick)
+        self._edit_button = Button("Edit", self._edit)
+        self._delete_button = Button("Delete", self._delete)
+        layout = Layout([100], fill_frame=True)
+        self.add_layout(layout)
+        layout.add_widget(self._list_view)
+        layout.add_widget(Divider())
+        layout2 = Layout([1, 1, 1, 1])
+        self.add_layout(layout2)
+        layout2.add_widget(Button("Add", self._add), 0)
+        layout2.add_widget(self._edit_button, 1)
+        layout2.add_widget(self._delete_button, 2)
+        layout2.add_widget(Button("Quit", self._quit), 3)
+        self.fix()
+        self._on_pick()
+
+    def _on_pick(self):
+        self._edit_button.disabled = self._list_view.value is None
+        self._delete_button.disabled = self._list_view.value is None
+
+    @staticmethod
+    def _add():
+        raise NextScene("Add")
+
+    @staticmethod
+    def _edit():
+        raise NextScene("Edit")
+
+    @staticmethod
+    def _delete():
+        raise NextScene("Delete")
+
+    @staticmethod
+    def _quit():
+        raise StopApplication("User pressed quit")
 
 
 class TestWidgets(unittest.TestCase):
@@ -104,9 +150,9 @@ class TestWidgets(unittest.TestCase):
         self.assertEqual(output, expected)
 
     @staticmethod
-    def process_input(form, values, separator=None):
+    def process_keys(form, values, separator=None):
         """
-        Inject a set of values separated by a common key separator.
+        Inject a set of key events separated by a common key separator.
         """
         for new_value in values:
             if isinstance(new_value, int):
@@ -116,6 +162,14 @@ class TestWidgets(unittest.TestCase):
                     form.process_event(KeyboardEvent(ord(char)))
             if separator:
                 form.process_event(KeyboardEvent(separator))
+
+    @staticmethod
+    def process_mouse(form, values):
+        """
+        Inject a set of mouse events.
+        """
+        for x, y, buttons in values:
+            form.process_event(MouseEvent(x, y, buttons))
 
     def test_form_data(self):
         """
@@ -248,9 +302,9 @@ class TestWidgets(unittest.TestCase):
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = TestFrame(canvas)
         form.reset()
-        self.process_input(form,
-                           ["ABC\nDEF", "GHI", "jkl", "MN", " ", " ", "", " "],
-                           Screen.KEY_TAB)
+        self.process_keys(form,
+                          ["ABC\nDEF", "GHI", "jkl", "MN", " ", " ", "", " "],
+                          Screen.KEY_TAB)
         form.save()
         self.assertEqual(
             form.data,
@@ -275,29 +329,43 @@ class TestWidgets(unittest.TestCase):
         form.reset()
 
         # Check basic movement keys
-        self.process_input(form,  ["ABC", Screen.KEY_LEFT, "D"])
+        self.process_keys(form,  ["ABC", Screen.KEY_LEFT, "D"])
         form.save()
         self.assertEqual(form.data["TA"], ["ABDC"])
-        self.process_input(form,  [Screen.KEY_RIGHT, "E"])
+        self.process_keys(form,  [Screen.KEY_RIGHT, "E"])
         form.save()
         self.assertEqual(form.data["TA"], ["ABDCE"])
-        self.process_input(form,  ["\nFGH", Screen.KEY_UP, "I"])
+        self.process_keys(form,  ["\nFGH", Screen.KEY_UP, "I"])
         form.save()
         self.assertEqual(form.data["TA"], ["ABDICE", "FGH"])
-        self.process_input(form,  [Screen.KEY_DOWN, "J"])
+        self.process_keys(form,  [Screen.KEY_DOWN, "J"])
         form.save()
         self.assertEqual(form.data["TA"], ["ABDICE", "FGHJ"])
-        self.process_input(form,  [Screen.KEY_HOME, "K"])
+        self.process_keys(form,  [Screen.KEY_HOME, "K"])
         form.save()
         self.assertEqual(form.data["TA"], ["ABDICE", "KFGHJ"])
-        self.process_input(form,  [Screen.KEY_END, "L"])
+        self.process_keys(form,  [Screen.KEY_END, "L"])
         form.save()
         self.assertEqual(form.data["TA"], ["ABDICE", "KFGHJL"])
 
-        # Backspace
-        self.process_input(form,  [Screen.KEY_BACK])
+        # Backspace - normal and wrapping lines
+        self.process_keys(form,  [Screen.KEY_BACK])
         form.save()
         self.assertEqual(form.data["TA"], ["ABDICE", "KFGHJ"])
+        self.process_keys(form,  [Screen.KEY_HOME, Screen.KEY_BACK])
+        form.save()
+        self.assertEqual(form.data["TA"], ["ABDICEKFGHJ"])
+
+        # Check cursor line-wrapping
+        self.process_keys(form,  ["\n"])
+        form.save()
+        self.assertEqual(form.data["TA"], ["ABDICE", "KFGHJ"])
+        self.process_keys(form,  [Screen.KEY_LEFT, "M"])
+        form.save()
+        self.assertEqual(form.data["TA"], ["ABDICEM", "KFGHJ"])
+        self.process_keys(form,  [Screen.KEY_RIGHT, "N"])
+        form.save()
+        self.assertEqual(form.data["TA"], ["ABDICEM", "NKFGHJ"])
 
     def test_text_input(self):
         """
@@ -309,24 +377,24 @@ class TestWidgets(unittest.TestCase):
         form.reset()
 
         # Check basic movement keys
-        self.process_input(form,  [Screen.KEY_TAB, "ABC"])
+        self.process_keys(form,  [Screen.KEY_TAB, "ABC"])
         form.save()
         self.assertEqual(form.data["TB"], "ABC")
-        self.process_input(form,  [Screen.KEY_HOME, "D"])
+        self.process_keys(form,  [Screen.KEY_HOME, "D"])
         form.save()
         self.assertEqual(form.data["TB"], "DABC")
-        self.process_input(form,  [Screen.KEY_END, "E"])
+        self.process_keys(form,  [Screen.KEY_END, "E"])
         form.save()
         self.assertEqual(form.data["TB"], "DABCE")
-        self.process_input(form,  [Screen.KEY_LEFT, "F"])
+        self.process_keys(form,  [Screen.KEY_LEFT, "F"])
         form.save()
         self.assertEqual(form.data["TB"], "DABCFE")
-        self.process_input(form,  [Screen.KEY_RIGHT, "G"])
+        self.process_keys(form,  [Screen.KEY_RIGHT, "G"])
         form.save()
         self.assertEqual(form.data["TB"], "DABCFEG")
 
         # Backspace
-        self.process_input(form,  [Screen.KEY_BACK])
+        self.process_keys(form,  [Screen.KEY_BACK])
         form.save()
         self.assertEqual(form.data["TB"], "DABCFE")
 
@@ -340,16 +408,16 @@ class TestWidgets(unittest.TestCase):
         form.reset()
 
         # Check basic selection keys
-        self.process_input(
+        self.process_keys(
             form,
             [Screen.KEY_TAB, Screen.KEY_TAB, Screen.KEY_TAB, Screen.KEY_TAB,
              Screen.KEY_TAB, " "])
         form.save()
         self.assertEqual(form.data["CA"], True)
-        self.process_input(form, ["\n"])
+        self.process_keys(form, ["\n"])
         form.save()
         self.assertEqual(form.data["CA"], False)
-        self.process_input(form, ["\r"])
+        self.process_keys(form, ["\r"])
         form.save()
         self.assertEqual(form.data["CA"], True)
 
@@ -363,17 +431,183 @@ class TestWidgets(unittest.TestCase):
         form.reset()
 
         # Check basic selection keys
-        self.process_input(
+        self.process_keys(
             form,
             [Screen.KEY_TAB, Screen.KEY_TAB, Screen.KEY_TAB, Screen.KEY_TAB])
         form.save()
         self.assertEqual(form.data["Things"], 1)
-        self.process_input(form, [Screen.KEY_DOWN])
+        self.process_keys(form, [Screen.KEY_DOWN])
         form.save()
         self.assertEqual(form.data["Things"], 2)
-        self.process_input(form, [Screen.KEY_UP])
+        self.process_keys(form, [Screen.KEY_UP])
         form.save()
         self.assertEqual(form.data["Things"], 1)
+
+    def test_mouse_input(self):
+        """
+        Check mouse input works as expected.
+        """
+        screen = MagicMock(spec=Screen, colours=8)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame(canvas)
+        form.register_scene(scene)
+        form.reset()
+
+        # Check focus moves when clicked on a text or textbox
+        self.process_mouse(form, [(29, 7, MouseEvent.LEFT_CLICK)])
+        self.assertEqual(form._layouts[form._focus]._live_widget, 2)
+        self.process_mouse(form, [(29, 2, MouseEvent.LEFT_CLICK)])
+        self.assertEqual(form._layouts[form._focus]._live_widget, 1)
+
+        # Check focus doesn't change on scroll or click outside of widgets
+        self.process_mouse(form, [(0, 0, 0)])
+        self.assertEqual(form._focus, 0)
+        self.assertEqual(form._layouts[form._focus]._live_col, 1)
+        self.assertEqual(form._layouts[form._focus]._live_widget, 1)
+        self.process_mouse(form, [(39, 7, MouseEvent.LEFT_CLICK)])
+        self.assertEqual(form._layouts[form._focus]._live_widget, 1)
+
+        # Check focus moves when clicked on a checkbox or radiobutton
+        self.process_mouse(form, [(29, 1, MouseEvent.LEFT_CLICK)])
+        self.assertEqual(form._layouts[form._focus]._live_widget, 7)
+        # Note that the above changes the Frame start-line.
+        self.process_mouse(form, [(29, 5, MouseEvent.LEFT_CLICK)])
+        self.assertEqual(form._layouts[form._focus]._live_widget, 9)
+
+        # Check focus moves when hovering over a widget
+        self.process_mouse(form, [(39, 7, MouseEvent.LEFT_CLICK), (3, 8, 0)])
+        self.assertEqual(form._focus, 1)
+        self.assertEqual(form._layouts[form._focus]._live_col, 0)
+        self.assertEqual(form._layouts[form._focus]._live_widget, 0)
+
+        # Check button click triggers an event.
+        with self.assertRaises(StopApplication):
+            self.process_mouse(form, [(30, 8, MouseEvent.LEFT_CLICK)])
+
+    def test_widget_navigation(self):
+        """
+        Check widget tab stops work as expected.
+        """
+        screen = MagicMock(spec=Screen, colours=8)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame(canvas)
+        form.reset()
+
+        # Check default focus at start is first visible widget
+        self.assertEqual(form._focus, 0)
+        self.assertEqual(form._layouts[form._focus]._live_col, 1)
+        self.assertEqual(form._layouts[form._focus]._live_widget, 1)
+
+        # Check BACK_TAB reverses TAB.
+        self.process_keys(form, [Screen.KEY_TAB])
+        self.assertEqual(form._layouts[form._focus]._live_widget, 2)
+        self.process_keys(form, [Screen.KEY_BACK_TAB])
+        self.assertEqual(form._layouts[form._focus]._live_widget, 1)
+
+        # Check BACK_TAB/TAB wraps around the form.
+        self.process_keys(form, [Screen.KEY_BACK_TAB])
+        self.assertEqual(form._focus, 1)
+        self.process_keys(form, [Screen.KEY_TAB])
+        self.assertEqual(form._focus, 0)
+
+        # Tab out into text fields and check UP/DOWN keys.
+        self.process_keys(form, [Screen.KEY_TAB, Screen.KEY_DOWN])
+        self.assertEqual(form._layouts[form._focus]._live_widget, 3)
+        self.process_keys(form, [Screen.KEY_UP])
+        self.assertEqual(form._layouts[form._focus]._live_widget, 2)
+
+        # Tab out into buttons and check LEFT/RIGHT keys.
+        self.process_keys(form, [Screen.KEY_TAB, Screen.KEY_TAB, Screen.KEY_TAB,
+                                 Screen.KEY_TAB, Screen.KEY_TAB, Screen.KEY_TAB,
+                                 Screen.KEY_TAB])
+        self.assertEqual(form._focus, 1)
+        self.assertEqual(form._layouts[form._focus]._live_col, 1)
+        self.assertEqual(form._layouts[form._focus]._live_widget, 0)
+
+        self.process_keys(form, [Screen.KEY_RIGHT])
+        self.assertEqual(form._layouts[form._focus]._live_col, 2)
+        self.process_keys(form, [Screen.KEY_LEFT])
+        self.assertEqual(form._layouts[form._focus]._live_col, 1)
+
+    def test_list_box(self):
+        """
+        Check widget tab stops work as expected.
+        """
+        screen = MagicMock(spec=Screen, colours=8)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame2(canvas, [("One", 1), ("Two", 2)])
+        form.register_scene(scene)
+        form.reset()
+
+        # Check we have a default value for our list.
+        form.save()
+        self.assertEqual(form.data, {"contacts": 1})
+
+        # Check that UP/DOWN change selection.
+        self.process_keys(form, [Screen.KEY_DOWN])
+        form.save()
+        self.assertEqual(form.data, {"contacts": 2})
+        self.process_keys(form, [Screen.KEY_UP])
+        form.save()
+        self.assertEqual(form.data, {"contacts": 1})
+
+        # Check that the listbox is rendered correctly.
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+------------ Test Frame 2 ------------+\n" +
+            "|One                                   |\n" +
+            "|Two                                   O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|--------------------------------------|\n" +
+            "| < Add > < Edit > < Delete < Quit >   |\n" +
+            "+--------------------------------------+\n")
+
+        # Check that mouse input changes selection.
+        self.process_mouse(form, [(2, 2, MouseEvent.LEFT_CLICK)])
+        form.save()
+        self.assertEqual(form.data, {"contacts": 2})
+        self.process_mouse(form, [(2, 1, MouseEvent.LEFT_CLICK)])
+        form.save()
+        self.assertEqual(form.data, {"contacts": 1})
+
+    def test_pop_up_widget(self):
+        """
+        Check widget tab stops work as expected.
+        """
+        def test_on_click(selection):
+            raise NextScene(str(selection))
+
+        screen = MagicMock(spec=Screen, colours=8)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = PopUpDialog(canvas, "Message", ["Yes", "No"], test_on_click)
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that the pop-up is rendered correctly.
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "                                        \n" +
+            "                                        \n" +
+            "          +------------------+          \n" +
+            "          |Message           |          \n" +
+            "          |                  |          \n" +
+            "          | < Yes >  < No >  |          \n" +
+            "          +------------------+          \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        # Check that mouse input triggers the close function.
+        with self.assertRaises(NextScene):
+            self.process_mouse(form, [(14, 5, MouseEvent.LEFT_CLICK)])
 
 
 if __name__ == '__main__':
