@@ -492,13 +492,13 @@ class Frame(Effect):
                     old_focus = self._focus
                     self._focus -= 1
                     while self._focus != old_focus:
+                        if self._focus < 0:
+                            self._focus = len(self._layouts) - 1
                         try:
                             self._layouts[self._focus].focus(force_last=True)
                             break
                         except IndexError:
                             self._focus -= 1
-                            if self._focus < 0:
-                                self._focus = len(self._layouts) - 1
                     self._layouts[self._focus].focus(force_last=True)
                     event = None
             elif isinstance(event, MouseEvent):
