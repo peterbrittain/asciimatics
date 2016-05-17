@@ -529,7 +529,9 @@ class TestScreen(unittest.TestCase):
                 event.EventFlags |= win32con.DOUBLE_CLICK
             screen._stdin.WriteConsoleInput([event])
         else:
-            bstate = 0
+            # Curses doesn't like no value in some cases - use a dummy button
+            # click which we don't use instead.
+            bstate = curses.BUTTON4_CLICKED
             if button & MouseEvent.LEFT_CLICK != 0:
                 bstate |= curses.BUTTON1_CLICKED
             if button & MouseEvent.RIGHT_CLICK != 0:
