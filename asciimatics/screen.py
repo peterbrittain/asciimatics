@@ -891,7 +891,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 # Reset the original screen settings.
                 win_out.SetConsoleCursorInfo(size, visible)
                 win_out.SetConsoleMode(out_mode)
-                win_out.SetConsoleTextAttribute(7)
+                win_out.SetConsoleTextAttribute(info['Attributes'])
                 win_in.SetConsoleMode(in_mode)
         else:
             def _wrapper(win):
