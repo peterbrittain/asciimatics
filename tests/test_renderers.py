@@ -290,7 +290,7 @@ class TestRenderers(unittest.TestCase):
             output = renderer.rendered_text
 
         # TODO: fix for Python V2.7's different random number generator
-        #self.assertEqual(
+        # self.assertEqual(
         #    "\n".join(output[0]),
         #    "  .:...   \n" +
         #    "  .::.    \n" +

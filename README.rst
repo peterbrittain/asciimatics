@@ -121,14 +121,8 @@ directory, hosted on GitHub.  See
 https://github.com/peterbrittain/asciimatics/tree/v1.6/samples.
 
 To view them, simply download these files and then simply run them directly
-with `python`.  Note that most can run on any platform, apart from:
-
-* `not_curses.py` which is a demo of the deprecated `blessed` support on Linux
-* `win_demo.py` which is a demo of the deprecated direct `win32console` support
-  on Windows.
-
-Alternatively, you can browse most of the samples in the gallery at
-https://github.com/peterbrittain/asciimatics/wiki.
+with `python`.  Alternatively, you can browse recordings of many of the samples
+in the gallery at https://github.com/peterbrittain/asciimatics/wiki.
 
 Bugs and enhancements
 ---------------------
