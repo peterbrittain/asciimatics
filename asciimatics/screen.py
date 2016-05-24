@@ -14,10 +14,6 @@ from asciimatics.event import KeyboardEvent, MouseEvent
 from .exceptions import ResizeScreenError, StopApplication, NextScene
 
 
-# Keep track of last known screen output buffer so we can resize correctly.
-_last_screen_buffer = None
-
-
 class _AbstractCanvas(with_metaclass(ABCMeta, object)):
     """
     Abstract class to handle screen buffering.
@@ -760,63 +756,21 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         self._attr = 0
         self._bg = 0
 
-    @classmethod
-    def from_curses(cls, win, height=200):
-        """
-        Construct a new Screen from a curses windows.
-
-        :param win: The curses window to use.
-        :param height: The buffer height for this window (if using scrolling).
-
-        This method is deprecated.  Please use :py:meth:`.wrapper` instead.
-        """
-        return _CursesScreen(win, height)
+        # Environment to be restored on exit.
+        self._environment = {}
 
     @classmethod
-    def from_blessed(cls, terminal, height=200):
+    def open(cls, height=200, catch_interrupt=False):
         """
-        Construct a new Screen from a blessed terminal.
+        Construct a new Screen for any platform.  This will just create the
+        correct Screen object for your environment.  See :py:meth:`.wrapper` for
+        a function to create and tidy up once you've finished with the Screen.
 
-        :param terminal: The blessed Terminal to use.
-        :param height: The buffer height for this window (if using scrolling).
-
-        This method is deprecated.  Please use :py:meth:`.wrapper` instead.
-        """
-        return _BlessedScreen(terminal, height)
-
-    @classmethod
-    def from_windows(cls, stdout, stdin, height=200):
-        """
-        Construct a new Screen from a Windows console.
-
-        :param stdout: The Windows PyConsoleScreenBufferType for stdout returned
-            from win32console.
-        :param stdin: The Windows PyConsoleScreenBufferType for stdin returned
-            from win32console.
-        :param height: The buffer height for this window (if using scrolling).
-
-        This method is deprecated.  Please use :py:meth:`.wrapper` instead.
-        """
-        return _WindowsScreen(stdout, stdin, height)
-
-    @classmethod
-    def wrapper(cls, func, height=200, catch_interrupt=False, arguments=None):
-        """
-        Construct a new Screen for any platform.  This will initialize and tidy
-        up the system as required around the underlying console subsystem.
-
-        :param func: The function to call once the screen has been created.
         :param height: The buffer height for this window (if using scrolling).
         :param catch_interrupt: Whether to catch and prevent keyboard
             interrupts.  Defaults to False to maintain backwards compatibility.
-        :param arguments: Optional arguments list to pass to func (after the
-            Screen object).
         """
         if sys.platform == "win32":
-            # I don't like this, but we need to track the last screen for
-            # resizing commands in Windows 10.
-            global _last_screen_buffer
-
             # Clone the standard output buffer so that we can do whatever we
             # need for the application, but restore the buffer at the end.
             # Note that we need to resize the clone to ensure that it is the
@@ -830,10 +784,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                                      0,
                                      None))
             try:
-                if _last_screen_buffer is None:
-                    info = old_out.GetConsoleScreenBufferInfo()
-                else:
-                    info = _last_screen_buffer.GetConsoleScreenBufferInfo()
+                info = old_out.GetConsoleScreenBufferInfo()
             except pywintypes.error:
                 info = None
             win_out = win32console.CreateConsoleScreenBuffer()
@@ -871,39 +822,62 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 new_mode &= ~win32console.ENABLE_PROCESSED_INPUT
             win_in.SetConsoleMode(new_mode)
 
-            try:
-                # Create the screen and invoke the wrapped function.
-                win_screen = _WindowsScreen(win_out, win_in, height)
-                if arguments:
-                    func(win_screen, *arguments)
-                else:
-                    func(win_screen)
+            screen = _WindowsScreen(win_out, win_in, height)
 
-                # Only restore the screen if we are genuinely finished - and so
-                # have not raised an exception.  This stops the restore from
-                # overriding any resize events.
-                old_out.SetConsoleActiveScreenBuffer()
-                win_out = old_out
-            finally:
-                # Remember the last window buffer just in case.
-                _last_screen_buffer = win_out
-
-                # Reset the original screen settings.
-                win_out.SetConsoleCursorInfo(size, visible)
-                win_out.SetConsoleMode(out_mode)
-                win_out.SetConsoleTextAttribute(info['Attributes'])
-                win_in.SetConsoleMode(in_mode)
+            screen._environment["stdin_mode"] = in_mode
+            screen._environment["old_stdout"] = old_out
         else:
-            def _wrapper(win):
-                cur_screen = _CursesScreen(win,
-                                           height,
-                                           catch_interrupt=catch_interrupt)
-                if arguments:
-                    func(cur_screen, *arguments)
-                else:
-                    func(cur_screen)
+            # Reproduce curses.wrapper()
+            stdscr = curses.initscr()
+            curses.noecho()
+            curses.cbreak()
+            stdscr.keypad(1)
 
-            curses.wrapper(_wrapper)
+            # noinspection PyBroadException
+            # - this code is exactly duplicating the curses module.
+            try:
+                curses.start_color()
+            except:
+                pass
+            screen = _CursesScreen(
+                stdscr, height, catch_interrupt=catch_interrupt)
+
+        return screen
+
+    @abstractmethod
+    def close(self, restore=True):
+        """
+        Close down this Screen and tidy up the environment as required.
+
+        :param restore: whether to restore the environment or not.
+        """
+
+    @classmethod
+    def wrapper(cls, func, height=200, catch_interrupt=False, arguments=None):
+        """
+        Construct a new Screen for any platform.  This will initialize and tidy
+        up the system as required around the underlying console subsystem.
+
+        :param func: The function to call once the screen has been created.
+        :param height: The buffer height for this window (if using scrolling).
+        :param catch_interrupt: Whether to catch and prevent keyboard
+            interrupts.  Defaults to False to maintain backwards compatibility.
+        :param arguments: Optional arguments list to pass to func (after the
+            Screen object).
+        """
+        screen = Screen.open(height, catch_interrupt=catch_interrupt)
+        restore = True
+        try:
+            try:
+                if arguments:
+                    func(screen, *arguments)
+                else:
+                    func(screen)
+            except ResizeScreenError:
+                restore = False
+                raise
+        finally:
+            screen.close(restore)
 
     @property
     def palette(self):
@@ -1303,14 +1277,25 @@ if sys.platform == "win32":
             # Save off the console details.
             self._stdout = stdout
             self._stdin = stdin
-            self._last_width = None
-            self._last_height = None
+            self._last_width = width
+            self._last_height = height
 
             # Windows is limited to the ANSI colour set.
             self.colours = 8
 
             # Opt for compatibility with Linux by default
             self._map_all = False
+
+        def close(self, restore=True):
+            """
+            Close down this Screen and tidy up the environment as required.
+
+            :param restore: whether to restore the environment or not.
+            """
+            if restore:
+                # Reset the original screen settings.
+                self._environment["old_stdout"].SetConsoleActiveScreenBuffer()
+                self._stdin.SetConsoleMode(self._environment["stdin_mode"])
 
         def map_all_keys(self, state):
             """
@@ -1390,11 +1375,8 @@ if sys.platform == "win32":
             info = self._stdout.GetConsoleScreenBufferInfo()['Window']
             width = info.Right - info.Left + 1
             height = info.Bottom - info.Top + 1
-            if self._last_width is not None and (
-                    width != self._last_width or height != self._last_height):
+            if width != self._last_width or height != self._last_height:
                 re_sized = True
-            self._last_width = width
-            self._last_height = height
             return re_sized
 
         def _change_colours(self, colour, attr, bg):
@@ -1600,6 +1582,18 @@ else:
             # high level buffers now.
             self._screen.refresh()
 
+        def close(self, restore=True):
+            """
+            Close down this Screen and tidy up the environment as required.
+
+            :param restore: whether to restore the environment or not.
+            """
+            if restore:
+                self._screen.keypad(0)
+                curses.echo()
+                curses.nocbreak()
+                curses.endwin()
+
         def _resize_handler(self, *_):
             """
             Window resize signal handler.  We don't care about any of the
@@ -1766,154 +1760,3 @@ else:
             if self._start_line is not None:
                 sys.stdout.write("{}{}{}".format(self._start_title, title,
                                                  self._end_title))
-
-    class _BlessedScreen(Screen):
-        """
-        Blessed screen implementation.  This is deprecated as it doesn't support
-        mouse input.
-        """
-
-        #: Conversion from Screen attributes to blessed equivalents.
-        ATTRIBUTES = {
-            Screen.A_BOLD: lambda term: term.bold,
-            Screen.A_NORMAL: lambda term: "",
-            Screen.A_REVERSE: lambda term: term.reverse,
-            Screen.A_UNDERLINE: lambda term: term.underline
-        }
-
-        def __init__(self, terminal, height):
-            """
-            :param terminal: The blessed Terminal object.
-            :param height: The buffer height for this window (if using
-                scrolling).
-            """
-            # Save off the screen details and se up the scrolling pad.
-            super(_BlessedScreen, self).__init__(
-                terminal.height, terminal.width, height)
-
-            # Save off terminal.
-            self._terminal = terminal
-
-            # Set up basic colour schemes.
-            self.colours = terminal.number_of_colors
-
-            # Set up signal handler for screen resizing.
-            self._re_sized = False
-            signal.signal(signal.SIGWINCH, self._resize_handler)
-
-        def _resize_handler(self, *_):
-            """
-            Window resize signal handler.  We don't care about any of the
-            parameters passed in beyond the object reference.
-            """
-            self._re_sized = True
-
-        def refresh(self):
-            """
-            Refresh the screen.
-            """
-            # Flush screen buffer to get all updates after doing the common
-            # processing.  Exact timing of the signal can interrupt the
-            # flush, raising an EINTR IOError, which we can safely ignore.
-            super(_BlessedScreen, self).refresh()
-            try:
-                sys.stdout.flush()
-            except IOError:
-                pass
-
-        def get_event(self):
-            """
-            Check for any event without waiting.
-
-            .. warning::
-
-                Blessed does not support mouse events.
-            """
-            key = self._terminal.inkey(timeout=0)
-            return KeyboardEvent(ord(key)) if key != "" else None
-
-        def has_resized(self):
-            """
-            Check whether the screen has been re-sized.
-            """
-            re_sized = self._re_sized
-            self._re_sized = False
-            return re_sized
-
-        def _change_colours(self, colour, attr, bg):
-            """
-            Change current colour if required.
-
-            :param colour: New colour to use.
-            :param attr: New attributes to use.
-            :param bg: New background colour to use.
-            """
-            # Change attribute first as this will reset colours when swapping
-            # modes.
-            if attr != self._attr:
-                sys.stdout.write(
-                    self._terminal.normal + self._terminal.on_color(0))
-                if attr != 0:
-                    sys.stdout.write(self.ATTRIBUTES[attr](self._terminal))
-                self._attr = attr
-                self._colour = None
-
-            # Now swap colours if required.
-            if colour != self._colour:
-                sys.stdout.write(self._terminal.color(colour))
-                self._colour = colour
-            if bg != self._bg:
-                sys.stdout.write(self._terminal.on_color(bg))
-                self._bg = bg
-
-        def _print_at(self, text, x, y):
-            """
-            Print string at the required location.
-
-            :param text: The text string to print.
-            :param x: The x coordinate
-            :param y: The Y coordinate
-            """
-            # Move the cursor if necessary
-            msg = ""
-            if x != self._x or y != self._y:
-                msg += self._terminal.move(y, x)
-
-            msg += text
-
-            # Print the text at the required location and update the current
-            # position.
-            sys.stdout.write(msg)
-            self._x = x + len(text)
-            self._y = y
-
-        def _scroll(self, lines):
-            """
-            Scroll the window up or down.
-
-            :param lines: Number of lines to scroll.  Negative numbers scroll
-                down.
-            """
-            if lines < 0:
-                sys.stdout.write("{}{}".format(
-                    self._terminal.move(0, 0),
-                    self._terminal.move_up() * -lines))
-            else:
-                sys.stdout.write("{}{}".format(
-                    self._terminal.move(self.height - 1, 0),
-                    self._terminal.move_down() * lines))
-
-        def _clear(self):
-            """
-            Clear the terminal.
-            """
-            sys.stdout.write(self._terminal.clear())
-
-        def set_title(self, title):
-            """
-            Set the title for this terminal/console session.  This will
-            typically change the text displayed in the window title bar.
-
-            :param title: The title to be set.
-            """
-            pass

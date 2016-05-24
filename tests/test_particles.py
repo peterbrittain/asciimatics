@@ -109,7 +109,7 @@ class TestParticles(unittest.TestCase):
         self.check_effect(canvas,
                           effect,
                           lambda value: self.assertIn(chr(value[0]), '|+:,. '),
-                          iterations=30)
+                          iterations=25)
 
     def test_palm_firework(self):
         """

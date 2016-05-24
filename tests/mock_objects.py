@@ -6,7 +6,8 @@ class MockEffect(Effect):
     """
     Dummy Effect use for some UTs.
     """
-    def __init__(self, count=10, stop=True, swallow=False, next_scene=None, **kwargs):
+    def __init__(self, count=10, stop=True, swallow=False, next_scene=None,
+                 **kwargs):
         """
         :param count: When to stop effect
         :param stop: Whether to stop the application or skip to next scene.

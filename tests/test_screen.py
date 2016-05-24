@@ -264,15 +264,11 @@ class TestScreen(unittest.TestCase):
 
         Screen.wrapper(internal_checks, height=15)
 
-    def test_old_start(self):
+    def test_open_close(self):
         """
-        Check deprecated Screen constructors work.
+        Check Screen.open works.
         """
         def check_screen(local_screen):
-            # Old initializer requires we construct screen now for curses.
-            if sys.platform != "win32":
-                local_screen = Screen.from_curses(local_screen)
-
             # If we get here there's not much new to test.  Check that we can
             # draw something without hitting an Exception.
             local_screen.print_at("Hello world!",
@@ -282,35 +278,9 @@ class TestScreen(unittest.TestCase):
                                   bg=Screen.COLOUR_BLUE)
             local_screen.refresh()
 
-        if sys.platform == "win32":
-            import win32console
-            import win32file
-            from win32file import GENERIC_READ, FILE_SHARE_READ, OPEN_ALWAYS, \
-                GENERIC_WRITE, FILE_SHARE_WRITE
-
-            win_stdout = win32console.PyConsoleScreenBufferType(
-                win32file.CreateFile("CONOUT$",
-                                     GENERIC_READ | GENERIC_WRITE,
-                                     FILE_SHARE_WRITE,
-                                     None,
-                                     OPEN_ALWAYS,
-                                     0,
-                                     None))
-
-            # Get the standard input buffer.
-            win_stdin = win32console.PyConsoleScreenBufferType(
-                win32file.CreateFile("CONIN$",
-                                     GENERIC_READ | GENERIC_WRITE,
-                                     FILE_SHARE_READ,
-                                     None,
-                                     OPEN_ALWAYS,
-                                     0,
-                                     None))
-            screen = Screen.from_windows(win_stdout, win_stdin)
-            check_screen(screen)
-        else:
-            import curses
-            curses.wrapper(check_screen)
+        screen = Screen.open()
+        check_screen(screen)
+        screen.close()
 
     def test_refresh(self):
         """
@@ -366,7 +336,6 @@ class TestScreen(unittest.TestCase):
             screen.play([scene])
             self.assertEqual(len(scene.effects), 1)
             self.assertEqual(scene.effects[0], test_effect)
-
 
         Screen.wrapper(internal_checks, height=15)
 
