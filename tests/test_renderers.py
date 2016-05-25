@@ -280,23 +280,23 @@ class TestRenderers(unittest.TestCase):
         """
         Check that the Fire renderer works.
         """
-        # Seed random numbers to get a reproducible test.
-        random.seed(2016)
-
         # Allow the fire to burn for a bit...
         renderer = Fire(5, 10, "xxxxxxxx", 1.0, 20, 8)
         output = None
         for _ in range(100):
             output = renderer.rendered_text
 
-        # TODO: fix for Python V2.7's different random number generator
-        # self.assertEqual(
-        #    "\n".join(output[0]),
+        # Output should be something like this, but we can't check exactly due
+        # to the random nature of the effect and the difference in RNG between
+        # Python2 and Python3.
+        #
         #    "  .:...   \n" +
         #    "  .::.    \n" +
         #    " .:$$::.. \n" +
         #    "..::$$$$. \n" +
-        #    " ..:$&&:  ")
+        #    " ..:$&&:  "
+        for char in "\n".join(output[0]):
+            self.assertIn(char, " .:$&@\n")
 
         # Check dimensions
         self.assertEqual(renderer.max_height, 5)
