@@ -230,6 +230,16 @@ class TestRenderers(unittest.TestCase):
             "|                  |\n" +
             "+------------------+")
 
+        self.assertEqual(
+            "\n".join(renderer.images[0]),
+            "+------------------+\n" +
+            "|                  |\n" +
+            "|  |######         |\n" +
+            "|  |               |\n" +
+            "|  |######         |\n" +
+            "|                  |\n" +
+            "+------------------+")
+
         # Switch on non-defaults
         renderer = BarChart(5, 30, [fn, fn], scale=10.0, axes=BarChart.BOTH,
                             intervals=2.5, labels=True, border=False,
@@ -302,6 +312,19 @@ class TestRenderers(unittest.TestCase):
         self.assertEqual(renderer.max_height, 5)
         self.assertEqual(renderer.max_width, 10)
 
+        # Check multi-line seeds work too...
+        renderer = Fire(5, 10, "xxxx\nxxxx\nxxxx", 1.0, 20, 8)
+        for _ in range(100):
+            output = renderer.rendered_text
+        for char in "\n".join(output[0]):
+            self.assertIn(char, " .:$&@\n")
+
+        # Check BG flag renders to BG colours only...
+        renderer = Fire(5, 10, "xxxx\nxxxx\nxxxx", 1.0, 20, 8, bg=True)
+        for _ in range(100):
+            output = renderer.rendered_text
+        for char in "\n".join(output[0]):
+            self.assertIn(char, " \n")
 
 if __name__ == '__main__':
     unittest.main()
