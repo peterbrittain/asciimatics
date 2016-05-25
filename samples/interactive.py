@@ -116,8 +116,6 @@ class CrossHairs(Sprite):
             colour=Screen.COLOUR_RED)
 
     def whack(self, sound):
-        global arrow
-
         x, y = self._path.next_pos()
         if self.overlaps(arrow, use_new_pos=True):
             arrow.say("OUCH!")
