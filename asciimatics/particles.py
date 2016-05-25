@@ -181,7 +181,7 @@ class ParticleEmitter(object):
                 char, x, y, fg, attr, bg = particle.next()
                 screen_data = self._screen.get_from(x, y)
                 if self._blend and screen_data:
-                    char2, fg2, attr2, bg2 = screen_data
+                    _, fg2, attr2, bg2 = screen_data
                     index = -1
                     for i, colours in enumerate(particle.colours):
                         if (fg2, attr2, bg2) == colours:

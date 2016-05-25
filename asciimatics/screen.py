@@ -275,8 +275,8 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                     x += sx
 
                 if char is None:
-                    self.print_at(self._line_chars[next_chars[0]], px//2, py//2,
-                                  colour, bg=bg)
+                    self.print_at(self._line_chars[next_chars[0]],
+                                  px // 2, py // 2, colour, bg=bg)
                     if next_chars[1] != 0:
                         self.print_at(self._line_chars[next_chars[1]],
                                       px // 2, py // 2 + sy, colour, bg=bg)
@@ -308,12 +308,12 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                     y += sy
 
                 if char is None:
-                    self.print_at(self._line_chars[next_chars[0]], px//2, py//2,
-                                  colour, bg=bg)
+                    self.print_at(self._line_chars[next_chars[0]],
+                                  px // 2, py // 2, colour, bg=bg)
                     if next_chars[1] != 0:
                         self.print_at(
-                            self._line_chars[next_chars[1]], px//2 + sx, py//2,
-                            colour, bg=bg)
+                            self._line_chars[next_chars[1]],
+                            px // 2 + sx, py // 2, colour, bg=bg)
                 elif char == " ":
                     self.print_at(char, px // 2, py // 2, bg=bg)
                     self.print_at(char, px // 2 + sx, py // 2, bg=bg)
@@ -756,9 +756,6 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         self._attr = 0
         self._bg = 0
 
-        # Environment to be restored on exit.
-        self._environment = {}
-
     @classmethod
     def open(cls, height=200, catch_interrupt=False):
         """
@@ -806,7 +803,6 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             win_in.SetStdHandle(STD_INPUT_HANDLE)
 
             # Hide the cursor.
-            (size, visible) = win_out.GetConsoleCursorInfo()
             win_out.SetConsoleCursorInfo(1, 0)
 
             # Disable scrolling
@@ -822,10 +818,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 new_mode &= ~win32console.ENABLE_PROCESSED_INPUT
             win_in.SetConsoleMode(new_mode)
 
-            screen = _WindowsScreen(win_out, win_in, height)
-
-            screen._environment["stdin_mode"] = in_mode
-            screen._environment["old_stdout"] = old_out
+            screen = _WindowsScreen(win_out, win_in, height, old_out, in_mode)
         else:
             # Reproduce curses.wrapper()
             stdscr = curses.initscr()
@@ -834,7 +827,8 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             stdscr.keypad(1)
 
             # noinspection PyBroadException
-            # - this code is exactly duplicating the curses module.
+            # pylint: disable=bare-except
+            # - This code deliberately duplicates the (bad) curses module code.
             try:
                 curses.start_color()
             except:
@@ -1259,7 +1253,7 @@ if sys.platform == "win32":
             Screen.A_UNDERLINE: lambda x: x
         }
 
-        def __init__(self, stdout, stdin, buffer_height):
+        def __init__(self, stdout, stdin, buffer_height, old_out, old_in):
             """
             :param stdout: The win32console PyConsoleScreenBufferType object for
                 stdout.
@@ -1267,6 +1261,10 @@ if sys.platform == "win32":
                 stdin.
             :param buffer_height: The buffer height for this window (if using
                 scrolling).
+            :param old_out: The original win32console PyConsoleScreenBufferType
+                object for stdout that should be restored on exit.
+            :param old_in: The original stdin state that should be restored on
+                exit.
             """
             # Save off the screen details and set up the scrolling pad.
             info = stdout.GetConsoleScreenBufferInfo()['Window']
@@ -1279,6 +1277,8 @@ if sys.platform == "win32":
             self._stdin = stdin
             self._last_width = width
             self._last_height = height
+            self._old_out = old_out
+            self._old_in = old_in
 
             # Windows is limited to the ANSI colour set.
             self.colours = 8
@@ -1294,8 +1294,8 @@ if sys.platform == "win32":
             """
             if restore:
                 # Reset the original screen settings.
-                self._environment["old_stdout"].SetConsoleActiveScreenBuffer()
-                self._stdin.SetConsoleMode(self._environment["stdin_mode"])
+                self._old_out.SetConsoleActiveScreenBuffer()
+                self._stdin.SetConsoleMode(self._old_in)
 
         def map_all_keys(self, state):
             """

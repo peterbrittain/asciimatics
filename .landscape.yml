@@ -15,5 +15,6 @@ pylint:
     - too-many-arguments
     - too-many-instance-attributes
     - invalid-name
+    - wrong-import-order
 mccabe:
   run: false

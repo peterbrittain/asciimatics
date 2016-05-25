@@ -101,7 +101,7 @@ def demo(screen):
 
     # Next scene: fireworks
     effects = []
-    for i in range(20):
+    for _ in range(20):
         effects.append(
             StarFirework(screen,
                          randint(3, screen.width - 4),
