@@ -4,17 +4,13 @@ Introduction
 Asciimatics is a package to help people create simple ASCII animations on any
 platform.  It is licensed under the Apache Software Foundation License 2.0.
 
-It originated from some work that I did on PiConga to create a retro text
-credits roll for the project.  This worked so well, I re-used it for another
-project.  At that point I felt it might be fun to share with others.
-
 
 Why?
 ----
 
 Why not?  It brings a little joy to anyone who was programming in the 80s...
-Oh and it provides a single cross-platform Python class to do all the console
-function you could ask for, including:
+Oh and it provides a single cross-platform Python class to do all the low-level
+console function you could ask for, including:
 
 * Coloured/styled text - including 256 colour terminals
 * Cursor positioning
@@ -22,13 +18,18 @@ function you could ask for, including:
 * Mouse input (terminal permitting)
 * Detecting and handling when the console resizes
 * Screen scraping
+
+In addition, it provides some simple, high-level APIs to provide more complex
+features including:
+
 * Anti-aliased ASCII line-drawing
-* Image to ASCII conversion
-* Many animation effects
+* Image to ASCII conversion - including JPEG and GIF formats
+* Many animation effects - e.g. sprites, particle systems, banners, etc.
+* Various widgets for text UIs - e.g. buttons, text boxes, radio buttons, etc.
 
 Currently this API has been proven to work on CentOS 6 & 7, Raspbian (i.e.
-Debian wheezy), Windows 7, 8 & 10 and OSX 10.11, though it should also 
-work for any other platform with a working curses implementation.
+Debian wheezy), Ubuntu 14.04, Windows 7, 8 & 10 and OSX 10.11, though it should
+also work for any other platform that provides a working curses implementation.
 
 
 Installation
@@ -95,7 +96,7 @@ So you want to join in?  Great!  There's a few ground rules...
    other programmers will admire.
 #. Make sure that your code is
    `PEP-8 <https://www.python.org/dev/peps/pep-0008/>`_ compliant.  Tools
-   such as flake8 or editors like pycharm really help here.
+   such as flake8 and pylint or editors like pycharm really help here.
 
 When you've got something you're happy with, please feel free to submit a pull
 request at https://github.com/peterbrittain/asciimatics/issues.

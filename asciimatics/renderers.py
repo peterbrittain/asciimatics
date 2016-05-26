@@ -15,7 +15,7 @@ from .screen import Screen
 
 
 #: Attribute conversion table for the ${c,a} form of attributes for
-#: :py:obj:`.paint`.
+#: :py:obj:`~.Screen.paint`.
 ATTRIBUTES = {
     "1": Screen.A_BOLD,
     "2": Screen.A_NORMAL,
