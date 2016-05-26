@@ -55,4 +55,9 @@ setup(
         'Pillow >= 2.7.0',
         'future',
     ] + (['pypiwin32'] if sys.platform == 'win32' else []),
+    tests_require=[
+        'mock',
+        'nose',
+    ],
+    test_suite='nose.collector',
 )
