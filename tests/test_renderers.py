@@ -1,4 +1,3 @@
-import random
 import unittest
 import os
 from asciimatics.renderers import StaticRenderer, FigletText, ImageFile, \

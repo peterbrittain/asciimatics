@@ -309,34 +309,34 @@ class ImageFile(StaticRenderer):
         :param colours: The number of colours the terminal supports.
         """
         super(ImageFile, self).__init__()
-        image = Image.open(filename)
-        background = image.info['background'] if 'background' in image.info \
-            else None
-        for frame in _ImageSequence(image):
-            ascii_image = ""
-            frame = frame.resize(
-                (int(frame.size[0] * height * 2.0 / frame.size[1]), height),
-                Image.BICUBIC)
-            grey_frame = frame.convert('L')
-            for py in range(0, grey_frame.size[1]):
-                ascii_image += "\n"
-                for px in range(0, grey_frame.size[0]):
-                    real_col = frame.getpixel((px, py))
-                    col = grey_frame.getpixel((px, py))
-                    if real_col == background:
-                        ascii_image += " "
-                    else:
-                        if colours >= 256:
-                            ascii_image += "${%d}" % (232 + col * 23 // 256)
+        with Image.open(filename) as image:
+            background = image.info['background'] if 'background' in \
+                image.info else None
+            for frame in _ImageSequence(image):
+                ascii_image = ""
+                frame = frame.resize(
+                    (int(frame.size[0] * height * 2.0 / frame.size[1]), height),
+                    Image.BICUBIC)
+                grey_frame = frame.convert('L')
+                for py in range(0, grey_frame.size[1]):
+                    ascii_image += "\n"
+                    for px in range(0, grey_frame.size[0]):
+                        real_col = frame.getpixel((px, py))
+                        col = grey_frame.getpixel((px, py))
+                        if real_col == background:
+                            ascii_image += " "
                         else:
-                            ascii_image += "${%d,%d}" % (
-                                7 if col >= 85 else 0,
-                                Screen.A_BOLD if col < 85 or col > 170 else
-                                Screen.A_NORMAL
-                            )
-                        ascii_image += self._greyscale[
-                            (int(col) * len(self._greyscale)) // 256]
-            self._images.append(ascii_image)
+                            if colours >= 256:
+                                ascii_image += "${%d}" % (232 + col * 23 // 256)
+                            else:
+                                ascii_image += "${%d,%d}" % (
+                                    7 if col >= 85 else 0,
+                                    Screen.A_BOLD if col < 85 or col > 170 else
+                                    Screen.A_NORMAL
+                                )
+                            ascii_image += self._greyscale[
+                                (int(col) * len(self._greyscale)) // 256]
+                self._images.append(ascii_image)
 
 
 class ColourImageFile(StaticRenderer):
@@ -359,49 +359,49 @@ class ColourImageFile(StaticRenderer):
         :param height: The height of the text rendered image.
         """
         super(ColourImageFile, self).__init__()
-        image = Image.open(filename)
+        with Image.open(filename) as image:
+            # Find any PNG or GIF background colour.
+            background = None
+            if 'background' in image.info:
+                background = image.info['background']
+            elif 'transparency' in image.info:
+                background = image.info['transparency']
 
-        # Find any PNG or GIF background colour.
-        background = None
-        if 'background' in image.info:
-            background = image.info['background']
-        elif 'transparency' in image.info:
-            background = image.info['transparency']
+            # Convert each frame in the image.
+            for frame in _ImageSequence(image):
+                ascii_image = ""
+                frame = frame.resize(
+                    (int(frame.size[0] * height * 2.0 / frame.size[1]), height),
+                    Image.BICUBIC)
+                tmp_img = Image.new("P", (1, 1))
+                tmp_img.putpalette(screen.palette)
 
-        # Convert each frame in the image.
-        for frame in _ImageSequence(image):
-            ascii_image = ""
-            frame = frame.resize(
-                (int(frame.size[0] * height * 2.0 / frame.size[1]), height),
-                Image.BICUBIC)
-            tmp_img = Image.new("P", (1, 1))
-            tmp_img.putpalette(screen.palette)
+                # Avoid dithering - this requires a little hack to get directly
+                # at the underlying library in PIL.
+                new_frame = frame.convert('RGB')
+                tmp_img.load()
+                new_frame.load()
+                new_frame = new_frame._new(
+                    new_frame.im.convert("P", 0, tmp_img.im))
 
-            # Avoid dithering - this requires a little hack to get directly
-            # at the underlying library in PIL.
-            new_frame = frame.convert('RGB')
-            tmp_img.load()
-            new_frame.load()
-            new_frame = new_frame._new(new_frame.im.convert("P", 0, tmp_img.im))
+                # Blank out any transparent sections of the image for complex
+                # images with alpha blending.
+                if background is None and frame.mode == 'RGBA':
+                    mask = Image.eval(
+                        frame.split()[-1], lambda a: 255 if a <= 64 else 0)
+                    new_frame.paste(16, mask)
 
-            # Blank out any transparent sections of the image for complex
-            # images with alpha blending.
-            if background is None and frame.mode == 'RGBA':
-                mask = Image.eval(frame.split()[-1], lambda a: 255 if a <= 64
-                                  else 0)
-                new_frame.paste(16, mask)
-
-            # Convert the resulting image to coloured ASCII codes.
-            for py in range(0, new_frame.size[1]):
-                ascii_image += "\n"
-                for px in range(0, new_frame.size[0]):
-                    real_col = frame.getpixel((px, py))
-                    col = new_frame.getpixel((px, py))
-                    if real_col == background or col == 16:
-                        ascii_image += " "
-                    else:
-                        ascii_image += "${%d}#" % col
-            self._images.append(ascii_image)
+                # Convert the resulting image to coloured ASCII codes.
+                for py in range(0, new_frame.size[1]):
+                    ascii_image += "\n"
+                    for px in range(0, new_frame.size[0]):
+                        real_col = frame.getpixel((px, py))
+                        col = new_frame.getpixel((px, py))
+                        if real_col == background or col == 16:
+                            ascii_image += " "
+                        else:
+                            ascii_image += "${%d}#" % col
+                self._images.append(ascii_image)
 
 
 class SpeechBubble(StaticRenderer):
