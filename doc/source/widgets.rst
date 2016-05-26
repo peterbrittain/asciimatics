@@ -23,7 +23,10 @@ simple, reusing concepts from standard web and desktop GUI frameworks.
 And that's it!  You can set various callbacks to get triggered when key events
 occur - e.g. changes to values, buttons get clicked, etc. - and use these to
 trigger your application processing.  For an example, see the contact_list.py
-sample provided.
+sample provided - which will look a bit like this:
+
+.. image:: contacts.png
+    :alt: Screen shot of the contacts list sample
 
 Common keys
 ~~~~~~~~~~~
@@ -424,7 +427,7 @@ standard screen.  This is not a problem.  You can keep adding your Widgets to
 your Layout and asciimatics will automatically clip the content to the space
 available and scroll the content as required.
 
-If you do this, it is recommended that you set `has_border=True`on the Frame
+If you do this, it is recommended that you set `has_border=True` on the Frame
 so that the user can use the scroll bar provided to move around the form.
 
 Colour schemes
@@ -571,7 +574,7 @@ Callbacks
 ~~~~~~~~~
 A callback is just a function that you pass into another function to be
 called when the associated event occurs.  In asciimatics, they can usually be
-identified by the fact that they start with "on_" and correspond to a
+identified by the fact that they start with `on` and correspond to a
 significant input action from the user, e.g. `on_click`.
 
 When writing your application, you simply need to decide which events you

@@ -9,8 +9,8 @@ multi-coloured text images to create the desired effect.  This is where a
 
 A Renderer is simply an object that will return one or more text strings and
 associated colour maps in a format that is suitable for display using the
-:py:meth:`.paint` method.  This collation of text string and colour map is
-referred to as the rendered text.  It might vary in complexity from a single,
+:py:meth:`~Screen.paint` method.  This collation of text string and colour map
+is referred to as the rendered text.  It might vary in complexity from a single,
 monochrome string through to many frames from an ASCII rendition
 of a colour video or animated GIF.
 

@@ -17,14 +17,14 @@ constructed Screen into the specified function.  For example:
 
     Screen.wrapper(demo)
 
-If you need more control than this allows, you can fall back to the lower level,
-environment-specific methods like :py:meth:`.from_curses`.  This access is
-deprecated though and may be removed in future releases.
+If you need more control than this allows, you can fall back to using
+:py:meth:`.open`, but then you have to call :py:meth:`.close` before
+exiting your application to restore the environment.
 
 Output
 ------
 Once you have a Screen, the simplest way to output text is using the
-:py:meth:`.print_at` method.  This allows you to place a string at a desired
+:py:meth:`~.Scren.print_at` method.  This allows you to place a string at a desired
 location in a specified colour.  The coordinates are zero-indexed starting at
 the top left of the screen and move down and right, so the example above
 displays `Hello world!` at (0, 0) which is the top left of the screen.
@@ -81,18 +81,18 @@ another parameter to `print_at`.  For example:
 
 Multicoloured strings
 ^^^^^^^^^^^^^^^^^^^^^
-If you want to do something more complex, you can use the :py:meth:`.paint`
-method to specify a colour map for each character to be displayed.  This must
-be a list of colour/attribute values (tuples or lists) that is at least
-as long as the text to be displayed.  This method is typically used for
-displaying complex, multi-coloured text from a Renderer.  See
+If you want to do something more complex, you can use the
+:py:meth:`~.Screen.paint` method to specify a colour map for each character to
+be displayed.  This must be a list of colour/attribute values (tuples or lists)
+that is at least as long as the text to be displayed.  This method is typically
+used for displaying complex, multi-coloured text from a Renderer.  See
 :ref:`animation-ref` for more details.
 
 Refreshing the Screen
 ---------------------
 Just using the above methods to output to screen isn't quite enough.
 The Screen maintains a buffer of what is to be displayed and will only actually
-display it once the :py:meth:`.Screen.refresh` method is called.  This is done
+display it once the :py:meth:`~.Screen.refresh` method is called.  This is done
 to reduce flicker on the display device as new content is created.
 
 Applications are required to re-render everything that needs to be
@@ -120,10 +120,10 @@ into account keyboard state - e.g. caps lock) if possible,
 or an extended key code (the ``KEY_xxx`` constants in the Screen class) where
 not.
 
-For example, if you press 'a' normally ``get_key`` will return 97, which is
-``ord('a')``.  If you press the same key with caps lock on, you will get 65,
-which is ``ord('A')``.  If you press 'F7' you will always get ``KEY_F7``
-irrespective of the caps lock.
+For example, if you press 'a' normally :py:meth:`.get_event` will return
+a KeyboardEvent with ``key_code`` 97, which is ``ord('a')``.  If you press the
+same key with caps lock on, you will get 65, which is ``ord('A')``.  If you
+press 'F7' you will always get ``KEY_F7`` irrespective of the caps lock.
 
 MouseEvent
 ^^^^^^^^^^
@@ -149,11 +149,11 @@ Screen Resizing
 It is not possible to change the Screen size through your program.  However, the
 user may resize their terminal or console while your program is running.
 
-You can read the current  size from the :py:obj:`.dimensions` property of the
-Screen.  Rather than poll this property for changes, you can check if your
-Screen has resized by calling the :py:meth:`.has_resized` method.  This will
-tell you if the dimensions have been changed by the user at any time since it
-was last called.
+You can read the current  size from the :py:obj:`~.Screen.dimensions` property
+of the Screen.  Rather than poll this property for changes, you can check if
+your Screen has resized by calling the :py:meth:`.has_resized` method.  This
+will tell you if the dimensions have been changed by the user at any time since
+it was last called.
 
 In addition, you can tell the Screen to throw an exception if this happens
 while you are playing a Scene by specifying ``stop_on_resize=True``.  This
@@ -164,9 +164,9 @@ Scraping Text
 -------------
 Sometimes it is useful to be able to read what is already displayed on the
 Screen at a given location.  This is often referred to as screen scraping.  You
-can do this using the :py:meth:`.get_from` method.  It will return the displayed
-character and attributes (as a 4-tuple) for any single character location on
-the Screen.
+can do this using the :py:meth:`~.Screen.get_from` method.  It will return the
+displayed character and attributes (as a 4-tuple) for any single character
+location on the Screen.
 
 .. code-block:: python
 
@@ -178,10 +178,10 @@ the Screen.
 Line drawing
 ------------
 The Screen object also provides some anti-aliased line drawing facilities,
-using ASCII characters to represent the line.  The :py:meth:`.move` method will
-move the drawing cursor to the specified coordinates and then the
-:py:meth:`.draw` method will draw a straight line from the current cursor
-location to the specified coordinates.
+using ASCII characters to represent the line.  The :py:meth:`~.Screen.move`
+method will move the drawing cursor to the specified coordinates and then the
+:py:meth:`~.Screen.draw` method will draw a straight line from the current
+cursor location to the specified coordinates.
 
 You can override the anti-aliasing with the ``char`` parameter.  This is most
 useful when trying to clear what was already drawn.  For example:

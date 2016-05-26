@@ -1,6 +1,16 @@
 CHANGE HISTORY
 ==============
 
+1.7.0
+-----
+- Reworked Screen construction.
+  - Added open() and close() methods to Screen.
+  - Retired from_windows(), from_curses() and from_blessed() methods.
+  - Retired Blessed support.
+- Added UT framework for testing and CI configurations.
+- Fixed bug in restoring console colours on Exit for Windows.
+- Fixed up logic for handling Ctrl keys and documented OS restrictions.
+
 1.6.0
 -----
 - Added `widgets` sub-package, providing a Frame effect for encapsulating a User
