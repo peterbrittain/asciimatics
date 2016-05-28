@@ -97,9 +97,9 @@ to reduce flicker on the display device as new content is created.
 
 Applications are required to re-render everything that needs to be
 displayed and then call refresh when all the new content is ready.  
-Note that the :py:meth:`.play` method will do this for you automatically
-at the end of each frame, so you don't need to call it again inside your
-animations.
+Note that the :py:meth:`.play` and :py:meth:`.draw_next_frame` methods will do
+this for you automatically at the end of each frame, so you don't need to call
+it again inside your animations.
 
 Input
 -----
