@@ -7,7 +7,9 @@ CHANGE HISTORY
   - Added open() and close() methods to Screen.
   - Retired from_windows(), from_curses() and from_blessed() methods.
   - Retired Blessed support.
-- Added UT framework for testing and CI configurations.
+- Added set_scenes() and draw_next_frame() to allow asynchronous frameworks to
+  use Screen.
+- Added UT framework for testing and CI configurations to run the tests.
 - Fixed bug in restoring console colours on Exit for Windows.
 - Fixed up logic for handling Ctrl keys and documented OS restrictions.
 

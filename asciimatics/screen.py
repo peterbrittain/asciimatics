@@ -754,6 +754,12 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         self._attr = 0
         self._bg = 0
 
+        # Control variables for playing out a set of Scenes.
+        self._scenes = []
+        self._scene_index = 0
+        self._frame = 0
+        self._unhandled_input = self._unhandled_event_default
+
     @classmethod
     def open(cls, height=200, catch_interrupt=False):
         """
@@ -987,7 +993,9 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
     def play(self, scenes, stop_on_resize=False, unhandled_input=None,
              start_scene=None):
         """
-        Play a set of scenes.
+        Play a set of scenes.  This is effectively a helper function to wrap
+        :py:meth:`.set_scenes` and :py:meth:`.draw_next_frame` to simplify
+        animation for most applications.
 
         :param scenes: a list of :py:obj:`.Scene` objects to play.
         :param stop_on_resize: Whether to stop when the screen is resized.
@@ -1005,84 +1013,118 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         The unhandled input function just takes one parameter - the input
         event that was not handled.
         """
+        # Initialise the Screen for animation.
+        self.set_scenes(
+            scenes, unhandled_input=unhandled_input, start_scene=start_scene)
+
+        # Mainline loop for animations
+        try:
+            while True:
+                self.draw_next_frame()
+                if self.has_resized():
+                    if stop_on_resize:
+                        self._scenes[self._scene_index].exit()
+                        raise ResizeScreenError("Screen resized",
+                                                self._scenes[self._scene_index])
+                time.sleep(0.05)
+        except StopApplication:
+            # Time to stop  - just exit the function.
+            return
+
+    def set_scenes(self, scenes, unhandled_input=None, start_scene=None):
+        """
+        Remember a set of scenes to be played.  This must be called before
+        using :py:meth:`.draw_next_frame`.
+
+        :param scenes: a list of :py:obj:`.Scene` objects to play.
+        :param unhandled_input: Function to call for any input not handled
+            by the Scenes/Effects being played.  Defaults to a function that
+            closes the application on "Q" or "X" being pressed.
+        :param start_scene: The old Scene to start from.  This must have name
+            that matches the name of one of the Scenes passed in.
+
+        :raises ResizeScreenError: if the screen is resized (and allowed by
+            stop_on_resize).
+
+        The unhandled input function just takes one parameter - the input
+        event that was not handled.
+        """
+        # Save off the scenes now.
+        self._scenes = scenes
+
         # Set up default unhandled input handler if needed.
         if unhandled_input is None:
             unhandled_input = self._unhandled_event_default
+        self._unhandled_input = unhandled_input
 
         # Find the starting scene.  Default to first if no match.
-        index = 0
+        self._scene_index = 0
         if start_scene is not None:
             for i, scene in enumerate(scenes):
                 if scene.name == start_scene.name:
-                    index = i
+                    self._scene_index = i
                     break
-            else:
-                # No match - ignore the old Scene.
-                start_scene = None
 
-        # Mainline loop for animations
+        # Reset the Scene - this allows the original scene to pick up old
+        # values on resizing.
+        self._scenes[self._scene_index].reset(
+            old_scene=start_scene, screen=self)
+
+        # Reset other internal state for the animation
+        self._frame = 0
         self.clear()
-        while True:
-            scene = scenes[index]
-            try:
-                frame = 0
-                if scene.clear:
-                    self.clear()
-                # Reset the Scene - only pass in the old scene once (otherwise
-                # we repeat the population when we loop through all the Scenes).
-                scene.reset(old_scene=start_scene, screen=self)
-                if start_scene:
-                    start_scene = None
-                re_sized = False
-                start_frame = frame
-                while not re_sized:
-                    frame += 1
-                    for effect in scene.effects:
-                        effect.update(frame)
-                        if effect.delete_count is not None:
-                            effect.delete_count -= 1
-                            if effect.delete_count == 0:
-                                scene.remove_effect(effect)
-                    self.refresh()
-                    event = self.get_event()
-                    while event is not None:
-                        event = scene.process_event(event)
-                        if event is not None:
-                            unhandled_input(event)
-                        event = self.get_event()
-                    re_sized = self.has_resized()
-                    if (scene.duration > 0 and
-                            frame >= scene.duration - start_frame):
-                        raise NextScene()
-                    time.sleep(0.05)
 
-                # Break out of the function if mandated by caller.
-                if re_sized:
-                    if stop_on_resize:
-                        scene.exit()
-                        raise ResizeScreenError("Screen resized", scene)
-            except NextScene as e:
-                if e.name is None:
-                    # Just allow next iteration of loop
-                    index += 1
-                    if index >= len(scenes):
-                        index = 0
-                else:
-                    # Find the required scene.
-                    for i, scene in enumerate(scenes):
-                        if scene.name == e.name:
-                            index = i
-                            break
-                    else:
-                        raise RuntimeError(
-                            "Could not find Scene: '{}'".format(e.name))
+    def draw_next_frame(self):
+        """
+        Draw the next frame in the currently configured Scenes. You must call
+        :py:meth:`.set_scenes` before using this for the first time.
 
-            except StopApplication:
-                # Time to stop  - just exit the function.
-                return
-
-            # Next iteration if nothing else has exited by now.
+        :raises StopApplication: if the application should be terminated.
+        """
+        scene = self._scenes[self._scene_index]
+        try:
+            self._frame += 1
+            for effect in scene.effects:
+                effect.update(self._frame)
+                if effect.delete_count is not None:
+                    effect.delete_count -= 1
+                    if effect.delete_count == 0:
+                        scene.remove_effect(effect)
+            self.refresh()
+            event = self.get_event()
+            while event is not None:
+                event = scene.process_event(event)
+                if event is not None:
+                    self._unhandled_input(event)
+                event = self.get_event()
+            if scene.duration > 0 and self._frame >= scene.duration:
+                raise NextScene()
+        except NextScene as e:
+            # Tidy up the current scene.
             scene.exit()
+
+            # Find the specified next Scene
+            if e.name is None:
+                # Just allow next iteration of loop
+                self._scene_index += 1
+                if self._scene_index >= len(self._scenes):
+                    self._scene_index = 0
+            else:
+                # Find the required scene.
+                for i, scene in enumerate(self._scenes):
+                    if scene.name == e.name:
+                        self._scene_index = i
+                        break
+                else:
+                    raise RuntimeError(
+                        "Could not find Scene: '{}'".format(e.name))
+
+            # Reset the screen if needed.
+            scene = self._scenes[self._scene_index]
+            scene.reset()
+            self._frame = 0
+            if scene.clear:
+                self.clear()
 
     @abstractmethod
     def _change_colours(self, colour, attr, bg):

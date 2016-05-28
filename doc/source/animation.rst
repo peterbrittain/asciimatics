@@ -30,7 +30,13 @@ These cuts are where you should consider creating a new Scene.
 
 Once you have built up a set of Effects into a list of one or more Scenes, you
 can pass this list to :py:meth:`.play` which will run through the Scenes in
-order, or stop playing if the user exits by pressing 'q'.
+order, or stop playing if the user exits by pressing 'q' (assuming you use the
+default key handling).
+
+If you cannot allow asciimatics to schedule each frame itself, e.g. because you
+are using an asynchronous framework of your own like gevent or twisted, you
+can use :py:meth:`.set_scenes` to set up your scenes and
+:py:meth:`.draw_next_frame` (every 1/20 of a second) to draw the next frame.
 
 Sprites and Paths
 -----------------
