@@ -21,10 +21,12 @@ class KeyboardEvent(Event):
 
 class MouseEvent(Event):
     """
-    The event represents a mouse move or click.
+    The event represents a mouse move or click.  Allowed values for the buttons
+    are any bitwise combination of `LEFT_CLICK`, `RIGHT_CLICK` and
+    `DOUBLE_CLICK`.
     """
 
-    #: Mouse button states - bitwise flags
+    # Mouse button states - bitwise flags
     LEFT_CLICK = 1
     RIGHT_CLICK = 2
     DOUBLE_CLICK = 4

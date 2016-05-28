@@ -40,7 +40,7 @@ class Renderer(with_metaclass(ABCMeta, object)):
     def max_width(self):
         """
         :return: The max width of the rendered text (across all images if an
-            animated renderer.
+            animated renderer).
         """
 
     @abstractproperty
@@ -59,7 +59,7 @@ class Renderer(with_metaclass(ABCMeta, object)):
     def max_height(self):
         """
         :return: The max height of the rendered text (across all images if an
-            animated renderer.
+            animated renderer).
         """
 
     def __repr__(self):
@@ -164,7 +164,7 @@ class StaticRenderer(Renderer):
     def max_height(self):
         """
         :return: The max height of the rendered text (across all images if an
-            animated renderer.
+            animated renderer).
         """
         if len(self._plain_images) <= 0:
             self._convert_images()
@@ -178,7 +178,7 @@ class StaticRenderer(Renderer):
     def max_width(self):
         """
         :return: The max width of the rendered text (across all images if an
-            animated renderer.
+            animated renderer).
         """
         if len(self._plain_images) <= 0:
             self._convert_images()
@@ -193,7 +193,7 @@ class StaticRenderer(Renderer):
 class DynamicRenderer(with_metaclass(ABCMeta, Renderer)):
     """
     A DynamicRenderer is a Renderer that creates each image as requested.  It
-    has a defined maximum size on construction.`
+    has a defined maximum size on construction.
     """
 
     def __init__(self, height, width):
@@ -433,9 +433,8 @@ class SpeechBubble(StaticRenderer):
 class Box(StaticRenderer):
     """
     Renders a simple box using ASCII characters.  This does not render in
-    extended box drawing characters as that requires direct use of the curses
-    API to draw non-ASCII characters (which is not supported by Effects that
-    take Renderer parameters).
+    extended box drawing characters as that requires non-ASCII characters in
+    Windows and direct access to curses in Linux.
     """
 
     def __init__(self, width, height):
@@ -490,14 +489,20 @@ class Rainbow(StaticRenderer):
 class BarChart(DynamicRenderer):
     """
     Renderer to create a bar chart using the specified functions as inputs for
-    each entry.  Can be used to chart distributions or to imitate a sound
-    equalizer.
+    each entry.  Can be used to chart distributions or for more graphical
+    effect - e.g. to imitate a sound equalizer or a progress indicator.
     """
 
-    #: Which axes to draw when rendering
+    #: Constant to indicate no axes should be rendered.
     NONE = 0
+
+    #: Constant to indicate just the x axis should be rendered.
     X_AXIS = 1
+
+    #: Constant to indicate just the y axis should be rendered.
     Y_AXIS = 2
+
+    #: Constant to indicate both axes should be rendered.
     BOTH = 3
 
     def __init__(self, height, width, functions, char="#",
