@@ -377,11 +377,9 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
     resources to allow us to do the ASCII animations.
 
     This is an abstract class that will build the correct concrete class for
-    you when you call :py:meth:`.wrapper`.
-
-    It is still permitted to call the class methods - e.g.
-    :py:meth:`.from_curses` or :py:meth:`.from_blessed`, however these are
-    deprecated and may be removed in future major releases.
+    you when you call :py:meth:`.wrapper`.  If needed, you can use the
+    :py:meth:`~.Screen.open` and :py:meth:`~.Screen.close` methods for finer
+    grained control of the construction and tidy up.
 
     Note that you need to define the required height for your screen buffer.
     This is important if you plan on using any Effects that will scroll the
@@ -389,13 +387,13 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
     full scrolling of your selected Effect.
     """
 
-    #: Attribute styles supported by Screen formatting functions
+    # Text attributes for use when printing to the Screen.
     A_BOLD = 1
     A_NORMAL = 2
     A_REVERSE = 3
     A_UNDERLINE = 4
 
-    #: Standard colours supported by Screen formatting functions
+    # Text colours for use when printing to the Screen.
     COLOUR_BLACK = 0
     COLOUR_RED = 1
     COLOUR_GREEN = 2
@@ -405,7 +403,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
     COLOUR_CYAN = 6
     COLOUR_WHITE = 7
 
-    #: Standard extended key codes.    
+    # Standard extended key codes.
     KEY_ESCAPE = -1
     KEY_F1 = -2
     KEY_F2 = -3
@@ -849,11 +847,12 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
     @classmethod
     def wrapper(cls, func, height=200, catch_interrupt=False, arguments=None):
         """
-        Construct a new Screen for any platform.  This will initialize and tidy
-        up the system as required around the underlying console subsystem.
+        Construct a new Screen for any platform.  This will initialize the
+        Screen, call the specified function and then tidy up the system as
+        required when the function exits.
 
-        :param func: The function to call once the screen has been created.
-        :param height: The buffer height for this window (if using scrolling).
+        :param func: The function to call once the Screen has been created.
+        :param height: The buffer height for this Screen (if using scrolling).
         :param catch_interrupt: Whether to catch and prevent keyboard
             interrupts.  Defaults to False to maintain backwards compatibility.
         :param arguments: Optional arguments list to pass to func (after the

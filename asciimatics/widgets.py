@@ -625,7 +625,7 @@ class Layout(object):
 
     def blur(self):
         """
-        Call this to give take the input focus from this Layout.
+        Call this to take the input focus from this Layout.
         """
         self._has_focus = False
         try:
@@ -940,13 +940,16 @@ class Widget(with_metaclass(ABCMeta, object)):
     def register_frame(self, frame):
         """
         Register the Frame that owns this Widget.
+
         :param frame: The owning Frame.
         """
         self._frame = frame
 
     def set_layout(self, x, y, offset, w, h):
         """
-        Set the size and position of the Widget.
+        Set the size and position of the Widget.  This should not be called
+        directly.  It is used by the :py:obj:`.Layout` class to arrange all
+        widgets within the Frame.
 
         :param x: The x position of the widget.
         :param y: The y position of the widget.
@@ -990,7 +993,7 @@ class Widget(with_metaclass(ABCMeta, object)):
 
     def blur(self):
         """
-        Call this to give take the input focus from this Widget.
+        Call this to take the input focus from this Widget.
         """
         self._has_focus = False
 
