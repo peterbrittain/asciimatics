@@ -1,5 +1,7 @@
+import curses
 import unittest
 import os
+import sys
 from asciimatics.renderers import StaticRenderer, FigletText, ImageFile, \
     ColourImageFile, SpeechBubble, Box, Rainbow, BarChart, Fire
 from asciimatics.screen import Screen
@@ -154,6 +156,14 @@ class TestRenderers(unittest.TestCase):
         """
         Check that the ColourImageFile renderer works.
         """
+        # Skip for non-Windows if the terminal definition is incomplete.
+        # This typically means we're running inside a non-standard termina;.
+        # For example, thi happens when embedded in PyCharm.
+        if sys.platform != "win32":
+            curses.initscr()
+            if curses.tigetstr("ri") is None:
+                self.skipTest("No valid terminal definition")
+
         def internal_checks(screen):
             renderer = ColourImageFile(
                 screen,
@@ -190,6 +200,12 @@ class TestRenderers(unittest.TestCase):
         """
         Check that the Rainbow renderer works.
         """
+        # Skip for non-Windows if the terminal definition is incomplete.
+        # This typically means we're running inside a non-standard termina;.
+        # For example, thi happens when embedded in PyCharm.
+        if sys.platform != "win32" and curses.tigetstr("ri") is None:
+            self.skipTest("No valid terminal definition")
+
         def internal_checks(screen):
             # Create a base renderer
             plain_text = (".-------.\n" +
