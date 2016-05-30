@@ -44,6 +44,15 @@ class TestRenderers(unittest.TestCase):
         """
         Check that the ${} syntax is parsed correctly.
         """
+        # Check the ${fg, attr, bg} variant
+        renderer = StaticRenderer(images=["${3,1,2}*"])
+        output = renderer.rendered_text
+        self.assertEqual(len(output[0]), len(output[1]))
+        self.assertEqual(output[0], ["*"])
+        self.assertEqual(
+            output[1][0][0],
+            (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_GREEN))
+
         # Check the ${fg, attr} variant
         renderer = StaticRenderer(images=["${3,1}*"])
         output = renderer.rendered_text

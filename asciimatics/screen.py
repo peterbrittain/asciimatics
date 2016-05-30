@@ -117,7 +117,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         defined in the Screen class.
         """
         # Trim text to the buffer.
-        if y < 0 or y >= self._buffer_height:
+        if y < 0 or y >= self._buffer_height or x > self.width:
             return
         if x < 0:
             text = text[-x:]

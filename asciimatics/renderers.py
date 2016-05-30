@@ -75,14 +75,14 @@ class StaticRenderer(Renderer):
     advance.  After construction the images will not change, but can by cycled
     for animation purposes.
 
-    This class will also convert text like ${c,a} into colour c, attribute a
-    for any subsequent text in the line, thus allowing multi-coloured text.  The
-    attribute is optional.
+    This class will also convert text like ${c,a,b} into colour c, attribute a
+    and background b for any subsequent text in the line, thus allowing
+    multi-coloured text.  The attribute and background are optional.
     """
 
     # Regular expression for use to find colour sequences in multi-colour text.
-    # It should match ${n} or ${m,n}
-    _colour_esc_code = r"^\$\{((\d+),(\d+)|(\d+))\}(.*)"
+    # It should match ${n}, ${m,n} or ${m,n,o}
+    _colour_esc_code = r"^\$\{((\d+),(\d+),(\d+)|(\d+),(\d+)|(\d+))\}(.*)"
     _colour_sequence = re.compile(_colour_esc_code)
 
     def __init__(self, images=None, animation=None):
@@ -110,7 +110,7 @@ class StaticRenderer(Renderer):
             new_image = []
             for line in image.split("\n"):
                 new_line = ""
-                attributes = (None, None)
+                attributes = (None, None, None)
                 colours = []
                 while len(line) > 0:
                     match = self._colour_sequence.match(line)
@@ -119,14 +119,20 @@ class StaticRenderer(Renderer):
                         colours.append(attributes)
                         line = line[1:]
                     else:
-                        # The regexp either matches ${c,a} for group 2,3 or
-                        # ${c} for group 4.
-                        if match.group(3) is None:
-                            attributes = (int(match.group(4)), 0)
-                        else:
+                        # The regexp either matches:
+                        # - 2,3,4 for ${c,a,b}
+                        # - 5,6 for ${c,a}
+                        # - 7 for ${c}.
+                        if match.group(2) is not None:
                             attributes = (int(match.group(2)),
-                                          ATTRIBUTES[match.group(3)])
-                        line = match.group(5)
+                                          ATTRIBUTES[match.group(3)],
+                                          int(match.group(4)))
+                        elif match.group(5) is not None:
+                            attributes = (int(match.group(5)),
+                                          ATTRIBUTES[match.group(6)])
+                        else:
+                            attributes = (int(match.group(7)), 0)
+                        line = match.group(8)
                 new_image.append(new_line)
                 colour_map.append(colours)
             self._plain_images.append(new_image)
