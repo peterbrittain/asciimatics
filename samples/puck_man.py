@@ -6,6 +6,11 @@ from asciimatics.paths import Path
 from asciimatics.renderers import StaticRenderer
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
+from asciimatics.effects import Print
+
+dot = """${7,2,7}####
+${7,2,7}####
+"""
 
 pacman = """
         {0}##########
@@ -217,6 +222,16 @@ def demo(screen):
         Ghost(screen, deepcopy(path), blinky, start_frame=110),
         Ghost(screen, deepcopy(path), clyde, start_frame=140),
     ]
+
+    for x in range(5, screen.width, 16):
+        effects.insert(0,
+                       Print(screen,
+                             StaticRenderer(images=[dot]),
+                             screen.height // 2,
+                             x=x,
+                             speed=1,
+                             stop_frame=4))
+
     scenes.append(Scene(effects, 600))
 
     screen.play(scenes, stop_on_resize=True)
