@@ -123,7 +123,7 @@ class TestEffects(unittest.TestCase):
             "hello", 1, 2, 7,
             attr=0,
             bg=0,
-            colour_map=[(None, None) for _ in range(5)],
+            colour_map=[(None, None, None) for _ in range(5)],
             transparent=True)
         screen.paint.reset_mock()
         effect.update(1)
