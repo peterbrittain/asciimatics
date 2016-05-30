@@ -1,7 +1,9 @@
+import curses
 import unittest
 from datetime import datetime
 from mock.mock import MagicMock, patch
 from random import randint
+import sys
 from asciimatics.effects import Print, Cycle, BannerText, Mirage, Scroll, Stars, \
     Matrix, Snow, Wipe, Clock, Cog, RandomNoise, Julia
 from asciimatics.paths import Path
@@ -36,6 +38,15 @@ class TestEffects(unittest.TestCase):
         """
         Check effects can be played.        
         """
+        # Skip for non-Windows if the terminal definition is incomplete.
+        # This typically means we're running inside a non-standard termina;.
+        # For example, thi happens when embedded in PyCharm.
+        if sys.platform != "win32":
+            curses.initscr\
+                ()
+            if curses.tigetstr("ri") is None:
+                self.skipTest("No valid terminal definition")
+
         # A lot of effects are just about the visual output working when played
         # so check that playing a load of text effects doesn't crash.
         #
