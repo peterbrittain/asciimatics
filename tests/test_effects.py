@@ -43,8 +43,7 @@ class TestEffects(unittest.TestCase):
         # This typically means we're running inside a non-standard termina;.
         # For example, thi happens when embedded in PyCharm.
         if sys.platform != "win32":
-            curses.initscr\
-                ()
+            curses.initscr()
             if curses.tigetstr("ri") is None:
                 self.skipTest("No valid terminal definition")
 

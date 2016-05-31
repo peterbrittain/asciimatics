@@ -1471,8 +1471,8 @@ if sys.platform == "win32":
             """
             # Scroll the visible screen up by one line
             info = self._stdout.GetConsoleScreenBufferInfo()['Window']
-            rectangle = win32console.PySMALL_RECTType(info.Left, info.Top+lines,
-                                                      info.Right, info.Bottom)
+            rectangle = win32console.PySMALL_RECTType(
+                info.Left, info.Top + lines, info.Right, info.Bottom)
             new_pos = win32console.PyCOORDType(0, info.Top)
             self._stdout.ScrollConsoleScreenBuffer(
                 rectangle, None, new_pos, " ", 0)
