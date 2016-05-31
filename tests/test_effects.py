@@ -1,9 +1,10 @@
-import curses
 import unittest
 from datetime import datetime
 from mock.mock import MagicMock, patch
 from random import randint
 import sys
+if sys.platform != "win32":
+    import curses
 from asciimatics.effects import Print, Cycle, BannerText, Mirage, Scroll, Stars, \
     Matrix, Snow, Wipe, Clock, Cog, RandomNoise, Julia
 from asciimatics.paths import Path
