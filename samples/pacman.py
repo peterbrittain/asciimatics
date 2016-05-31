@@ -332,6 +332,11 @@ class PacMan(Sprite):
             start_frame=start_frame,
             stop_frame=stop_frame)
 
+    def _update(self, frame_no):
+        super(PacMan, self)._update(frame_no)
+        for effect in self._scene.effects:
+            if isinstance(effect, ScaredGhost) and self.overlaps(effect):
+                self._scene.remove_effect(effect)
 
 class Ghost(Sprite):
     def __init__(self, screen, path, colour=1, start_frame=0, stop_frame=0):
@@ -343,7 +348,7 @@ class Ghost(Sprite):
             renderer_dict={
                 "default": StaticRenderer(images=images),
             },
-            colour=Screen.COLOUR_RED,
+            colour=colour,
             path=path,
             start_frame=start_frame,
             stop_frame=stop_frame)
@@ -362,6 +367,41 @@ class ScaredGhost(Sprite):
             stop_frame=stop_frame)
 
 
+class EatingScene(Scene):
+    def __init__(self, screen):
+        super(EatingScene, self).__init__([], 240 + screen.width)
+        self._screen = screen
+
+    def reset(self, old_scene=None, screen=None):
+        super(EatingScene, self).reset(old_scene, screen)
+
+        # Recreate all the elements.
+        centre = (self._screen.width // 2, self._screen.height // 2)
+        path = Path()
+        path.jump_to(-16, centre[1])
+        path.move_straight_to(
+            self._screen.width + 16, centre[1], (self._screen.width + 16) // 3)
+        path.wait(100)
+        path2 = Path()
+        path2.jump_to(-16, centre[1])
+        path2.move_straight_to(
+            self._screen.width + 16, centre[1], self._screen.width + 16)
+        path2.wait(100)
+
+        for effect in self.effects:
+            self.remove_effect(effect)
+
+        self.add_effect(
+            ScaredGhost(self._screen, deepcopy(path2)))
+        self.add_effect(
+            ScaredGhost(self._screen, deepcopy(path2), start_frame=60))
+        self.add_effect(
+            ScaredGhost(self._screen, deepcopy(path2), start_frame=120))
+        self.add_effect(
+            ScaredGhost(self._screen, deepcopy(path2), start_frame=180))
+        self.add_effect(PacMan(self._screen, path, start_frame=240))
+
+
 def demo(screen):
     scenes = []
     centre = (screen.width // 2, screen.height // 2)
@@ -370,7 +410,7 @@ def demo(screen):
     effects = [
         BannerText(screen,
                    ColourImageFile(screen, "pacman.png", 16),
-                   (screen.height - 16 ) // 2,
+                   (screen.height - 16) // 2,
                    Screen.COLOUR_WHITE),
         Print(screen,
               StaticRenderer(images=["A tribute to the classic 80's "
@@ -382,7 +422,7 @@ def demo(screen):
     # Scene 1 - run away, eating dots
     path = Path()
     path.jump_to(screen.width + 16, centre[1])
-    path.move_straight_to(-16, centre[1], screen.width // 2)
+    path.move_straight_to(-16, centre[1], (screen.width + 16) // 3)
     path.wait(100)
 
     if screen.colours <= 16:
@@ -398,10 +438,10 @@ def demo(screen):
 
     effects = [
         PacMan(screen, path),
-        Ghost(screen, deepcopy(path), inky, start_frame=50),
-        Ghost(screen, deepcopy(path), pinky, start_frame=80),
-        Ghost(screen, deepcopy(path), blinky, start_frame=110),
-        Ghost(screen, deepcopy(path), clyde, start_frame=140),
+        Ghost(screen, deepcopy(path), inky, start_frame=40),
+        Ghost(screen, deepcopy(path), pinky, start_frame=60),
+        Ghost(screen, deepcopy(path), blinky, start_frame=80),
+        Ghost(screen, deepcopy(path), clyde, start_frame=100),
     ]
 
     for x in range(5, screen.width, 16):
@@ -413,22 +453,10 @@ def demo(screen):
                              speed=1,
                              stop_frame=4))
 
-    scenes.append(Scene(effects, 160 + screen.width))
+    scenes.append(Scene(effects, 100 + screen.width))
 
     # Scene 2 - Chase ghosts after a power pill
-    path = Path()
-    path.jump_to(-16, centre[1])
-    path.move_straight_to(screen.width + 16, centre[1], screen.width // 2)
-    path.wait(100)
-    effects = [
-        ScaredGhost(screen, deepcopy(path)),
-        ScaredGhost(screen, deepcopy(path), start_frame=30),
-        ScaredGhost(screen, deepcopy(path), start_frame=60),
-        ScaredGhost(screen, deepcopy(path), start_frame=90),
-        PacMan(screen, path, start_frame=120),
-    ]
-    scenes.append(Scene(effects, 160 + screen.width))
-
+    scenes.append(EatingScene(screen))
 
     screen.play(scenes, stop_on_resize=True)
 

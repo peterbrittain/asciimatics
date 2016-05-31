@@ -594,6 +594,8 @@ class Sprite(Effect):
         self._dir_count = 0
         self._dir_x = None
         self._dir_y = None
+        self._old_x = None
+        self._old_y = None
         self._old_direction = None
         self._path.reset()
 

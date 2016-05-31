@@ -93,7 +93,7 @@ class Path(_AbstractPath):
         """
         :return: The next position tuple (x, y) for the Sprite on this path.
         """
-        ressult = None
+        result = None
         if self._index <= len(self._steps):
             result = self._steps[self._index]
             self._index += 1
