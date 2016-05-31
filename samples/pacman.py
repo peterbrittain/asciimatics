@@ -1,12 +1,11 @@
 from copy import deepcopy
 import sys
-from asciimatics.effects import Sprite
 from asciimatics.exceptions import ResizeScreenError
 from asciimatics.paths import Path
-from asciimatics.renderers import StaticRenderer
+from asciimatics.renderers import StaticRenderer, ColourImageFile
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
-from asciimatics.effects import Print
+from asciimatics.effects import Print, Sprite, BannerText
 
 dot = """${7,2,7}####
 ${7,2,7}####
@@ -367,6 +366,19 @@ def demo(screen):
     scenes = []
     centre = (screen.width // 2, screen.height // 2)
 
+    # Title
+    effects = [
+        BannerText(screen,
+                   ColourImageFile(screen, "pacman.png", 16),
+                   (screen.height - 16 ) // 2,
+                   Screen.COLOUR_WHITE),
+        Print(screen,
+              StaticRenderer(images=["A tribute to the classic 80's "
+                                     "video game by Namco."]),
+              screen.height - 1)
+    ]
+    scenes.append(Scene(effects, 0))
+
     # Scene 1 - run away, eating dots
     path = Path()
     path.jump_to(screen.width + 16, centre[1])
@@ -390,10 +402,6 @@ def demo(screen):
         Ghost(screen, deepcopy(path), pinky, start_frame=80),
         Ghost(screen, deepcopy(path), blinky, start_frame=110),
         Ghost(screen, deepcopy(path), clyde, start_frame=140),
-        Print(screen,
-              StaticRenderer(images=["A tribute to the classic 80's "
-                                     "video game by Namco."]),
-              screen.height - 1)
     ]
 
     for x in range(5, screen.width, 16):
