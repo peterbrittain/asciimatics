@@ -1088,7 +1088,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 effect.update(self._frame)
                 if effect.delete_count is not None:
                     effect.delete_count -= 1
-                    if effect.delete_count == 0:
+                    if effect.delete_count <= 0:
                         scene.remove_effect(effect)
             self.refresh()
             event = self.get_event()

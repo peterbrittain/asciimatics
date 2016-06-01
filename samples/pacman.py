@@ -299,6 +299,16 @@ ${4,2,4}######${7,2,0}  ${4,2,4}########${7,2,0}  ${4,2,4}########
 ${4,2,4}####${7,2,0}      ${4,2,4}####${7,2,0}      ${4,2,4}####
 """
 
+eyes = """
+    ${4,2,4}####${4,2,0}        ${4,2,4}####
+  ${7,2,7}..${4,2,4}####${7,2,7}..${7,2,0}    ${7,2,7}..${4,2,4}####${7,2,7}..
+  ${7,2,7}........${7,2,0}    ${7,2,7}........
+  ${7,2,7}........${7,2,0}    ${7,2,7}........
+    ${7,2,7}....${7,2,0}        ${7,2,7}....
+
+
+"""
+
 # Globals used for pacman animation
 direction = 1
 value = 0
@@ -336,7 +346,7 @@ class PacMan(Sprite):
         super(PacMan, self)._update(frame_no)
         for effect in self._scene.effects:
             if isinstance(effect, ScaredGhost) and self.overlaps(effect):
-                self._scene.remove_effect(effect)
+                effect.eaten(frame_no)
 
 class Ghost(Sprite):
     def __init__(self, screen, path, colour=1, start_frame=0, stop_frame=0):
@@ -365,12 +375,44 @@ class ScaredGhost(Sprite):
             path=path,
             start_frame=start_frame,
             stop_frame=stop_frame)
+        self._eaten = False
+
+    def eaten(self, frame_no):
+        # Already eaten - just ignore
+        if self._eaten:
+            return
+
+        # Allow one more iteration for this Sprite to clear itself up.
+        self._eaten = True
+        self._delete_count = 2
+
+        # Spawn the eyes to run away
+        path = Path()
+        path.jump_to(self._old_x + 12, self._old_y + 4)
+        path.move_straight_to(
+            self._old_x + 12, -8, (self._old_y + 12) // 2)
+        path.wait(100)
+        self._scene.add_effect(Eyes(self._screen, path))
+
+
+class Eyes(Sprite):
+    def __init__(self, screen, path, start_frame=0, stop_frame=0):
+        super(Eyes, self).__init__(
+            screen,
+            renderer_dict={
+                "default": StaticRenderer(images=[eyes]),
+            },
+            colour=Screen.COLOUR_BLUE,
+            path=path,
+            start_frame=start_frame,
+            stop_frame=stop_frame)
 
 
 class EatingScene(Scene):
     def __init__(self, screen):
         super(EatingScene, self).__init__([], 240 + screen.width)
         self._screen = screen
+        self._reset_count = 0
 
     def reset(self, old_scene=None, screen=None):
         super(EatingScene, self).reset(old_scene, screen)
@@ -388,7 +430,8 @@ class EatingScene(Scene):
             self._screen.width + 16, centre[1], self._screen.width + 16)
         path2.wait(100)
 
-        for effect in self.effects:
+        # Take a copy of the list before using it to remove all effects.
+        for effect in self.effects[:]:
             self.remove_effect(effect)
 
         self.add_effect(
@@ -401,6 +444,8 @@ class EatingScene(Scene):
             ScaredGhost(self._screen, deepcopy(path2), start_frame=180))
         self.add_effect(PacMan(self._screen, path, start_frame=240))
 
+        if len(self._effects) > 5:
+            raise RuntimeError("@@@ WHOOPS!")
 
 def demo(screen):
     scenes = []
