@@ -346,7 +346,7 @@ class PacMan(Sprite):
         super(PacMan, self)._update(frame_no)
         for effect in self._scene.effects:
             if isinstance(effect, ScaredGhost) and self.overlaps(effect):
-                effect.eaten(frame_no)
+                effect.eaten()
 
 class Ghost(Sprite):
     def __init__(self, screen, path, colour=1, start_frame=0, stop_frame=0):
@@ -377,7 +377,7 @@ class ScaredGhost(Sprite):
             stop_frame=stop_frame)
         self._eaten = False
 
-    def eaten(self, frame_no):
+    def eaten(self):
         # Already eaten - just ignore
         if self._eaten:
             return
@@ -444,8 +444,6 @@ class EatingScene(Scene):
             ScaredGhost(self._screen, deepcopy(path2), start_frame=180))
         self.add_effect(PacMan(self._screen, path, start_frame=240))
 
-        if len(self._effects) > 5:
-            raise RuntimeError("@@@ WHOOPS!")
 
 def demo(screen):
     scenes = []
