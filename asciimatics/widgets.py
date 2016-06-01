@@ -36,8 +36,9 @@ def _split_text(text, width, height):
                 current_line = line_token + " "
             else:
                 current_line += line_token + " "
-    else:
-        result.append(current_line.rstrip())
+
+    # Add any remaining text to the result.
+    result.append(current_line.rstrip())
 
     # Check for a height overrun and truncate.
     if len(result) > height:
@@ -386,6 +387,7 @@ class Frame(Effect):
         :param widget: The index of the widget to take the focus.
         """
         # Find the layout to own the focus.
+        i = 0
         for i, l in enumerate(self._layouts):
             if l is layout:
                 break
