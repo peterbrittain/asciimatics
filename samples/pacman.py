@@ -2,10 +2,18 @@ from copy import deepcopy
 import sys
 from asciimatics.exceptions import ResizeScreenError
 from asciimatics.paths import Path
-from asciimatics.renderers import StaticRenderer, ColourImageFile
+from asciimatics.renderers import StaticRenderer, ColourImageFile, FigletText
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.effects import Print, Sprite, BannerText
+
+namco = """
+88888888b.  8888888b. 8888888888b. .d88888888 .d888888b.
+88      88         88 88   88   88 88         88      88
+88      88 .d88888888 88   88   88 88         88      88
+88      88 88      88 88   88   88 88         88      88
+88      88 `888888888 88   88   88 `888888888 `8888888P'
+"""
 
 dot = """${7,2,7}####
 ${7,2,7}####
@@ -500,6 +508,20 @@ def demo(screen):
 
     # Scene 2 - Chase ghosts after a power pill
     scenes.append(EatingScene(screen))
+
+    # Scene 3 - Thanks...
+    effects = [
+        Print(screen, FigletText("Thank you,"), screen.height // 3 - 3,
+              colour=Screen.COLOUR_RED),
+        Print(screen,
+              StaticRenderer(images=[namco]),
+              screen.height * 2 // 3 - 2,
+              colour=Screen.COLOUR_RED),
+        Print(screen,
+              StaticRenderer(images=["< Press X to exit. >"]),
+              screen.height - 1)
+    ]
+    scenes.append(Scene(effects, 0))
 
     screen.play(scenes, stop_on_resize=True)
 
