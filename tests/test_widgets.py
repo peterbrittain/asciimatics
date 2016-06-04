@@ -641,6 +641,42 @@ class TestWidgets(unittest.TestCase):
             "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n" +
             "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n")
 
+    def test_clone(self):
+        """
+        Check Frame cloning works.
+        """
+        def test_on_click(selection):
+            raise NextScene(str(selection))
+
+        screen = MagicMock(spec=Screen, colours=8)
+        scene = MagicMock(spec=Scene)
+        scene2 = Scene([], 10)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Check that pop-up dialogs get copied to the new Scene
+        form = PopUpDialog(
+            canvas, "Message", ["Yes", "No"], test_on_click, has_shadow=True)
+        form.register_scene(scene)
+        form.clone(canvas, scene2)
+        self.assertEqual(len(scene2.effects), 1)
+        self.assertEqual(scene2.effects[0]._text, "Message")
+        self.assertEqual(scene2.effects[0]._buttons, ["Yes", "No"])
+
+        # Check that normal Frame data gets copied to the new Scene.
+        frame = TestFrame(canvas)
+        frame2 = TestFrame(canvas)
+        scene2 = Scene([frame2], 10)
+        frame.register_scene(scene)
+        frame2.register_scene(scene)
+        frame.data = {"TA": "something"}
+        frame2.data = {}
+
+        self.assertEqual(frame2.data, {})
+        self.assertNotEqual(frame2.data, frame.data)
+        frame.clone(canvas, scene2)
+        self.assertEqual(frame2.data, frame.data)
+
+
 
 if __name__ == '__main__':
     unittest.main()
