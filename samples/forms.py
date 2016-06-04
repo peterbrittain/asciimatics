@@ -25,6 +25,7 @@ class DemoFrame(Frame):
                                         int(screen.height * 2 // 3),
                                         int(screen.width * 2 // 3),
                                         data=form_data,
+                                        has_shadow=True,
                                         name="My Form")
         layout = Layout([1, 18, 1])
         self.add_layout(layout)
@@ -104,6 +105,7 @@ class ClockFrame(Frame):
     def __init__(self, screen, x, y):
         super(ClockFrame, self).__init__(screen, 13, 26,
                                          name="Clock",
+                                         has_shadow=True,
                                          x=x, y=y)
         self.add_effect(Clock(self._canvas, 13, 7, 7, Screen.COLOUR_BLUE))
         self.fix()
