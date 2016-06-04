@@ -348,6 +348,10 @@ class Frame(Effect):
             layout.reset()
             layout.blur()
 
+        # Then reset any effects as needed.
+        for effect in self._effects:
+            effect.reset()
+
         # Set up active widget.
         self._focus = 0
         while self._focus < len(self._layouts):
@@ -448,6 +452,7 @@ class Frame(Effect):
 
     def process_event(self, event):
         # Claim the input focus if a mouse clicked on this Frame.
+        claimed_focus = False
         if isinstance(event, MouseEvent):
             new_event = self.rebase_event(event)
             if (0 <= new_event.x < self._canvas.width and
@@ -455,6 +460,7 @@ class Frame(Effect):
                     event.buttons > 0):
                 self._scene.remove_effect(self)
                 self._scene.add_effect(self)
+                claimed_focus = True
 
         # No need to do anything if this Frame has no Layouts - and hence no
         # widgets.  Swallow all Keyboard events while we have focus.
@@ -463,7 +469,9 @@ class Frame(Effect):
             if event is not None and isinstance(event, KeyboardEvent):
                 return
             else:
-                return event
+                # Don't allow mouse events to bubble down if this window owns
+                # the Screen - as already calculated when taking te focus.
+                return None if claimed_focus else event
 
         # Give the current widget in focus first chance to process the event.
         event = self._layouts[self._focus].process_event(event,
@@ -524,7 +532,9 @@ class Frame(Effect):
                         self._canvas.scroll_to(sb_pos)
                         return
 
-        return event
+        # Don't allow mouse events to bubble down if this window owns
+        # the Screen - as already calculated when taking te focus.
+        return None if claimed_focus else event
 
 
 class Layout(object):
