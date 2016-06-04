@@ -609,6 +609,38 @@ class TestWidgets(unittest.TestCase):
         with self.assertRaises(NextScene):
             self.process_mouse(form, [(14, 5, MouseEvent.LEFT_CLICK)])
 
+    def test_shadow(self):
+        """
+        Check Frames support shadows.
+        """
+        def test_on_click(selection):
+            raise NextScene(str(selection))
+
+        screen = MagicMock(spec=Screen, colours=8)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        for y in range(10):
+            canvas.print_at("X" * 40, 0, y)
+        form = PopUpDialog(
+            canvas, "Message", ["Yes", "No"], test_on_click, has_shadow=True)
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that the pop-up is rendered correctly.
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n" +
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n" +
+            "XXXXXXXXXX+------------------+XXXXXXXXXX\n" +
+            "XXXXXXXXXX|Message           | XXXXXXXXX\n" +
+            "XXXXXXXXXX|                  | XXXXXXXXX\n" +
+            "XXXXXXXXXX| < Yes >  < No >  | XXXXXXXXX\n" +
+            "XXXXXXXXXX+------------------+ XXXXXXXXX\n" +
+            "XXXXXXXXXXX                    XXXXXXXXX\n" +
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n" +
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n")
+
 
 if __name__ == '__main__':
     unittest.main()
