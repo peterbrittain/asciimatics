@@ -101,11 +101,10 @@ class DemoFrame(Frame):
 
 
 class ClockFrame(Frame):
-    def __init__(self, screen):
+    def __init__(self, screen, x, y):
         super(ClockFrame, self).__init__(screen, 13, 26,
-                                         has_border=False,
                                          name="Clock",
-                                         x=screen.width - 26, y=0)
+                                         x=x, y=y)
         self.add_effect(Clock(self._canvas, 13, 7, 7, Screen.COLOUR_BLUE))
         self.fix()
 
@@ -114,8 +113,11 @@ def demo(screen, scene):
     scenes = []
     effects = [
         Julia(screen),
+        ClockFrame(screen, 0, 0),
+        ClockFrame(screen, screen.width - 26, 0),
+        ClockFrame(screen, 0, screen.height - 13),
+        ClockFrame(screen, screen.width - 26, screen.height - 13),
         DemoFrame(screen),
-        ClockFrame(screen),
     ]
     scenes.append(Scene(effects, -1))
 
