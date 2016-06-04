@@ -291,13 +291,13 @@ class Frame(Effect):
         if self._has_shadow:
             (colour, attr, bg) = self.palette["shadow"]
             self._screen.print_at(
-                "x" * self._canvas.width,
+                " " * self._canvas.width,
                 self._canvas.origin[0] + 1,
                 self._canvas.origin[1] + self._canvas.height,
                 colour, attr, bg)
             for y in range(self._canvas.height):
                 self._screen.print_at(
-                    "x",
+                    " ",
                     self._canvas.origin[0] + self._canvas.width,
                     self._canvas.origin[1] + y + 1,
                     colour, attr, bg)
@@ -1912,13 +1912,15 @@ class PopUpDialog(Frame):
         "disabled": _bold,
     }
 
-    def __init__(self, screen, text, buttons, on_close=None):
+    def __init__(self, screen, text, buttons, on_close=None, has_shadow=False):
         """
         :param screen: The Screen that owns this dialog.
         :param text: The message text to display.
         :param buttons: A list of button names to display.
         :param on_close: Optional function to invoke on exit.  This MUST be a
             static method to work across screen resizing.
+        :param has_shadow: optional flag to specify if dialog should have a
+            shadow when drawn.
 
         The `on_close` method (if specified) will be called with one integer
         parameter that corresponds to the index of the button passed in the
@@ -1946,7 +1948,8 @@ class PopUpDialog(Frame):
 
         # Construct the Frame
         self._data = {"message": self._message}
-        super(PopUpDialog, self).__init__(screen, height, width, self._data)
+        super(PopUpDialog, self).__init__(
+            screen, height, width, self._data, has_shadow=has_shadow)
 
         # Build up the message box
         layout = Layout([100], fill_frame=True)
