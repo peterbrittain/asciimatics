@@ -65,6 +65,8 @@ class Frame(Effect):
     palette = {
         "background":
             (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "shadow":
+            (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_BLACK),
         "disabled":
             (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLUE),
         "label":
@@ -103,7 +105,7 @@ class Frame(Effect):
 
     def __init__(self, screen, height, width, data=None, on_load=None,
                  has_border=True, hover_focus=False, name=None, title=None,
-                 x=None, y=None):
+                 x=None, y=None, has_shadow=False):
         """
         :param screen: The Screen that owns this Frame.
         :param width: The desired width of the Frame.
@@ -118,7 +120,9 @@ class Frame(Effect):
             reset data as needed from on old copy after the screen resizes.
         :param title: Optional title to display if has_border is True.
         :param x: Optional x position for the top left corner of the Frame.
-        :param y: Optionl y position for the top left corner of the Frame.
+        :param y: Optional y position for the top left corner of the Frame.
+        :param has_shadow: Optional flag to indicate if this Frame should have
+            a shadow when drawn.
         """
         super(Frame, self).__init__()
         self._focus = 0
@@ -133,6 +137,7 @@ class Frame(Effect):
         self._hover_focus = hover_focus
         self._initial_data = data if data else {}
         self._title = " " + title[0:width - 4] + " " if title else ""
+        self._has_shadow = has_shadow
 
         # A unique name is needed for cloning.  Try our best to get one!
         self._name = title if name is None else name
@@ -281,6 +286,21 @@ class Frame(Effect):
 
         # Now push it all to screen.
         self._canvas.refresh()
+
+        # And finally - draw the shadow
+        if self._has_shadow:
+            (colour, attr, bg) = self.palette["shadow"]
+            self._screen.print_at(
+                "x" * self._canvas.width,
+                self._canvas.origin[0] + 1,
+                self._canvas.origin[1] + self._canvas.height,
+                colour, attr, bg)
+            for y in range(self._canvas.height):
+                self._screen.print_at(
+                    "x",
+                    self._canvas.origin[0] + self._canvas.width,
+                    self._canvas.origin[1] + y + 1,
+                    colour, attr, bg)
 
     @property
     def data(self):
@@ -1876,6 +1896,7 @@ class PopUpDialog(Frame):
     _focus = (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_YELLOW)
     palette = {
         "background": _normal,
+        "shadow": (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_BLACK),
         "label": _bold,
         "borders": _normal,
         "scroll": _normal,

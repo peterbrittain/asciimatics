@@ -11,6 +11,7 @@ CHANGE HISTORY
   use Screen.
 - Added support for multi-colour rendering using ${c,a,b} syntax.
 - Added UT framework for testing and CI configurations to run the tests.
+- Added shadows tp Frames.
 - Fixed bug in restoring console colours on Exit for Windows.
 - Fixed up logic for handling Ctrl keys and documented OS restrictions.
 
