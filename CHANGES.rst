@@ -4,9 +4,11 @@ CHANGE HISTORY
 1.7.0
 -----
 - Reworked Screen construction.
+
   - Added open() and close() methods to Screen.
   - Retired from_windows(), from_curses() and from_blessed() methods.
   - Retired Blessed support.
+
 - Added set_scenes() and draw_next_frame() to allow asynchronous frameworks to
   use Screen.
 - Added support for multi-colour rendering using ${c,a,b} syntax.
@@ -19,6 +21,7 @@ CHANGE HISTORY
 -----
 - Added `widgets` sub-package, providing a Frame effect for encapsulating a User
   Interface, a Layout to organise the content and the following widgets:
+
   - Button
   - CheckBox
   - Divider
@@ -27,6 +30,7 @@ CHANGE HISTORY
   - RadioButtons
   - Text
   - TextBox
+
 - Added PopUpDialog for simple alerting in a UI.
 - Added `attr` option to Print Effect.
 - Added `keys` option to BarChart Renderer.
