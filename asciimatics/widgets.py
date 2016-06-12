@@ -66,7 +66,7 @@ class Frame(Effect):
         "background":
             (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
         "shadow":
-            (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_BLACK),
+            (None, None, Screen.COLOUR_BLACK),
         "disabled":
             (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLUE),
         "label":
@@ -289,18 +289,19 @@ class Frame(Effect):
 
         # And finally - draw the shadow
         if self._has_shadow:
-            (colour, attr, bg) = self.palette["shadow"]
-            self._screen.print_at(
-                " " * self._canvas.width,
+            (colour, _, bg) = self.palette["shadow"]
+            self._screen.highlight(
                 self._canvas.origin[0] + 1,
                 self._canvas.origin[1] + self._canvas.height,
-                colour, attr, bg)
-            for y in range(self._canvas.height):
-                self._screen.print_at(
-                    " ",
-                    self._canvas.origin[0] + self._canvas.width,
-                    self._canvas.origin[1] + y + 1,
-                    colour, attr, bg)
+                self._canvas.width,
+                1,
+                fg=colour, bg=bg)
+            self._screen.highlight(
+                self._canvas.origin[0] + self._canvas.width,
+                self._canvas.origin[1] + 1,
+                1,
+                self._canvas.height,
+                fg=colour, bg=bg)
 
     @property
     def data(self):

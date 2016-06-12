@@ -194,6 +194,42 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                     bg = colour_map[i][2]
                 self.print_at(c, x + i, y, colour, attr, bg, transparent)
 
+    def highlight(self, x, y, w, h, fg=None, bg=None):
+        """
+        Highlight a specified section of the screen.
+
+        :param x: The column (x coord) for the start of the highlight.
+        :param y: The line (y coord) for the start of the highlight.
+        :param w: The width of the highlight (in characters).
+        :param h: The height of the highlight (in characters).
+        :param fg: The foreground colour of the highlight.
+        :param bg: The background colour of the highlight.
+
+        The colours and attributes are the COLOUR_xxx and A_yyy constants
+        defined in the Screen class.  If fg or bg are None that means don't
+        change the foreground/background as appropriate.
+        """
+        for i in range(w):
+            if x + i >= self.width or x + i < 0:
+                continue
+
+            for j in range(h):
+                if y + j >= self._buffer_height or y + j < 0:
+                    continue
+
+                old = self._double_buffer[y + j][x + i]
+                if fg is None:
+                    if bg is not None:
+                        self._double_buffer[y + j][x + i] = \
+                            (old[0], old[1], old[2], bg)
+                else:
+                    if bg is None:
+                        self._double_buffer[y + j][x + i] = \
+                            (old[0], fg, old[2], old[3])
+                    else:
+                        self._double_buffer[y + j][x + i] = \
+                            (old[0], fg, old[2], bg)
+
     def is_visible(self, x, y):
         """
         Return whether the specified location is on the visible screen.
