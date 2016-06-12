@@ -358,11 +358,14 @@ class ColourImageFile(StaticRenderer):
         avoid this renderer on that platform.
     """
 
-    def __init__(self, screen, filename, height=30):
+    def __init__(self, screen, filename, height=30, bg=Screen.COLOUR_BLACK,
+                 fill_background=False):
         """
         :param screen: The screen to use when displaying the image.
         :param filename: The name of the file to render.
         :param height: The height of the text rendered image.
+        :param bg: The default background colour for this image.
+        :param fill_background: Whether to set background colours too.
         """
         super(ColourImageFile, self).__init__()
         with Image.open(filename) as image:
@@ -404,9 +407,15 @@ class ColourImageFile(StaticRenderer):
                         real_col = frame.getpixel((px, py))
                         col = new_frame.getpixel((px, py))
                         if real_col == background or col == 16:
-                            ascii_image += " "
+                            if fill_background:
+                                ascii_image += "${%d,2,%d} " % (bg, bg)
+                            else:
+                                ascii_image += "${%d} " % bg
                         else:
-                            ascii_image += "${%d}#" % col
+                            if fill_background:
+                                ascii_image += "${%d,2,%d}#" % (col, col)
+                            else:
+                                ascii_image += "${%d}#" % col
                 self._images.append(ascii_image)
 
 

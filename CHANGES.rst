@@ -11,6 +11,7 @@ CHANGE HISTORY
 
 - Added set_scenes() and draw_next_frame() to allow asynchronous frameworks to
   use Screen.
+- Added background colour support to ColourImageFile.
 - Added support for multi-colour rendering using ${c,a,b} syntax.
 - Added UT framework for testing and CI configurations to run the tests.
 - Added shadows tp Frames.
