@@ -77,6 +77,38 @@ class TestScreen(unittest.TestCase):
         Screen.wrapper(
             check_screen_and_canvas, height=15, arguments=[internal_checks])
 
+    def test_highlight(self):
+        """
+        Check that highlight works as expected.
+        """
+        def internal_checks(screen):
+            for x in range(screen.width):
+                for y in range(15):
+                    char = randint(0, 255)
+                    fg = randint(Screen.COLOUR_RED, Screen.COLOUR_WHITE)
+                    bg = randint(Screen.COLOUR_RED, Screen.COLOUR_WHITE)
+                    attr = randint(0, Screen.A_UNDERLINE)
+                    screen.print_at(chr(char), x, y, fg, attr, bg)
+
+            # Check BG highlight first.
+            screen.highlight(-1, -1, screen.width + 2, screen.height + 2, bg=0)
+            for x in range(screen.width):
+                for y in range(15):
+                    _, fg2, _, bg2 = screen.get_from(x, y)
+                    self.assertEqual(bg2, 0)
+                    self.assertNotEqual(fg2, 0)
+
+            # Now check FG highlighting.
+            screen.highlight(-1, -1, screen.width + 2, screen.height + 2, fg=0)
+            for x in range(screen.width):
+                for y in range(15):
+                    _, fg2, _, bg2 = screen.get_from(x, y)
+                    self.assertEqual(bg2, 0)
+                    self.assertEqual(fg2, 0)
+
+        Screen.wrapper(
+            check_screen_and_canvas, height=15, arguments=[internal_checks])
+
     def test_visible(self):
         """
         Check that is_visible works as expected.

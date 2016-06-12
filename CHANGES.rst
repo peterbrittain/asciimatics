@@ -13,6 +13,7 @@ CHANGE HISTORY
   use Screen.
 - Added background colour support to ColourImageFile.
 - Added support for multi-colour rendering using ${c,a,b} syntax.
+- Added highlight() method to Screen and Canvas.
 - Added UT framework for testing and CI configurations to run the tests.
 - Added shadows tp Frames.
 - Fixed bug in restoring console colours on Exit for Windows.
