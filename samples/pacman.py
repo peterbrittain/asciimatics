@@ -460,7 +460,7 @@ def demo(screen):
     # Title
     effects = [
         BannerText(screen,
-                   ColourImageFile(screen, "pacman.png", 16),
+                   ColourImageFile(screen, "pacman.png", 16, 0, True),
                    (screen.height - 16) // 2,
                    Screen.COLOUR_WHITE),
         Print(screen,

@@ -158,14 +158,15 @@ class TestRenderers(unittest.TestCase):
         Check that the ColourImageFile renderer works.
         """
         # Skip for non-Windows if the terminal definition is incomplete.
-        # This typically means we're running inside a non-standard termina;.
-        # For example, thi happens when embedded in PyCharm.
+        # This typically means we're running inside a non-standard terminal.
+        # For example, this happens when embedded in PyCharm.
         if sys.platform != "win32":
             curses.initscr()
             if curses.tigetstr("ri") is None:
                 self.skipTest("No valid terminal definition")
 
         def internal_checks(screen):
+            # Check the original FG only rendering
             renderer = ColourImageFile(
                 screen,
                 os.path.join(os.path.dirname(__file__), "globe.gif"),
@@ -195,6 +196,29 @@ class TestRenderers(unittest.TestCase):
                  '   ###############  ',
                  '     ###########    '])
 
+            # Also check the BG rendering
+            renderer2 = ColourImageFile(
+                screen,
+                os.path.join(os.path.dirname(__file__), "globe.gif"),
+                fill_background=True,
+                height=10)
+
+            # Check BG rendering doesn't change the text output.
+            image2 = next(renderer2.images)
+            self.assertEqual(image, image2)
+
+            # Check BG rendering gives same colours for FG and BG as original
+            # rendering
+            for a, b in zip(renderer.rendered_text[1], renderer2.rendered_text[1]):
+                for attr1, attr2 in zip(a, b):
+                    print(attr1, attr2)
+                    if attr1[0] is None:
+                        self.assertEqual(0, attr2[0])
+                        self.assertEqual(0, attr2[2])
+                    else:
+                        self.assertEqual(attr1[0], attr2[0])
+                        self.assertEqual(attr2[0], attr2[2])
+
         Screen.wrapper(internal_checks, height=15)
 
     def test_rainbow(self):
@@ -202,8 +226,8 @@ class TestRenderers(unittest.TestCase):
         Check that the Rainbow renderer works.
         """
         # Skip for non-Windows if the terminal definition is incomplete.
-        # This typically means we're running inside a non-standard termina;.
-        # For example, thi happens when embedded in PyCharm.
+        # This typically means we're running inside a non-standard terminal.
+        # For example, this happens when embedded in PyCharm.
         if sys.platform != "win32" and curses.tigetstr("ri") is None:
             self.skipTest("No valid terminal definition")
 

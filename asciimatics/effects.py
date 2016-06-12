@@ -192,12 +192,14 @@ class BannerText(Effect):
     banner.
     """
 
-    def __init__(self, screen, renderer, y, colour, **kwargs):
+    def __init__(self, screen, renderer, y, colour, bg=Screen.COLOUR_BLACK,
+                 **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param renderer: The renderer to be scrolled
         :param y: The line (y coordinate) for the start of the text.
-        :param colour: The colour attribute to use for the text.
+        :param colour: The default foreground colour to use for the text.
+        :param bg: The default background colour to use for the text.
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
@@ -206,6 +208,7 @@ class BannerText(Effect):
         self._renderer = renderer
         self._y = y
         self._colour = colour
+        self._bg = bg
         self._text_pos = None
         self._scr_pos = None
 
@@ -223,7 +226,7 @@ class BannerText(Effect):
         image, colours = self._renderer.rendered_text
         for (i, line) in enumerate(image):
             line += " "
-            colours[i].append((None, None))
+            colours[i].append((self._colour, 2, self._bg))
             end_pos = min(
                 len(line),
                 self._text_pos + self._screen.width - self._scr_pos)
@@ -231,6 +234,7 @@ class BannerText(Effect):
                                self._scr_pos,
                                self._y + i,
                                self._colour,
+                               bg=self._bg,
                                colour_map=colours[i][self._text_pos:end_pos])
 
     @property

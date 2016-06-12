@@ -27,8 +27,8 @@ def check_screen_and_canvas(screen, fn):
 class TestScreen(unittest.TestCase):
     def setUp(self):
         # Skip for non-Windows if the terminal definition is incomplete.
-        # This typically means we're running inside a non-standard termina;.
-        # For example, thi happens when embedded in PyCharm.
+        # This typically means we're running inside a non-standard terminal.
+        # For example, this happens when embedded in PyCharm.
         if sys.platform != "win32":
             curses.initscr()
             if curses.tigetstr("ri") is None:
