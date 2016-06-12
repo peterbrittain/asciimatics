@@ -633,11 +633,11 @@ class TestWidgets(unittest.TestCase):
             "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n" +
             "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n" +
             "XXXXXXXXXX+------------------+XXXXXXXXXX\n" +
-            "XXXXXXXXXX|Message           | XXXXXXXXX\n" +
-            "XXXXXXXXXX|                  | XXXXXXXXX\n" +
-            "XXXXXXXXXX| < Yes >  < No >  | XXXXXXXXX\n" +
-            "XXXXXXXXXX+------------------+ XXXXXXXXX\n" +
-            "XXXXXXXXXXX                    XXXXXXXXX\n" +
+            "XXXXXXXXXX|Message           |XXXXXXXXXX\n" +
+            "XXXXXXXXXX|                  |XXXXXXXXXX\n" +
+            "XXXXXXXXXX| < Yes >  < No >  |XXXXXXXXXX\n" +
+            "XXXXXXXXXX+------------------+XXXXXXXXXX\n" +
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n" +
             "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n" +
             "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n")
 
