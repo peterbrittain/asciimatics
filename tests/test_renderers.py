@@ -211,7 +211,6 @@ class TestRenderers(unittest.TestCase):
             # rendering
             for a, b in zip(renderer.rendered_text[1], renderer2.rendered_text[1]):
                 for attr1, attr2 in zip(a, b):
-                    print(attr1, attr2)
                     if attr1[0] is None:
                         self.assertEqual(0, attr2[0])
                         self.assertEqual(0, attr2[2])
