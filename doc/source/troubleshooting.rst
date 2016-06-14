@@ -67,4 +67,4 @@ workarounds.
    so far is the tests but even some of them need to skip where they
    cannot actually run.  To run from the IDE, you must start a real
    console from the Terminal window e.g. using `start cmd /c "python
-   <your file name>".`
+   <your file name>"`.
