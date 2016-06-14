@@ -51,3 +51,20 @@ prevent this as it is built in to the operating system, so you will never be
 able to detect the Ctrl+S key.  See `here
 <http://stackoverflow.com/questions/26436581/is-it-possible-to-disable-system-
 console-xoff-xon-flow-control-processing-in-my>`__ for details.
+
+I can't run it inside PyCharm
+-----------------------------
+Depending on which version you're using, you may see an Exception or simply
+nothing (i.e. it looks like the program has hung).  The reason for this is
+that the PyCharm Terminal/Console is not a true native terminal/console and
+so the native interfaces used by asciimatics will not work.  There are 2
+workarounds.
+
+1. The simplest is just to run asciimatics inside a real terminal
+   or window - i.e. not inside PyCharm.
+
+2. If you must run inside PyCharm, the only option I've got working
+   so far is the tests but even some of them need to skip where they
+   cannot actually run.  To run from the IDE, you must start a real
+   console from the Terminal window e.g. using `start cmd /c "python
+   <your file name>".`
