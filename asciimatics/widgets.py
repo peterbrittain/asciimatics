@@ -293,7 +293,7 @@ class Frame(Effect):
             self._screen.highlight(
                 self._canvas.origin[0] + 1,
                 self._canvas.origin[1] + self._canvas.height,
-                self._canvas.width,
+                self._canvas.width - 1,
                 1,
                 fg=colour, bg=bg, blend=50)
             self._screen.highlight(
