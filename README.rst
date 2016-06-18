@@ -108,6 +108,14 @@ And you should see something like this:
    :alt: asciicast
    :target: https://asciinema.org/a/18756?autoplay=1
 
+Or maybe you're looking to create a TUI?  In which case this
+`simple code <https://github.com/peterbrittain/asciimatics/
+blob/master/samples/contact_list.py>`__ will give you this:
+
+.. image:: https://asciinema.org/a/45946.png
+    :alt: contact list sample
+    :target: https://asciinema.org/a/45946?autoplay=1
+
 Documentation
 -------------
 
