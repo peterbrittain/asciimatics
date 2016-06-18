@@ -75,9 +75,19 @@ Additionally, Windows users will need to install `pypiwin32`.
 
 How to use it?
 --------------
+To use the low-level API, simply create the Screen and use it.  For example:
 
-Create a Screen, put together a Scene using some Effects and then get the
-Screen to play it.
+.. code-block:: python
+
+    def demo(screen):
+        screen.print_at('Hello world!', 0, 0)
+        screen.refresh()
+        sleep(10)
+
+    Screen.wrapper(demo)
+
+For the higher level features, create the Screen, put together a Scene
+using some Effects and then get the Screen to play it.  For example:
 
 .. code-block:: python
 
