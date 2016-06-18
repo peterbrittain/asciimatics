@@ -506,7 +506,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         (r1, g1, b1) = self.palette[new * 3:new * 3 + 3]
         (r2, g2, b2) = self.palette[old * 3:old * 3 + 3]
 
-        f = lambda c1, c2: ((c2 * ratio) + (c1 * (100 - ratio))) // 100
+        f = lambda c1, c2: ((c1 * ratio) + (c2 * (100 - ratio))) // 100
         r = f(r1, r2)
         g = f(g1, g2)
         b = f(b1, b2)
@@ -526,7 +526,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         self._blends[key] = match
         return match
 
-    def highlight(self, x, y, w, h, fg=None, bg=None, blend=0):
+    def highlight(self, x, y, w, h, fg=None, bg=None, blend=100):
         """
         Highlight a specified section of the screen.
 
@@ -536,7 +536,8 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         :param h: The height of the highlight (in characters).
         :param fg: The foreground colour of the highlight.
         :param bg: The background colour of the highlight.
-        :param blend: How much (as a percentage) to blend new and old colours.
+        :param blend: How much (as a percentage) to take of the new colour
+            when blending.
 
         The colours and attributes are the COLOUR_xxx and A_yyy constants
         defined in the Screen class.  If fg or bg are None that means don't
