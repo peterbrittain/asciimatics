@@ -66,7 +66,7 @@ class Frame(Effect):
         "background":
             (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
         "shadow":
-            (None, None, Screen.COLOUR_BLACK),
+            (Screen.COLOUR_BLACK, None, Screen.COLOUR_BLACK),
         "disabled":
             (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLUE),
         "label":
@@ -295,13 +295,13 @@ class Frame(Effect):
                 self._canvas.origin[1] + self._canvas.height,
                 self._canvas.width,
                 1,
-                fg=colour, bg=bg)
+                fg=colour, bg=bg, blend=50)
             self._screen.highlight(
                 self._canvas.origin[0] + self._canvas.width,
                 self._canvas.origin[1] + 1,
                 1,
                 self._canvas.height,
-                fg=colour, bg=bg)
+                fg=colour, bg=bg, blend=50)
 
     @property
     def data(self):

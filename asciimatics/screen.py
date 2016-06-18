@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import object
 from builtins import range
+from math import sqrt
 from future.utils import with_metaclass
 import time
 from abc import ABCMeta, abstractmethod
@@ -21,485 +22,6 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
 
     # Characters for anti-aliasing line drawing.
     _line_chars = " ''^.|/7.\\|Ywbd#"
-
-    def __init__(self, height, width, buffer_height):
-        """
-        :param height: The buffer height for this object.
-        :param width: The buffer width for this object.
-        :param buffer_height: The buffer height for this window.
-        """
-        super(_AbstractCanvas, self).__init__()
-
-        # Create screen buffers.
-        self.height = height
-        self.width = width
-        self._buffer_height = buffer_height
-        self._screen_buffer = None
-        self._double_buffer = None
-        self._start_line = 0
-        self._x = 0
-        self._y = 0
-
-        # Reset the screen ready to go...
-        self.reset()
-
-    def reset(self):
-        """
-        Reset the internal buffers for the abstract canvas.
-        """
-        # Reset our screen buffer
-        self._start_line = 0
-        self._x = self._y = None
-        line = [(" ", Screen.COLOUR_WHITE, 0, 0) for _ in range(self.width)]
-        self._screen_buffer = [
-            copy.deepcopy(line) for _ in range(self._buffer_height)]
-        self._double_buffer = copy.deepcopy(self._screen_buffer)
-        self._reset()
-
-    def scroll(self):
-        """
-        Scroll the abstract canvas up one line.
-        """
-        self._start_line += 1
-
-    def scroll_to(self, line):
-        """
-        Scroll the abstract canvas to make a specific line.
-
-        :param line: The line to scroll to.
-        """
-        self._start_line = line
-
-    @abstractmethod
-    def _reset(self):
-        """
-        Internal implementation required to reset underlying drawing
-        interface.
-        """
-
-    @abstractmethod
-    def refresh(self):
-        """
-        Refresh this object - this will draw to the underlying display
-        interface.
-        """
-
-    def get_from(self, x, y):
-        """
-        Get the character at the specified location.
-
-        :param x: The column (x coord) of the character.
-        :param y: The row (y coord) of the character.
-
-        :return: A 4-tuple of (ascii code, foreground, attributes, background)
-                 for the character at the location.
-        """
-        if y < 0 or y >= self._buffer_height or x < 0 or x >= self.width:
-            return None
-        cell = self._double_buffer[y][x]
-        return ord(cell[0]), cell[1], cell[2], cell[3]
-
-    def print_at(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
-        """
-        Print the text at the specified location using the
-        specified colour and attributes.
-
-        :param text: The (single line) text to be printed.
-        :param x: The column (x coord) for the start of the text.
-        :param y: The line (y coord) for the start of the text.
-        :param colour: The colour of the text to be displayed.
-        :param attr: The cell attribute of the text to be displayed.
-        :param bg: The background colour of the text to be displayed.
-        :param transparent: Whether to print spaces or not, thus giving a
-            transparent effect.
-
-        The colours and attributes are the COLOUR_xxx and A_yyy constants
-        defined in the Screen class.
-        """
-        # Trim text to the buffer.
-        if y < 0 or y >= self._buffer_height or x > self.width:
-            return
-        if x < 0:
-            text = text[-x:]
-            x = 0
-        if x + len(text) >= self.width:
-            text = text[:self.width - x]
-
-        if len(text) > 0:
-            for i, c in enumerate(text):
-                if c != " " or not transparent:
-                    self._double_buffer[y][x + i] = (c, colour, attr, bg)
-
-    @property
-    def start_line(self):
-        """
-        :return: The start line of the top of the canvas.
-        """
-        return self._start_line
-
-    @property
-    def dimensions(self):
-        """
-        :return: The full dimensions of the canvas as a (height, width) tuple.
-        """
-        return self.height, self.width
-
-    def centre(self, text, y, colour=7, attr=0, colour_map=None):
-        """
-        Centre the text on the specified line (y) using the optional
-        colour and attributes.
-
-        :param text: The (single line) text to be printed.
-        :param y: The line (y coord) for the start of the text.
-        :param colour: The colour of the text to be displayed.
-        :param attr: The cell attribute of the text to be displayed.
-        :param colour_map: Colour/attribute list for multi-colour text.
-
-        The colours and attributes are the COLOUR_xxx and A_yyy constants
-        defined in the Screen class.
-        """
-        x = (self.width - len(text)) // 2
-        self.paint(text, x, y, colour, attr, colour_map=colour_map)
-
-    def paint(self, text, x, y, colour=7, attr=0, bg=0, transparent=False,
-              colour_map=None):
-        """
-        Paint multi-colour text at the defined location.
-
-        :param text: The (single line) text to be printed.
-        :param x: The column (x coord) for the start of the text.
-        :param y: The line (y coord) for the start of the text.
-        :param colour: The default colour of the text to be displayed.
-        :param attr: The default cell attribute of the text to be displayed.
-        :param bg: The default background colour of the text to be displayed.
-        :param transparent: Whether to print spaces or not, thus giving a
-            transparent effect.
-        :param colour_map: Colour/attribute list for multi-colour text.
-
-        The colours and attributes are the COLOUR_xxx and A_yyy constants
-        defined in the Screen class.
-        colour_map is a list of tuples (foreground, attribute, background) that
-        must be the same length as the passed in text (or None if no mapping is
-        required).
-        """
-        if colour_map is None:
-            self.print_at(text, x, y, colour, attr, bg, transparent)
-        else:
-            for i, c in enumerate(text):
-                if len(colour_map[i]) > 0 and colour_map[i][0] is not None:
-                    colour = colour_map[i][0]
-                if len(colour_map[i]) > 1 and colour_map[i][1] is not None:
-                    attr = colour_map[i][1]
-                if len(colour_map[i]) > 2 and colour_map[i][2] is not None:
-                    bg = colour_map[i][2]
-                self.print_at(c, x + i, y, colour, attr, bg, transparent)
-
-    def highlight(self, x, y, w, h, fg=None, bg=None):
-        """
-        Highlight a specified section of the screen.
-
-        :param x: The column (x coord) for the start of the highlight.
-        :param y: The line (y coord) for the start of the highlight.
-        :param w: The width of the highlight (in characters).
-        :param h: The height of the highlight (in characters).
-        :param fg: The foreground colour of the highlight.
-        :param bg: The background colour of the highlight.
-
-        The colours and attributes are the COLOUR_xxx and A_yyy constants
-        defined in the Screen class.  If fg or bg are None that means don't
-        change the foreground/background as appropriate.
-        """
-        for i in range(w):
-            if x + i >= self.width or x + i < 0:
-                continue
-
-            for j in range(h):
-                if y + j >= self._buffer_height or y + j < 0:
-                    continue
-
-                old = self._double_buffer[y + j][x + i]
-                if fg is None:
-                    if bg is not None:
-                        self._double_buffer[y + j][x + i] = \
-                            (old[0], old[1], old[2], bg)
-                else:
-                    if bg is None:
-                        self._double_buffer[y + j][x + i] = \
-                            (old[0], fg, old[2], old[3])
-                    else:
-                        self._double_buffer[y + j][x + i] = \
-                            (old[0], fg, old[2], bg)
-
-    def is_visible(self, x, y):
-        """
-        Return whether the specified location is on the visible screen.
-
-        :param x: The column (x coord) for the location to check.
-        :param y: The line (y coord) for the location to check.
-        """
-        return ((x >= 0) and
-                (x <= self.width) and
-                (y >= self._start_line) and
-                (y < self._start_line + self.height))
-
-    def move(self, x, y):
-        """
-        Move the drawing cursor to the specified position.
-
-        :param x: The column (x coord) for the location to check.
-        :param y: The line (y coord) for the location to check.
-        """
-        self._x = int(round(x, 1)) * 2
-        self._y = int(round(y, 1)) * 2
-
-    def draw(self, x, y, char=None, colour=7, bg=0, thin=False):
-        """
-        Draw a line from drawing cursor to the specified position.  This uses a
-        modified Bressenham algorithm, interpolating twice as many points to
-        render down to anti-aliased characters when no character is specified,
-        or uses standard algorithm plotting with the specified character.
-
-        :param x: The column (x coord) for the location to check.
-        :param y: The line (y coord) for the location to check.
-        :param char: Optional character to use to draw the line.
-        :param colour: Optional colour for plotting the line.
-        :param bg: Optional background colour for plotting the line.
-        :param thin: Optional width of anti-aliased line.
-        """
-        # Define line end points.
-        x0 = self._x
-        y0 = self._y
-        x1 = int(round(x, 1)) * 2
-        y1 = int(round(y, 1)) * 2
-
-        # Remember last point for next line.
-        self._x = x1
-        self._y = y1
-
-        dx = abs(x1 - x0)
-        dy = abs(y1 - y0)
-
-        sx = -1 if x0 > x1 else 1
-        sy = -1 if y0 > y1 else 1
-
-        x_range = range(0, 2) if sx > 0 else range(1, -1, -1)
-        y_range = range(0, 2) if sy > 0 else range(1, -1, -1)
-
-        x = x0
-        y = y0
-
-        if dx > dy:
-            err = dx
-            while x != x1:
-                next_chars = [0, 0]
-                px = x & ~1
-                py = y & ~1
-                for ix in x_range:
-                    if y >= py and y - py < 2:
-                        next_chars[0] |= 2 ** ix * 4 ** (y % 2)
-                    else:
-                        next_chars[1] |= 2 ** ix * 4 ** (y % 2)
-                    if not thin:
-                        if y + sy >= py and y + sy - py < 2:
-                            next_chars[0] |= 2 ** ix * 4 ** ((y + sy) % 2)
-                        else:
-                            next_chars[1] |= 2 ** ix * 4 ** ((y + sy) % 2)
-                    err -= 2 * dy
-                    if err < 0:
-                        y += sy
-                        err += 2 * dx
-                    x += sx
-
-                if char is None:
-                    self.print_at(self._line_chars[next_chars[0]],
-                                  px // 2, py // 2, colour, bg=bg)
-                    if next_chars[1] != 0:
-                        self.print_at(self._line_chars[next_chars[1]],
-                                      px // 2, py // 2 + sy, colour, bg=bg)
-                elif char == " ":
-                    self.print_at(char, px // 2, py // 2, bg=bg)
-                    self.print_at(char, px // 2, py // 2 + sy, bg=bg)
-                else:
-                    self.print_at(char, px // 2, py // 2, colour, bg=bg)
-        else:
-            err = dy
-            while y != y1:
-                next_chars = [0, 0]
-                px = x & ~1
-                py = y & ~1
-                for iy in y_range:
-                    if x >= px and x - px < 2:
-                        next_chars[0] |= 2 ** (x % 2) * 4 ** iy
-                    else:
-                        next_chars[1] |= 2 ** (x % 2) * 4 ** iy
-                    if not thin:
-                        if x + sx >= px and x + sx - px < 2:
-                            next_chars[0] |= 2 ** ((x + sx) % 2) * 4 ** iy
-                        else:
-                            next_chars[1] |= 2 ** ((x + sx) % 2) * 4 ** iy
-                    err -= 2 * dx
-                    if err < 0:
-                        x += sx
-                        err += 2 * dy
-                    y += sy
-
-                if char is None:
-                    self.print_at(self._line_chars[next_chars[0]],
-                                  px // 2, py // 2, colour, bg=bg)
-                    if next_chars[1] != 0:
-                        self.print_at(
-                            self._line_chars[next_chars[1]],
-                            px // 2 + sx, py // 2, colour, bg=bg)
-                elif char == " ":
-                    self.print_at(char, px // 2, py // 2, bg=bg)
-                    self.print_at(char, px // 2 + sx, py // 2, bg=bg)
-                else:
-                    self.print_at(char, px // 2, py // 2, colour, bg=bg)
-
-
-class Canvas(_AbstractCanvas):
-    """
-    A Canvas is an object that can be used to draw to the screen. It maintains
-    its own buffer that will be flushed to the screen when `refresh()` is
-    called.
-    """
-
-    def __init__(self, screen, height, width, x=None, y=None):
-        """
-        :param screen: The underlying Screen that will be drawn to on refresh.
-        :param height: The height of the screen buffer to be used.
-        :param width: The width of the screen buffer to be used.
-        :param x: The x position for the top left corner of the Canvas.
-        :param y: The y position for the top left corner of the Canvas.
-
-        If either of the x or y positions is not set, the Canvas will default
-        to centring within the current Screen for that location.
-        """
-        # Save off the screen details.
-        # TODO: Fix up buffer logic once and for all!
-        super(Canvas, self).__init__(height, width, 200)
-        self._screen = screen
-        self._dx = (screen.width - width) // 2 if x is None else x
-        self._dy = (screen.height - height) // 2 if y is None else y
-        self.colours = screen.colours
-
-    def refresh(self):
-        """
-        Flush the canvas content to the underlying screen.
-        """
-        for y in range(self.height):
-            for x in range(self.width):
-                c = self._double_buffer[y + self._start_line][x]
-                self._screen.print_at(
-                    c[0], x + self._dx, y + self._dy, c[1], c[2], c[3])
-
-    def _reset(self):
-        # Nothing needed for a Canvas
-        pass
-
-    @property
-    def origin(self):
-        """
-        The location of top left corner of the canvas on the Screen.
-
-        :returns: A tuple (x, y) of the location
-        """
-        return self._dx, self._dy
-
-
-class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
-    """
-    Class to track basic state of the screen.  This constructs the necessary
-    resources to allow us to do the ASCII animations.
-
-    This is an abstract class that will build the correct concrete class for
-    you when you call :py:meth:`.wrapper`.  If needed, you can use the
-    :py:meth:`~.Screen.open` and :py:meth:`~.Screen.close` methods for finer
-    grained control of the construction and tidy up.
-
-    Note that you need to define the required height for your screen buffer.
-    This is important if you plan on using any Effects that will scroll the
-    screen vertically (e.g. Scroll).  It must be big enough to handle the
-    full scrolling of your selected Effect.
-    """
-
-    # Text attributes for use when printing to the Screen.
-    A_BOLD = 1
-    A_NORMAL = 2
-    A_REVERSE = 3
-    A_UNDERLINE = 4
-
-    # Text colours for use when printing to the Screen.
-    COLOUR_BLACK = 0
-    COLOUR_RED = 1
-    COLOUR_GREEN = 2
-    COLOUR_YELLOW = 3
-    COLOUR_BLUE = 4
-    COLOUR_MAGENTA = 5
-    COLOUR_CYAN = 6
-    COLOUR_WHITE = 7
-
-    # Standard extended key codes.
-    KEY_ESCAPE = -1
-    KEY_F1 = -2
-    KEY_F2 = -3
-    KEY_F3 = -4
-    KEY_F4 = -5
-    KEY_F5 = -6
-    KEY_F6 = -7
-    KEY_F7 = -8
-    KEY_F8 = -9
-    KEY_F9 = -10
-    KEY_F10 = -11
-    KEY_F11 = -12
-    KEY_F12 = -13
-    KEY_F13 = -14
-    KEY_F14 = -15
-    KEY_F15 = -16
-    KEY_F16 = -17
-    KEY_F17 = -18
-    KEY_F18 = -19
-    KEY_F19 = -20
-    KEY_F20 = -21
-    KEY_F21 = -22
-    KEY_F22 = -23
-    KEY_F23 = -24
-    KEY_F24 = -25
-    KEY_PRINT_SCREEN = -100
-    KEY_INSERT = -101
-    KEY_DELETE = -102
-    KEY_HOME = -200
-    KEY_END = -201
-    KEY_LEFT = -203
-    KEY_UP = -204
-    KEY_RIGHT = -205
-    KEY_DOWN = -206
-    KEY_PAGE_UP = -207
-    KEY_PAGE_DOWN = -208
-    KEY_BACK = -300
-    KEY_TAB = -301
-    KEY_BACK_TAB = -302
-    KEY_NUMPAD0 = -400
-    KEY_NUMPAD1 = -401
-    KEY_NUMPAD2 = -402
-    KEY_NUMPAD3 = -403
-    KEY_NUMPAD4 = -404
-    KEY_NUMPAD5 = -405
-    KEY_NUMPAD6 = -406
-    KEY_NUMPAD7 = -407
-    KEY_NUMPAD8 = -408
-    KEY_NUMPAD9 = -409
-    KEY_MULTIPLY = -410
-    KEY_ADD = -411
-    KEY_SUBTRACT = -412
-    KEY_DECIMAL = -413
-    KEY_DIVIDE = -414
-    KEY_CAPS_LOCK = -500
-    KEY_NUM_LOCK = -501
-    KEY_SCROLL_LOCK = -502
-    KEY_SHIFT = -600
-    KEY_CONTROL = -601
-    KEY_MENU = -602
 
     #  Colour palette for 8/16 colour terminals
     _8_palette = [
@@ -773,15 +295,545 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         0xee, 0xee, 0xee,
     ]
 
+    def __init__(self, height, width, buffer_height, colours):
+        """
+        :param height: The buffer height for this object.
+        :param width: The buffer width for this object.
+        :param buffer_height: The buffer height for this object.
+        :param colours: Number of colours for this object.
+        """
+        super(_AbstractCanvas, self).__init__()
+
+        # Create screen buffers.
+        self.height = height
+        self.width = width
+        self.colours = colours
+        self._buffer_height = buffer_height
+        self._screen_buffer = None
+        self._double_buffer = None
+        self._start_line = 0
+        self._x = 0
+        self._y = 0
+
+        # dictionary cache for colour blending
+        self._blends = {}
+
+        # Reset the screen ready to go...
+        self.reset()
+
+    def reset(self):
+        """
+        Reset the internal buffers for the abstract canvas.
+        """
+        # Reset our screen buffer
+        self._start_line = 0
+        self._x = self._y = None
+        line = [(" ", Screen.COLOUR_WHITE, 0, 0) for _ in range(self.width)]
+        self._screen_buffer = [
+            copy.deepcopy(line) for _ in range(self._buffer_height)]
+        self._double_buffer = copy.deepcopy(self._screen_buffer)
+        self._reset()
+
+    def scroll(self):
+        """
+        Scroll the abstract canvas up one line.
+        """
+        self._start_line += 1
+
+    def scroll_to(self, line):
+        """
+        Scroll the abstract canvas to make a specific line.
+
+        :param line: The line to scroll to.
+        """
+        self._start_line = line
+
+    @abstractmethod
+    def _reset(self):
+        """
+        Internal implementation required to reset underlying drawing
+        interface.
+        """
+
+    @abstractmethod
+    def refresh(self):
+        """
+        Refresh this object - this will draw to the underlying display
+        interface.
+        """
+
+    def get_from(self, x, y):
+        """
+        Get the character at the specified location.
+
+        :param x: The column (x coord) of the character.
+        :param y: The row (y coord) of the character.
+
+        :return: A 4-tuple of (ascii code, foreground, attributes, background)
+                 for the character at the location.
+        """
+        if y < 0 or y >= self._buffer_height or x < 0 or x >= self.width:
+            return None
+        cell = self._double_buffer[y][x]
+        return ord(cell[0]), cell[1], cell[2], cell[3]
+
+    def print_at(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
+        """
+        Print the text at the specified location using the
+        specified colour and attributes.
+
+        :param text: The (single line) text to be printed.
+        :param x: The column (x coord) for the start of the text.
+        :param y: The line (y coord) for the start of the text.
+        :param colour: The colour of the text to be displayed.
+        :param attr: The cell attribute of the text to be displayed.
+        :param bg: The background colour of the text to be displayed.
+        :param transparent: Whether to print spaces or not, thus giving a
+            transparent effect.
+
+        The colours and attributes are the COLOUR_xxx and A_yyy constants
+        defined in the Screen class.
+        """
+        # Trim text to the buffer.
+        if y < 0 or y >= self._buffer_height or x > self.width:
+            return
+        if x < 0:
+            text = text[-x:]
+            x = 0
+        if x + len(text) >= self.width:
+            text = text[:self.width - x]
+
+        if len(text) > 0:
+            for i, c in enumerate(text):
+                if c != " " or not transparent:
+                    self._double_buffer[y][x + i] = (c, colour, attr, bg)
+
+    @property
+    def start_line(self):
+        """
+        :return: The start line of the top of the canvas.
+        """
+        return self._start_line
+
+    @property
+    def dimensions(self):
+        """
+        :return: The full dimensions of the canvas as a (height, width) tuple.
+        """
+        return self.height, self.width
+
+    @property
+    def palette(self):
+        """
+        :return: A palette compatible with the PIL.
+        """
+        if self.colours < 256:
+            # Use the ANSI colour set.
+            return self._8_palette
+        else:
+            return self._256_palette
+
+    def centre(self, text, y, colour=7, attr=0, colour_map=None):
+        """
+        Centre the text on the specified line (y) using the optional
+        colour and attributes.
+
+        :param text: The (single line) text to be printed.
+        :param y: The line (y coord) for the start of the text.
+        :param colour: The colour of the text to be displayed.
+        :param attr: The cell attribute of the text to be displayed.
+        :param colour_map: Colour/attribute list for multi-colour text.
+
+        The colours and attributes are the COLOUR_xxx and A_yyy constants
+        defined in the Screen class.
+        """
+        x = (self.width - len(text)) // 2
+        self.paint(text, x, y, colour, attr, colour_map=colour_map)
+
+    def paint(self, text, x, y, colour=7, attr=0, bg=0, transparent=False,
+              colour_map=None):
+        """
+        Paint multi-colour text at the defined location.
+
+        :param text: The (single line) text to be printed.
+        :param x: The column (x coord) for the start of the text.
+        :param y: The line (y coord) for the start of the text.
+        :param colour: The default colour of the text to be displayed.
+        :param attr: The default cell attribute of the text to be displayed.
+        :param bg: The default background colour of the text to be displayed.
+        :param transparent: Whether to print spaces or not, thus giving a
+            transparent effect.
+        :param colour_map: Colour/attribute list for multi-colour text.
+
+        The colours and attributes are the COLOUR_xxx and A_yyy constants
+        defined in the Screen class.
+        colour_map is a list of tuples (foreground, attribute, background) that
+        must be the same length as the passed in text (or None if no mapping is
+        required).
+        """
+        if colour_map is None:
+            self.print_at(text, x, y, colour, attr, bg, transparent)
+        else:
+            for i, c in enumerate(text):
+                if len(colour_map[i]) > 0 and colour_map[i][0] is not None:
+                    colour = colour_map[i][0]
+                if len(colour_map[i]) > 1 and colour_map[i][1] is not None:
+                    attr = colour_map[i][1]
+                if len(colour_map[i]) > 2 and colour_map[i][2] is not None:
+                    bg = colour_map[i][2]
+                self.print_at(c, x + i, y, colour, attr, bg, transparent)
+
+    def _blend(self, new, old, ratio):
+        """
+        Blend the new colour with the old according to the ratio.
+
+        :param new: The new colour (or None if not required).
+        :param old: The old colour.
+        :param ratio: The ratio to blend new and old
+        :returns: the new colour index to use for the required blend.
+        """
+        # Don't bother blending if none is required.
+        if new is None:
+            return old
+
+        # Check colour blend cache for a quick answer.
+        key = (min(new, old), max(new, old))
+        if key in self._blends:
+            return self._blends[key]
+
+        # No quick answer - do it the long way...  First lookup the RGB values
+        # for both colours and blend.
+        (r1, g1, b1) = self.palette[new * 3:new * 3 + 3]
+        (r2, g2, b2) = self.palette[old * 3:old * 3 + 3]
+
+        f = lambda c1, c2: ((c2 * ratio) + (c1 * (100 - ratio))) // 100
+        r = f(r1, r2)
+        g = f(g1, g2)
+        b = f(b1, b2)
+
+        # Now do the reverse lookup...
+        nearest = (256 ** 2) * 3
+        match = 0
+        for c in range(self.colours):
+            (rc, gc, bc) = self.palette[c * 3:c * 3 + 3]
+            diff = sqrt(((rc - r) * 0.3) ** 2 + ((gc - g) * 0.59) ** 2 +
+                        ((bc - b) * 0.11) ** 2)
+            if diff < nearest:
+                nearest = diff
+                match = c
+
+        # Save off the answer and return it
+        self._blends[key] = match
+        return match
+
+    def highlight(self, x, y, w, h, fg=None, bg=None, blend=0):
+        """
+        Highlight a specified section of the screen.
+
+        :param x: The column (x coord) for the start of the highlight.
+        :param y: The line (y coord) for the start of the highlight.
+        :param w: The width of the highlight (in characters).
+        :param h: The height of the highlight (in characters).
+        :param fg: The foreground colour of the highlight.
+        :param bg: The background colour of the highlight.
+        :param blend: How much (as a percentage) to blend new and old colours.
+
+        The colours and attributes are the COLOUR_xxx and A_yyy constants
+        defined in the Screen class.  If fg or bg are None that means don't
+        change the foreground/background as appropriate.
+        """
+        for i in range(w):
+            if x + i >= self.width or x + i < 0:
+                continue
+
+            for j in range(h):
+                if y + j >= self._buffer_height or y + j < 0:
+                    continue
+
+                old = self._double_buffer[y + j][x + i]
+                new_bg = self._blend(bg, old[3], blend)
+                new_fg = self._blend(fg, old[1], blend)
+                self._double_buffer[y + j][x + i] = \
+                    (old[0], new_fg, old[2], new_bg)
+
+    def is_visible(self, x, y):
+        """
+        Return whether the specified location is on the visible screen.
+
+        :param x: The column (x coord) for the location to check.
+        :param y: The line (y coord) for the location to check.
+        """
+        return ((x >= 0) and
+                (x <= self.width) and
+                (y >= self._start_line) and
+                (y < self._start_line + self.height))
+
+    def move(self, x, y):
+        """
+        Move the drawing cursor to the specified position.
+
+        :param x: The column (x coord) for the location to check.
+        :param y: The line (y coord) for the location to check.
+        """
+        self._x = int(round(x, 1)) * 2
+        self._y = int(round(y, 1)) * 2
+
+    def draw(self, x, y, char=None, colour=7, bg=0, thin=False):
+        """
+        Draw a line from drawing cursor to the specified position.  This uses a
+        modified Bressenham algorithm, interpolating twice as many points to
+        render down to anti-aliased characters when no character is specified,
+        or uses standard algorithm plotting with the specified character.
+
+        :param x: The column (x coord) for the location to check.
+        :param y: The line (y coord) for the location to check.
+        :param char: Optional character to use to draw the line.
+        :param colour: Optional colour for plotting the line.
+        :param bg: Optional background colour for plotting the line.
+        :param thin: Optional width of anti-aliased line.
+        """
+        # Define line end points.
+        x0 = self._x
+        y0 = self._y
+        x1 = int(round(x, 1)) * 2
+        y1 = int(round(y, 1)) * 2
+
+        # Remember last point for next line.
+        self._x = x1
+        self._y = y1
+
+        dx = abs(x1 - x0)
+        dy = abs(y1 - y0)
+
+        sx = -1 if x0 > x1 else 1
+        sy = -1 if y0 > y1 else 1
+
+        x_range = range(0, 2) if sx > 0 else range(1, -1, -1)
+        y_range = range(0, 2) if sy > 0 else range(1, -1, -1)
+
+        x = x0
+        y = y0
+
+        if dx > dy:
+            err = dx
+            while x != x1:
+                next_chars = [0, 0]
+                px = x & ~1
+                py = y & ~1
+                for ix in x_range:
+                    if y >= py and y - py < 2:
+                        next_chars[0] |= 2 ** ix * 4 ** (y % 2)
+                    else:
+                        next_chars[1] |= 2 ** ix * 4 ** (y % 2)
+                    if not thin:
+                        if y + sy >= py and y + sy - py < 2:
+                            next_chars[0] |= 2 ** ix * 4 ** ((y + sy) % 2)
+                        else:
+                            next_chars[1] |= 2 ** ix * 4 ** ((y + sy) % 2)
+                    err -= 2 * dy
+                    if err < 0:
+                        y += sy
+                        err += 2 * dx
+                    x += sx
+
+                if char is None:
+                    self.print_at(self._line_chars[next_chars[0]],
+                                  px // 2, py // 2, colour, bg=bg)
+                    if next_chars[1] != 0:
+                        self.print_at(self._line_chars[next_chars[1]],
+                                      px // 2, py // 2 + sy, colour, bg=bg)
+                elif char == " ":
+                    self.print_at(char, px // 2, py // 2, bg=bg)
+                    self.print_at(char, px // 2, py // 2 + sy, bg=bg)
+                else:
+                    self.print_at(char, px // 2, py // 2, colour, bg=bg)
+        else:
+            err = dy
+            while y != y1:
+                next_chars = [0, 0]
+                px = x & ~1
+                py = y & ~1
+                for iy in y_range:
+                    if x >= px and x - px < 2:
+                        next_chars[0] |= 2 ** (x % 2) * 4 ** iy
+                    else:
+                        next_chars[1] |= 2 ** (x % 2) * 4 ** iy
+                    if not thin:
+                        if x + sx >= px and x + sx - px < 2:
+                            next_chars[0] |= 2 ** ((x + sx) % 2) * 4 ** iy
+                        else:
+                            next_chars[1] |= 2 ** ((x + sx) % 2) * 4 ** iy
+                    err -= 2 * dx
+                    if err < 0:
+                        x += sx
+                        err += 2 * dy
+                    y += sy
+
+                if char is None:
+                    self.print_at(self._line_chars[next_chars[0]],
+                                  px // 2, py // 2, colour, bg=bg)
+                    if next_chars[1] != 0:
+                        self.print_at(
+                            self._line_chars[next_chars[1]],
+                            px // 2 + sx, py // 2, colour, bg=bg)
+                elif char == " ":
+                    self.print_at(char, px // 2, py // 2, bg=bg)
+                    self.print_at(char, px // 2 + sx, py // 2, bg=bg)
+                else:
+                    self.print_at(char, px // 2, py // 2, colour, bg=bg)
+
+
+class Canvas(_AbstractCanvas):
+    """
+    A Canvas is an object that can be used to draw to the screen. It maintains
+    its own buffer that will be flushed to the screen when `refresh()` is
+    called.
+    """
+
+    def __init__(self, screen, height, width, x=None, y=None):
+        """
+        :param screen: The underlying Screen that will be drawn to on refresh.
+        :param height: The height of the screen buffer to be used.
+        :param width: The width of the screen buffer to be used.
+        :param x: The x position for the top left corner of the Canvas.
+        :param y: The y position for the top left corner of the Canvas.
+
+        If either of the x or y positions is not set, the Canvas will default
+        to centring within the current Screen for that location.
+        """
+        # Save off the screen details.
+        # TODO: Fix up buffer logic once and for all!
+        super(Canvas, self).__init__(height, width, 200, screen.colours)
+        self._screen = screen
+        self._dx = (screen.width - width) // 2 if x is None else x
+        self._dy = (screen.height - height) // 2 if y is None else y
+
+    def refresh(self):
+        """
+        Flush the canvas content to the underlying screen.
+        """
+        for y in range(self.height):
+            for x in range(self.width):
+                c = self._double_buffer[y + self._start_line][x]
+                self._screen.print_at(
+                    c[0], x + self._dx, y + self._dy, c[1], c[2], c[3])
+
+    def _reset(self):
+        # Nothing needed for a Canvas
+        pass
+
+    @property
+    def origin(self):
+        """
+        The location of top left corner of the canvas on the Screen.
+
+        :returns: A tuple (x, y) of the location
+        """
+        return self._dx, self._dy
+
+
+class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
+    """
+    Class to track basic state of the screen.  This constructs the necessary
+    resources to allow us to do the ASCII animations.
+
+    This is an abstract class that will build the correct concrete class for
+    you when you call :py:meth:`.wrapper`.  If needed, you can use the
+    :py:meth:`~.Screen.open` and :py:meth:`~.Screen.close` methods for finer
+    grained control of the construction and tidy up.
+
+    Note that you need to define the required height for your screen buffer.
+    This is important if you plan on using any Effects that will scroll the
+    screen vertically (e.g. Scroll).  It must be big enough to handle the
+    full scrolling of your selected Effect.
+    """
+
+    # Text attributes for use when printing to the Screen.
+    A_BOLD = 1
+    A_NORMAL = 2
+    A_REVERSE = 3
+    A_UNDERLINE = 4
+
+    # Text colours for use when printing to the Screen.
+    COLOUR_BLACK = 0
+    COLOUR_RED = 1
+    COLOUR_GREEN = 2
+    COLOUR_YELLOW = 3
+    COLOUR_BLUE = 4
+    COLOUR_MAGENTA = 5
+    COLOUR_CYAN = 6
+    COLOUR_WHITE = 7
+
+    # Standard extended key codes.
+    KEY_ESCAPE = -1
+    KEY_F1 = -2
+    KEY_F2 = -3
+    KEY_F3 = -4
+    KEY_F4 = -5
+    KEY_F5 = -6
+    KEY_F6 = -7
+    KEY_F7 = -8
+    KEY_F8 = -9
+    KEY_F9 = -10
+    KEY_F10 = -11
+    KEY_F11 = -12
+    KEY_F12 = -13
+    KEY_F13 = -14
+    KEY_F14 = -15
+    KEY_F15 = -16
+    KEY_F16 = -17
+    KEY_F17 = -18
+    KEY_F18 = -19
+    KEY_F19 = -20
+    KEY_F20 = -21
+    KEY_F21 = -22
+    KEY_F22 = -23
+    KEY_F23 = -24
+    KEY_F24 = -25
+    KEY_PRINT_SCREEN = -100
+    KEY_INSERT = -101
+    KEY_DELETE = -102
+    KEY_HOME = -200
+    KEY_END = -201
+    KEY_LEFT = -203
+    KEY_UP = -204
+    KEY_RIGHT = -205
+    KEY_DOWN = -206
+    KEY_PAGE_UP = -207
+    KEY_PAGE_DOWN = -208
+    KEY_BACK = -300
+    KEY_TAB = -301
+    KEY_BACK_TAB = -302
+    KEY_NUMPAD0 = -400
+    KEY_NUMPAD1 = -401
+    KEY_NUMPAD2 = -402
+    KEY_NUMPAD3 = -403
+    KEY_NUMPAD4 = -404
+    KEY_NUMPAD5 = -405
+    KEY_NUMPAD6 = -406
+    KEY_NUMPAD7 = -407
+    KEY_NUMPAD8 = -408
+    KEY_NUMPAD9 = -409
+    KEY_MULTIPLY = -410
+    KEY_ADD = -411
+    KEY_SUBTRACT = -412
+    KEY_DECIMAL = -413
+    KEY_DIVIDE = -414
+    KEY_CAPS_LOCK = -500
+    KEY_NUM_LOCK = -501
+    KEY_SCROLL_LOCK = -502
+    KEY_SHIFT = -600
+    KEY_CONTROL = -601
+    KEY_MENU = -602
+
     def __init__(self, height, width, buffer_height):
         """
         Don't call this constructor directly.
         """
-        super(Screen, self).__init__(height, width, buffer_height)
+        super(Screen, self).__init__(height, width, buffer_height, 0)
         # Initialize base class variables - e.g. those used for drawing.
         self.height = height
         self.width = width
-        self.colours = 0
         self._last_start_line = 0
 
         # Set up internal state for colours - used by children to determine
@@ -913,17 +965,6 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 raise
         finally:
             screen.close(restore)
-
-    @property
-    def palette(self):
-        """
-        :return: A palette compatible with the PIL.
-        """
-        if self.colours < 256:
-            # Use the ANSI colour set.
-            return self._8_palette
-        else:
-            return self._256_palette
 
     def _reset(self):
         """
@@ -1133,7 +1174,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 if event is not None:
                     self._unhandled_input(event)
                 event = self.get_event()
-            if scene.duration > 0 and self._frame >= scene.duration:
+            if 0 < scene.duration <= self._frame:
                 raise NextScene()
         except NextScene as e:
             # Tidy up the current scene.
