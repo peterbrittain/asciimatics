@@ -48,7 +48,7 @@ features including:
 * Many animation effects - e.g. sprites, particle systems, banners, etc.
 * Various widgets for text UIs - e.g. buttons, text boxes, radio buttons, etc.
 
-Currently this API has been proven to work on CentOS 6 & 7, Raspbian (i.e.
+Currently this package has been proven to work on CentOS 6 & 7, Raspbian (i.e.
 Debian wheezy), Ubuntu 14.04, Windows 7, 8 & 10 and OSX 10.11, though it should
 also work for any other platform that provides a working curses implementation.  
 
@@ -75,9 +75,13 @@ Additionally, Windows users will need to install `pypiwin32`.
 
 How to use it?
 --------------
-To use the low-level API, simply create the Screen and use it.  For example:
+To use the low-level API, simply create a Screen and use it to print
+coloured text at any location, or get mouse/keyboard input.  For example,
+here is the classic "hello world":
 
 .. code-block:: python
+
+    from asciimatics.screen import Screen
 
     def demo(screen):
         screen.print_at('Hello world!', 0, 0)
@@ -86,8 +90,10 @@ To use the low-level API, simply create the Screen and use it.  For example:
 
     Screen.wrapper(demo)
 
-For the higher level features, create the Screen, put together a Scene
-using some Effects and then get the Screen to play it.  For example:
+That same code works on Windows, OSX and Linux and paves the way for
+all the higher level features.  These still need the Screen, but now
+you also create a Scene using some Effects and then get the Screen 
+to play it.  For example, this code:
 
 .. code-block:: python
 
@@ -112,7 +118,7 @@ using some Effects and then get the Screen to play it.  For example:
     
     Screen.wrapper(demo)
 
-And you should see something like this:
+should produce something like this:
 
 .. image:: https://asciinema.org/a/18756.png
    :alt: asciicast
@@ -129,7 +135,8 @@ blob/master/samples/contact_list.py>`__ will give you this:
 Documentation
 -------------
 
-Documentation is available at http://asciimatics.readthedocs.org/
+Full documentation of all the above (and more!) is available at 
+http://asciimatics.readthedocs.org/
 
 More examples
 -------------
