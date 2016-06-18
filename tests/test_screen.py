@@ -106,6 +106,18 @@ class TestScreen(unittest.TestCase):
                     self.assertEqual(bg2, 0)
                     self.assertEqual(fg2, 0)
 
+            # Now check blending.
+            screen.print_at("*" * screen.width,
+                            0, 0,
+                            Screen.COLOUR_CYAN,
+                            Screen.A_NORMAL,
+                            Screen.COLOUR_YELLOW)
+            screen.highlight(0, 0, screen.width, 1, fg=0, bg=0, blend=50)
+            for x in range(screen.width):
+                _, fg2, _, bg2 = screen.get_from(x, 0)
+                self.assertEqual(bg2, 0)
+                self.assertEqual(fg2, 0)
+
         Screen.wrapper(
             check_screen_and_canvas, height=15, arguments=[internal_checks])
 
