@@ -77,16 +77,23 @@ How to use it?
 --------------
 To use the low-level API, simply create a Screen and use it to print
 coloured text at any location, or get mouse/keyboard input.  For example,
-here is the classic "hello world":
+here is a variant on the classic "hello world":
 
 .. code-block:: python
 
+    from random import randint
     from asciimatics.screen import Screen
 
     def demo(screen):
-        screen.print_at('Hello world!', 0, 0)
-        screen.refresh()
-        sleep(10)
+        while True:
+            screen.print_at('Hello world!',
+                            randint(0, screen.width), randint(0, screen.height),
+                            colour=randint(0, screen.colours - 1),
+                            bg=randint(0, screen.colours - 1))
+            ev = screen.get_key()
+            if ev in (ord('Q'), ord('q')):
+                return
+            screen.refresh()
 
     Screen.wrapper(demo)
 
