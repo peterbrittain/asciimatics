@@ -452,18 +452,18 @@ class Box(StaticRenderer):
     Windows and direct access to curses in Linux.
     """
 
-    def __init__(self, width, height, unicode=False):
+    def __init__(self, width, height, uni=False):
         """
         :param width: The desired width of the box.
         :param height: The desired height of the box.
-        :param unicode: Whether to use unicode box characters or not.
+        :param uni: Whether to use unicode box characters or not.
         """
         super(Box, self).__init__()
-        if unicode:
-            box = "┌" + "─" * (width - 2) + "┐\n"
+        if uni:
+            box = u"┌" + u"─" * (width - 2) + u"┐\n"
             for _ in range(height - 2):
-                box += "│" + " " * (width - 2) + "│\n"
-            box += "└" + "─" * (width - 2) + "┘\n"
+                box += u"│" + u" " * (width - 2) + u"│\n"
+            box += u"└" + u"─" * (width - 2) + u"┘\n"
         else:
             box = "+" + "-" * (width - 2) + "+\n"
             for _ in range(height - 2):

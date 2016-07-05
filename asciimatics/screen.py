@@ -328,7 +328,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         # Reset our screen buffer
         self._start_line = 0
         self._x = self._y = None
-        line = [(" ", Screen.COLOUR_WHITE, 0, 0) for _ in range(self.width)]
+        line = [(u" ", Screen.COLOUR_WHITE, 0, 0) for _ in range(self.width)]
         self._screen_buffer = [
             copy.deepcopy(line) for _ in range(self._buffer_height)]
         self._double_buffer = copy.deepcopy(self._screen_buffer)
@@ -406,7 +406,8 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         if len(text) > 0:
             for i, c in enumerate(text):
                 if c != " " or not transparent:
-                    self._double_buffer[y][x + i] = (c, colour, attr, bg)
+                    self._double_buffer[y][x + i] = (unicode(c), colour, attr,
+                                                             bg)
 
     @property
     def start_line(self):
@@ -1799,10 +1800,10 @@ else:
                 else:
                     # Handle a genuine key press.
                     if key in self._KEY_MAP:
-                        # self.print_at(str(self._KEY_MAP[key]) + "  ", 0, 30)
+                        self.print_at(str(self._KEY_MAP[key]) + "  ", 0, 30)
                         return KeyboardEvent(self._KEY_MAP[key])
                     elif key != -1:
-                        # self.print_at(str(key) + "  ", 0, 30)
+                        self.print_at(unicode(key) + "  ", 0, 30)
                         return KeyboardEvent(key)
 
                 # Wasn't interesting - discard and look at the next event.
@@ -1855,7 +1856,7 @@ else:
             :param y: The Y coordinate
             """
             # Move the cursor if necessary
-            msg = ""
+            msg = u""
             if x != self._x or y != self._y:
                 msg += curses.tparm(self._move_y_x, y, x).decode("utf-8")
 
