@@ -245,7 +245,7 @@ class TestEffects(unittest.TestCase):
         buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
         for x in range(canvas.width):
             for y in range(canvas.height):
-                canvas.print_at(chr(randint(1, 128)), x, y)
+                canvas.print_at(unichr(randint(1, 128)), x, y)
                 buffer[y][x] = canvas.get_from(x, y)
         for i in range(10):
             effect.update(i)
