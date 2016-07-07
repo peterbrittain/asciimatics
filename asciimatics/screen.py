@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import object
 from builtins import range
+from builtins import str
 from math import sqrt
 from future.utils import with_metaclass
 import time
@@ -406,7 +407,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         if len(text) > 0:
             for i, c in enumerate(text):
                 if c != " " or not transparent:
-                    self._double_buffer[y][x + i] = (unicode(c), colour, attr,
+                    self._double_buffer[y][x + i] = (str(c), colour, attr,
                                                              bg)
 
     @property
@@ -1803,7 +1804,7 @@ else:
                         self.print_at(str(self._KEY_MAP[key]) + "  ", 0, 30)
                         return KeyboardEvent(self._KEY_MAP[key])
                     elif key != -1:
-                        self.print_at(unicode(key) + "  ", 0, 30)
+                        self.print_at(str(key) + "  ", 0, 30)
                         return KeyboardEvent(key)
 
                 # Wasn't interesting - discard and look at the next event.
