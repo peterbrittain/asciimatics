@@ -1407,6 +1407,9 @@ if sys.platform == "win32":
             # Opt for compatibility with Linux by default
             self._map_all = False
 
+            # Set of keys currently pressed.
+            self._keys = set()
+
         def close(self, restore=True):
             """
             Close down this Screen and tidy up the environment as required.
@@ -1442,28 +1445,49 @@ if sys.platform == "win32":
             # Look for a new event and consume it if there is one.
             while len(self._stdin.PeekConsoleInput(1)) > 0:
                 event = self._stdin.ReadConsoleInput(1)[0]
-                if (event.EventType == win32console.KEY_EVENT and
-                        event.KeyDown):
-                    # Translate keys into a KeyboardEvent object.
+                if event.EventType == win32console.KEY_EVENT:
+                    # Pasting unicode text appears to just generate key-up
+                    # events, but the rest of the console input simply doesn't
+                    # work with key up events - e.g. misses keyboard repeats.
+                    #
+                    # We therefore allow any key press (i.e. KeyDown) event and
+                    # _any_ event that appears to have popped up from nowhere.
                     key_code = ord(event.Char)
-                    if event.VirtualKeyCode in self._KEY_MAP:
-                        key_code = self._KEY_MAP[event.VirtualKeyCode]
+                    if (event.KeyDown or
+                            (key_code > 0 and key_code not in self._keys)):
+                        # Record any keys that were pressed.
+                        if event.KeyDown:
+                            self._keys.add(key_code)
 
-                    # Sadly, we are limited to Linux terminal input and so can't
-                    # return modifier states in a cross-platform way.  If the
-                    # user decided not to be cross-platform, so be it, otherwise
-                    # map some standard bindings for extended keys.
-                    if (self._map_all and
-                            event.VirtualKeyCode in self._EXTRA_KEY_MAP):
-                        key_code = self._EXTRA_KEY_MAP[event.VirtualKeyCode]
+                        # Translate keys into a KeyboardEvent object.
+                        if event.VirtualKeyCode in self._KEY_MAP:
+                            key_code = self._KEY_MAP[event.VirtualKeyCode]
+
+                        # Sadly, we are limited to Linux terminal input and so
+                        # can't return modifier states in a cross-platform way.
+                        # If the user decided not to be cross-platform, so be
+                        # it, otherwise map some standard bindings for extended
+                        # keys.
+                        if (self._map_all and
+                                event.VirtualKeyCode in self._EXTRA_KEY_MAP):
+                            key_code = self._EXTRA_KEY_MAP[event.VirtualKeyCode]
+                        else:
+                            if (event.VirtualKeyCode == win32con.VK_TAB and
+                                    event.ControlKeyState &
+                                    win32con.SHIFT_PRESSED):
+                                key_code = Screen.KEY_BACK_TAB
+
+                        # Don't return anything if we didn't have a valid
+                        # mapping.
+                        if key_code:
+                            return KeyboardEvent(key_code)
                     else:
-                        if (event.VirtualKeyCode == win32con.VK_TAB and
-                                event.ControlKeyState & win32con.SHIFT_PRESSED):
-                            key_code = Screen.KEY_BACK_TAB
+                        # Tidy up any key that was previously pressed.  At
+                        # start-up, we may be mid-key, so can't assume this must
+                        # always match up.
+                        if key_code in self._keys:
+                            self._keys.remove(key_code)
 
-                    # Don't return anything if we didn't have a valid mapping.
-                    if key_code:
-                        return KeyboardEvent(key_code)
                 elif event.EventType == win32console.MOUSE_EVENT:
                     # Translate into a MouseEvent object.
                     button = 0
