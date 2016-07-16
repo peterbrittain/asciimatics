@@ -1,10 +1,14 @@
+# -*- coding: utf-8 -*-
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
+from locale import getlocale, getdefaultlocale
+import struct
 from builtins import object
 from builtins import range
 from builtins import str
+from builtins import ord
 from math import sqrt
 from future.utils import with_metaclass
 import time
@@ -14,6 +18,10 @@ import sys
 import signal
 from asciimatics.event import KeyboardEvent, MouseEvent
 from .exceptions import ResizeScreenError, StopApplication, NextScene
+
+# Logging
+from logging import getLogger
+logger = getLogger(__name__)
 
 
 class _AbstractCanvas(with_metaclass(ABCMeta, object)):
@@ -1723,6 +1731,15 @@ else:
                 Screen.A_UNDERLINE: self._a_underline
             }
 
+            # Byte stream processing for unicode input.
+            encoding = getlocale()[1]
+            if not encoding:
+                encoding = getdefaultlocale()[1]
+            self._process_utf8 = (encoding is not None and
+                                  encoding.lower() == "utf-8")
+            self._bytes_to_read = 0
+            self._bytes_to_return = b""
+
             # We'll actually break out into low-level output, so flush any
             # high level buffers now.
             self._screen.refresh()
@@ -1802,8 +1819,11 @@ else:
             Check for an event without waiting.
             """
             # Spin through notifications until we find something we want.
-            key = self._screen.getch()
+            key = 0
             while key != -1:
+                # Get the next key
+                key = self._screen.getch()
+
                 if key == curses.KEY_RESIZE:
                     # Handle screen resize
                     self._re_sized = True
@@ -1822,17 +1842,30 @@ else:
                     if bstate & curses.BUTTON1_DOUBLE_CLICKED != 0:
                         buttons |= MouseEvent.DOUBLE_CLICK
                     return MouseEvent(x, y, buttons)
-                else:
+                elif key != -1:
+                    # Handle any byte streams first
+                    logger.debug("Processing key: %x", key)
+                    if self._process_utf8 and key > 0:
+                        if key & 0xC0 == 0xC0:
+                            self._bytes_to_return = struct.pack(b"B", key)
+                            self._bytes_to_read = bin(key)[2:].index("0") - 1
+                            logger.debug("Byte stream: %d bytes left",
+                                         self._bytes_to_read)
+                            continue
+                        elif self._bytes_to_read > 0:
+                            self._bytes_to_return += struct.pack(b"B", key)
+                            self._bytes_to_read -= 1
+                            if self._bytes_to_read > 0:
+                                continue
+                            else:
+                                key = ord(self._bytes_to_return.decode("utf-8"))
+
                     # Handle a genuine key press.
+                    logger.debug("Returning key: %x", key)
                     if key in self._KEY_MAP:
-                        self.print_at(str(self._KEY_MAP[key]) + "  ", 0, 30)
                         return KeyboardEvent(self._KEY_MAP[key])
                     elif key != -1:
-                        self.print_at(str(key) + "  ", 0, 30)
                         return KeyboardEvent(key)
-
-                # Wasn't interesting - discard and look at the next event.
-                key = self._screen.getch()
 
             return None
 
@@ -1881,19 +1914,22 @@ else:
             :param y: The Y coordinate
             """
             # Move the cursor if necessary
-            msg = u""
+            cursor = u""
             if x != self._x or y != self._y:
-                msg += curses.tparm(self._move_y_x, y, x).decode("utf-8")
-
-            msg += text
+                cursor = curses.tparm(self._move_y_x, y, x).decode("utf-8")
 
             # Print the text at the required location and update the current
-            # position.  Screen resize can throw IOErrors.  These can be safely
-            # ignored as the screen will be shortly reset anyway.
+            # position.
             try:
-                sys.stdout.write(msg)
+                sys.stdout.write(cursor + text)
             except IOError:
+                # Screen resize can throw IOErrors.  These can be safely
+                # ignored as the screen will be shortly reset anyway.
                 pass
+            except UnicodeEncodeError:
+                # This is probably a sign that the user has the wrong locale.
+                # Try to soldier on anyway.
+                sys.stdout.write(cursor + "?" * len(text))
 
         def set_title(self, title):
             """
