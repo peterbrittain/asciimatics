@@ -1,10 +1,14 @@
+# -*- coding: utf-8 -*-
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
+from locale import getlocale, getdefaultlocale
+import struct
 from builtins import object
 from builtins import range
 from builtins import str
+from builtins import ord
 from math import sqrt
 from future.utils import with_metaclass
 import time
@@ -14,6 +18,10 @@ import sys
 import signal
 from asciimatics.event import KeyboardEvent, MouseEvent
 from .exceptions import ResizeScreenError, StopApplication, NextScene
+
+# Logging
+from logging import getLogger
+logger = getLogger(__name__)
 
 
 class _AbstractCanvas(with_metaclass(ABCMeta, object)):
@@ -1414,6 +1422,9 @@ if sys.platform == "win32":
             # Opt for compatibility with Linux by default
             self._map_all = False
 
+            # Set of keys currently pressed.
+            self._keys = set()
+
         def close(self, restore=True):
             """
             Close down this Screen and tidy up the environment as required.
@@ -1449,28 +1460,49 @@ if sys.platform == "win32":
             # Look for a new event and consume it if there is one.
             while len(self._stdin.PeekConsoleInput(1)) > 0:
                 event = self._stdin.ReadConsoleInput(1)[0]
-                if (event.EventType == win32console.KEY_EVENT and
-                        event.KeyDown):
-                    # Translate keys into a KeyboardEvent object.
+                if event.EventType == win32console.KEY_EVENT:
+                    # Pasting unicode text appears to just generate key-up
+                    # events, but the rest of the console input simply doesn't
+                    # work with key up events - e.g. misses keyboard repeats.
+                    #
+                    # We therefore allow any key press (i.e. KeyDown) event and
+                    # _any_ event that appears to have popped up from nowhere.
                     key_code = ord(event.Char)
-                    if event.VirtualKeyCode in self._KEY_MAP:
-                        key_code = self._KEY_MAP[event.VirtualKeyCode]
+                    if (event.KeyDown or
+                            (key_code > 0 and key_code not in self._keys)):
+                        # Record any keys that were pressed.
+                        if event.KeyDown:
+                            self._keys.add(key_code)
 
-                    # Sadly, we are limited to Linux terminal input and so can't
-                    # return modifier states in a cross-platform way.  If the
-                    # user decided not to be cross-platform, so be it, otherwise
-                    # map some standard bindings for extended keys.
-                    if (self._map_all and
-                            event.VirtualKeyCode in self._EXTRA_KEY_MAP):
-                        key_code = self._EXTRA_KEY_MAP[event.VirtualKeyCode]
+                        # Translate keys into a KeyboardEvent object.
+                        if event.VirtualKeyCode in self._KEY_MAP:
+                            key_code = self._KEY_MAP[event.VirtualKeyCode]
+
+                        # Sadly, we are limited to Linux terminal input and so
+                        # can't return modifier states in a cross-platform way.
+                        # If the user decided not to be cross-platform, so be
+                        # it, otherwise map some standard bindings for extended
+                        # keys.
+                        if (self._map_all and
+                                event.VirtualKeyCode in self._EXTRA_KEY_MAP):
+                            key_code = self._EXTRA_KEY_MAP[event.VirtualKeyCode]
+                        else:
+                            if (event.VirtualKeyCode == win32con.VK_TAB and
+                                    event.ControlKeyState &
+                                    win32con.SHIFT_PRESSED):
+                                key_code = Screen.KEY_BACK_TAB
+
+                        # Don't return anything if we didn't have a valid
+                        # mapping.
+                        if key_code:
+                            return KeyboardEvent(key_code)
                     else:
-                        if (event.VirtualKeyCode == win32con.VK_TAB and
-                                event.ControlKeyState & win32con.SHIFT_PRESSED):
-                            key_code = Screen.KEY_BACK_TAB
+                        # Tidy up any key that was previously pressed.  At
+                        # start-up, we may be mid-key, so can't assume this must
+                        # always match up.
+                        if key_code in self._keys:
+                            self._keys.remove(key_code)
 
-                    # Don't return anything if we didn't have a valid mapping.
-                    if key_code:
-                        return KeyboardEvent(key_code)
                 elif event.EventType == win32console.MOUSE_EVENT:
                     # Translate into a MouseEvent object.
                     button = 0
@@ -1706,6 +1738,15 @@ else:
                 Screen.A_UNDERLINE: self._a_underline
             }
 
+            # Byte stream processing for unicode input.
+            encoding = getlocale()[1]
+            if not encoding:
+                encoding = getdefaultlocale()[1]
+            self._process_utf8 = (encoding is not None and
+                                  encoding.lower() == "utf-8")
+            self._bytes_to_read = 0
+            self._bytes_to_return = b""
+
             # We'll actually break out into low-level output, so flush any
             # high level buffers now.
             self._screen.refresh()
@@ -1785,8 +1826,11 @@ else:
             Check for an event without waiting.
             """
             # Spin through notifications until we find something we want.
-            key = self._screen.getch()
+            key = 0
             while key != -1:
+                # Get the next key
+                key = self._screen.getch()
+
                 if key == curses.KEY_RESIZE:
                     # Handle screen resize
                     self._re_sized = True
@@ -1805,17 +1849,30 @@ else:
                     if bstate & curses.BUTTON1_DOUBLE_CLICKED != 0:
                         buttons |= MouseEvent.DOUBLE_CLICK
                     return MouseEvent(x, y, buttons)
-                else:
+                elif key != -1:
+                    # Handle any byte streams first
+                    logger.debug("Processing key: %x", key)
+                    if self._process_utf8 and key > 0:
+                        if key & 0xC0 == 0xC0:
+                            self._bytes_to_return = struct.pack(b"B", key)
+                            self._bytes_to_read = bin(key)[2:].index("0") - 1
+                            logger.debug("Byte stream: %d bytes left",
+                                         self._bytes_to_read)
+                            continue
+                        elif self._bytes_to_read > 0:
+                            self._bytes_to_return += struct.pack(b"B", key)
+                            self._bytes_to_read -= 1
+                            if self._bytes_to_read > 0:
+                                continue
+                            else:
+                                key = ord(self._bytes_to_return.decode("utf-8"))
+
                     # Handle a genuine key press.
+                    logger.debug("Returning key: %x", key)
                     if key in self._KEY_MAP:
-                        self.print_at(str(self._KEY_MAP[key]) + "  ", 0, 30)
                         return KeyboardEvent(self._KEY_MAP[key])
                     elif key != -1:
-                        self.print_at(str(key) + "  ", 0, 30)
                         return KeyboardEvent(key)
-
-                # Wasn't interesting - discard and look at the next event.
-                key = self._screen.getch()
 
             return None
 
@@ -1864,19 +1921,22 @@ else:
             :param y: The Y coordinate
             """
             # Move the cursor if necessary
-            msg = u""
+            cursor = u""
             if x != self._x or y != self._y:
-                msg += curses.tparm(self._move_y_x, y, x).decode("utf-8")
-
-            msg += text
+                cursor = curses.tparm(self._move_y_x, y, x).decode("utf-8")
 
             # Print the text at the required location and update the current
-            # position.  Screen resize can throw IOErrors.  These can be safely
-            # ignored as the screen will be shortly reset anyway.
+            # position.
             try:
-                sys.stdout.write(msg)
+                sys.stdout.write(cursor + text)
             except IOError:
+                # Screen resize can throw IOErrors.  These can be safely
+                # ignored as the screen will be shortly reset anyway.
                 pass
+            except UnicodeEncodeError:
+                # This is probably a sign that the user has the wrong locale.
+                # Try to soldier on anyway.
+                sys.stdout.write(cursor + "?" * len(text))
 
         def set_title(self, title):
             """
