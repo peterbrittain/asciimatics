@@ -1284,7 +1284,7 @@ class Text(Widget):
                 self._column = 0
             elif event.key_code == Screen.KEY_END:
                 self._column = len(self._value)
-            elif 32 <= event.key_code:
+            elif event.key_code >= 32:
                 # Insert any visible text at the current cursor position.
                 self.value = chr(event.key_code).join([
                     self._value[:self._column],
@@ -1630,7 +1630,7 @@ class TextBox(Widget):
             elif event.key_code == Screen.KEY_END:
                 # Go to the end of this line
                 self._column = len(self._value[self._line])
-            elif 32 <= event.key_code:
+            elif event.key_code >= 32:
                 # Insert any visible text at the current cursor position.
                 self._value[self._line] = chr(event.key_code).join([
                     self._value[self._line][:self._column],
