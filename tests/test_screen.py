@@ -539,9 +539,13 @@ class TestScreen(unittest.TestCase):
             event.KeyDown = 0
             screen._stdin.WriteConsoleInput([event])
         else:
-            # This works for ASCII as it is a subset of UTF-8
-            for c in chr(char).encode("utf-8"):
-                curses.ungetch(ord(c))
+            if char > 0:
+                # This works for ASCII as it is a subset of UTF-8
+                for c in chr(char).encode("utf-8"):
+                    curses.ungetch(ord(c))
+            else:
+                # Should I be reverse mapping here?
+                curses.ungetch(char)
 
     @staticmethod
     def _inject_mouse(screen, x, y, button):
