@@ -80,6 +80,10 @@ class TestEffects(unittest.TestCase):
         # Check there is no stop frame
         self.assertEqual(effect.stop_frame, 0)
 
+        # This effect should ignore events.
+        event = object()
+        self.assertEqual(event, effect.process_event(event))
+
     def test_cycle(self):
         """
         Check that Cycle works.
@@ -103,6 +107,10 @@ class TestEffects(unittest.TestCase):
         # Check there is no stop frame
         self.assertEqual(effect.stop_frame, 0)
 
+        # This effect should ignore events.
+        event = object()
+        self.assertEqual(event, effect.process_event(event))
+
     def test_banner(self):
         """
         Check that BannerText works.
@@ -121,6 +129,10 @@ class TestEffects(unittest.TestCase):
 
         # Check there is some stop frame - will vary according to screen width
         self.assertGreater(effect.stop_frame, 0)
+
+        # This effect should ignore events.
+        event = object()
+        self.assertEqual(event, effect.process_event(event))
 
     def test_print(self):
         """
@@ -146,6 +158,10 @@ class TestEffects(unittest.TestCase):
         # Check there is no stop frame by default.
         self.assertEqual(effect.stop_frame, 0)
 
+        # This effect should ignore events.
+        event = object()
+        self.assertEqual(event, effect.process_event(event))
+
     def test_mirage(self):
         """
         Check that Mirage works.
@@ -168,6 +184,10 @@ class TestEffects(unittest.TestCase):
         # Check there is no stop frame by default.
         self.assertEqual(effect.stop_frame, 0)
 
+        # This effect should ignore events.
+        event = object()
+        self.assertEqual(event, effect.process_event(event))
+
     def test_stars(self):
         """
         Check that Stars works.
@@ -188,6 +208,10 @@ class TestEffects(unittest.TestCase):
 
         # Check there is no stop frame by default.
         self.assertEqual(effect.stop_frame, 0)
+
+        # This effect should ignore events.
+        event = object()
+        self.assertEqual(event, effect.process_event(event))
 
     def test_matrix(self):
         """
@@ -211,6 +235,10 @@ class TestEffects(unittest.TestCase):
         # Check there is no stop frame by default.
         self.assertEqual(effect.stop_frame, 0)
 
+        # This effect should ignore events.
+        event = object()
+        self.assertEqual(event, effect.process_event(event))
+
     def test_snow(self):
         """
         Check that Snow works.
@@ -232,6 +260,10 @@ class TestEffects(unittest.TestCase):
 
         # Check there is no stop frame by default.
         self.assertEqual(effect.stop_frame, 0)
+
+        # This effect should ignore events.
+        event = object()
+        self.assertEqual(event, effect.process_event(event))
 
     def test_wipe(self):
         """
@@ -258,6 +290,10 @@ class TestEffects(unittest.TestCase):
 
         # Check there is no stop frame by default.
         self.assertEqual(effect.stop_frame, 0)
+
+        # This effect should ignore events.
+        event = object()
+        self.assertEqual(event, effect.process_event(event))
 
     @patch("datetime.datetime")
     def test_clock(self, mock_datetime):
@@ -312,6 +348,10 @@ class TestEffects(unittest.TestCase):
         # Check there is no stop frame by default.
         self.assertEqual(effect.stop_frame, 0)
 
+        # This effect should ignore events.
+        event = object()
+        self.assertEqual(event, effect.process_event(event))
+
     def test_sprite(self):
         """
         Check that Sprites work.
@@ -340,6 +380,37 @@ class TestEffects(unittest.TestCase):
         # Check there is no stop frame by default.
         self.assertEqual(effect.stop_frame, 0)
 
+        # Static paths should pay no attention to events.
+        event = object()
+        self.assertEqual(event, effect.process_event(event))
+
+    def test_sprite_overlap(self):
+        """
+        Check that Sprites detect overlap.
+        """
+        screen = MagicMock(spec=Screen, colours=8)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        path = Path()
+        path.jump_to(10, 5)
+        effect1 = Sam(canvas, path)
+        effect2 = Sam(canvas, path)
+
+        # These 2 sprites should overlap!
+        effect1.reset()
+        effect1.update(0)
+        effect2.reset()
+        effect2.update(0)
+        self.assertTrue(effect1.overlaps(effect2))
+
+        # Now create a sprite that shouldn't quite overlap
+        width = effect1.last_position()[2]
+        path = Path()
+        path.jump_to(10 + width, 5)
+        effect2 = Sam(canvas, path)
+        effect2.reset()
+        effect2.update(0)
+        self.assertFalse(effect1.overlaps(effect2))
+
     def test_cog(self):
         """
         Check that Cog works.
@@ -363,6 +434,10 @@ class TestEffects(unittest.TestCase):
         # Check there is no stop frame by default.
         self.assertEqual(effect.stop_frame, 0)
 
+        # This effect should ignore events.
+        event = object()
+        self.assertEqual(event, effect.process_event(event))
+
     def test_noise(self):
         """
         Check that RandomNoise works.
@@ -385,6 +460,10 @@ class TestEffects(unittest.TestCase):
         # Check there is no stop frame by default.
         self.assertEqual(effect.stop_frame, 0)
 
+        # This effect should ignore events.
+        event = object()
+        self.assertEqual(event, effect.process_event(event))
+
     def test_julia(self):
         """
         Check that Julia works.
@@ -406,6 +485,10 @@ class TestEffects(unittest.TestCase):
 
         # Check there is no stop frame by default.
         self.assertEqual(effect.stop_frame, 0)
+
+        # This effect should ignore events.
+        event = object()
+        self.assertEqual(event, effect.process_event(event))
 
 if __name__ == '__main__':
     unittest.main()

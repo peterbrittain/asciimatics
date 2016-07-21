@@ -319,6 +319,10 @@ class TestWidgets(unittest.TestCase):
                 'Things': 1
             })
 
+        # Check that forms ignore unrecognised events.
+        event = object()
+        self.assertEqual(event, form.process_event(event))
+
     def test_textbox_input(self):
         """
         Check TextBox input works as expected.
@@ -367,6 +371,10 @@ class TestWidgets(unittest.TestCase):
         form.save()
         self.assertEqual(form.data["TA"], ["ABDICEM", "NKFGHJ"])
 
+        # Check that the current focus ignores unknown events.
+        event = object()
+        self.assertEqual(event, form.process_event(event))
+
     def test_text_input(self):
         """
         Check Text input works as expected.
@@ -398,6 +406,10 @@ class TestWidgets(unittest.TestCase):
         form.save()
         self.assertEqual(form.data["TB"], "DABCFE")
 
+        # Check that the current focus ignores unknown events.
+        event = object()
+        self.assertEqual(event, form.process_event(event))
+
     def test_checkbox_input(self):
         """
         Check Checkbox input works as expected.
@@ -421,6 +433,10 @@ class TestWidgets(unittest.TestCase):
         form.save()
         self.assertEqual(form.data["CA"], True)
 
+        # Check that the current focus ignores unknown events.
+        event = object()
+        self.assertEqual(event, form.process_event(event))
+
     def test_radiobutton_input(self):
         """
         Check RadioButton input works as expected.
@@ -442,6 +458,10 @@ class TestWidgets(unittest.TestCase):
         self.process_keys(form, [Screen.KEY_UP])
         form.save()
         self.assertEqual(form.data["Things"], 1)
+
+        # Check that the current focus ignores unknown events.
+        event = object()
+        self.assertEqual(event, form.process_event(event))
 
     def test_mouse_input(self):
         """
@@ -484,6 +504,10 @@ class TestWidgets(unittest.TestCase):
         # Check button click triggers an event.
         with self.assertRaises(StopApplication):
             self.process_mouse(form, [(30, 8, MouseEvent.LEFT_CLICK)])
+
+        # Check that the current focus ignores unknown events.
+        event = object()
+        self.assertEqual(event, form.process_event(event))
 
     def test_widget_navigation(self):
         """
@@ -576,6 +600,10 @@ class TestWidgets(unittest.TestCase):
         form.save()
         self.assertEqual(form.data, {"contacts": 1})
 
+        # Check that the current focus ignores unknown events.
+        event = object()
+        self.assertEqual(event, form.process_event(event))
+
     def test_pop_up_widget(self):
         """
         Check widget tab stops work as expected.
@@ -608,6 +636,10 @@ class TestWidgets(unittest.TestCase):
         # Check that mouse input triggers the close function.
         with self.assertRaises(NextScene):
             self.process_mouse(form, [(14, 5, MouseEvent.LEFT_CLICK)])
+
+        # Check that the pop-up swallows all events.
+        event = object()
+        self.assertIsNone(form.process_event(event))
 
     def test_shadow(self):
         """

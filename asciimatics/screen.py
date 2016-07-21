@@ -23,6 +23,10 @@ from .exceptions import ResizeScreenError, StopApplication, NextScene
 from logging import getLogger
 logger = getLogger(__name__)
 
+# Looks like pywin32 is missing some Windows constants
+ENABLE_EXTENDED_FLAGS = 0x0080
+ENABLE_QUICK_EDIT_MODE = 0x0040
+
 
 class _AbstractCanvas(with_metaclass(ABCMeta, object)):
     """
@@ -415,8 +419,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         if len(text) > 0:
             for i, c in enumerate(text):
                 if c != " " or not transparent:
-                    self._double_buffer[y][x + i] = (str(c), colour, attr,
-                                                             bg)
+                    self._double_buffer[y][x + i] = (str(c), colour, attr, bg)
 
     @property
     def start_line(self):
@@ -912,10 +915,6 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             out_mode = win_out.GetConsoleMode()
             win_out.SetConsoleMode(
                 out_mode & ~ win32console.ENABLE_WRAP_AT_EOL_OUTPUT)
-
-            # Looks like pywin32 is missing some Windows constants
-            ENABLE_EXTENDED_FLAGS = 0x0080
-            ENABLE_QUICK_EDIT_MODE = 0x0040
 
             # Enable mouse input, disable quick-edit mode and disable ctrl-c
             # if needed.
@@ -1476,7 +1475,7 @@ if sys.platform == "win32":
                     key_code = ord(event.Char)
                     if (event.KeyDown or
                             (key_code > 0 and key_code not in self._keys and
-			     event.VirtualKeyCode == win32con.VK_MENU)):
+                             event.VirtualKeyCode == win32con.VK_MENU)):
                         # Record any keys that were pressed.
                         if event.KeyDown:
                             self._keys.add(key_code)

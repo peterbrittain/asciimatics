@@ -1,7 +1,14 @@
+# -*- coding: utf-8 -*-
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import os
 from random import randint
 import unittest
 import sys
+from builtins import str
 from builtins import chr
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import StopApplication, NextScene
@@ -532,7 +539,9 @@ class TestScreen(unittest.TestCase):
             event.KeyDown = 0
             screen._stdin.WriteConsoleInput([event])
         else:
-            curses.ungetch(char)
+            # This works for ASCII as it is a subset of UTF-8
+            for c in char.encode("utf-8"):
+                curses.ungetch(c)
 
     @staticmethod
     def _inject_mouse(screen, x, y, button):
@@ -584,6 +593,12 @@ class TestScreen(unittest.TestCase):
             ch = screen.get_key()
             self.assertEqual(ch, ord("b"))
             self.assertIsNone(screen.get_key())
+
+            # Check that unicode input also works
+            self._inject_key(screen, ord(u"├"))
+            ch = screen.get_event()
+            self.assertEqual(ch.key_code, ord(u"├"))
+            self.assertIsNone(screen.get_event())
 
         Screen.wrapper(internal_checks, height=15)
 
