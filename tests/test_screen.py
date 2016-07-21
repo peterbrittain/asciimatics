@@ -540,8 +540,8 @@ class TestScreen(unittest.TestCase):
             screen._stdin.WriteConsoleInput([event])
         else:
             # This works for ASCII as it is a subset of UTF-8
-            for c in char.encode("utf-8"):
-                curses.ungetch(c)
+            for c in chr(char).encode("utf-8"):
+                curses.ungetch(ord(c))
 
     @staticmethod
     def _inject_mouse(screen, x, y, button):
