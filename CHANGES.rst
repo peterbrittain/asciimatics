@@ -3,6 +3,7 @@ CHANGE HISTORY
 
 1.7.0
 -----
+- Added unicode support for input and output.
 - Reworked Screen construction.
 
   - Added open() and close() methods to Screen.
@@ -15,9 +16,10 @@ CHANGE HISTORY
 - Added support for multi-colour rendering using ${c,a,b} syntax.
 - Added highlight() method to Screen and Canvas.
 - Added UT framework for testing and CI configurations to run the tests.
-- Added shadows tp Frames.
+- Added shadows to Frames.
 - Fixed bug in restoring console colours on Exit for Windows.
 - Fixed up logic for handling Ctrl keys and documented OS restrictions.
+- Fixed refresh timer in play() when handling intensive computational load.
 
 1.6.0
 -----
