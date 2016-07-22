@@ -1720,21 +1720,21 @@ else:
                              curses.REPORT_MOUSE_POSITION)
 
             # Lookup the necessary escape codes in the terminfo database.
-            self._move_y_x = curses.tigetstr(b"cup")
-            self._up_line = curses.tigetstr(b"ri").decode("utf-8")
-            self._down_line = curses.tigetstr(b"ind").decode("utf-8")
-            self._fg_color = curses.tigetstr(b"setaf")
-            self._bg_color = curses.tigetstr(b"setab")
-            if curses.tigetflag(b"hs"):
-                self._start_title = curses.tigetstr(b"tsl").decode("utf-8")
-                self._end_title = curses.tigetstr(b"fsl").decode("utf-8")
+            self._move_y_x = curses.tigetstr("cup")
+            self._up_line = curses.tigetstr("ri").decode("utf-8")
+            self._down_line = curses.tigetstr("ind").decode("utf-8")
+            self._fg_color = curses.tigetstr("setaf")
+            self._bg_color = curses.tigetstr("setab")
+            if curses.tigetflag("hs"):
+                self._start_title = curses.tigetstr("tsl").decode("utf-8")
+                self._end_title = curses.tigetstr("fsl").decode("utf-8")
             else:
                 self._start_title = self._end_title = None
-            self._a_normal = curses.tigetstr(b"sgr0").decode("utf-8")
-            self._a_bold = curses.tigetstr(b"bold").decode("utf-8")
-            self._a_reverse = curses.tigetstr(b"rev").decode("utf-8")
-            self._a_underline = curses.tigetstr(b"smul").decode("utf-8")
-            self._clear_screen = curses.tigetstr(b"clear").decode("utf-8")
+            self._a_normal = curses.tigetstr("sgr0").decode("utf-8")
+            self._a_bold = curses.tigetstr("bold").decode("utf-8")
+            self._a_reverse = curses.tigetstr("rev").decode("utf-8")
+            self._a_underline = curses.tigetstr("smul").decode("utf-8")
+            self._clear_screen = curses.tigetstr("clear").decode("utf-8")
 
             # Conversion from Screen attributes to curses equivalents.
             self._ATTRIBUTES = {
