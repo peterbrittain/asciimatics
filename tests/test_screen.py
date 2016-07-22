@@ -10,6 +10,7 @@ import unittest
 import sys
 from builtins import str
 from builtins import chr
+from builtins import bytes
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import StopApplication, NextScene
 from asciimatics.scene import Scene
@@ -543,8 +544,8 @@ class TestScreen(unittest.TestCase):
                 # Curses uses a LIFO stack for key injection, so reverse the
                 # byte string to be injected.  Note that this still works for
                 # ASCII as it is a single char subset of UTF-8.
-                for c in reversed(chr(char).encode("utf-8")):
-                    curses.ungetch(ord(c))
+                for c in reversed(bytes(chr(char).encode("utf-8"))):
+                    curses.ungetch(c)
             else:
                 # Should I be reverse mapping here?
                 curses.ungetch(char)
