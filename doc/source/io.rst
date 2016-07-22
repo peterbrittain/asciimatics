@@ -88,6 +88,17 @@ that is at least as long as the text to be displayed.  This method is typically
 used for displaying complex, multi-coloured text from a Renderer.  See
 :ref:`animation-ref` for more details.
 
+Unicode support
+^^^^^^^^^^^^^^^
+As of V1.7, asciimatics is officially misleadingly named!  It has support for
+unicode input and output.  Just use a unicode literal where you would
+previously have used a string.  For example:
+
+.. code-block:: python
+
+    # Should have a telephone at the start...
+    screen.print_at(u'☎ Call me!', 0, 0, COLOUR_GREEN, A_BOLD)
+
 Refreshing the Screen
 ---------------------
 Just using the above methods to output to screen isn't quite enough.
@@ -124,6 +135,10 @@ For example, if you press 'a' normally :py:meth:`.get_event` will return
 a KeyboardEvent with ``key_code`` 97, which is ``ord('a')``.  If you press the
 same key with caps lock on, you will get 65, which is ``ord('A')``.  If you
 press 'F7' you will always get ``KEY_F7`` irrespective of the caps lock.
+
+As of V1.7, you can also get keyboard events for Unicode characters outside
+the ASCII character set.  These will also return the ordinal representation of
+the unicode character, just like the previous support for ASCII characters.
 
 MouseEvent
 ^^^^^^^^^^
