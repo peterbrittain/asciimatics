@@ -33,9 +33,9 @@ Why not?  It brings a little joy to anyone who was programming in the 80s...
 Oh and it provides a single cross-platform Python class to do all the low-level
 console function you could ask for, including:
 
-* Coloured/styled text - including 256 colour terminals
+* Coloured/styled text - including 256 colour terminals and unicode characters
 * Cursor positioning
-* Keyboard input (without blocking or echoing)
+* Keyboard input (without blocking or echoing) including unicode support
 * Mouse input (terminal permitting)
 * Detecting and handling when the console resizes
 * Screen scraping
