@@ -540,8 +540,10 @@ class TestScreen(unittest.TestCase):
             screen._stdin.WriteConsoleInput([event])
         else:
             if char > 0:
-                # This works for ASCII as it is a subset of UTF-8
-                for c in chr(char).encode("utf-8"):
+                # Curses uses a LIFO stack for key injection, so reverse the
+                # byte string to be injected.  Note that this still works for
+                # ASCII as it is a single char subset of UTF-8.
+                for c in reversed(chr(char).encode("utf-8")):
                     curses.ungetch(ord(c))
             else:
                 # Should I be reverse mapping here?
