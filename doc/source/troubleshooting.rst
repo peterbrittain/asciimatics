@@ -17,6 +17,8 @@ usually do the trick these days.
 
 Mouse support not working
 -------------------------
+Curses systems
+^^^^^^^^^^^^^^
 Mouse support isn't fully enabled by default on all terminal types.  This will
 often require some extra extensions to be enabled as described `here
 <http://unix.stackexchange.com/questions/35021/how-to-configure-the-terminal
@@ -29,6 +31,15 @@ Although it is possible to get Linux terminals to report all mouse movement,
 the reporting of mouse buttons along with movement appears to be highly
 erratic.  The best reporting appears to be using the button event mode - i.e.
 mixing ``xterm-1002`` with ``xterm-256color``.
+
+Windows
+^^^^^^^
+Asciimatics will reprogram the Windows console to report mouse events on
+start-up.  However, it is possible to change this while the application is
+running.  In particular, if you switch on QuickEdit mode, Windows will stop
+reporting mouse events and process them itself.  It is not possible to have
+both, so if you want to use the mouse in yor app, please switch off QuickEdit
+mode.
 
 Windows title does not change
 -----------------------------
