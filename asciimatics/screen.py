@@ -860,6 +860,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         self._scenes = []
         self._scene_index = 0
         self._frame = 0
+        self._idle_frame_rate = 1
         self._unhandled_input = self._unhandled_event_default
 
     @classmethod
@@ -1085,7 +1086,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 raise NextScene()
 
     def play(self, scenes, stop_on_resize=False, unhandled_input=None,
-             start_scene=None):
+             start_scene=None, idle_frame_rate=1):
         """
         Play a set of scenes.  This is effectively a helper function to wrap
         :py:meth:`.set_scenes` and :py:meth:`.draw_next_frame` to simplify
@@ -1100,6 +1101,9 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             closes the application on "Q" or "X" being pressed.
         :param start_scene: The old Scene to start from.  This must have name
             that matches the name of one of the Scenes passed in.
+        :param idle_frame_rate: The frame rate at which The Screen will refresh
+            when there is no input.  Setting higher values slows reduces the
+            CPU load of the animation, but reduces responsiveness
 
         :raises ResizeScreenError: if the screen is resized (and allowed by
             stop_on_resize).
@@ -1109,7 +1113,8 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         """
         # Initialise the Screen for animation.
         self.set_scenes(
-            scenes, unhandled_input=unhandled_input, start_scene=start_scene)
+            scenes, unhandled_input=unhandled_input, start_scene=start_scene,
+            idle_frame_rate=idle_frame_rate)
 
         # Mainline loop for animations
         try:
@@ -1128,7 +1133,8 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             # Time to stop  - just exit the function.
             return
 
-    def set_scenes(self, scenes, unhandled_input=None, start_scene=None):
+    def set_scenes(self, scenes, unhandled_input=None, start_scene=None,
+                   idle_frame_rate=1):
         """
         Remember a set of scenes to be played.  This must be called before
         using :py:meth:`.draw_next_frame`.
@@ -1139,6 +1145,9 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             closes the application on "Q" or "X" being pressed.
         :param start_scene: The old Scene to start from.  This must have name
             that matches the name of one of the Scenes passed in.
+        :param idle_frame_rate: The frame rate at which The Screen will refresh
+            when there is no input.  Setting higher values reduces the CPU
+            load of any animation, but reduces Screen responsiveness.
 
         :raises ResizeScreenError: if the screen is resized (and allowed by
             stop_on_resize).
@@ -1146,6 +1155,9 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         The unhandled input function just takes one parameter - the input
         event that was not handled.
         """
+        # Update the idle frame rate - for use later.
+        self._idle_frame_rate = idle_frame_rate
+
         # Save off the scenes now.
         self._scenes = scenes
 
@@ -1180,15 +1192,21 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         """
         scene = self._scenes[self._scene_index]
         try:
-            self._frame += 1
-            for effect in scene.effects:
-                effect.update(self._frame)
-                if effect.delete_count is not None:
-                    effect.delete_count -= 1
-                    if effect.delete_count <= 0:
-                        scene.remove_effect(effect)
-            self.refresh()
             event = self.get_event()
+
+            # Only bother with a refresh if there was an event to process or
+            # we have to refresh due to the idle frame rate threshold.
+            self._frame += 1
+            if event is not None or self._frame % self._idle_frame_rate == 0:
+                for effect in scene.effects:
+                    effect.update(self._frame)
+                    if effect.delete_count is not None:
+                        effect.delete_count -= 1
+                        if effect.delete_count <= 0:
+                            scene.remove_effect(effect)
+                self.refresh()
+
+            # Now process all the input events
             while event is not None:
                 event = scene.process_event(event)
                 if event is not None:

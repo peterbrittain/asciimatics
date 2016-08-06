@@ -170,7 +170,8 @@ def demo(screen, scene):
         Scene([ContactView(screen, contacts)], -1, name="Edit Contact")
     ]
 
-    screen.play(scenes, stop_on_resize=True, start_scene=scene)
+    screen.play(scenes, stop_on_resize=True, start_scene=scene,
+                idle_frame_rate=5)
 
 contacts = ContactModel()
 last_scene = None
