@@ -98,6 +98,20 @@ class Effect(with_metaclass(ABCMeta, object)):
         """
         return self._delete_count
 
+    @property
+    def frame_update_count(self):
+        """
+        The number of frames before this Effect should be updated.
+
+        Increasing this number potentially reduces the CPU load of a Scene (if
+        no other Effect needs to be scheduled sooner), but can affect perceived
+        responsiveness of the Scene if it is too long.  Handle with care!
+
+        A value of 0 means refreshes are not required beyond a response to an
+        input event.  It defaults to 1 for all Effects.
+        """
+        return 1
+
     @delete_count.setter
     def delete_count(self, value):
         self._delete_count = value
