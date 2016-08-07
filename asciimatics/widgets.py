@@ -343,6 +343,17 @@ class Frame(Effect):
         """
         return self._canvas
 
+    @property
+    def frame_update_count(self):
+        """
+        The number of frames before this Effect should be updated.
+        """
+        result = 1000000
+        for layout in self._layouts:
+            if layout.frame_update_count > 0:
+                result = min(result, layout.frame_update_count)
+        return result
+
     def clone(self, screen, scene):
         """
         Create a clone of this Frame into a new Screen.
@@ -600,6 +611,18 @@ class Layout(object):
         Whether this Layout is variable height or not.
         """
         return self._fill_frame
+
+    @property
+    def frame_update_count(self):
+        """
+        The number of frames before this Layout should be updated.
+        """
+        result = 1000000
+        for column in self._columns:
+            for widget in column:
+                if widget.frame_update_count > 0:
+                    result = min(result, widget.frame_update_count)
+        return result
 
     def register_frame(self, frame):
         """
@@ -966,6 +989,13 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         return self._is_disabled
 
+    @property
+    def frame_update_count(self):
+        """
+        The number of frames before this Widget should be updated.
+        """
+        return 0
+
     @disabled.setter
     def disabled(self, new_value):
         self._is_disabled = new_value
@@ -1316,6 +1346,11 @@ class Text(Widget):
     @property
     def value(self):
         return self._value
+
+    @property
+    def frame_update_count(self):
+        # Force refresh for cursor if needed.
+        return 5 if self._has_focus else 0
 
     @value.setter
     def value(self, new_value):
@@ -1685,6 +1720,11 @@ class TextBox(Widget):
             self._value = new_value
         if old_value != self._value and self._on_change:
             self._on_change()
+
+    @property
+    def frame_update_count(self):
+        # Force refresh for cursor if needed.
+        return 5 if self._has_focus else 0
 
 
 class ListBox(Widget):
