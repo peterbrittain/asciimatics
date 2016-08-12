@@ -1494,6 +1494,7 @@ if sys.platform == "win32":
                     # _any_ event that appears to have popped up from nowhere
                     # as long as the Alt key is present.
                     key_code = ord(event.Char)
+                    logger.debug("Processing key: %x", key_code)
                     if (event.KeyDown or
                             (key_code > 0 and key_code not in self._keys and
                              event.VirtualKeyCode == win32con.VK_MENU)):
@@ -1532,6 +1533,8 @@ if sys.platform == "win32":
 
                 elif event.EventType == win32console.MOUSE_EVENT:
                     # Translate into a MouseEvent object.
+                    logger.debug("Processing mouse: %d, %d",
+                                 event.MousePosition.X, event.MousePosition.Y)
                     button = 0
                     if event.EventFlags == 0:
                         # Button pressed - translate it.

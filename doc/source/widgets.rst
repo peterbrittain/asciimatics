@@ -721,6 +721,17 @@ formal definition of the API is defined as follows.
         :param scene: The new Scene object to clone into.
         """
 
+Reducing CPU usage
+~~~~~~~~~~~~~~~~~~
+It is the nature of text UIs that they don't need to refresh anywhere near as
+often as a full-blown animated Scene.  Asciimatics therefore optimizes the
+refresh rate when only Frames are being displayed on the Screen.
+
+However, there are some widgets that can reduce the need for animation even
+further by not requesting animation updates (e.g. for a blinking cursor).  If
+this is an issue for your application, you can specify ``reduce_cpu=True`` when
+constructing your Frames.  See contact_list.py for an example of this.
+
 Custom widgets
 --------------
 To develop your own widget, you need to define a new class that inherits from

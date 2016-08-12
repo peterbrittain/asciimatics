@@ -20,6 +20,7 @@ CHANGE HISTORY
 - Fixed bug in restoring console colours on Exit for Windows.
 - Fixed up logic for handling Ctrl keys and documented OS restrictions.
 - Fixed refresh timer in play() when handling intensive computational load.
+- Improved CPU usage for Widgets-based UIs.
 
 1.6.0
 -----
