@@ -130,7 +130,8 @@ class ContactView(Frame):
                                           screen.height * 2 // 3,
                                           screen.width * 2 // 3,
                                           hover_focus=True,
-                                          title="Contact Details")
+                                          title="Contact Details",
+                                          reduce_cpu=True)
         # Save off the model that accesses the contacts database.
         self._model = model
 

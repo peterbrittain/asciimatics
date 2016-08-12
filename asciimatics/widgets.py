@@ -105,7 +105,7 @@ class Frame(Effect):
 
     def __init__(self, screen, height, width, data=None, on_load=None,
                  has_border=True, hover_focus=False, name=None, title=None,
-                 x=None, y=None, has_shadow=False):
+                 x=None, y=None, has_shadow=False, reduce_cpu=False):
         """
         :param screen: The Screen that owns this Frame.
         :param width: The desired width of the Frame.
@@ -123,6 +123,8 @@ class Frame(Effect):
         :param y: Optional y position for the top left corner of the Frame.
         :param has_shadow: Optional flag to indicate if this Frame should have
             a shadow when drawn.
+        :param reduce_cpu: Whether to minimize CPU usage (for use on low spec
+            systems).
         """
         super(Frame, self).__init__()
         self._focus = 0
@@ -138,6 +140,7 @@ class Frame(Effect):
         self._initial_data = data if data else {}
         self._title = " " + title[0:width - 4] + " " if title else ""
         self._has_shadow = has_shadow
+        self._reduce_cpu = reduce_cpu
 
         # A unique name is needed for cloning.  Try our best to get one!
         self._name = title if name is None else name
@@ -353,6 +356,13 @@ class Frame(Effect):
             if layout.frame_update_count > 0:
                 result = min(result, layout.frame_update_count)
         return result
+
+    @property
+    def reduce_cpu(self):
+        """
+        Whether this Frame should try to optimize refreshes to reduce CPU.
+        """
+        return self._reduce_cpu
 
     def clone(self, screen, scene):
         """
@@ -1087,7 +1097,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         :param y: The y coordinate for the cursor.
         """
         (colour, attr, bg) = self._pick_colours("edit_text")
-        if frame_no % 10 < 5:
+        if frame_no % 10 < 5 or self._frame.reduce_cpu:
             attr |= Screen.A_REVERSE
         self._frame.canvas.print_at(char, x, y, colour, attr, bg)
 
@@ -1350,7 +1360,7 @@ class Text(Widget):
     @property
     def frame_update_count(self):
         # Force refresh for cursor if needed.
-        return 5 if self._has_focus else 0
+        return 5 if self._has_focus and not self._frame.reduce_cpu else 0
 
     @value.setter
     def value(self, new_value):
@@ -1724,7 +1734,7 @@ class TextBox(Widget):
     @property
     def frame_update_count(self):
         # Force refresh for cursor if needed.
-        return 5 if self._has_focus else 0
+        return 5 if self._has_focus and not self._frame.reduce_cpu else 0
 
 
 class ListBox(Widget):
