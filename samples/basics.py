@@ -15,7 +15,7 @@ import sys
 def _speak(screen, text, pos, start):
     return Print(
         screen,
-        SpeechBubble(text, "L"),
+        SpeechBubble(text, "L", uni=screen.unicode_aware),
         x=pos[0] + 4, y=pos[1] - 4,
         colour=Screen.COLOUR_CYAN,
         clear=True,
@@ -53,7 +53,8 @@ def demo(screen):
         Arrow(screen, path, colour=Screen.COLOUR_GREEN),
         _speak(screen, "Let's start with the Screen...", podium, 10),
         _speak(screen, "This is your Screen object.", podium, 80),
-        Print(screen, Box(screen.width, screen.height, uni=True),
+        Print(screen,
+              Box(screen.width, screen.height, uni=screen.unicode_aware),
               0, 0, start_frame=90),
         _speak(screen, "It lets you play a Scene like this one I'm in.",
                podium, 150),
@@ -177,7 +178,7 @@ def demo(screen):
 if __name__ == "__main__":
     while True:
         try:
-            Screen.wrapper(demo)
+            Screen.wrapper(demo, unicode_aware=True)
             sys.exit(0)
         except ResizeScreenError:
             pass

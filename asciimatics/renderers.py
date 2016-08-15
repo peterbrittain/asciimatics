@@ -1,4 +1,4 @@
-# coding=utf-8
+# -*- coding: utf-8 -*-
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
@@ -424,7 +424,7 @@ class SpeechBubble(StaticRenderer):
     Renders supplied text into a speech bubble.
     """
 
-    def __init__(self, text, tail=None):
+    def __init__(self, text, tail=None, uni=False):
         """
         :param text: The text to be put into a speech bubble.
         :param tail: Where to put the bubble callout tail, specifying "L" or
@@ -432,9 +432,15 @@ class SpeechBubble(StaticRenderer):
         """
         super(SpeechBubble, self).__init__()
         max_len = max([len(x) for x in text.split("\n")])
-        bubble = ".-" + "-" * max_len + "-.\n"
-        for line in text.split("\n"):
-            bubble += "| " + line + " |\n"
+        if uni:
+            bubble = "╭─" + "─" * max_len + "─╮\n"
+            for line in text.split("\n"):
+                bubble += "│ " + line + " │\n"
+            bubble += "╰─" + "─" * max_len + "─╯\n"
+        else:
+            bubble = ".-" + "-" * max_len + "-.\n"
+            for line in text.split("\n"):
+                bubble += "| " + line + " |\n"
             bubble += "`-" + "-" * max_len + "-`\n"
         if tail == "L":
             bubble += "  )/  \n"
