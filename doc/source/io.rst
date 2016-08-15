@@ -163,17 +163,22 @@ Screen Resizing
 ---------------
 It is not possible to change the Screen size through your program.  However, the
 user may resize their terminal or console while your program is running.
+Asciimatics will continue to run as best as it can within its original
+dimensions, or you can tell it to re-create the Screen to the new size if
+desired.
 
-You can read the current  size from the :py:obj:`~.Screen.dimensions` property
-of the Screen.  Rather than poll this property for changes, you can check if
-your Screen has resized by calling the :py:meth:`.has_resized` method.  This
-will tell you if the dimensions have been changed by the user at any time since
-it was last called.
+In a little more detail, you can read the Screen size (at the time of creation)
+from the :py:obj:`~.Screen.dimensions` property.  If the user changes the size
+at any point, you can detect this by calling the :py:meth:`.has_resized` method.
+In addition, you can tell the Screen to throw an exception if this happens while
+you are playing a Scene by specifying ``stop_on_resize=True``.
 
-In addition, you can tell the Screen to throw an exception if this happens
-while you are playing a Scene by specifying ``stop_on_resize=True``.  This
-should then allow your program to redefine the Scenes as needed and then pass
-the new Scenes to the Screen to play them instead.
+Once you have detetected that the screen size has changed using one of the
+options above, you can either decide to carry on with the current Screen or
+throw it away and create a new one (by simply creating a new Screen object). If
+you do the latter, you will typically need to recreate your associated Scenes
+and Effects to run inside the new boundaries.  See the bars.py demo as a sample
+of how to handle this.
 
 Scraping Text
 -------------
