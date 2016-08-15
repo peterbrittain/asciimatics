@@ -35,6 +35,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
 
     # Characters for anti-aliasing line drawing.
     _line_chars = " ''^.|/7.\\|Ywbd#"
+    _uni_line_chars = " ⠃⠘⠛⡄⡇⡜⡟⢠⢣⢸⢻⣤⣧⣼⣿"
 
     #  Colour palette for 8/16 colour terminals
     _8_palette = [
@@ -308,14 +309,18 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         0xee, 0xee, 0xee,
     ]
 
-    def __init__(self, height, width, buffer_height, colours):
+    def __init__(self, height, width, buffer_height, colours, unicode_aware):
         """
         :param height: The buffer height for this object.
         :param width: The buffer width for this object.
         :param buffer_height: The buffer height for this object.
         :param colours: Number of colours for this object.
+        :param unicode_aware: Force use of unicode options for this object.
         """
         super(_AbstractCanvas, self).__init__()
+
+        # Can we handle unicode environments?
+        self._unicode_aware = unicode_aware
 
         # Create screen buffers.
         self.height = height
@@ -427,6 +432,13 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         :return: The start line of the top of the canvas.
         """
         return self._start_line
+
+    @property
+    def unicode_aware(self):
+        """
+        :return: Whether unicode input/output is supported or not.
+        """
+        return self._unicode_aware
 
     @property
     def dimensions(self):
@@ -606,6 +618,10 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         :param bg: Optional background colour for plotting the line.
         :param thin: Optional width of anti-aliased line.
         """
+        # Decide what type of line drawing to use.
+        line_chars = (self._uni_line_chars if self._unicode_aware else
+                      self._line_chars)
+
         # Define line end points.
         x0 = self._x
         y0 = self._y
@@ -651,10 +667,10 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                     x += sx
 
                 if char is None:
-                    self.print_at(self._line_chars[next_chars[0]],
+                    self.print_at(line_chars[next_chars[0]],
                                   px // 2, py // 2, colour, bg=bg)
                     if next_chars[1] != 0:
-                        self.print_at(self._line_chars[next_chars[1]],
+                        self.print_at(line_chars[next_chars[1]],
                                       px // 2, py // 2 + sy, colour, bg=bg)
                 elif char == " ":
                     self.print_at(char, px // 2, py // 2, bg=bg)
@@ -684,11 +700,11 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                     y += sy
 
                 if char is None:
-                    self.print_at(self._line_chars[next_chars[0]],
+                    self.print_at(line_chars[next_chars[0]],
                                   px // 2, py // 2, colour, bg=bg)
                     if next_chars[1] != 0:
                         self.print_at(
-                            self._line_chars[next_chars[1]],
+                            line_chars[next_chars[1]],
                             px // 2 + sx, py // 2, colour, bg=bg)
                 elif char == " ":
                     self.print_at(char, px // 2, py // 2, bg=bg)
@@ -717,7 +733,8 @@ class Canvas(_AbstractCanvas):
         """
         # Save off the screen details.
         # TODO: Fix up buffer logic once and for all!
-        super(Canvas, self).__init__(height, width, 200, screen.colours)
+        super(Canvas, self).__init__(
+            height, width, 200, screen.colours, screen.unicode_aware)
         self._screen = screen
         self._dx = (screen.width - width) // 2 if x is None else x
         self._dy = (screen.height - height) // 2 if y is None else y
@@ -840,11 +857,13 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
     KEY_CONTROL = -601
     KEY_MENU = -602
 
-    def __init__(self, height, width, buffer_height):
+    def __init__(self, height, width, buffer_height, unicode_aware):
         """
         Don't call this constructor directly.
         """
-        super(Screen, self).__init__(height, width, buffer_height, 0)
+        super(Screen, self).__init__(
+            height, width, buffer_height, 0, unicode_aware)
+
         # Initialize base class variables - e.g. those used for drawing.
         self.height = height
         self.width = width
@@ -864,7 +883,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         self._unhandled_input = self._unhandled_event_default
 
     @classmethod
-    def open(cls, height=200, catch_interrupt=False):
+    def open(cls, height=200, catch_interrupt=False, unicode_aware=False):
         """
         Construct a new Screen for any platform.  This will just create the
         correct Screen object for your environment.  See :py:meth:`.wrapper` for
@@ -873,6 +892,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         :param height: The buffer height for this window (if using scrolling).
         :param catch_interrupt: Whether to catch and prevent keyboard
             interrupts.  Defaults to False to maintain backwards compatibility.
+        :param unicode_aware: Whether the application can use unicde or not.
         """
         if sys.platform == "win32":
             # Clone the standard output buffer so that we can do whatever we
@@ -928,7 +948,8 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 new_mode &= ~win32console.ENABLE_PROCESSED_INPUT
             win_in.SetConsoleMode(new_mode)
 
-            screen = _WindowsScreen(win_out, win_in, height, old_out, in_mode)
+            screen = _WindowsScreen(win_out, win_in, height, old_out, in_mode,
+                                    unicode_aware=unicode_aware)
         else:
             # Reproduce curses.wrapper()
             stdscr = curses.initscr()
@@ -943,8 +964,9 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 curses.start_color()
             except:
                 pass
-            screen = _CursesScreen(
-                stdscr, height, catch_interrupt=catch_interrupt)
+            screen = _CursesScreen(stdscr, height,
+                                   catch_interrupt=catch_interrupt,
+                                   unicode_aware=unicode_aware)
 
         return screen
 
@@ -957,7 +979,8 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         """
 
     @classmethod
-    def wrapper(cls, func, height=200, catch_interrupt=False, arguments=None):
+    def wrapper(cls, func, height=200, catch_interrupt=False, arguments=None,
+                unicode_aware=False):
         """
         Construct a new Screen for any platform.  This will initialize the
         Screen, call the specified function and then tidy up the system as
@@ -969,8 +992,11 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             interrupts.  Defaults to False to maintain backwards compatibility.
         :param arguments: Optional arguments list to pass to func (after the
             Screen object).
+        :param unicode_aware: Whether the application can use unicde or not.
         """
-        screen = Screen.open(height, catch_interrupt=catch_interrupt)
+        screen = Screen.open(height,
+                             catch_interrupt=catch_interrupt,
+                             unicode_aware=unicode_aware)
         restore = True
         try:
             try:
@@ -1412,7 +1438,8 @@ if sys.platform == "win32":
             Screen.A_UNDERLINE: lambda x: x
         }
 
-        def __init__(self, stdout, stdin, buffer_height, old_out, old_in):
+        def __init__(self, stdout, stdin, buffer_height, old_out, old_in,
+                     unicode_aware=False):
             """
             :param stdout: The win32console PyConsoleScreenBufferType object for
                 stdout.
@@ -1424,12 +1451,14 @@ if sys.platform == "win32":
                 object for stdout that should be restored on exit.
             :param old_in: The original stdin state that should be restored on
                 exit.
+            :param unicode_aware: Whether this Screen can use unicode or not.
             """
             # Save off the screen details and set up the scrolling pad.
             info = stdout.GetConsoleScreenBufferInfo()['Window']
             width = info.Right - info.Left + 1
             height = info.Bottom - info.Top + 1
-            super(_WindowsScreen, self).__init__(height, width, buffer_height)
+            super(_WindowsScreen, self).__init__(
+                height, width, buffer_height, unicode_aware)
 
             # Save off the console details.
             self._stdout = stdout
@@ -1707,16 +1736,18 @@ else:
             # there's no translation for them either.
         }
 
-        def __init__(self, win, height=200, catch_interrupt=False):
+        def __init__(self, win, height=200, catch_interrupt=False,
+                     unicode_aware=False):
             """
             :param win: The window object as returned by the curses wrapper
                 method.
             :param height: The height of the screen buffer to be used.
             :param catch_interrupt: Whether to catch SIGINT or not.
+            :param unicode_aware: Whether this Screen can use unicode or not.
             """
             # Save off the screen details.
             super(_CursesScreen, self).__init__(
-                win.getmaxyx()[0], win.getmaxyx()[1], height)
+                win.getmaxyx()[0], win.getmaxyx()[1], height, unicode_aware)
             self._screen = win
             self._screen.keypad(1)
 
