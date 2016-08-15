@@ -9,13 +9,14 @@ from asciimatics.widgets import Frame, Layout, Button, Label, TextBox, Text, \
 
 
 class TestFrame(Frame):
-    def __init__(self, screen, has_border=True):
+    def __init__(self, screen, has_border=True, reduce_cpu=False):
         super(TestFrame, self).__init__(screen,
                                         screen.height,
                                         screen.width,
                                         name="Test Form",
                                         has_border=has_border,
-                                        hover_focus=True)
+                                        hover_focus=True,
+                                        reduce_cpu=reduce_cpu)
         layout = Layout([1, 18, 1])
         self.add_layout(layout)
         self._reset_button = Button("Reset", self._reset)
@@ -708,6 +709,45 @@ class TestWidgets(unittest.TestCase):
         frame.clone(canvas, scene2)
         self.assertEqual(frame2.data, frame.data)
 
+    def test_frame_rate(self):
+        """
+        Check Frame rate limiting works as expected.
+        """
+        screen = MagicMock(spec=Screen, colours=8)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame(canvas)
+        form.reset()
+
+        # With no special CPU consideration, and a cursor to animate, there
+        # should be a 5 frame pause.
+        self.assertEqual(form.reduce_cpu, False)
+        self.assertEqual(form.frame_update_count, 5)
+
+        # Shift focus away from a text input (to get no cursor animation).
+        self.process_keys(form, [Screen.KEY_BACK_TAB])
+
+        # With no special CPU consideration, and no cursors to animate, there
+        # should be a (very!) long pause.
+        self.assertEqual(form.reduce_cpu, False)
+        self.assertEqual(form.frame_update_count, 1000000)
+
+    def test_cpu_saving(self):
+        """
+        Check Frame rate limiting is even more extreme when in cpu saving mode.
+        """
+        screen = MagicMock(spec=Screen, colours=8)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame(canvas, reduce_cpu=True)
+        form.reset()
+
+        # In this mode, it shouldn't matter where we are on the Frame - all
+        # widgets will basically say they don't need animation.
+        self.assertEqual(form.reduce_cpu, True)
+        self.assertEqual(form.frame_update_count, 1000000)
+
+        # Shift focus away from a text input, just to be sure.
+        self.process_keys(form, [Screen.KEY_BACK_TAB])
+        self.assertEqual(form.frame_update_count, 1000000)
 
 
 if __name__ == '__main__':
