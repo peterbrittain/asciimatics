@@ -69,7 +69,7 @@ class TestEffects(unittest.TestCase):
         Check that Scroll works.
         """
         # Check that it will attempt to scroll the screen at the required rate.
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         effect = Scroll(screen, 2)
         effect.reset()
         effect.update(1)
@@ -89,7 +89,7 @@ class TestEffects(unittest.TestCase):
         Check that Cycle works.
         """
         # Check that cycle swaps colours every other frame.
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         effect = Cycle(screen, StaticRenderer(images=["hello"]), 2)
         effect.reset()
         # First 2 calls should do nothing and use black.
@@ -116,7 +116,7 @@ class TestEffects(unittest.TestCase):
         Check that BannerText works.
         """
         # Check that banner redraws every frame.
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 100, 0, 0)
         effect = BannerText(canvas, StaticRenderer(images=["hello"]), 2, 3)
         effect.reset()
@@ -139,7 +139,7 @@ class TestEffects(unittest.TestCase):
         Check that the Print Effect works.
         """
         # Check that print only redraws on specified rate.
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         effect = Print(screen, StaticRenderer(images=["hello"]), 2, 1)
         effect.reset()
         effect.update(0)
@@ -167,7 +167,7 @@ class TestEffects(unittest.TestCase):
         Check that Mirage works.
         """
         # Check that Mirage randomly updates the Screen every other frame.
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         effect = Mirage(canvas, FigletText("hello"), 3, 1)
         effect.reset()
@@ -193,7 +193,7 @@ class TestEffects(unittest.TestCase):
         Check that Stars works.
         """
         # Check that Stars randomly updates the Screen every frame.
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         effect = Stars(canvas, 100)
         effect.reset()
@@ -218,7 +218,7 @@ class TestEffects(unittest.TestCase):
         Check that the Matrix works.
         """
         # Check that Matrix randomly updates the Screen every other frame.
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         effect = Matrix(canvas)
         effect.reset()
@@ -244,7 +244,7 @@ class TestEffects(unittest.TestCase):
         Check that Snow works.
         """
         # Check that Snow randomly updates the Screen every 3rd frame.
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         effect = Snow(canvas)
         effect.reset()
@@ -270,7 +270,7 @@ class TestEffects(unittest.TestCase):
         Check that Wipe works.
         """
         # Check that Wipe clears lines going down the screen.
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         effect = Wipe(canvas)
         effect.reset()
@@ -301,7 +301,7 @@ class TestEffects(unittest.TestCase):
         Check that Clock works.
         """
         # Check that Clock updates every second.
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         mock_datetime.now.return_value = datetime
         mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
         canvas = Canvas(screen, 10, 40, 0, 0)
@@ -357,7 +357,7 @@ class TestEffects(unittest.TestCase):
         Check that Sprites work.
         """
         # Check that we can move a Sprite around the screen.
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         path = Path()
         path.jump_to(10, 5)
@@ -388,7 +388,7 @@ class TestEffects(unittest.TestCase):
         """
         Check that Sprites detect overlap.
         """
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         path = Path()
         path.jump_to(10, 5)
@@ -416,7 +416,7 @@ class TestEffects(unittest.TestCase):
         Check that Cog works.
         """
         # Check that Cog updates the Screen every other frame.
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         effect = Cog(canvas, 10, 5, 5)
         effect.reset()
@@ -443,7 +443,7 @@ class TestEffects(unittest.TestCase):
         Check that RandomNoise works.
         """
         # Check that RandomNoise updates every frame.
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         effect = RandomNoise(canvas)
         effect.reset()
@@ -469,7 +469,7 @@ class TestEffects(unittest.TestCase):
         Check that Julia works.
         """
         # Check that Julia updates every frame.
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         effect = Julia(canvas)
         effect.reset()
