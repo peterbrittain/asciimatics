@@ -35,7 +35,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
 
     # Characters for anti-aliasing line drawing.
     _line_chars = " ''^.|/7.\\|Ywbd#"
-    _uni_line_chars = " ⠃⠘⠛⡄⡇⡜⡟⢠⢣⢸⢻⣤⣧⣼⣿"
+    _uni_line_chars = " ▘▝▀▖▌▞▛▗▚▐▜▄▙▟█"
 
     #  Colour palette for 8/16 colour terminals
     _8_palette = [

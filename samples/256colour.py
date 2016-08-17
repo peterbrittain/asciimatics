@@ -19,7 +19,7 @@ def demo(screen):
 
 while True:
     try:
-        Screen.wrapper(demo)
+        Screen.wrapper(demo, unicode_aware=True)
         sys.exit(0)
     except ResizeScreenError:
         pass
