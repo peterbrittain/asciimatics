@@ -178,7 +178,7 @@ def demo(screen):
 if __name__ == "__main__":
     while True:
         try:
-            Screen.wrapper(demo, unicode_aware=True)
+            Screen.wrapper(demo)
             sys.exit(0)
         except ResizeScreenError:
             pass

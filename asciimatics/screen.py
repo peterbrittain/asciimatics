@@ -9,6 +9,7 @@ from builtins import object
 from builtins import range
 from builtins import str
 from builtins import ord
+from builtins import chr
 from math import sqrt
 from future.utils import with_metaclass
 import time
@@ -625,8 +626,8 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         # Define line end points.
         x0 = self._x
         y0 = self._y
-        x1 = int(round(x, 1)) * 2
-        y1 = int(round(y, 1)) * 2
+        x1 = int(round(x * 2, 0))
+        y1 = int(round(y * 2, 0))
 
         # Remember last point for next line.
         self._x = x1
@@ -638,79 +639,65 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         sx = -1 if x0 > x1 else 1
         sy = -1 if y0 > y1 else 1
 
-        x_range = range(0, 2) if sx > 0 else range(1, -1, -1)
-        y_range = range(0, 2) if sy > 0 else range(1, -1, -1)
+        def _get_start_char(cx, cy):
+            needle = self.get_from(cx, cy)
+            if needle is not None:
+                letter, cfg, _, cbg = needle
+                if colour == cfg and bg == cbg and chr(letter) in line_chars:
+                    return line_chars.find(chr(letter))
+            return 0
 
-        x = x0
-        y = y0
-
-        if dx > dy:
+        def _draw_on_x(x, y):
             err = dx
+            px = x - 2
+            py = y - 2
             while x != x1:
-                next_chars = [0, 0]
-                px = x & ~1
-                py = y & ~1
-                for ix in x_range:
-                    if y >= py and y - py < 2:
-                        next_chars[0] |= 2 ** ix * 4 ** (y % 2)
-                    else:
-                        next_chars[1] |= 2 ** ix * 4 ** (y % 2)
-                    if not thin:
-                        if y + sy >= py and y + sy - py < 2:
-                            next_chars[0] |= 2 ** ix * 4 ** ((y + sy) % 2)
-                        else:
-                            next_chars[1] |= 2 ** ix * 4 ** ((y + sy) % 2)
-                    err -= 2 * dy
-                    if err < 0:
-                        y += sy
-                        err += 2 * dx
-                    x += sx
-
-                if char is None:
-                    self.print_at(line_chars[next_chars[0]],
-                                  px // 2, py // 2, colour, bg=bg)
-                    if next_chars[1] != 0:
-                        self.print_at(line_chars[next_chars[1]],
-                                      px // 2, py // 2 + sy, colour, bg=bg)
-                elif char == " ":
-                    self.print_at(char, px // 2, py // 2, bg=bg)
-                    self.print_at(char, px // 2, py // 2 + sy, bg=bg)
-                else:
-                    self.print_at(char, px // 2, py // 2, colour, bg=bg)
-        else:
-            err = dy
-            while y != y1:
-                next_chars = [0, 0]
-                px = x & ~1
-                py = y & ~1
-                for iy in y_range:
-                    if x >= px and x - px < 2:
-                        next_chars[0] |= 2 ** (x % 2) * 4 ** iy
-                    else:
-                        next_chars[1] |= 2 ** (x % 2) * 4 ** iy
-                    if not thin:
-                        if x + sx >= px and x + sx - px < 2:
-                            next_chars[0] |= 2 ** ((x + sx) % 2) * 4 ** iy
-                        else:
-                            next_chars[1] |= 2 ** ((x + sx) % 2) * 4 ** iy
-                    err -= 2 * dx
-                    if err < 0:
-                        x += sx
-                        err += 2 * dy
+                if x < px or x - px >= 2 or y < py or y - py >= 2:
+                    px = x & ~1
+                    py = y & ~1
+                    next_char = _get_start_char(px // 2, py // 2)
+                next_char |= 2 ** abs(x % 2) * 4 ** (y % 2)
+                err -= 2 * dy
+                if err < 0:
                     y += sy
+                    err += 2 * dx
+                x += sx
 
                 if char is None:
-                    self.print_at(line_chars[next_chars[0]],
+                    self.print_at(line_chars[next_char],
                                   px // 2, py // 2, colour, bg=bg)
-                    if next_chars[1] != 0:
-                        self.print_at(
-                            line_chars[next_chars[1]],
-                            px // 2 + sx, py // 2, colour, bg=bg)
-                elif char == " ":
-                    self.print_at(char, px // 2, py // 2, bg=bg)
-                    self.print_at(char, px // 2 + sx, py // 2, bg=bg)
                 else:
                     self.print_at(char, px // 2, py // 2, colour, bg=bg)
+
+        def _draw_on_y(x, y):
+            err = dy
+            px = x - 2
+            py = y - 2
+            while y != y1:
+                if x < px or x - px >= 2 or y < py or y - py >= 2:
+                    px = x & ~1
+                    py = y & ~1
+                    next_char = _get_start_char(px // 2, py // 2)
+                next_char |= 2 ** abs(x % 2) * 4 ** (y % 2)
+                err -= 2 * dx
+                if err < 0:
+                    x += sx
+                    err += 2 * dy
+                y += sy
+
+                if char is None:
+                    self.print_at(line_chars[next_char],
+                                  px // 2, py // 2, colour, bg=bg)
+                else:
+                    self.print_at(char, px // 2, py // 2, colour, bg=bg)
+        if dx > dy:
+            _draw_on_x(x0, y0)
+            if not thin:
+                _draw_on_x(x0, y0 + 1)
+        else:
+            _draw_on_y(x0, y0)
+            if not thin:
+                _draw_on_y(x0 + 1, y0)
 
 
 class Canvas(_AbstractCanvas):
@@ -883,7 +870,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         self._unhandled_input = self._unhandled_event_default
 
     @classmethod
-    def open(cls, height=200, catch_interrupt=False, unicode_aware=False):
+    def open(cls, height=200, catch_interrupt=False, unicode_aware=None):
         """
         Construct a new Screen for any platform.  This will just create the
         correct Screen object for your environment.  See :py:meth:`.wrapper` for
@@ -892,7 +879,8 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         :param height: The buffer height for this window (if using scrolling).
         :param catch_interrupt: Whether to catch and prevent keyboard
             interrupts.  Defaults to False to maintain backwards compatibility.
-        :param unicode_aware: Whether the application can use unicde or not.
+        :param unicode_aware: Whether the application can use unicode or not.
+            If None, try to detect from the environment if UTF-8 is enabled.
         """
         if sys.platform == "win32":
             # Clone the standard output buffer so that we can do whatever we
@@ -980,7 +968,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
 
     @classmethod
     def wrapper(cls, func, height=200, catch_interrupt=False, arguments=None,
-                unicode_aware=False):
+                unicode_aware=None):
         """
         Construct a new Screen for any platform.  This will initialize the
         Screen, call the specified function and then tidy up the system as
@@ -992,7 +980,8 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             interrupts.  Defaults to False to maintain backwards compatibility.
         :param arguments: Optional arguments list to pass to func (after the
             Screen object).
-        :param unicode_aware: Whether the application can use unicde or not.
+        :param unicode_aware: Whether the application can use unicode or not.
+            If None, try to detect from the environment if UTF-8 is enabled.
         """
         screen = Screen.open(height,
                              catch_interrupt=catch_interrupt,
@@ -1457,6 +1446,11 @@ if sys.platform == "win32":
             info = stdout.GetConsoleScreenBufferInfo()['Window']
             width = info.Right - info.Left + 1
             height = info.Bottom - info.Top + 1
+
+            # Detect UTF-8 if needed and then construct the Screen.
+            if unicode_aware is None:
+                # According to MSDN, 65001 is the Windows UTF-8 code page.
+                unicode_aware = win32console.GetConsoleCP() == 65001
             super(_WindowsScreen, self).__init__(
                 height, width, buffer_height, unicode_aware)
 
