@@ -263,9 +263,9 @@ class TestScreen(unittest.TestCase):
                     screen.draw(10, 10 - start, thin=line_type)
                     res = screen.get_from(1, 9 if start else 1)
                     if line_type:
-                        self.assertEqual(res[0], ord("/" if start else "\\"))
+                        self.assertEqual(res[0], ord("'" if start else "\\"))
                     else:
-                        self.assertEqual(res[0], ord("d" if start else "Y"))
+                        self.assertEqual(res[0], ord("7" if start else "Y"))
 
                     # Check clearing works too
                     screen.move(0, start)
@@ -274,7 +274,10 @@ class TestScreen(unittest.TestCase):
                     self.assertEqual(res[0], ord(" "))
 
         Screen.wrapper(
-            check_screen_and_canvas, height=15, arguments=[internal_checks])
+            check_screen_and_canvas,
+            height=15,
+            unicode_aware=False,
+            arguments=[internal_checks])
 
     def test_palette(self):
         """
