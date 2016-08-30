@@ -1739,6 +1739,14 @@ else:
             :param catch_interrupt: Whether to catch SIGINT or not.
             :param unicode_aware: Whether this Screen can use unicode or not.
             """
+            # Determine unicode support if needed.
+            if unicode_aware is None:
+                encoding = getlocale()[1]
+                if not encoding:
+                    encoding = getdefaultlocale()[1]
+                unicode_aware = (encoding is not None and
+                                 encoding.lower() == "utf-8")
+
             # Save off the screen details.
             super(_CursesScreen, self).__init__(
                 win.getmaxyx()[0], win.getmaxyx()[1], height, unicode_aware)
@@ -1794,11 +1802,6 @@ else:
             }
 
             # Byte stream processing for unicode input.
-            encoding = getlocale()[1]
-            if not encoding:
-                encoding = getdefaultlocale()[1]
-            self._process_utf8 = (encoding is not None and
-                                  encoding.lower() == "utf-8")
             self._bytes_to_read = 0
             self._bytes_to_return = b""
 
@@ -1907,7 +1910,7 @@ else:
                 elif key != -1:
                     # Handle any byte streams first
                     logger.debug("Processing key: %x", key)
-                    if self._process_utf8 and key > 0:
+                    if self._unicode_aware and key > 0:
                         if key & 0xC0 == 0xC0:
                             self._bytes_to_return = struct.pack(b"B", key)
                             self._bytes_to_read = bin(key)[2:].index("0") - 1

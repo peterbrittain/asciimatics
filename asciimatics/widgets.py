@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
@@ -253,17 +254,29 @@ class Frame(Effect):
 
         # Draw any border if needed.
         if self._has_border:
+            # Decide on box chars to use.
+            tl = u"┌" if self._canvas.unicode_aware else "+"
+            tr = u"┐" if self._canvas.unicode_aware else "+"
+            bl = u"└" if self._canvas.unicode_aware else "+"
+            br = u"┘" if self._canvas.unicode_aware else "+"
+            horiz = u"─" if self._canvas.unicode_aware else "-"
+            vert = u"│" if self._canvas.unicode_aware else "|"
+
             # Draw the basic border first.
             (colour, attr, bg) = self.palette["borders"]
             for dy in range(self._canvas.height):
                 y = self._canvas.start_line + dy
-                if dy == 0 or dy == self._canvas.height - 1:
+                if dy == 0:
                     self._canvas.print_at(
-                        "+" + ("-" * (self._canvas.width - 2)) + "+",
+                        tl + (horiz * (self._canvas.width - 2)) + tr,
+                        0, y, colour, attr, bg)
+                elif dy == self._canvas.height - 1:
+                    self._canvas.print_at(
+                        bl + (horiz * (self._canvas.width - 2)) + br,
                         0, y, colour, attr, bg)
                 else:
-                    self._canvas.print_at("|", 0, y, colour, attr, bg)
-                    self._canvas.print_at("|", self._canvas.width - 1, y,
+                    self._canvas.print_at(vert, 0, y, colour, attr, bg)
+                    self._canvas.print_at(vert, self._canvas.width - 1, y,
                                           colour, attr, bg)
 
             # Now the title
@@ -276,6 +289,11 @@ class Frame(Effect):
 
             # And now the scroll bar
             if self._canvas.height > 5:
+                # Sort out chars
+                cursor = u"█" if self._canvas.unicode_aware else "O"
+                back = u"░" if self._canvas.unicode_aware else "|"
+
+                # Now draw...
                 sb_height = self._canvas.height - 4
                 sb_pos = (self._canvas.start_line /
                           (self._max_height - self._canvas.height))
@@ -284,7 +302,7 @@ class Frame(Effect):
                 (colour, attr, bg) = self.palette["scroll"]
                 for dy in range(sb_height):
                     y = self._canvas.start_line + dy + 2
-                    self._canvas.print_at("O" if dy == sb_pos else "|",
+                    self._canvas.print_at(cursor if dy == sb_pos else back,
                                           self._canvas.width - 1, y,
                                           colour, attr, bg)
 
@@ -1239,7 +1257,8 @@ class Divider(Widget):
     def update(self, frame_no):
         (colour, attr, bg) = self._frame.palette["borders"]
         if self._draw_line:
-            self._frame.canvas.print_at("-" * self._w,
+            horiz = u"─" if self._frame.canvas.unicode_aware else "-"
+            self._frame.canvas.print_at(horiz * self._w,
                                         self._x,
                                         self._y + (self._h // 2),
                                         colour, attr, bg)
@@ -1395,9 +1414,10 @@ class CheckBox(Widget):
         self._draw_label()
 
         # Render this checkbox.
+        check_char = u"✓" if self._frame.canvas.unicode_aware else "X"
         (colour, attr, bg) = self._pick_colours("control", self._has_focus)
         self._frame.canvas.print_at(
-            "[{}] ".format("X" if self._value else " "),
+            "[{}] ".format(check_char if self._value else " "),
             self._x + self._offset,
             self._y,
             colour, attr, bg)
@@ -1473,11 +1493,14 @@ class RadioButtons(Widget):
     def update(self, frame_no):
         self._draw_label()
 
+        # Decide on check char
+        check_char = u"•" if self._frame.canvas.unicode_aware else "X"
+
         # Render the list of radio buttons.
         for i, (text, _) in enumerate(self._options):
             fg, attr, bg = self._pick_colours("control", i == self._selection)
             fg2, attr2, bg2 = self._pick_colours("field", i == self._selection)
-            check = "X" if i == self._selection else " "
+            check = check_char if i == self._selection else " "
             self._frame.canvas.print_at(
                 "({}) ".format(check),
                 self._x + self._offset,

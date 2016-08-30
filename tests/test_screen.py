@@ -610,7 +610,7 @@ class TestScreen(unittest.TestCase):
             self.assertEqual(ch.key_code, ord(u"├"))
             self.assertIsNone(screen.get_event())
 
-        Screen.wrapper(internal_checks, height=15)
+        Screen.wrapper(internal_checks, height=15, unicode_aware=True)
 
     def test_mouse_input(self):
         """

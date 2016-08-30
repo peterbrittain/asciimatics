@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
 import unittest
 import os
 import sys
@@ -90,12 +95,14 @@ class TestRenderers(unittest.TestCase):
         """
         Check that the SpeechBubble renderer works.
         """
+        # Standard rendering.
         renderer = SpeechBubble("hello")
         self.assertEqual(str(renderer),
                          ".-------.\n" +
                          "| hello |\n" +
                          "`-------`\n")
 
+        # Left bubble.
         renderer = SpeechBubble("world", tail="L")
         self.assertEqual(str(renderer),
                          ".-------.\n" +
@@ -104,6 +111,7 @@ class TestRenderers(unittest.TestCase):
                          "  )/  \n" +
                          "-\"`\n")
 
+        # Right bubble
         renderer = SpeechBubble("bye!", tail="R")
         self.assertEqual(str(renderer),
                          ".------.\n" +
@@ -111,6 +119,13 @@ class TestRenderers(unittest.TestCase):
                          "`------`\n" +
                          "    \\(  \n" +
                          "     `\"-\n")
+
+        # Unicode rendering.
+        renderer = SpeechBubble("hello", uni=True)
+        self.assertEqual(str(renderer),
+                         u"╭───────╮\n"
+                         u"│ hello │\n"
+                         u"╰───────╯\n")
 
     def test_box(self):
         """

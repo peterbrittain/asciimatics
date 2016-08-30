@@ -79,3 +79,40 @@ asciimatics will not work.  There are 2 workarounds.
    cannot actually run.  To run from the IDE, you must start a real
    console from the Terminal window e.g. using `start cmd /c "python
    <your file name>"`.
+
+.. _unicode-issues-ref:
+
+Unicode characters are not working
+----------------------------------
+Curses systems
+^^^^^^^^^^^^^^
+Most modern versions of Linux/OSX come with a good selection of glyphs supported
+as standard.  The most likely issue is that you are not using a UTF-8 locale.
+
+To set this up, follow the instructions `here
+<http://stackoverflow.com/q/7165108/4994021>`__ for OSX or `here
+<http://serverfault.com/q/275403>`__ for Linux.
+
+Windows
+^^^^^^^
+On Windows systems, there are a couple of potential issues.  The first is that
+you might be using the wrong code page.  Windows comes with `many
+<https://msdn.microsoft.com/en-us/library/windows/desktop/
+dd317756(v=vs.85).asp>`__ code pages.  By default, asciimatics will only enable
+unicode features if you are using code page 65001 (the UTF-8 code page).  You
+can fix this issue by running::
+
+    chcp 65001
+
+If this does not solve the issue, the next possibility is that you may be using
+the Lucida Console or Consolas fonts.  These do not have a full enough range
+of glyphs to support all the unicode output that asciimatics can generate.
+
+To fix this issue, you need to download a font with a wider range of glyphs
+and then install them as the default for your command prompt.  Details of how
+to do that are available `here <http://www.techrepublic.com/blog/
+windows-and-office/quick-tip-add-fonts-to-the-command-prompt/>`__.  I recommend
+that you use the `DejaVu Mono font <http://dejavu-fonts.org/wiki/Main_Page>`__,
+which you can extract from the ZIP file from the `download page
+<http://dejavu-fonts.org/wiki/Download>`__ - it is DejaVuSansMono.ttf in the TTF
+folder of the ZIP.
