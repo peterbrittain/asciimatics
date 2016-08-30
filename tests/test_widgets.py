@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
 import unittest
 from mock.mock import MagicMock
 from asciimatics.event import KeyboardEvent, MouseEvent
@@ -176,7 +181,7 @@ class TestWidgets(unittest.TestCase):
         """
         Check Frame.data works as expected.
         """
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = TestFrame(canvas)
 
@@ -203,7 +208,7 @@ class TestWidgets(unittest.TestCase):
         """
         Check Frame renders as expected.
         """
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = TestFrame(canvas)
         form.reset()
@@ -255,11 +260,67 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "+--------------------------------------+\n")
 
+    def test_unicode_rendering(self):
+        """
+        Check Frame renders as expected for unicode environments.
+        """
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=True)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame(canvas)
+        form.reset()
+
+        # Check initial rendering
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "┌──────────────────────────────────────┐\n" +
+            "│ Group 1:                             │\n" +
+            "│ My First                             █\n" +
+            "│ Box:                                 ░\n" +
+            "│                                      ░\n" +
+            "│                                      ░\n" +
+            "│                                      ░\n" +
+            "│ Text1:                               ░\n" +
+            "│ Text2:                               │\n" +
+            "└──────────────────────────────────────┘\n")
+
+        # Check scrolling works.  Should also test label splitting and ellipsis.
+        form.move_to(0, 9, 8)
+        form.update(1)
+        self.assert_canvas_equals(
+            canvas,
+            "┌──────────────────────────────────────┐\n" +
+            "│ Text3:                               │\n" +
+            "│                                      ░\n" +
+            "│ ──────────────────────────────────   ░\n" +
+            "│ Group 2:                             █\n" +
+            "│ A Longer   (•) Option 1              ░\n" +
+            "│ Selection: ( ) Option 2              ░\n" +
+            "│            ( ) Option 3              ░\n" +
+            "│ A very...  [ ] Field 1               │\n" +
+            "└──────────────────────────────────────┘\n")
+
+        # Now check button rendering.
+        form.move_to(0, 18, 8)
+        form.update(2)
+        self.assert_canvas_equals(
+            canvas,
+            "┌──────────────────────────────────────┐\n" +
+            "│            [ ] Field 3               │\n" +
+            "│                                      ░\n" +
+            "│ ──────────────────────────────────   ░\n" +
+            "│                                      ░\n" +
+            "│ < Reset >  < View Data > < Quit >    ░\n" +
+            "│                                      ░\n" +
+            "│                                      █\n" +
+            "│                                      │\n" +
+            "└──────────────────────────────────────┘\n")
+
     def test_no_border(self):
         """
         Check that a Frame with nor border works
         """
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = TestFrame(canvas, has_border=False)
         form.reset()
@@ -299,7 +360,7 @@ class TestWidgets(unittest.TestCase):
         """
         Check Frame input works as expected.
         """
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = TestFrame(canvas)
         form.reset()
@@ -328,7 +389,7 @@ class TestWidgets(unittest.TestCase):
         """
         Check TextBox input works as expected.
         """
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = TestFrame(canvas)
         form.reset()
@@ -380,7 +441,7 @@ class TestWidgets(unittest.TestCase):
         """
         Check Text input works as expected.
         """
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = TestFrame(canvas)
         form.reset()
@@ -415,7 +476,7 @@ class TestWidgets(unittest.TestCase):
         """
         Check Checkbox input works as expected.
         """
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = TestFrame(canvas)
         form.reset()
@@ -442,7 +503,7 @@ class TestWidgets(unittest.TestCase):
         """
         Check RadioButton input works as expected.
         """
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = TestFrame(canvas)
         form.reset()
@@ -468,7 +529,7 @@ class TestWidgets(unittest.TestCase):
         """
         Check mouse input works as expected.
         """
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         scene = MagicMock(spec=Scene)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = TestFrame(canvas)
@@ -514,7 +575,7 @@ class TestWidgets(unittest.TestCase):
         """
         Check widget tab stops work as expected.
         """
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = TestFrame(canvas)
         form.reset()
@@ -559,7 +620,7 @@ class TestWidgets(unittest.TestCase):
         """
         Check widget tab stops work as expected.
         """
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         scene = MagicMock(spec=Scene)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = TestFrame2(canvas, [("One", 1), ("Two", 2)])
@@ -612,7 +673,7 @@ class TestWidgets(unittest.TestCase):
         def test_on_click(selection):
             raise NextScene(str(selection))
 
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         scene = MagicMock(spec=Scene)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = PopUpDialog(canvas, "Message", ["Yes", "No"], test_on_click)
@@ -649,7 +710,7 @@ class TestWidgets(unittest.TestCase):
         def test_on_click(selection):
             raise NextScene(str(selection))
 
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         scene = MagicMock(spec=Scene)
         canvas = Canvas(screen, 10, 40, 0, 0)
         for y in range(10):
@@ -681,7 +742,7 @@ class TestWidgets(unittest.TestCase):
         def test_on_click(selection):
             raise NextScene(str(selection))
 
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         scene = MagicMock(spec=Scene)
         scene2 = Scene([], 10)
         canvas = Canvas(screen, 10, 40, 0, 0)
@@ -713,7 +774,7 @@ class TestWidgets(unittest.TestCase):
         """
         Check Frame rate limiting works as expected.
         """
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = TestFrame(canvas)
         form.reset()
@@ -735,7 +796,7 @@ class TestWidgets(unittest.TestCase):
         """
         Check Frame rate limiting is even more extreme when in cpu saving mode.
         """
-        screen = MagicMock(spec=Screen, colours=8)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = TestFrame(canvas, reduce_cpu=True)
         form.reset()

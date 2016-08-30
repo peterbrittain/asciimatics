@@ -99,6 +99,10 @@ previously have used a string.  For example:
     # Should have a telephone at the start...
     screen.print_at(u'☎ Call me!', 0, 0, COLOUR_GREEN, A_BOLD)
 
+If your system is configured to support unicode, this should be output
+correctly.  However, not all systems will work straight out of the box.
+See :ref:`unicode-issues-ref` for more details on how to fix this.
+
 Refreshing the Screen
 ---------------------
 Just using the above methods to output to screen isn't quite enough.
@@ -139,6 +143,9 @@ press 'F7' you will always get ``KEY_F7`` irrespective of the caps lock.
 As of V1.7, you can also get keyboard events for Unicode characters outside
 the ASCII character set.  These will also return the ordinal representation of
 the unicode character, just like the previous support for ASCII characters.
+
+If you are seeing random garbage instead, your system is probably not correctly
+configured for unicode.  See :ref:`unicode-issues-ref` for how to fix this.
 
 MouseEvent
 ^^^^^^^^^^
@@ -219,3 +226,15 @@ useful when trying to clear what was already drawn.  For example:
 If the resulting line is too thick, you can also pick a thinner pen by
 specifying ``thin=True``.  Examples of both styles can be found in the Clock
 sample code.
+
+.. code-block:: python
+
+    COLOUR_BLACK = 0
+    COLOUR_RED = 1
+    COLOUR_GREEN = 2
+    COLOUR_YELLOW = 3
+    COLOUR_BLUE = 4
+    COLOUR_MAGENTA = 5
+    COLOUR_CYAN = 6
+    COLOUR_WHITE = 7
+
