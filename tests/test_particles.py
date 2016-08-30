@@ -133,7 +133,7 @@ class TestParticles(unittest.TestCase):
         self.check_effect(canvas,
                           effect,
                           lambda value: self.assertIn(chr(value[0]), '|*:. '),
-                          iterations=20)
+                          iterations=15)
 
     def test_serpent_firework(self):
         """
