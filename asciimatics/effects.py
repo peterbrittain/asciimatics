@@ -319,6 +319,11 @@ class Print(Effect):
     def stop_frame(self):
         return self._stop_frame
 
+    @property
+    def frame_update_count(self):
+        # Only demand update for next update frame.
+        return self._speed - (self._frame_no % self._speed)
+
 
 class Mirage(Effect):
     """
@@ -886,6 +891,11 @@ class Clock(Effect):
     @property
     def stop_frame(self):
         return self._stop_frame
+
+    @property
+    def frame_update_count(self):
+        # Only need to update once a second
+        return 20
 
 
 class Cog(Effect):
