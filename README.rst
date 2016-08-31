@@ -159,7 +159,10 @@ in the gallery at https://github.com/peterbrittain/asciimatics/wiki.
 Bugs and enhancements
 ---------------------
 
-You can report bugs and submit enhancement requests at
+If you have a problem, please check out the troubleshooting guide
+at http://asciimatics.readthedocs.io/en/latest/troubleshooting.html.
+If this doesn't solve your problem, you can report bugs (or submit 
+enhancement requests) at
 https://github.com/peterbrittain/asciimatics/issues.
 
 Contributing to the project
