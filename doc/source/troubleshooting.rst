@@ -93,6 +93,17 @@ To set this up, follow the instructions `here
 <http://stackoverflow.com/q/7165108/4994021>`__ for OSX or `here
 <http://serverfault.com/q/275403>`__ for Linux.
 
+If that doesn't solve the problem and you are seeing unexpected lines in your
+block drawing characters, you are using a Terminal with extra spacing between
+your lines.
+
+OSX allows you to edit the spacing as explained `here <http://superuser.com/
+questions/350821/how-can-i-change-the-line-height-in-terminal-osx>`__, but 
+Linux users will probably need to install a different terminal as explained 
+`here <http://askubuntu.com/questions/194264/
+how-do-i-change-the-line-spacing-in-terminal>`__.  I have found that 
+`rxvt-unicode-256color` is most likely to work.
+
 Windows
 ^^^^^^^
 On Windows systems, there are a couple of potential issues.  The first is that
