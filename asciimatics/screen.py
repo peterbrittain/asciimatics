@@ -1101,7 +1101,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 raise NextScene()
 
     def play(self, scenes, stop_on_resize=False, unhandled_input=None,
-             start_scene=None):
+             start_scene=None, repeat=True):
         """
         Play a set of scenes.  This is effectively a helper function to wrap
         :py:meth:`.set_scenes` and :py:meth:`.draw_next_frame` to simplify
@@ -1116,6 +1116,8 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             closes the application on "Q" or "X" being pressed.
         :param start_scene: The old Scene to start from.  This must have name
             that matches the name of one of the Scenes passed in.
+        :param repeat: Whether to repeat the Scenes once it has reached the end.
+            Defaults to True.
 
         :raises ResizeScreenError: if the screen is resized (and allowed by
             stop_on_resize).
@@ -1131,7 +1133,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         try:
             while True:
                 a = time.time()
-                self.draw_next_frame()
+                self.draw_next_frame(repeat=repeat)
                 if self.has_resized():
                     if stop_on_resize:
                         self._scenes[self._scene_index].exit()
@@ -1188,10 +1190,13 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         self._idle_frame_count = 0
         self.clear()
 
-    def draw_next_frame(self):
+    def draw_next_frame(self, repeat=True):
         """
         Draw the next frame in the currently configured Scenes. You must call
         :py:meth:`.set_scenes` before using this for the first time.
+
+        :param repeat: Whether to repeat the Scenes once it has reached the end.
+            Defaults to True.
 
         :raises StopApplication: if the application should be terminated.
         """
@@ -1240,7 +1245,10 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 # Just allow next iteration of loop
                 self._scene_index += 1
                 if self._scene_index >= len(self._scenes):
-                    self._scene_index = 0
+                    if repeat:
+                        self._scene_index = 0
+                    else:
+                        raise StopApplication("Repeat disabled")
             else:
                 # Find the required scene.
                 for i, scene in enumerate(self._scenes):

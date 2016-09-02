@@ -445,6 +445,12 @@ class TestScreen(unittest.TestCase):
             self.assertTrue(test_effect1.reset_called)
             self.assertFalse(test_effect2.reset_called)
 
+            # Now check that play stops at the end when repeat=False
+            test_effect1 = MockEffect(stop=False)
+            scene1 = Scene([test_effect1], 5, name="1")
+            screen.play([scene1], repeat=False)
+            self.assertTrue(test_effect1.reset_called)
+
         Screen.wrapper(internal_checks, height=15)
 
     def test_catch_exceptions(self):
