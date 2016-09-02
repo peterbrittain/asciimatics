@@ -523,7 +523,7 @@ def demo(screen):
     ]
     scenes.append(Scene(effects, 0))
 
-    screen.play(scenes, stop_on_resize=True)
+    screen.play(scenes, stop_on_resize=True, repeat=False)
 
 
 if __name__ == "__main__":
