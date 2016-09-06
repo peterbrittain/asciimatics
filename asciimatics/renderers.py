@@ -9,6 +9,7 @@ import copy
 from random import randint, random
 from future.utils import with_metaclass
 from abc import ABCMeta, abstractproperty, abstractmethod
+from math import sin, pi, sqrt
 from pyfiglet import Figlet, DEFAULT_FONT
 from PIL import Image
 import re
@@ -830,5 +831,53 @@ class Fire(DynamicRenderer):
                                            self._buffer[y][x])]
                         bg = 0
                     self._write(char, x, y, colour[0], colour[1], bg)
+
+        return self._plain_image, self._colour_map
+
+
+class Plasma(DynamicRenderer):
+    """
+    Renderer to create a "plasma" effect using sinusoidal functions.
+
+    The implementation here uses the same techniques described in
+    http://lodev.org/cgtutor/plasma.html
+    """
+
+    # The ASCII grey scale from darkest to lightest.
+    _greyscale = ' .:;rsA23hHG#9&@'
+
+    def __init__(self, height, width, colours):
+        """
+        :param height: Height of the box to contain the flames.
+        :param width: Width of the box to contain the flames.
+        :param colours: Number of colours the screen supports.
+        """
+        super(Plasma, self).__init__(height, width)
+        self._colours = colours
+        self._t = 0
+
+    def _render_now(self):
+        super(Plasma, self)._render_now()
+
+        # Internal function for creating a sine wave radiating out from a point
+        def f(x1, y1, xp, yp, n):
+            return sin(sqrt((x1 - self._width * xp) ** 2 +
+                            4 * ((y1 - self._height * yp) ** 2)) * pi / n)
+
+        self._t += 1
+        for y in range(self._height - 1):
+            for x in range(self._width - 1):
+                value = abs(f(x + self._t / 3, y, 1 / 4, 1 / 3, 15) +
+                            f(x, y, 1 / 8, 1 / 5, 11) +
+                            f(x, y + self._t / 3, 1 / 2, 1 / 5, 13) +
+                            f(x, y, 3 / 4, 4 / 5, 13)) / 4.0
+                if self._colours >= 256:
+                    fg = 232 + value * 23
+                    attr = Screen.A_NORMAL
+                else:
+                    fg = 7 if value >= 1/3 else 0
+                    attr = Screen.A_BOLD if value < 1/3 or value > 2/3 else 0
+                char = self._greyscale[int((len(self._greyscale) - 1) * value)]
+                self._write(char, x, y, fg, attr, 0)
 
         return self._plain_image, self._colour_map

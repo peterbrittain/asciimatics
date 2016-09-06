@@ -647,21 +647,21 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                     return line_chars.find(chr(letter))
             return 0
 
-        def _draw_on_x(x, y):
+        def _draw_on_x(ix, iy):
             err = dx
-            px = x - 2
-            py = y - 2
-            while x != x1:
-                if x < px or x - px >= 2 or y < py or y - py >= 2:
-                    px = x & ~1
-                    py = y & ~1
+            px = ix - 2
+            py = iy - 2
+            while ix != x1:
+                if ix < px or ix - px >= 2 or iy < py or iy - py >= 2:
+                    px = ix & ~1
+                    py = iy & ~1
                     next_char = _get_start_char(px // 2, py // 2)
-                next_char |= 2 ** abs(x % 2) * 4 ** (y % 2)
+                next_char |= 2 ** abs(ix % 2) * 4 ** (iy % 2)
                 err -= 2 * dy
                 if err < 0:
-                    y += sy
+                    iy += sy
                     err += 2 * dx
-                x += sx
+                ix += sx
 
                 if char is None:
                     self.print_at(line_chars[next_char],
@@ -669,21 +669,21 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                 else:
                     self.print_at(char, px // 2, py // 2, colour, bg=bg)
 
-        def _draw_on_y(x, y):
+        def _draw_on_y(ix, iy):
             err = dy
-            px = x - 2
-            py = y - 2
-            while y != y1:
-                if x < px or x - px >= 2 or y < py or y - py >= 2:
-                    px = x & ~1
-                    py = y & ~1
+            px = ix - 2
+            py = iy - 2
+            while iy != y1:
+                if ix < px or ix - px >= 2 or iy < py or iy - py >= 2:
+                    px = ix & ~1
+                    py = iy & ~1
                     next_char = _get_start_char(px // 2, py // 2)
-                next_char |= 2 ** abs(x % 2) * 4 ** (y % 2)
+                next_char |= 2 ** abs(ix % 2) * 4 ** (iy % 2)
                 err -= 2 * dx
                 if err < 0:
-                    x += sx
+                    ix += sx
                     err += 2 * dy
-                y += sy
+                iy += sy
 
                 if char is None:
                     self.print_at(line_chars[next_char],
