@@ -10,7 +10,7 @@ import sys
 if sys.platform != "win32":
     import curses
 from asciimatics.renderers import StaticRenderer, FigletText, ImageFile, \
-    ColourImageFile, SpeechBubble, Box, Rainbow, BarChart, Fire
+    ColourImageFile, SpeechBubble, Box, Rainbow, BarChart, Fire, Plasma
 from asciimatics.screen import Screen
 
 
@@ -225,7 +225,8 @@ class TestRenderers(unittest.TestCase):
 
             # Check BG rendering gives same colours for FG and BG as original
             # rendering
-            for a, b in zip(renderer.rendered_text[1], renderer2.rendered_text[1]):
+            for a, b in zip(renderer.rendered_text[1],
+                            renderer2.rendered_text[1]):
                 for attr1, attr2 in zip(a, b):
                     if attr1[0] is None:
                         self.assertEqual(0, attr2[0])
@@ -389,6 +390,23 @@ class TestRenderers(unittest.TestCase):
             output = renderer.rendered_text
         for char in "\n".join(output[0]):
             self.assertIn(char, " \n")
+
+    def test_plasma(self):
+        """
+        Check that the Plasma renderer works.
+        """
+        # Check basic content of the renderer
+        renderer = Plasma(5, 10, 8)
+
+        # Check several renderings
+        for _ in range(10):
+            output = renderer.rendered_text
+            for char in "\n".join(output[0]):
+                self.assertIn(char, ' .:;rsA23hHG#9&@\n')
+
+        # Check dimensions
+        self.assertEqual(renderer.max_height, 5)
+        self.assertEqual(renderer.max_width, 10)
 
 if __name__ == '__main__':
     unittest.main()
