@@ -872,7 +872,7 @@ class Plasma(DynamicRenderer):
                             f(x, y + self._t / 3, 1 / 2, 1 / 5, 13) +
                             f(x, y, 3 / 4, 4 / 5, 13)) / 4.0
                 if self._colours >= 256:
-                    fg = 232 + value * 23
+                    fg = 232 + int(value * 23)
                     attr = Screen.A_NORMAL
                 else:
                     fg = 7 if value >= 1/3 else 0
