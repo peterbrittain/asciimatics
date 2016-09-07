@@ -1829,6 +1829,20 @@ else:
                 curses.nocbreak()
                 curses.endwin()
 
+        @staticmethod
+        def _safe_write(msg):
+            """
+            Safe write to screen - catches IOErrors on screen resize.
+
+            :param msg: The message to write to the screen.
+            """
+            try:
+                sys.stdout.write(msg)
+            except IOError:
+                # Screen resize can throw IOErrors.  These can be safely
+                # ignored as the screen will be shortly reset anyway.
+                pass
+
         def _resize_handler(self, *_):
             """
             Window resize signal handler.  We don't care about any of the
@@ -1846,11 +1860,11 @@ else:
                 down.
             """
             if lines < 0:
-                sys.stdout.write("{}{}".format(
+                self._safe_write("{}{}".format(
                     curses.tparm(self._move_y_x, 0, 0).decode("utf-8"),
                     self._up_line * -lines))
             else:
-                sys.stdout.write("{}{}".format(curses.tparm(
+                self._safe_write("{}{}".format(curses.tparm(
                     self._move_y_x, self.height, 0).decode("utf-8"),
                     self._down_line * lines))
 
@@ -1858,7 +1872,7 @@ else:
             """
             Clear the Screen of all content.
             """
-            sys.stdout.write(self._clear_screen)
+            self._safe_write(self._clear_screen)
             sys.stdout.flush()
 
         def refresh(self):
@@ -1961,20 +1975,20 @@ else:
             # Change attribute first as this will reset colours when swapping
             # modes.
             if attr != self._attr:
-                sys.stdout.write(self._a_normal)
+                self._safe_write(self._a_normal)
                 if attr != 0:
-                    sys.stdout.write(self._ATTRIBUTES[attr])
+                    self._safe_write(self._ATTRIBUTES[attr])
                 self._attr = attr
                 self._colour = None
                 self._bg = None
 
             # Now swap colours if required.
             if colour != self._colour:
-                sys.stdout.write(curses.tparm(
+                self._safe_write(curses.tparm(
                     self._fg_color, colour).decode("utf-8"))
                 self._colour = colour
             if bg != self._bg:
-                sys.stdout.write(curses.tparm(
+                self._safe_write(curses.tparm(
                     self._bg_color, bg).decode("utf-8"))
                 self._bg = bg
 
@@ -1994,15 +2008,11 @@ else:
             # Print the text at the required location and update the current
             # position.
             try:
-                sys.stdout.write(cursor + text)
-            except IOError:
-                # Screen resize can throw IOErrors.  These can be safely
-                # ignored as the screen will be shortly reset anyway.
-                pass
+                self._safe_write(cursor + text)
             except UnicodeEncodeError:
                 # This is probably a sign that the user has the wrong locale.
                 # Try to soldier on anyway.
-                sys.stdout.write(cursor + "?" * len(text))
+                self._safe_write(cursor + "?" * len(text))
 
         def set_title(self, title):
             """
@@ -2012,5 +2022,5 @@ else:
             :param title: The title to be set.
             """
             if self._start_line is not None:
-                sys.stdout.write("{}{}{}".format(self._start_title, title,
+                self._safe_write("{}{}{}".format(self._start_title, title,
                                                  self._end_title))
