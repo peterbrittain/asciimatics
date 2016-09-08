@@ -875,8 +875,9 @@ class Plasma(DynamicRenderer):
                     fg = 232 + int(value * 23)
                     attr = Screen.A_NORMAL
                 else:
-                    fg = 7 if value >= 1/3 else 0
-                    attr = Screen.A_BOLD if value < 1/3 or value > 2/3 else 0
+                    fg = (Screen.COLOUR_RED if value >= 1/3 else
+                          Screen.COLOUR_MAGENTA)
+                    attr = Screen.A_BOLD if value > 2/3 else Screen.A_NORMAL
                 char = self._greyscale[int((len(self._greyscale) - 1) * value)]
                 self._write(char, x, y, fg, attr, 0)
 
