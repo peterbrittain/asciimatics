@@ -849,6 +849,8 @@ class Plasma(DynamicRenderer):
     # Colours for different environments
     _palette_8 = [
         (Screen.COLOUR_BLUE, Screen.A_NORMAL),
+        (Screen.COLOUR_BLUE, Screen.A_NORMAL),
+        (Screen.COLOUR_MAGENTA, Screen.A_NORMAL),
         (Screen.COLOUR_MAGENTA, Screen.A_NORMAL),
         (Screen.COLOUR_RED, Screen.A_NORMAL),
         (Screen.COLOUR_RED, Screen.A_BOLD),
