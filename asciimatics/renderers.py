@@ -846,6 +846,31 @@ class Plasma(DynamicRenderer):
     # The ASCII grey scale from darkest to lightest.
     _greyscale = ' .:;rsA23hHG#9&@'
 
+    # Colours for different environments
+    _palette_8 = [
+        (Screen.COLOUR_BLUE, Screen.A_NORMAL),
+        (Screen.COLOUR_MAGENTA, Screen.A_NORMAL),
+        (Screen.COLOUR_RED, Screen.A_NORMAL),
+        (Screen.COLOUR_RED, Screen.A_BOLD),
+    ]
+    _palette_256 = [
+        (18, 0),
+        (19, 0),
+        (20, 0),
+        (21, 0),
+        (57, 0),
+        (93, 0),
+        (129, 0),
+        (201, 0),
+        (200, 0),
+        (199, 0),
+        (198, 0),
+        (197, 0),
+        (196, 0),
+        (196, 0),
+        (196, 0),
+    ]
+
     def __init__(self, height, width, colours):
         """
         :param height: Height of the box to contain the flames.
@@ -853,7 +878,7 @@ class Plasma(DynamicRenderer):
         :param colours: Number of colours the screen supports.
         """
         super(Plasma, self).__init__(height, width)
-        self._colours = colours
+        self._palette = self._palette_256 if colours >= 256 else self._palette_8
         self._t = 0
 
     def _render_now(self):
@@ -871,13 +896,8 @@ class Plasma(DynamicRenderer):
                             f(x, y, 1 / 8, 1 / 5, 11) +
                             f(x, y + self._t / 3, 1 / 2, 1 / 5, 13) +
                             f(x, y, 3 / 4, 4 / 5, 13)) / 4.0
-                if self._colours >= 256:
-                    fg = 232 + int(value * 23)
-                    attr = Screen.A_NORMAL
-                else:
-                    fg = (Screen.COLOUR_RED if value >= 1/3 else
-                          Screen.COLOUR_MAGENTA)
-                    attr = Screen.A_BOLD if value > 2/3 else Screen.A_NORMAL
+                fg, attr = self._palette[
+                    int(round(value * (len(self._palette) - 1)))]
                 char = self._greyscale[int((len(self._greyscale) - 1) * value)]
                 self._write(char, x, y, fg, attr, 0)
 
