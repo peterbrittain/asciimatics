@@ -24,6 +24,7 @@ CHANGE HISTORY
 - Added repeat flag to play() to allow termination of the animation instead of
   infinite looping.
 - Improved CPU usage for Widgets-based UIs.
+- General docs and test tidy up.
 
 1.6.0
 -----
