@@ -532,7 +532,10 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         (r1, g1, b1) = self.palette[new * 3:new * 3 + 3]
         (r2, g2, b2) = self.palette[old * 3:old * 3 + 3]
 
-        f = lambda c1, c2: ((c1 * ratio) + (c2 * (100 - ratio))) // 100
+        # Helper function to blend RGB values.
+        def f(c1, c2):
+            return ((c1 * ratio) + (c2 * (100 - ratio))) // 100
+
         r = f(r1, r2)
         g = f(g1, g2)
         b = f(b1, b2)
