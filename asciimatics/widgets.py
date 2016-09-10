@@ -383,11 +383,10 @@ class Frame(Effect):
         """
         return self._reduce_cpu
 
-    def clone(self, screen, scene):
+    def clone(self, _, scene):
         """
         Create a clone of this Frame into a new Screen.
 
-        :param screen: The new Screen object to clone into.
         :param scene: The new Scene object to clone into.
         """
         # Default implementation is to assume that the application creates a

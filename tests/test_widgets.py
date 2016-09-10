@@ -142,6 +142,14 @@ class TestFrame2(Frame):
         raise StopApplication("User pressed quit")
 
 
+class TestFrame3(Frame):
+    def __init__(self, screen):
+        super(TestFrame3, self).__init__(screen, 10, 20,
+                                         name="Blank",
+                                         has_shadow=True)
+        self.fix()
+
+
 class TestWidgets(unittest.TestCase):
 
     def assert_canvas_equals(self, canvas, expected):
@@ -399,13 +407,13 @@ class TestWidgets(unittest.TestCase):
         self.process_keys(form,  ["ABC", Screen.KEY_LEFT, "D"])
         form.save()
         self.assertEqual(form.data["TA"], ["ABDC"])
-        self.process_keys(form,  [Screen.KEY_RIGHT, "E"])
+        self.process_keys(form,  [Screen.KEY_RIGHT, Screen.KEY_RIGHT, "E"])
         form.save()
         self.assertEqual(form.data["TA"], ["ABDCE"])
-        self.process_keys(form,  ["\nFGH", Screen.KEY_UP, "I"])
+        self.process_keys(form,  ["\nFGH", Screen.KEY_UP, Screen.KEY_UP, "I"])
         form.save()
         self.assertEqual(form.data["TA"], ["ABDICE", "FGH"])
-        self.process_keys(form,  [Screen.KEY_DOWN, "J"])
+        self.process_keys(form,  [Screen.KEY_DOWN, Screen.KEY_DOWN, "J"])
         form.save()
         self.assertEqual(form.data["TA"], ["ABDICE", "FGHJ"])
         self.process_keys(form,  [Screen.KEY_HOME, "K"])
@@ -811,6 +819,39 @@ class TestWidgets(unittest.TestCase):
         self.process_keys(form, [Screen.KEY_BACK_TAB])
         self.assertEqual(form.frame_update_count, 1000000)
 
+    def test_stop_frame(self):
+        """
+        Check Frames always request no end to the Scene.
+        """
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame(canvas, reduce_cpu=True)
+        self.assertEqual(form.stop_frame, -1)
+
+    def test_empty_frame(self):
+        """
+        Check empty Frames still work.
+        """
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        scene = MagicMock(spec=Scene)
+        form = TestFrame3(canvas)
+        form.register_scene(scene)
+        form.reset()
+
+        # Check all keyboard events get swallowed
+        self.assertIsNone(form.process_event(KeyboardEvent(ord("A"))))
+
+        # Check Mouse events over the Frame are swallowed and others allowed
+        # to bubble down the input stack.
+        self.assertIsNone(
+            form.process_event(MouseEvent(20, 5, MouseEvent.LEFT_CLICK)))
+        self.assertIsNotNone(
+            form.process_event(MouseEvent(5, 5, MouseEvent.LEFT_CLICK)))
+
+        # Check form data is empty.
+        form.save()
+        self.assertEqual(form.data, {})
 
 if __name__ == '__main__':
     unittest.main()

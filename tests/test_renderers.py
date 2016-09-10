@@ -138,6 +138,13 @@ class TestRenderers(unittest.TestCase):
                          "|        |\n" +
                          "+--------+\n")
 
+        # Unicode rendering.
+        renderer = Box(10, 3, uni=True)
+        self.assertEqual(str(renderer),
+                         "┌────────┐\n" +
+                         "│        │\n" +
+                         "└────────┘\n")
+
     def test_image_files(self):
         """
         Check that the ImageFile renderer works.
@@ -350,6 +357,34 @@ class TestRenderers(unittest.TestCase):
              (None, 0, 0),
              (None, 0, 0),
              (7, 2, 0)])
+
+        # 3 colour gradients
+        renderer = BarChart(7, 20, [fn, fn], gradient=[(4, 1, 2),
+                                                       (8, 2, 3),
+                                                       (15, 3, 4)])
+        self.assertEqual(
+            renderer.rendered_text[1][2],
+            [(7, 2, 0),
+             (None, 0, 0),
+             (None, 0, 0),
+             (7, 2, 0),
+             (1, 2, 2),
+             (1, 2, 2),
+             (2, 2, 3),
+             (2, 2, 3),
+             (3, 2, 4),
+             (3, 2, 4),
+             (None, 0, 0),
+             (None, 0, 0),
+             (None, 0, 0),
+             (None, 0, 0),
+             (None, 0, 0),
+             (None, 0, 0),
+             (None, 0, 0),
+             (None, 0, 0),
+             (None, 0, 0),
+             (7, 2, 0)])
+
 
     def test_fire(self):
         """
