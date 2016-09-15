@@ -16,7 +16,7 @@ for name in sys.argv[1:]:
     if isfile(name):
         try:
             with open(name) as file:
-                coverage = "".join(file.readlines())
+                coverage = file.read()
 
             print("Processing {}".format(name))
             coverage = re.sub(r'\\\\Projects', r'\\\\projects', coverage)
