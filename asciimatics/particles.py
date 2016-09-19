@@ -57,7 +57,7 @@ class Particle(object):
         self._next_char = (
             self._default_next_char if next_char is None else next_char)
         self._last = None
-        self._parm = parm
+        self.parm = parm
         self._on_create = on_create
         self._on_each = on_each
         self._on_destroy = on_destroy
@@ -147,6 +147,19 @@ class ParticleEmitter(object):
         self.time_left = spawn
         self._blend = blend
 
+    @staticmethod
+    def _find_colour(particle, start_index, screen_data):
+        """
+        Helper function to find an existing colour in the particle palette.
+        """
+        _, fg2, attr2, bg2 = screen_data
+        index = start_index
+        for i, colours in enumerate(particle.colours):
+            if (fg2, attr2, bg2) == colours:
+                index = i
+                break
+        return index
+
     def update(self):
         """
         The function to draw a new frame for the particle system.
@@ -167,13 +180,7 @@ class ParticleEmitter(object):
                 char, x, y, fg, attr, bg = last
                 screen_data = self._screen.get_from(x, y)
                 if self._blend and screen_data:
-                    _, fg2, attr2, bg2 = screen_data
-                    index = 0
-                    for i, colours in enumerate(particle.colours):
-                        if (fg2, attr2, bg2) == colours:
-                            index = i
-                            break
-                    index -= 1
+                    index = self._find_colour(particle, 0, screen_data) - 1
                     fg, attr, bg = particle.colours[max(index, 0)]
                 self._screen.print_at(" ", x, y, fg, attr, bg)
 
@@ -182,13 +189,7 @@ class ParticleEmitter(object):
                 char, x, y, fg, attr, bg = particle.next()
                 screen_data = self._screen.get_from(x, y)
                 if self._blend and screen_data:
-                    _, fg2, attr2, bg2 = screen_data
-                    index = -1
-                    for i, colours in enumerate(particle.colours):
-                        if (fg2, attr2, bg2) == colours:
-                            index = i
-                            break
-                    index += 1
+                    index = self._find_colour(particle, -1, screen_data) + 1
                     fg, attr, bg = \
                         particle.colours[min(index, len(particle.colours) - 1)]
                 self._screen.print_at(char, x, y, fg, attr, bg)
@@ -355,9 +356,9 @@ class SerpentExplosion(ParticleEmitter):
     def _explode(particle):
         # Change direction like a serpent firework.
         if particle.time % 3 == 0:
-            particle._parm = uniform(0, 2 * pi)
-        particle.dx = (particle.dx + cos(particle._parm) / 2) * 0.8
-        particle.dy = (particle.dy + sin(particle._parm) / 4) * 0.8
+            particle.parm = uniform(0, 2 * pi)
+        particle.dx = (particle.dx + cos(particle.parm) / 2) * 0.8
+        particle.dy = (particle.dy + sin(particle.parm) / 4) * 0.8
         particle.x += particle.dx
         particle.y += particle.dy
 

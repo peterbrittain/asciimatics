@@ -12,6 +12,7 @@ CHANGE HISTORY
 
 - Added set_scenes() and draw_next_frame() to allow asynchronous frameworks to
   use Screen.
+- Added Plasma renderer and sample code to use it.
 - Added background colour support to ColourImageFile.
 - Added support for multi-colour rendering using ${c,a,b} syntax.
 - Added highlight() method to Screen and Canvas.
@@ -23,6 +24,7 @@ CHANGE HISTORY
 - Added repeat flag to play() to allow termination of the animation instead of
   infinite looping.
 - Improved CPU usage for Widgets-based UIs.
+- General docs and test tidy up.
 
 1.6.0
 -----
