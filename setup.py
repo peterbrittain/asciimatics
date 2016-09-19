@@ -19,7 +19,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='asciimatics',
-    version='1.6.0',
+    use_scm_version={"write_to": "asciimatics/version.py"},
     description='A cross-platform package to replace curses (mouse/keyboard '
                 'input & text colours/positioning) and create ASCII '
                 'animations',
@@ -55,6 +55,7 @@ setup(
         'Pillow >= 2.7.0',
         'future',
     ] + (['pypiwin32'] if sys.platform == 'win32' else []),
+    setup_requires=['setuptools_scm'],
     tests_require=[
         'mock',
         'nose',

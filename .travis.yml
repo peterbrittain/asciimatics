@@ -14,5 +14,6 @@ script:
 after_success:
   - mv .coverage .coverage.travis
   - appveyor-artifacts -m download
+  - python coverage_fix.py */.coverage
   - coverage combine .coverage.travis */.coverage
   - coveralls
