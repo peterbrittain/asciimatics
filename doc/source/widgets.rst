@@ -534,10 +534,14 @@ Method.  For example
 
 .. warning::
 
-    Note that the global handler is only called if the focus does not proccess
+    Note that the global handler is only called if the focus does not process
     the event.  Some widgets - e.g. TextBox - take any printable text and so
     the only keys that always get to this handler are the control codes.
     Others will sometimes get here depending on the type of Widget in focus.
+
+By default, the global handler will do nothing if you are playing any Scenes
+containing a Frame.  Otherwise it contains the top-level logic for skipping to
+the next Scene (on space or enter), or exiting the program (on Q or X).
 
 Dealing with Ctrl+C and Ctrl+Z
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

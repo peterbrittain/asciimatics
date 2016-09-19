@@ -1097,7 +1097,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             c = event.key_code
             if c in (ord("X"), ord("x"), ord("Q"), ord("q")):
                 raise StopApplication("User terminated app")
-            if c in (ord(" "), ord("\n")):
+            if c in (ord(" "), ord("\n"), ord("\r")):
                 raise NextScene()
 
     def play(self, scenes, stop_on_resize=False, unhandled_input=None,
@@ -1169,7 +1169,14 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
 
         # Set up default unhandled input handler if needed.
         if unhandled_input is None:
-            unhandled_input = self._unhandled_event_default
+            # Check that none of the Effects is incompatible with the default
+            # handler.
+            safe = True
+            for scene in self._scenes:
+                for effect in scene.effects:
+                    safe &= effect.safe_to_default_unhandled_input
+            if safe:
+                unhandled_input = self._unhandled_event_default
         self._unhandled_input = unhandled_input
 
         # Find the starting scene.  Default to first if no match.
@@ -1209,7 +1216,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             # Now process all the input events
             while event is not None:
                 event = scene.process_event(event)
-                if event is not None:
+                if event is not None and self._unhandled_input is not None:
                     self._unhandled_input(event)
                 event = self.get_event()
 

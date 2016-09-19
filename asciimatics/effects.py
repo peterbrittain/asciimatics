@@ -100,6 +100,10 @@ class Effect(with_metaclass(ABCMeta, object)):
         """
         return self._delete_count
 
+    @delete_count.setter
+    def delete_count(self, value):
+        self._delete_count = value
+
     @property
     def frame_update_count(self):
         """
@@ -114,9 +118,16 @@ class Effect(with_metaclass(ABCMeta, object)):
         """
         return 1
 
-    @delete_count.setter
-    def delete_count(self, value):
-        self._delete_count = value
+    @property
+    def safe_to_default_unhandled_input(self):
+        """
+        Whether it is safe to use the default handler for any unhandled input
+        from this Effect.
+
+        A value of False means that aciimatics should not use the default
+        handler.  This is typically the case for Frames.
+        """
+        return True
 
     def process_event(self, event):
         """
