@@ -359,6 +359,12 @@ class Frame(Effect):
         return -1
 
     @property
+    def safe_to_default_unhandled_input(self):
+        # It is NOT safe to use the unhandled input handler on Frames as the
+        # default on space and enter is to go to the next Scene.
+        return False
+
+    @property
     def canvas(self):
         """
         The Canvas that backs this Frame.
