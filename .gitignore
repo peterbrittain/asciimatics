@@ -43,3 +43,6 @@ docs/_build/
 
 # IDE
 .idea/
+
+# Workaround for setuptools_scm on RTD builds
+doc/source/conf.py

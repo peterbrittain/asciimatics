@@ -11,6 +11,13 @@ from codecs import open
 from os import path
 import sys
 
+import shutil
+ 
+with open("./doc/source/conf_orig.py", "r") as src:
+    with open("./doc/source/conf.py", "w") as dst:
+        dst.write("# FILE COPIED FROM conf_orig.py; DO NOT CHANGE\n")
+        shutil.copyfileobj(src, dst)
+
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the relevant file
