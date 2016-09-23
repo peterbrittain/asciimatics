@@ -48,7 +48,8 @@ Right arrow          Move to the first Widget in the column to the right of
 Space or Return      Select the current Widget - e.g. click a Button.
 ===================  ==========================================================
 
-Note that the cursor keys will not traverse between Layouts.
+Note that the cursor keys will not traverse between Layouts.  In addition,
+asciimatics will not allow you to navigate to a disabled widget.
 
 Inside the standard text edit Widgets, the cursor key actions are overridden and
 instead they will allow you to for navigate around the editable text as you
@@ -344,6 +345,15 @@ field, indenting all of the fields to the same depth:
     layout.add_widget(Text("Phone number:", "phone"))
     layout.add_widget(Text("Email address:", "email"))
     layout.add_widget(TextBox(5, "Notes:", "notes", as_string=True))
+
+Disabling widgets
+~~~~~~~~~~~~~~~~~
+Any widget can be disabled by setting the ``disabled`` property.  When this
+is ``True``, asciimatics will redraw the widget using the 'disabled' colour
+palette entry and prevent the user from selecting it or editing it.
+
+It is still possible to change the widget programmatically, though.  For
+example, you can still change the ``value`` of a disabled widget.
 
 Layouts in more detail
 ~~~~~~~~~~~~~~~~~~~~~~
