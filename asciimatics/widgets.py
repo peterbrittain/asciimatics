@@ -457,7 +457,6 @@ class Frame(Effect):
         :param widget: The index of the widget to take the focus.
         """
         # Find the layout to own the focus.
-        i = 0
         for i, l in enumerate(self._layouts):
             if l is layout:
                 break
