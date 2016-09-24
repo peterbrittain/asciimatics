@@ -24,10 +24,10 @@ exiting your application to restore the environment.
 Output
 ------
 Once you have a Screen, the simplest way to output text is using the
-:py:meth:`~.Scren.print_at` method.  This allows you to place a string at a desired
-location in a specified colour.  The coordinates are zero-indexed starting at
-the top left of the screen and move down and right, so the example above
-displays `Hello world!` at (0, 0) which is the top left of the screen.
+:py:meth:`~.Screen.print_at` method.  This allows you to place a string at a
+desired location in a specified colour.  The coordinates are zero-indexed
+starting at the top left of the screen and move down and right, so the example
+above displays `Hello world!` at (0, 0) which is the top left of the screen.
 
 Colours
 ^^^^^^^

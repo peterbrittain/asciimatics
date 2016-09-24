@@ -57,6 +57,7 @@ class PlasmaScene(Scene):
         self._effects = [self._effects[0]]
         self._add_cheesy_comment()
 
+
 def demo(screen):
     screen.play([PlasmaScene(screen)], stop_on_resize=True)
 

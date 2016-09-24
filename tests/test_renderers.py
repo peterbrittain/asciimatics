@@ -385,7 +385,6 @@ class TestRenderers(unittest.TestCase):
              (None, 0, 0),
              (7, 2, 0)])
 
-
     def test_fire(self):
         """
         Check that the Fire renderer works.

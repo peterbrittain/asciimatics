@@ -356,6 +356,7 @@ class PacMan(Sprite):
             if isinstance(effect, ScaredGhost) and self.overlaps(effect):
                 effect.eaten()
 
+
 class Ghost(Sprite):
     def __init__(self, screen, path, colour=1, start_frame=0, stop_frame=0):
         images = []

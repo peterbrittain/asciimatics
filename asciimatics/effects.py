@@ -124,7 +124,7 @@ class Effect(with_metaclass(ABCMeta, object)):
         Whether it is safe to use the default handler for any unhandled input
         from this Effect.
 
-        A value of False means that aciimatics should not use the default
+        A value of False means that asciimatics should not use the default
         handler.  This is typically the case for Frames.
         """
         return True

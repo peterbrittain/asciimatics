@@ -654,6 +654,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
             err = dx
             px = ix - 2
             py = iy - 2
+            next_char = 0
             while ix != x1:
                 if ix < px or ix - px >= 2 or iy < py or iy - py >= 2:
                     px = ix & ~1
@@ -676,6 +677,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
             err = dy
             px = ix - 2
             py = iy - 2
+            next_char = 0
             while iy != y1:
                 if ix < px or ix - px >= 2 or iy < py or iy - py >= 2:
                     px = ix & ~1
