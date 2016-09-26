@@ -1,6 +1,10 @@
 CHANGE HISTORY
 ==============
 
+1.7.1
+-----
+- Fixed Linux distribution
+
 1.7.0
 -----
 - Added unicode support for input and output.
