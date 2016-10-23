@@ -49,7 +49,8 @@ features including:
 * Various widgets for text UIs - e.g. buttons, text boxes, radio buttons, etc.
 
 Currently this package has been proven to work on CentOS 6 & 7, Raspbian (i.e.
-Debian wheezy), Ubuntu 14.04, Windows 7, 8 & 10 and OSX 10.11, though it should
+Debian wheezy), Ubuntu 14.04, Windows 7, 8 & 10, OSX 10.11 and Android 
+Marshmallow (courtesy of https://termux.com), though it should
 also work for any other platform that provides a working curses implementation.  
 
 (Please let me know if you successfully verified it on other platforms so
