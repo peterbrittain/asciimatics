@@ -1,6 +1,21 @@
 Troubleshooting
 ===============
 
+Installing on Android
+---------------------
+To run on Android, you need access to a CLI environment.  I've found that 
+https://termux.com does the trick, but you need to install some extra packages
+before you can install asciimatics.
+
+After installing termux, star it up and run the following commands:
+
+.. code-block:: bash
+
+    apt update
+    apt-get install clang python-dev libjpeg-dev
+    LDFLAGS=-L/system/lib pip install Pillow
+    pip install asciimatics
+
 256 colours not working
 -----------------------
 By default a lot of terminals will only support 8/16 colours.  Windows users
