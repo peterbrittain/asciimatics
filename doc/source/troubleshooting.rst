@@ -7,7 +7,7 @@ To run on Android, you need access to a CLI environment.  I've found that
 https://termux.com does the trick, but you need to install some extra packages
 before you can install asciimatics.
 
-After installing termux, star it up and run the following commands:
+After installing termux, start up the app and run the following commands:
 
 .. code-block:: bash
 
