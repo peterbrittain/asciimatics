@@ -1,6 +1,10 @@
 CHANGE HISTORY
 ==============
 
+1.7.2
+-----
+- Fixed Windows dependencies
+
 1.7.1
 -----
 - Fixed Linux distribution
