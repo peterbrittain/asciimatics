@@ -61,7 +61,10 @@ setup(
         'pyfiglet >= 0.7.2',
         'Pillow >= 2.7.0',
         'future',
-    ] + (['pypiwin32'] if sys.platform == 'win32' else []),
+    ],
+    extras_require={
+        ':sys_platform == "win32"': ['pypiwin32'],
+    },
     setup_requires=['setuptools_scm'],
     tests_require=[
         'mock',
