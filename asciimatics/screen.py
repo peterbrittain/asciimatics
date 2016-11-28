@@ -867,6 +867,10 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         self._attr = 0
         self._bg = 0
 
+        # tracking of current cursor position - used in screen refresh.
+        self._cur_x = 0
+        self._cur_y = 0
+
         # Control variables for playing out a set of Scenes.
         self._scenes = []
         self._scene_index = 0
@@ -1012,6 +1016,8 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         self._colour = None
         self._attr = None
         self._bg = None
+        self._cur_x = None
+        self._cur_y = None
 
     def refresh(self):
         """
@@ -1642,15 +1648,15 @@ if sys.platform == "win32":
             # them on the assumption that we'll resize shortly.
             try:
                 # Move the cursor if necessary
-                if x != self._x or y != self._y:
+                if x != self._cur_x or y != self._cur_y:
                     self._stdout.SetConsoleCursorPosition(
                         win32console.PyCOORDType(x, y))
 
                 # Print the text at the required location and update the current
                 # position.
                 self._stdout.WriteConsole(text)
-                self._x = x + len(text)
-                self._y = y
+                self._cur_x = x + len(text)
+                self._cur_y = y
             except pywintypes.error:
                 pass
 
@@ -2014,7 +2020,7 @@ else:
             """
             # Move the cursor if necessary
             cursor = u""
-            if x != self._x or y != self._y:
+            if x != self._cur_x or y != self._cur_y:
                 cursor = curses.tparm(self._move_y_x, y, x).decode("utf-8")
 
             # Print the text at the required location and update the current
@@ -2025,6 +2031,10 @@ else:
                 # This is probably a sign that the user has the wrong locale.
                 # Try to soldier on anyway.
                 self._safe_write(cursor + "?" * len(text))
+
+            # Update cursor position for next time...
+            self._cur_x = x + len(text)
+            self._cur_y = y
 
         def set_title(self, title):
             """

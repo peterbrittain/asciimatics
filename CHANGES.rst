@@ -1,6 +1,10 @@
 CHANGE HISTORY
 ==============
 
+2.0.0
+-----
+- Improved efficiency of screen refresh on curses systems.
+
 1.7.0
 -----
 - Added unicode support for input and output.
