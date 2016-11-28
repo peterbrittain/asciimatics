@@ -279,6 +279,38 @@ class TestScreen(unittest.TestCase):
             unicode_aware=False,
             arguments=[internal_checks])
 
+    def test_last_pos(self):
+        """
+        Check that screen drawing is efficient and unaffected by draw.
+        """
+        def internal_checks(screen):
+            # Should start with no known location.
+            screen.reset()
+            self.assertEqual(screen._cur_x, None)
+            self.assertEqual(screen._cur_y, None)
+
+            # Drawing should not affect latest update.  This was previously
+            # bugged - hence this test case!
+            screen.move(0, 0)
+            screen.draw(10, 10)
+            self.assertEqual(screen._cur_x, None)
+            self.assertEqual(screen._cur_y, None)
+
+            # Printing should not affect latest update.
+            screen.print_at("Hi", 12, 12)
+            self.assertEqual(screen._cur_x, None)
+            self.assertEqual(screen._cur_y, None)
+
+            # Refresh should update the last drawn character.
+            screen.refresh()
+            self.assertEqual(screen._cur_x, 14)
+            self.assertEqual(screen._cur_y, 12)
+
+        Screen.wrapper(
+            internal_checks,
+            height=15,
+            unicode_aware=False)
+
     def test_palette(self):
         """
         Check that we have a valid colour palette.
