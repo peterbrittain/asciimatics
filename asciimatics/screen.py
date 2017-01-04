@@ -14,7 +14,7 @@ from math import sqrt
 from future.utils import with_metaclass
 import time
 from abc import ABCMeta, abstractmethod
-import copy
+import json
 import sys
 import signal
 from asciimatics.event import KeyboardEvent, MouseEvent
@@ -348,9 +348,12 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         self._start_line = 0
         self._x = self._y = None
         line = [(u" ", Screen.COLOUR_WHITE, 0, 0) for _ in range(self.width)]
+
+        # Note that we use json to duplicate the data as copy.deepcopy is an
+        # order of magnitude slower.
         self._screen_buffer = [
-            copy.deepcopy(line) for _ in range(self._buffer_height)]
-        self._double_buffer = copy.deepcopy(self._screen_buffer)
+            json.loads(json.dumps(line)) for _ in range(self._buffer_height)]
+        self._double_buffer = json.loads(json.dumps(self._screen_buffer))
         self._reset()
 
     def scroll(self):
