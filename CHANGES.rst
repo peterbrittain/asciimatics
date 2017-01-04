@@ -4,6 +4,7 @@ CHANGE HISTORY
 2.0.0
 -----
 - Improved efficiency of screen refresh on curses systems.
+- Improved start-up time by avoiding use of deepcopy()
 
 1.7.0
 -----
