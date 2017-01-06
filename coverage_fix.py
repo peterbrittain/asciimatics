@@ -5,6 +5,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 import re
 import sys
+import os
 
 # Simple hack to fix up the path names so that the appveyor-artifacts
 # mangling finds and fixes up paths as expected in code coverage results.
@@ -12,14 +13,23 @@ import sys
 # This script does a search and replace on the whole file.
 from os.path import isfile
 
+REGEX_MANGLE = re.compile(r'"C:\\\\projects\\\\.*?"')
+
 for name in sys.argv[1:]:
     if isfile(name):
         try:
             with open(name) as file:
                 coverage = file.read()
 
+            # Updated logic from appveyor-artifacts while waiting for formal patch.
             print("Processing {}".format(name))
-            coverage = re.sub(r'\\\\Projects', r'\\\\projects', coverage)
+            for windows_path in set(REGEX_MANGLE.findall(coverage)):
+                unix_relative_path = windows_path.replace(r'\\', '/').split('/', 3)[-1][:-1]
+                unix_absolute_path = os.path.abspath(unix_relative_path)
+                if not os.path.isfile(unix_absolute_path):
+                    print('No such file: {}'.format(unix_absolute_path))
+                    sys.exit(1)
+                coverage = coverage.replace(windows_path, unix_absolute_path)
 
             with open(name, "w") as file:
                 file.writelines(coverage)
