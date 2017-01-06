@@ -13,7 +13,7 @@ script:
   nosetests --with-coverage --cover-package=asciimatics
 after_success:
   - mv .coverage .coverage.travis
-  - appveyor-artifacts -m download
+  - appveyor-artifacts download
   - python coverage_fix.py */.coverage
   - coverage combine .coverage.travis */.coverage
   - coveralls
