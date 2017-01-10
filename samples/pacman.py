@@ -400,7 +400,7 @@ class ScaredGhost(Sprite):
         path.jump_to(self._old_x + 12, self._old_y + 4)
         path.move_straight_to(
             self._old_x + 12, -8, (self._old_y + 12) // 2)
-        path.wait(100)
+        path.wait(10000)
         self._scene.add_effect(Eyes(self._screen, path))
 
 
