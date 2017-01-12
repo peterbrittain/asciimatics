@@ -31,7 +31,7 @@ setup(
                 'input & text colours/positioning) and create ASCII '
                 'animations',
     long_description=long_description,
-    url='https://github.com/peterbrittain/asciimatics.git',
+    url='https://github.com/peterbrittain/asciimatics',
     author='Peter Brittain',
     author_email='peter.brittain.os@gmail.com',
     license='Apache 2.0',
