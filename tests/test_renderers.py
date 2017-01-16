@@ -244,6 +244,51 @@ class TestRenderers(unittest.TestCase):
 
         Screen.wrapper(internal_checks, height=15)
 
+    def test_uni_image_files(self):
+        """
+        Check that the unicode ColourImageFile rendering works.
+        """
+        # Skip for non-Windows if the terminal definition is incomplete.
+        # This typically means we're running inside a non-standard terminal.
+        # For example, this happens when embedded in PyCharm.
+        if sys.platform != "win32":
+            curses.initscr()
+            if curses.tigetstr("ri") is None:
+                self.skipTest("No valid terminal definition")
+
+        def internal_checks(screen):
+            # Check the original FG only rendering
+            renderer = ColourImageFile(
+                screen,
+                os.path.join(os.path.dirname(__file__), "globe.gif"),
+                height=10, uni=True, dither=True)
+
+            # Check renderer got all images from the file.
+            count = 0
+            for image in renderer.images:
+                count += 1
+                self.assertIsNotNone(image)
+                self.assertIsNotNone(len(image) <= renderer.max_height)
+            self.assertEqual(count, 11)
+
+            # Check an image looks plausible
+            image = next(renderer.images)
+            self.assertEqual(
+                image,
+                ['.',
+                 '     ▄▄▄▄▄▄▄▄▄▄     .',
+                 '   ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄  .',
+                 ' ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ .',
+                 ' ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄.',
+                 '▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄.',
+                 '▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄.',
+                 ' ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄.',
+                 ' ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ .',
+                 '   ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄  .',
+                 '     ▄▄▄▄▄▄▄▄▄▄▄    .'])
+
+        Screen.wrapper(internal_checks, height=15)
+
     def test_rainbow(self):
         """
         Check that the Rainbow renderer works.

@@ -5,6 +5,7 @@ CHANGE HISTORY
 -----
 - Improved efficiency of screen refresh on curses systems.
 - Improved start-up time by avoiding use of deepcopy()
+- Added unicode characters to ColourFileImage to increase rendering resolution.
 
 1.7.0
 -----
