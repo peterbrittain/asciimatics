@@ -419,7 +419,7 @@ class ColourImageFile(StaticRenderer):
                     for px in range(0, new_frame.size[0]):
                         real_col = frame.getpixel((px, py))
                         real_col2 = (frame.getpixel((px, py + 1)) if uni else
-                            real_col)
+                                     real_col)
                         col = new_frame.getpixel((px, py))
                         col2 = new_frame.getpixel((px, py + 1)) if uni else col
                         if ((real_col == real_col2 == background) or
@@ -430,7 +430,8 @@ class ColourImageFile(StaticRenderer):
                                 ascii_image += "${%d} " % bg
                         else:
                             if fill_background or uni:
-                                ascii_image += "${%d,2,%d}%s" % (col2, col, brush)
+                                ascii_image += "${%d,2,%d}%s" % (col2, col,
+                                                                 brush)
                             else:
                                 ascii_image += "${%d}#" % col
                 if uni:

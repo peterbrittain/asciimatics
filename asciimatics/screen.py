@@ -879,6 +879,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         self._scene_index = 0
         self._frame = 0
         self._idle_frame_count = 0
+        self._forced_update = False
         self._unhandled_input = self._unhandled_event_default
 
     @classmethod
@@ -1209,6 +1210,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         # Reset other internal state for the animation
         self._frame = 0
         self._idle_frame_count = 0
+        self._forced_update = False
         self.clear()
 
     def draw_next_frame(self, repeat=True):
@@ -1239,7 +1241,8 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             # Effect.
             self._frame += 1
             self._idle_frame_count -= 1
-            if got_event or self._idle_frame_count <= 0:
+            if got_event or self._idle_frame_count <= 0 or self._forced_update:
+                self._forced_update = False
                 self._idle_frame_count = 1000000
                 for effect in scene.effects:
                     # Update the effect and delete if needed.
@@ -1287,6 +1290,14 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             self._idle_frame_count = 0
             if scene.clear:
                 self.clear()
+
+    def force_update(self):
+        """
+        Force the Screen to redraw the current Scene on the next call to
+        draw_next_frame, overriding the frame_update_count value for all the
+        Effects.
+        """
+        self._forced_update = True
 
     @abstractmethod
     def _change_colours(self, colour, attr, bg):

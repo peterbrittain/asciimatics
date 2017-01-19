@@ -18,22 +18,25 @@ REGEX_MANGLE = re.compile(r'"C:\\\\projects\\\\.*?"')
 for name in sys.argv[1:]:
     if isfile(name):
         try:
-            with open(name) as file:
-                coverage = file.read()
+            with open(name) as my_file:
+                coverage = my_file.read()
 
-            # Updated logic from appveyor-artifacts while waiting for formal patch.
+            # Updated logic from appveyor-artifacts while waiting for formal
+            # patch.
             print("Processing {}".format(name))
             for windows_path in set(REGEX_MANGLE.findall(coverage)):
                 print('  Found: {}'.format(windows_path))
-                unix_relative_path = windows_path.replace(r'\\', '/').split('/', 3)[-1][:-1]
+                unix_relative_path = \
+                    windows_path.replace(r'\\', '/').split('/', 3)[-1][:-1]
                 unix_absolute_path = os.path.abspath(unix_relative_path)
                 if not os.path.isfile(unix_absolute_path):
                     print('No such file: {}'.format(unix_absolute_path))
                     sys.exit(1)
-                coverage = coverage.replace(windows_path, '"' + unix_absolute_path +'"')
+                coverage = coverage.replace(
+                        windows_path, '"' + unix_absolute_path + '"')
 
-            with open(name, "w") as file:
-                file.writelines(coverage)
+            with open(name, "w") as my_file:
+                my_file.writelines(coverage)
         except UnicodeDecodeError:
             print("Skipping binary file {}".format(name))
     else:

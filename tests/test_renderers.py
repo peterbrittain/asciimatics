@@ -7,11 +7,11 @@ from builtins import str
 import unittest
 import os
 import sys
-if sys.platform != "win32":
-    import curses
 from asciimatics.renderers import StaticRenderer, FigletText, ImageFile, \
     ColourImageFile, SpeechBubble, Box, Rainbow, BarChart, Fire, Plasma
 from asciimatics.screen import Screen
+if sys.platform != "win32":
+    import curses
 
 
 class TestRenderers(unittest.TestCase):

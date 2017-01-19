@@ -14,6 +14,7 @@
 
 # import sys
 # import os
+from setuptools_scm import get_version
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -56,7 +57,6 @@ copyright = u'2015-16, Peter Brittain'
 # built documents.
 #
 # Use setuptools_scm to get detailed patch versions.
-from setuptools_scm import get_version
 base_version = get_version(root='../..', relative_to=__file__)
 # The full version, including alpha/beta/rc tags.
 release = '.'.join(base_version.split('.')[:3])
