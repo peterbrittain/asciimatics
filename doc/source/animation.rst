@@ -119,3 +119,23 @@ as follows.
 Putting this all together (by playing the Effect) you have a classic exploding
 firework.  For more examples, see the other Effects in the particles and
 fireworks samples.
+
+CPU Considerations
+------------------
+Many people run asciimatics on low-power systems and so care about CPU.  However
+there is a trade-off between CPU usage and responsiveness of any User Interface
+or the slickness of any animation.  Asciimatics tries to handle this for you by
+looking at when each ``Effect`` next wants to be redrawn and only refreshing the
+``Screen`` when needed.
+
+For most use-cases, this default should be enough for your needs.  However,
+there are a couple of cases where you might need more.  The first is very
+low-power (e.g. SOC) systems where you need to keep CPU usage to a minimum for
+a widget-based UI.  In this case, you can use the ``reduce_cpu`` parameter
+when constructing your :py:obj:`.Frame`.
+
+The other case, is actually the opposite problem - you may find that
+asciimatics is being too conservative and you need to refresh the ``Screen``
+before it thinks you need to do so.  In this case, you can simply force its hand
+by calling :py:meth:`.force_update`, which will force a full refresh of the
+``Screen`` next time that :py:meth:`.draw_next_frame` is called.

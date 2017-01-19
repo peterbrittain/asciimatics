@@ -27,6 +27,9 @@ else:
 def check_screen_and_canvas(screen, fn):
     """
     Helper function to check that a Screen and Canvas work identically.
+
+    :param screen: The screen object to use for the test.
+    :param fn: The function to call for the test.
     """
     for test_object in (screen, Canvas(screen, screen.height, screen.width)):
         fn(test_object)
@@ -482,6 +485,30 @@ class TestScreen(unittest.TestCase):
             scene1 = Scene([test_effect1], 5, name="1")
             screen.play([scene1], repeat=False)
             self.assertTrue(test_effect1.reset_called)
+
+        Screen.wrapper(internal_checks, height=15)
+
+    def test_forced_update(self):
+        """
+        Check that forcing an update works as expected.
+        """
+        def internal_checks(screen):
+            # First check that Effects are always drawn at Scene start
+            test_effect = MockEffect(count=101, stop_frame=101, frame_rate=100)
+            screen.set_scenes([Scene([test_effect], 0)])
+            screen.draw_next_frame()
+            self.assertTrue(test_effect.update_called)
+
+            # Now check that the Screen honours the long frame rate...
+            test_effect.update_called = False
+            for _ in range(90):
+                screen.draw_next_frame()
+            self.assertFalse(test_effect.update_called)
+
+            # Now check that the forced update works as expected.
+            screen.force_update()
+            screen.draw_next_frame()
+            self.assertTrue(test_effect.update_called)
 
         Screen.wrapper(internal_checks, height=15)
 
