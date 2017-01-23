@@ -295,10 +295,13 @@ class Frame(Effect):
 
                 # Now draw...
                 sb_height = self._canvas.height - 4
-                sb_pos = (self._canvas.start_line /
-                          (self._max_height - self._canvas.height))
-                sb_pos = min(1, max(0, sb_pos))
-                sb_pos = max(int(sb_height * sb_pos) - 1, 0)
+                try:
+                    sb_pos = (self._canvas.start_line /
+                              (self._max_height - self._canvas.height))
+                    sb_pos = min(1, max(0, sb_pos))
+                    sb_pos = max(int(sb_height * sb_pos) - 1, 0)
+                except ZeroDivisionError:
+                    sb_pos = 0
                 (colour, attr, bg) = self.palette["scroll"]
                 for dy in range(sb_height):
                     y = self._canvas.start_line + dy + 2
