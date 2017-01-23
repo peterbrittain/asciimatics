@@ -517,18 +517,27 @@ class TestWidgets(unittest.TestCase):
         form = TestFrame(canvas)
         form.reset()
 
-        # Check basic selection keys
+        # Check basic selection keys - including limit checking
         self.process_keys(
             form,
             [Screen.KEY_TAB, Screen.KEY_TAB, Screen.KEY_TAB, Screen.KEY_TAB])
         form.save()
         self.assertEqual(form.data["Things"], 1)
-        self.process_keys(form, [Screen.KEY_DOWN])
-        form.save()
-        self.assertEqual(form.data["Things"], 2)
         self.process_keys(form, [Screen.KEY_UP])
         form.save()
         self.assertEqual(form.data["Things"], 1)
+        self.process_keys(form, [Screen.KEY_DOWN])
+        form.save()
+        self.assertEqual(form.data["Things"], 2)
+        self.process_keys(form, [Screen.KEY_DOWN])
+        form.save()
+        self.assertEqual(form.data["Things"], 3)
+        self.process_keys(form, [Screen.KEY_DOWN])
+        form.save()
+        self.assertEqual(form.data["Things"], 3)
+        self.process_keys(form, [Screen.KEY_UP])
+        form.save()
+        self.assertEqual(form.data["Things"], 2)
 
         # Check that the current focus ignores unknown events.
         event = object()

@@ -889,17 +889,21 @@ class Layout(object):
                     event = None
                 elif event.key_code == Screen.KEY_DOWN:
                     # Move on to next widget in this column
+                    wid = self._live_widget
                     self._columns[self._live_col][self._live_widget].blur()
                     self._find_next_widget(1, stay_in_col=True)
                     self._columns[self._live_col][self._live_widget].focus()
-                    event = None
+                    # Don't swallow the event if it had no effect.
+                    event = event if wid == self._live_widget else None
                 elif event.key_code == Screen.KEY_UP:
                     # Move on to previous widget, unless it is the first in the
                     # Layout.
+                    wid = self._live_widget
                     self._columns[self._live_col][self._live_widget].blur()
                     self._find_next_widget(-1, stay_in_col=True)
                     self._columns[self._live_col][self._live_widget].focus()
-                    event = None
+                    # Don't swallow the event if it had no effect.
+                    event = event if wid == self._live_widget else None
                 elif event.key_code == Screen.KEY_LEFT:
                     # Move on to last widget in the previous column
                     self._columns[self._live_col][self._live_widget].blur()
@@ -1524,15 +1528,14 @@ class RadioButtons(Widget):
 
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
-            # Don't swallow keys if at limits of the list.
-            if event.key_code == Screen.KEY_UP and self._selection > 0:
+            if event.key_code == Screen.KEY_UP:
                 # Use property to trigger events.
-                self._selection -= 1
+                self._selection = max(0, self._selection - 1)
                 self.value = self._options[self._selection][1]
-            elif (event.key_code == Screen.KEY_DOWN and
-                    self._selection < len(self._options) - 1):
+            elif event.key_code == Screen.KEY_DOWN:
                 # Use property to trigger events.
-                self._selection += 1
+                self._selection = min(self._selection + 1,
+                                      len(self._options) - 1)
                 self.value = self._options[self._selection][1]
             else:
                 # Ignore any other key press.
