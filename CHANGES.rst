@@ -6,6 +6,10 @@ CHANGE HISTORY
 - Improved efficiency of screen refresh on curses systems.
 - Improved start-up time by avoiding use of deepcopy()
 - Added unicode characters to ColourFileImage to increase rendering resolution.
+- Added force_update() to allow background refresh of the Screen.
+- Added support for DELETE key to text widgets.
+- Fixed ZeroDivisionError in Frames.
+- Tweaked widget navigation using cursor keys to be more like web forms.
 
 1.7.0
 -----

@@ -442,6 +442,18 @@ class TestWidgets(unittest.TestCase):
         form.save()
         self.assertEqual(form.data["TA"], ["ABDICEM", "NKFGHJ"])
 
+        # Delete - normal and wrapping lines and at end of all data.
+        self.process_keys(form,  [Screen.KEY_DELETE])
+        form.save()
+        self.assertEqual(form.data["TA"], ["ABDICEM", "NFGHJ"])
+        self.process_keys(form,
+                          [Screen.KEY_UP, Screen.KEY_END, Screen.KEY_DELETE])
+        form.save()
+        self.assertEqual(form.data["TA"], ["ABDICEMNFGHJ"])
+        self.process_keys(form, [Screen.KEY_END, Screen.KEY_DELETE])
+        form.save()
+        self.assertEqual(form.data["TA"], ["ABDICEMNFGHJ"])
+
         # Check that the current focus ignores unknown events.
         event = object()
         self.assertEqual(event, form.process_event(event))
@@ -476,6 +488,14 @@ class TestWidgets(unittest.TestCase):
         self.process_keys(form,  [Screen.KEY_BACK])
         form.save()
         self.assertEqual(form.data["TB"], "DABCFE")
+
+        # Delete - including at end of data
+        self.process_keys(form,  [Screen.KEY_DELETE])
+        form.save()
+        self.assertEqual(form.data["TB"], "DABCFE")
+        self.process_keys(form,  [Screen.KEY_HOME, Screen.KEY_DELETE])
+        form.save()
+        self.assertEqual(form.data["TB"], "ABCFE")
 
         # Check that the current focus ignores unknown events.
         event = object()
