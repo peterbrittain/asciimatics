@@ -1345,6 +1345,11 @@ class Text(Widget):
                         self._value[:self._column - 1],
                         self._value[self._column:]])
                     self._column -= 1
+            if event.key_code == Screen.KEY_DELETE:
+                if self._column < len(self._value):
+                    self.value = "".join([
+                        self._value[:self._column],
+                        self._value[self._column + 1:]])
             elif event.key_code == Screen.KEY_LEFT:
                 self._column -= 1
                 self._column = max(self._column, 0)
@@ -1673,6 +1678,16 @@ class TextBox(Widget):
                         # Join this line with previous
                         self._line -= 1
                         self._column = len(self._value[self._line])
+                        self._value[self._line] += \
+                            self._value.pop(self._line + 1)
+            elif event.key_code == Screen.KEY_DELETE:
+                if self._column < len(self._value[self._line]):
+                    self._value[self._line] = "".join([
+                        self._value[self._line][:self._column],
+                        self._value[self._line][self._column + 1:]])
+                else:
+                    if self._line < len(self._value) - 1:
+                        # Join this line with next
                         self._value[self._line] += \
                             self._value.pop(self._line + 1)
             elif event.key_code == Screen.KEY_UP:
