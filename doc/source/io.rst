@@ -140,6 +140,13 @@ a KeyboardEvent with ``key_code`` 97, which is ``ord('a')``.  If you press the
 same key with caps lock on, you will get 65, which is ``ord('A')``.  If you
 press 'F7' you will always get ``KEY_F7`` irrespective of the caps lock.
 
+The control key (CTRL) on a keyboard returns control codes (the first 31
+codes in the ASCII table).  You can calculate the control code for any key using
+the :py:meth:`.ctrl` method.  Note that not all systems will return control
+codes for all keys, so this function can return None if asciimatics doesn't
+believe the key will work.  For best system compatibility, stick to the control
+codes for alphabetical characters - i.e. "A" to "Z".
+
 As of V1.7, you can also get keyboard events for Unicode characters outside
 the ASCII character set.  These will also return the ordinal representation of
 the unicode character, just like the previous support for ASCII characters.

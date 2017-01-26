@@ -1069,6 +1069,22 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                   it returns None.
         """
 
+    @staticmethod
+    def ctrl(char):
+        """
+        Calculate the control code for a given key.  For example, this converts
+        "a" to 1 (which is the code for ctrl-a).
+
+        :param char: The key to convert to a control code.
+        :return: The control code as an integer or None if unknown.
+        """
+        # Convert string to int if needed.
+        if isinstance(char, str):
+            char = ord((char).upper())
+
+        # Only deal with the characters between '@' and '_'
+        return char & 0x1f if 64 <= char <= 95 else None
+
     @abstractmethod
     def has_resized(self):
         """
