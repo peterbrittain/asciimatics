@@ -766,5 +766,24 @@ class TestScreen(unittest.TestCase):
 
         Screen.wrapper(internal_checks, height=15)
 
+    def test_ctrl(self):
+        """
+        Check that ctrl returns the right values.
+        """
+        # Check standard alphabetical range
+        for i, char in enumerate(range(ord('@'), ord('Z'))):
+            self.assertEqual(Screen.ctrl(char), i)
+            self.assertEqual(Screen.ctrl(chr(char)), i)
+            self.assertEqual(Screen.ctrl(chr(char).lower()), i)
+
+        # Check last few options - which mostly aren't actually returned in
+        # Linux and so probably only of limited value, but what the heck!
+        for i, char in enumerate(["[", "\\", "]", "^", "_"]):
+            self.assertEqual(Screen.ctrl(char), i + 27)
+
+        # Check other things return None - pick boundaries for checks.
+        for char in ["?", "`", "\x7f"]:
+            self.assertIsNone(Screen.ctrl(char))
+
 if __name__ == '__main__':
     unittest.main()
