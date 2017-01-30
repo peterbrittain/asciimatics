@@ -7,7 +7,7 @@ from builtins import chr
 import unittest
 from mock.mock import MagicMock
 from asciimatics.event import KeyboardEvent, MouseEvent
-from asciimatics.exceptions import NextScene, StopApplication
+from asciimatics.exceptions import NextScene, StopApplication, InvalidFields
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen, Canvas
 from asciimatics.widgets import Frame, Layout, Button, Label, TextBox, Text, \
@@ -34,9 +34,15 @@ class TestFrame(Frame):
         layout.add_widget(
             Text(label="Text1:", name="TB", on_change=self._on_change), 1)
         layout.add_widget(
-            Text(label="Text2:", name="TC", on_change=self._on_change), 1)
+            Text(label="Text2:",
+                 name="TC",
+                 on_change=self._on_change,
+                 validator="^[0-9]*$"), 1)
         layout.add_widget(
-            Text(label="Text3:", name="TD", on_change=self._on_change), 1)
+            Text(label="Text3:",
+                 name="TD",
+                 on_change=self._on_change,
+                 validator=lambda x: x in ("", "a")), 1)
         layout.add_widget(Divider(height=2), 1)
         layout.add_widget(Label("Group 2:"), 1)
         layout.add_widget(RadioButtons([("Option 1", 1),
@@ -500,6 +506,36 @@ class TestWidgets(unittest.TestCase):
         # Check that the current focus ignores unknown events.
         event = object()
         self.assertEqual(event, form.process_event(event))
+
+    def test_validation(self):
+        """
+        Check free-form text validation works as expected.
+        """
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame(canvas)
+        form.reset()
+
+        # Check that save still works with no validation.
+        self.process_keys(form,  [Screen.KEY_TAB, Screen.KEY_TAB, "ABC"])
+        form.save()
+        self.assertEqual(form.data["TC"], "ABC")
+
+        # Check that enforced validation throws exceptions as needed.
+        with self.assertRaises(InvalidFields) as cm:
+            form.save(validate=True)
+        self.assertEqual(cm.exception.fields, ["TC"])
+
+        # Check valid data doesn't throw anything.
+        self.process_keys(form,
+                          [Screen.KEY_BACK, Screen.KEY_BACK, Screen.KEY_BACK])
+        form.save(validate=True)
+
+        # Check functions work as well as regexp strings.
+        self.process_keys(form, [Screen.KEY_TAB, "ABC"])
+        with self.assertRaises(InvalidFields) as cm:
+            form.save(validate=True)
+        self.assertEqual(cm.exception.fields, ["TD"])
 
     def test_checkbox_input(self):
         """

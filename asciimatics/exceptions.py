@@ -76,6 +76,28 @@ class NextScene(Exception):
         return self._name
 
 
+class InvalidFields(Exception):
+    """
+    When saving data from a Frame, you can ask the Frame to validate the data
+    before saving.  This is the exception that gets thrwn if any invalid datd
+    is found.
+    """
+
+    def __init__(self, fields):
+        """
+        :param fields: The list of the fields that are invalid.
+        """
+        super(InvalidFields, self).__init__()
+        self._fields = fields
+
+    @property
+    def fields(self):
+        """
+        The list of fields that are invalid.
+        """
+        return self._fields
+
+
 class Highlander(Exception):
     """
     There can be only one Layout or Widget with certain options set (designed

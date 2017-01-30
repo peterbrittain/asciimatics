@@ -506,6 +506,24 @@ For example:
         "notes": "Some multi-line\ntext from the user."
     }
 
+Validating text data
+~~~~~~~~~~~~~~~~~~~~
+Free-form text input sometimes needs validating to make sure that the user has
+entered the right thing - e.g. a valid email address - in a form.  Asciimatics
+makes this easy by adding the `validator` parameter to `Text` widgets.
+
+This parameter takes either a regular expression string or a function (taking a
+single parameter of the current widget value).  Asciimatics will use it to
+determine if the widget contains valid data.  It uses this information in 2
+places.
+
+1. Whenever the `Frame` is redrawn, asciimatics will check the state and flag
+   any invalid values using the `invalid` colour palette selection.
+
+2. When your program calls :py:meth:`~.Frame.save` specifying `validate=True`,
+   asciimatics will check all fields and throw an :py:obj:`.InvalidFields`
+   exception if it finds any invalid data.
+
 Input focus
 ~~~~~~~~~~~
 As mentioned in the explanation of colour palettes, asciimatics has the concept

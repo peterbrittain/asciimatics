@@ -1080,7 +1080,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         """
         # Convert string to int if needed.
         if isinstance(char, str):
-            char = ord((char).upper())
+            char = ord(char.upper())
 
         # Only deal with the characters between '@' and '_'
         return char & 0x1f if 64 <= char <= 95 else None
