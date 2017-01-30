@@ -1,17 +1,20 @@
+import re
+
 from asciimatics.effects import Julia, Clock
 from asciimatics.widgets import Frame, TextBox, Layout, Label, Divider, Text, \
     CheckBox, RadioButtons, Button, PopUpDialog
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
-from asciimatics.exceptions import ResizeScreenError, NextScene, StopApplication
+from asciimatics.exceptions import ResizeScreenError, NextScene, StopApplication, \
+    InvalidFields
 import sys
 
 # Initial data for the form
 form_data = {
     "TA": ["Hello world!", "How are you?"],
-    "TB": "Value1",
-    "TC": "Value2",
-    "TD": "Value3",
+    "TB": "alphabet",
+    "TC": "123",
+    "TD": "a@b.com",
     "Things": 2,
     "CA": False,
     "CB": True,
@@ -36,11 +39,20 @@ class DemoFrame(Frame):
                                   name="TA",
                                   on_change=self._on_change), 1)
         layout.add_widget(
-            Text(label="Text1:", name="TB", on_change=self._on_change), 1)
+            Text(label="Alpha:",
+                 name="TB",
+                 on_change=self._on_change,
+                 validator="^[a-zA-Z]*$"), 1)
         layout.add_widget(
-            Text(label="Text2:", name="TC", on_change=self._on_change), 1)
+            Text(label="Number:",
+                 name="TC",
+                 on_change=self._on_change,
+                 validator="^[0-9]*$"), 1)
         layout.add_widget(
-            Text(label="Text3:", name="TD", on_change=self._on_change), 1)
+            Text(label="Email:",
+                 name="TD",
+                 on_change=self._on_change,
+                 validator=self._check_email), 1)
         layout.add_widget(Divider(height=2), 1)
         layout.add_widget(Label("Group 2:"), 1)
         layout.add_widget(RadioButtons([("Option 1", 1),
@@ -80,10 +92,15 @@ class DemoFrame(Frame):
 
     def _view(self):
         # Build result of this form and display it.
-        self.save()
-        message = "Values entered are:\n\n"
-        for key, value in self.data.items():
-            message += "- {}: {}\n".format(key, value)
+        try:
+            self.save(validate=True)
+            message = "Values entered are:\n\n"
+            for key, value in self.data.items():
+                message += "- {}: {}\n".format(key, value)
+        except InvalidFields as exc:
+            message = "The following fields are invalid:\n\n"
+            for field in exc.fields:
+                message += "- {}\n".format(field)
         self._scene.add_effect(
             PopUpDialog(self._screen, message, ["OK"]))
 
@@ -93,6 +110,12 @@ class DemoFrame(Frame):
                         "Are you sure?",
                         ["Yes", "No"],
                         on_close=self._quit_on_yes))
+
+    @staticmethod
+    def _check_email(value):
+        m = re.match("^[a-zA-Z0-9_\-\.]+@[a-zA-Z0-9_\-\.]+\.[a-zA-Z0-9_\-\.]+$",
+                     value)
+        return len(value) == 0 or m is not None
 
     @staticmethod
     def _quit_on_yes(selected):

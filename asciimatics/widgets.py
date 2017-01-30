@@ -4,6 +4,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 from types import FunctionType
+
+import re
 from builtins import chr
 from builtins import range
 from builtins import object
@@ -13,7 +15,7 @@ from future.utils import with_metaclass
 from abc import ABCMeta, abstractmethod, abstractproperty
 from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent, MouseEvent
-from asciimatics.exceptions import Highlander
+from asciimatics.exceptions import Highlander, InvalidFields
 from asciimatics.screen import Screen, Canvas
 
 
@@ -71,6 +73,8 @@ class Frame(Effect):
             (Screen.COLOUR_BLACK, None, Screen.COLOUR_BLACK),
         "disabled":
             (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLUE),
+        "invalid":
+            (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_RED),
         "label":
             (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLUE),
         "borders":
@@ -434,13 +438,17 @@ class Frame(Effect):
         if self._on_load is not None:
             self._on_load()
 
-    def save(self):
+    def save(self, validate=False):
         """
         Save the current values in all the widgets back to the persistent data
         storage.
 
+        :param validate: Whether to validate the data before saving.
+
         Calling this while setting the `data` field (e.g. in a widget callback)
         will have no effect.
+
+        When validating data, it can throw an Exception for any
         """
         # Don't allow this function to be called if we are already updating the
         # data for the form.
@@ -448,8 +456,16 @@ class Frame(Effect):
             return
 
         # We're clear - pass on to all layouts/widgets.
+        invalid = []
         for layout in self._layouts:
-            layout.save()
+            try:
+                layout.save(validate=validate)
+            except InvalidFields as exc:
+                invalid.extend(exc.fields)
+
+        # Check for any bad data and raise exception if needed.
+        if len(invalid) > 0:
+            raise InvalidFields(invalid)
 
     def switch_focus(self, layout, column, widget):
         """
@@ -943,18 +959,27 @@ class Layout(object):
             for widget in column:
                 widget.update(frame_no)
 
-    def save(self):
+    def save(self, validate):
         """
         Save the current values in all the widgets back to the persistent data
         storage.
+
+        :param validate: whether to validate the saved data or not.
+        :raises: InvalidFields if any invalid data is found.
         """
+        invalid = []
         for column in self._columns:
             for widget in column:
-                if widget.name is not None:
-                    # This relies on the fact that we are passed the actual dict
-                    # and so can edit it directly.  In this case, that is all we
-                    # want - no need to update the widgets.
-                    self._frame._data[widget.name] = widget.value
+                if widget.is_valid or not validate:
+                    if widget.name is not None:
+                        # This relies on the fact that we are passed the actual
+                        # dict and so can edit it directly.  In this case, that
+                        # is all we want - no need to update the widgets.
+                        self._frame._data[widget.name] = widget.value
+                else:
+                    invalid.append(widget.name)
+        if len(invalid) > 0:
+            raise InvalidFields(invalid)
 
     def update_widgets(self):
         """
@@ -1014,6 +1039,14 @@ class Widget(with_metaclass(ABCMeta, object)):
         self._display_label = None
         self._is_tab_stop = tab_stop
         self._is_disabled = False
+        self._is_valid = True
+
+    @property
+    def is_valid(self):
+        """
+        Whether this widget has passed its data validation or not.
+        """
+        return self._is_valid
 
     @property
     def is_tab_stop(self):
@@ -1141,6 +1174,8 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         if self.disabled:
             key = "disabled"
+        elif not self._is_valid:
+            key = "invalid"
         else:
             if self._has_focus:
                 key = "focus_" + palette_name
@@ -1291,17 +1326,22 @@ class Text(Widget):
     label and an entry box.
     """
 
-    def __init__(self, label=None, name=None, on_change=None):
+    def __init__(self, label=None, name=None, on_change=None, validator=None):
         """
         :param label: An optional label for the widget.
         :param name: The name for the widget.
         :param on_change: Optional function to call when text changes.
+        :param validator: Optional definition of valid data for this widget.
+            This can be a function (which takes the current value and returns
+            True for valid content) or a regex string, which must match the
+            entire allowed value.
         """
         super(Text, self).__init__(name)
         self._label = label
         self._column = 0
         self._start_column = 0
         self._on_change = on_change
+        self._validator = validator
 
     def update(self, frame_no):
         self._draw_label()
@@ -1405,6 +1445,12 @@ class Text(Widget):
         self._value = new_value if new_value else ""
         if old_value != self._value and self._on_change:
             self._on_change()
+        if self._validator:
+            if isinstance(self._validator, FunctionType):
+                self._is_valid = self._validator(self._value)
+            else:
+                self._is_valid = re.match(self._validator,
+                                          self._value) is not None
 
 
 class CheckBox(Widget):
