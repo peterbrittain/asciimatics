@@ -3,6 +3,8 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
+
+from itertools import izip_longest
 from types import FunctionType
 
 import re
@@ -556,6 +558,12 @@ class Frame(Effect):
                 # Don't allow mouse events to bubble down if this window owns
                 # the Screen - as already calculated when taking te focus.
                 return None if claimed_focus else event
+
+        # Don't bother trying to process widgets if there is no well-defined
+        # focus.  This means there is no enabled widget in the Frame.
+        # TODO: Why should this be different from the above?  Global key handling needs fixing...
+        if self._focus < 0 or self._focus >= len(self._layouts):
+            return None if claimed_focus else event
 
         # Give the current widget in focus first chance to process the event.
         event = self._layouts[self._focus].process_event(event,
@@ -1832,59 +1840,25 @@ class TextBox(Widget):
         return 5 if self._has_focus and not self._frame.reduce_cpu else 0
 
 
-class ListBox(Widget):
+class _BaseListBox(Widget):
     """
-    A ListBox is a simple widget for displaying a list of options from which
-    the user can select one option.
+    An Internal class to contain common function between list box types.
     """
 
     def __init__(self, height, options, label=None, name=None, on_change=None):
         """
-        :param height: The required number of input lines for this ListBox.
+        :param height: The required number of input lines for this widget.
         :param label: An optional label for the widget.
-        :param name: The name for the ListBox.
+        :param name: The name for the widget.
         :param on_change: Optional function to call when selection changes.
         """
-        super(ListBox, self).__init__(name)
+        super(_BaseListBox, self).__init__(name)
         self._options = options
         self._label = label
         self._line = 0
         self._start_line = 0
         self._required_height = height
         self._on_change = on_change
-
-    def update(self, frame_no):
-        self._draw_label()
-
-        # Calculate new visible limits if needed.
-        width = self._w - self._offset
-        height = self._h
-        dx = dy = 0
-
-        # Clear out the existing box content
-        (colour, attr, bg) = self._frame.palette["field"]
-        for i in range(height):
-            self._frame.canvas.print_at(
-                " " * width,
-                self._x + self._offset + dx,
-                self._y + i + dy,
-                colour, attr, bg)
-
-        # Don't bother with anything else if there are no options to render.
-        if len(self._options) <= 0:
-            return
-
-        # Render visible portion of the text.
-        self._start_line = max(0, max(self._line - height + 1,
-                                      min(self._start_line, self._line)))
-        for i, (text, _) in enumerate(self._options):
-            if self._start_line <= i < self._start_line + height:
-                colour, attr, bg = self._pick_colours("field", i == self._line)
-                self._frame.canvas.print_at(
-                    "{:{width}}".format(text, width=width),
-                    self._x + self._offset + dx,
-                    self._y + i + dy - self._start_line,
-                    colour, attr, bg)
 
     def reset(self):
         # Reset selection - use value to trigger on_select
@@ -1937,7 +1911,7 @@ class ListBox(Widget):
         # Only trigger notification after we've changed selection
         old_value = self._value
         self._value = new_value
-        for i, (_, value) in enumerate(self._options):
+        for i, [_, value] in enumerate(self._options):
             if value == new_value:
                 self._line = i
                 break
@@ -1959,6 +1933,136 @@ class ListBox(Widget):
     def options(self, new_value):
         self._options = new_value
         self.value = self._options[0][1] if len(self._options) > 0 else None
+
+
+class ListBox(_BaseListBox):
+    """
+    A ListBox is a simple widget for displaying a list of options from which
+    the user can select one option.
+    """
+
+    def __init__(self, height, options, label=None, name=None, on_change=None):
+        """
+        :param height: The required number of input lines for this ListBox.
+        :param label: An optional label for the widget.
+        :param name: The name for the ListBox.
+        :param on_change: Optional function to call when selection changes.
+        """
+        super(ListBox, self).__init__(height, options, label=label, name=name,
+                                      on_change=on_change)
+
+    def update(self, frame_no):
+        self._draw_label()
+
+        # Calculate new visible limits if needed.
+        width = self._w - self._offset
+        height = self._h
+        dx = dy = 0
+
+        # Clear out the existing box content
+        (colour, attr, bg) = self._frame.palette["field"]
+        for i in range(height):
+            self._frame.canvas.print_at(
+                " " * width,
+                self._x + self._offset + dx,
+                self._y + i + dy,
+                colour, attr, bg)
+
+        # Don't bother with anything else if there are no options to render.
+        if len(self._options) <= 0:
+            return
+
+        # Render visible portion of the text.
+        self._start_line = max(0, max(self._line - height + 1,
+                                      min(self._start_line, self._line)))
+        for i, (text, _) in enumerate(self._options):
+            if self._start_line <= i < self._start_line + height:
+                colour, attr, bg = self._pick_colours("field", i == self._line)
+                self._frame.canvas.print_at(
+                    "{:{width}}".format(text, width=width),
+                    self._x + self._offset + dx,
+                    self._y + i + dy - self._start_line,
+                    colour, attr, bg)
+
+
+class MultiColumnListBox(_BaseListBox):
+    """
+    A MultiColumnListBox is a widget for displaying a set of related data in
+    columns, from which the user can select a line.
+    """
+
+    def __init__(self, height, columns, options, label=None, name=None,
+                 on_change=None):
+        """
+        :param height: The required number of input lines for this ListBox.
+        :param columns: A list of widths for each column.
+        :param options: The options for each row in the widget.
+        :param label: An optional label for the widget.
+        :param name: The name for the ListBox.
+        :param on_change: Optional function to call when selection changes.
+
+        The number of columns is for this widget is determined from the number
+        of entries in the `columns` parameter.  The `options` list is then a
+        list of tuples of the form ([val1, val2, ... , valn], index).  For
+        example, this data provides 2 rows for a 3 column widget:
+
+            options=[
+                (["One", "row", "here"], 1),
+                (["Second", "row", "here"], 2)
+            ]
+
+        The options list may be None and then can be set later using the
+        `options` property on this widget.
+        """
+        super(MultiColumnListBox, self).__init__(
+            height, options, label=label, name=name, on_change=on_change)
+        # TODO: Should widths be absolute, relative or both?
+        # TODO: headings?
+        # TODO:
+        self._columns = columns
+
+    def update(self, frame_no):
+        self._draw_label()
+
+        # Calculate new visible limits if needed.
+        width = self._w - self._offset
+        height = self._h
+        dx = dy = 0
+
+        # Clear out the existing box content
+        (colour, attr, bg) = self._frame.palette["field"]
+        for i in range(height):
+            self._frame.canvas.print_at(
+                " " * width,
+                self._x + self._offset + dx,
+                self._y + i + dy,
+                colour, attr, bg)
+
+        # Don't bother with anything else if there are no options to render.
+        if len(self._options) <= 0:
+            return
+
+        # Render visible portion of the text.
+        self._start_line = max(0, max(self._line - height + 1,
+                                      min(self._start_line, self._line)))
+        for i, [row, _] in enumerate(self._options):
+            if self._start_line <= i < self._start_line + height:
+                colour, attr, bg = self._pick_colours("field", i == self._line)
+                row_dx = 0
+                # Try to handle badly formatted data, where row lists don't
+                # match the expected number of columns.
+                for j, [text, width] in enumerate(
+                        izip_longest(row, self._columns, fillvalue="")):
+                    if width == "":
+                        break
+                    if len(text) >= width:
+                        text = text[:width - 3] + "..."
+                    self._frame.canvas.print_at(
+                        "{:{}}".format(text, width),
+                        self._x + self._offset + dx + row_dx,
+                        self._y + i + dy - self._start_line,
+                        colour, attr, bg)
+                    row_dx += width
 
 
 class Button(Widget):
