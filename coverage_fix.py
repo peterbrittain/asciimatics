@@ -33,7 +33,7 @@ for name in sys.argv[1:]:
                     print('No such file: {}'.format(unix_absolute_path))
                     sys.exit(1)
                 coverage = coverage.replace(
-                        windows_path, '"' + unix_absolute_path + '"')
+                    windows_path, '"' + unix_absolute_path + '"')
 
             with open(name, "w") as my_file:
                 my_file.writelines(coverage)

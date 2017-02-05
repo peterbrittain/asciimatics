@@ -3,16 +3,14 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
-
-from itertools import izip_longest
 from types import FunctionType
-
 import re
 from builtins import chr
 from builtins import range
 from builtins import object
 from copy import copy, deepcopy
 from functools import partial
+from future.moves.itertools import zip_longest
 from future.utils import with_metaclass
 from abc import ABCMeta, abstractmethod, abstractproperty
 from asciimatics.effects import Effect
@@ -1840,7 +1838,7 @@ class TextBox(Widget):
         return 5 if self._has_focus and not self._frame.reduce_cpu else 0
 
 
-class _BaseListBox(Widget):
+class _BaseListBox(with_metaclass(ABCMeta, Widget)):
     """
     An Internal class to contain common function between list box types.
     """
@@ -2052,7 +2050,7 @@ class MultiColumnListBox(_BaseListBox):
                 # Try to handle badly formatted data, where row lists don't
                 # match the expected number of columns.
                 for j, [text, width] in enumerate(
-                        izip_longest(row, self._columns, fillvalue="")):
+                        zip_longest(row, self._columns, fillvalue="")):
                     if width == "":
                         break
                     if len(text) >= width:

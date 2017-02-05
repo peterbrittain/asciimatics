@@ -21,11 +21,11 @@ class TestParticles(unittest.TestCase):
                 for y in range(canvas.height):
                     self.assertEqual(canvas.get_from(x, y), (32, 7, 0, 0))
 
-        # Set up blank buffer - OK this should copy the existing screen, but
+        # Set up blank my_buffer - OK this should copy the existing screen, but
         # we just lose one iteration on the checks (when not really blank).
-        buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
+        my_buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
 
-        # Re-draw comparing the buffer with what's on the canvas
+        # Re-draw comparing the my_buffer with what's on the canvas
         for i in range(iterations):
             effect.update(i)
             changed = False
@@ -35,9 +35,9 @@ class TestParticles(unittest.TestCase):
                     for x in range(canvas.width):
                         value = canvas.get_from(x, y)
                         assert_fn(value)
-                        if value != buffer[y][x]:
+                        if value != my_buffer[y][x]:
                             changed = True
-                            buffer[y][x] = value
+                            my_buffer[y][x] = value
                         view += chr(value[0])
                     view += "\n"
                 self.assertTrue(changed, "failed at step %d %s" % (i, view))

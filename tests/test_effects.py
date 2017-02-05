@@ -25,15 +25,15 @@ class TestEffects(unittest.TestCase):
             for y in range(canvas.height):
                 self.assertEqual(canvas.get_from(x, y), (32, 7, 0, 0))
 
-    def check_canvas(self, canvas, buffer, assert_fn):
+    def check_canvas(self, canvas, my_buffer, assert_fn):
         changed = False
         for x in range(canvas.width):
             for y in range(canvas.height):
                 value = canvas.get_from(x, y)
                 assert_fn(value)
-                if value != buffer[y][x]:
+                if value != my_buffer[y][x]:
                     changed = True
-                    buffer[y][x] = value
+                    my_buffer[y][x] = value
         return changed
 
     def test_text_effects(self):
@@ -198,12 +198,12 @@ class TestEffects(unittest.TestCase):
         effect = Stars(canvas, 100)
         effect.reset()
         self.assert_blank(canvas)
-        buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
+        my_buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
         for i in range(10):
             effect.update(i)
             self.assertTrue(self.check_canvas(
                 canvas,
-                buffer,
+                my_buffer,
                 lambda value: self.assertIn(chr(value[0]), " .+x*")))
 
         # Check there is no stop frame by default.
@@ -223,12 +223,12 @@ class TestEffects(unittest.TestCase):
         effect = Matrix(canvas)
         effect.reset()
         self.assert_blank(canvas)
-        buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
+        my_buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
         for i in range(10):
             effect.update(i)
             self.assertEqual(self.check_canvas(
                 canvas,
-                buffer,
+                my_buffer,
                 lambda value: self.assertTrue(value[0] == 32 or value[1] == 2)),
                 i % 2 == 0)
 
@@ -249,12 +249,12 @@ class TestEffects(unittest.TestCase):
         effect = Snow(canvas)
         effect.reset()
         self.assert_blank(canvas)
-        buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
+        my_buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
         for i in range(10):
             effect.update(i)
             self.assertEqual(self.check_canvas(
                 canvas,
-                buffer,
+                my_buffer,
                 lambda value: self.assertIn(chr(value[0]), ".+* ,;#@")),
                 i % 3 == 0)
 
@@ -275,16 +275,16 @@ class TestEffects(unittest.TestCase):
         effect = Wipe(canvas)
         effect.reset()
         self.assert_blank(canvas)
-        buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
+        my_buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
         for x in range(canvas.width):
             for y in range(canvas.height):
                 canvas.print_at(chr(randint(1, 128)), x, y)
-                buffer[y][x] = canvas.get_from(x, y)
+                my_buffer[y][x] = canvas.get_from(x, y)
         for i in range(10):
             effect.update(i)
             self.assertEqual(self.check_canvas(
                 canvas,
-                buffer,
+                my_buffer,
                 lambda value: self.assertLess(value[0], 129)),
                 i % 2 == 0)
 
@@ -308,7 +308,7 @@ class TestEffects(unittest.TestCase):
         effect = Clock(canvas, 10, 5, 5)
         effect.reset()
         self.assert_blank(canvas)
-        buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
+        my_buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
 
         # Set a time for the next update and check it is drawn.
         mock_datetime.now.return_value = \
@@ -317,7 +317,7 @@ class TestEffects(unittest.TestCase):
         mock_datetime.now.assert_called()
         self.assertEqual(self.check_canvas(
             canvas,
-            buffer,
+            my_buffer,
             lambda value: self.assertLess(value[0], 129)),
             True)
 
@@ -329,7 +329,7 @@ class TestEffects(unittest.TestCase):
         mock_datetime.now.assert_called()
         self.assertEqual(self.check_canvas(
             canvas,
-            buffer,
+            my_buffer,
             lambda value: self.assertLess(value[0], 129)),
             False)
 
@@ -341,7 +341,7 @@ class TestEffects(unittest.TestCase):
         mock_datetime.now.assert_called()
         self.assertEqual(self.check_canvas(
             canvas,
-            buffer,
+            my_buffer,
             lambda value: self.assertLess(value[0], 129)),
             True)
 
@@ -368,12 +368,12 @@ class TestEffects(unittest.TestCase):
         effect = Sam(canvas, path)
         effect.reset()
         self.assert_blank(canvas)
-        buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
+        my_buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
         for i in range(30):
             effect.update(i)
             self.assertEqual(self.check_canvas(
                 canvas,
-                buffer,
+                my_buffer,
                 lambda value: self.assertLess(value[0], 129)),
                 i % 2 == 0, "Bad update on frame %d" % i)
 
@@ -421,12 +421,12 @@ class TestEffects(unittest.TestCase):
         effect = Cog(canvas, 10, 5, 5)
         effect.reset()
         self.assert_blank(canvas)
-        buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
+        my_buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
         for i in range(20):
             effect.update(i)
             self.assertEqual(self.check_canvas(
                 canvas,
-                buffer,
+                my_buffer,
                 lambda value: self.assertIn(
                     chr(value[0]), " ''^.|/7.\\|Ywbd#")),
                 i % 2 == 0)
@@ -448,12 +448,12 @@ class TestEffects(unittest.TestCase):
         effect = RandomNoise(canvas)
         effect.reset()
         self.assert_blank(canvas)
-        buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
+        my_buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
         for i in range(20):
             effect.update(i)
             self.assertEqual(self.check_canvas(
                 canvas,
-                buffer,
+                my_buffer,
                 lambda value: self.assertLess(value[0], 129)),
                 True)
 
@@ -474,12 +474,12 @@ class TestEffects(unittest.TestCase):
         effect = Julia(canvas)
         effect.reset()
         self.assert_blank(canvas)
-        buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
+        my_buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
         for i in range(20):
             effect.update(i)
             self.assertEqual(self.check_canvas(
                 canvas,
-                buffer,
+                my_buffer,
                 lambda value: self.assertIn(chr(value[0]), '@&9#GHh32As;:. ')),
                 True)
 
