@@ -4,7 +4,12 @@ from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, StopApplication
 import sys
-import psutil
+try:
+    import psutil
+except ImportError:
+    print("This sample requires psutil.")
+    print("Please run `pip install psutil` and try again.")
+    sys.exit(0)
 
 # Text constants for the UI
 FOOTER_L = "Another example from asciimatics"
