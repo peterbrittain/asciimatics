@@ -1079,7 +1079,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         :return: The control code as an integer or None if unknown.
         """
         # Convert string to int if needed.
-        if isinstance(char, str):
+        if isinstance(char, basestring):
             char = ord(char.upper())
 
         # Only deal with the characters between '@' and '_'
