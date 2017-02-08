@@ -25,8 +25,10 @@ class DemoFrame(Frame):
         self._reverse = True
         self._list = MultiColumnListBox(Widget.FILL_FRAME,
                                         [6, 10, 3, 10, 10, 5, 5, 100],
-                                        [], name="mc_list")
-        self._list.disabled = True
+                                        [],
+                                        titles=["PID", "USER", "NICE", "VIRT", "RSS", "CPU%", "MEM%", "COMMAND"],
+                                        name="mc_list")
+        # self._list.disabled = True
 
         # Create the basic form layout...
         layout = Layout([1], fill_frame=True)
@@ -43,12 +45,14 @@ class DemoFrame(Frame):
             self.palette[key] = (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK)
         for key in ["selected_focus_field", "label"]:
             self.palette[key] = (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLACK)
+        self.palette["title"] = (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_WHITE)
 
     def process_event(self, event):
         # Allow for normal handling in all widgets.
         event = super(DemoFrame, self).process_event(event)
 
         # Now do some global key handling for this Frame.
+        # TODO: Should this actually be more of a global handler?
         if isinstance(event, KeyboardEvent):
             if event.key_code in [ord('q'), ord('Q'), Screen.ctrl("c")]:
                 raise StopApplication("User quit")
@@ -69,6 +73,8 @@ class DemoFrame(Frame):
 
             # Create the data to go in the multi-column list...
             last_selection = self._list.value
+            # TODO: Is this really right?  If so expose the API...
+            last_start = self._list._start_line
             list_data = []
             for process in psutil.process_iter():
                 memory = process.memory_info()
@@ -80,7 +86,8 @@ class DemoFrame(Frame):
                     memory.rss,
                     process.cpu_percent(),
                     process.memory_percent(),
-                    " ".join(process.cmdline()) if process.cmdline() else process.name()
+                    (" ".join(process.cmdline()) if process.cmdline() else
+                     "[{}]".format(process.name()))
                 ]
                 list_data.append(data)
 
@@ -88,7 +95,6 @@ class DemoFrame(Frame):
             list_data = sorted(list_data,
                                key=lambda x: x[self._sort],
                                reverse=self._reverse)
-            # TODO: handle other types better?
             new_data = [
                 ([
                     str(x[0]),
@@ -105,8 +111,9 @@ class DemoFrame(Frame):
             # Update the list and try to reset the last selection.
             self._list.options = new_data
             self._list.value = last_selection
+            self._list._start_line = last_start
+            # TODO: Should I expose a way of separating selection from view?
 
-            # TODO: don't like the access to this internal field.
             # TODO: better options for formatting layouts within a text box?
             memory = psutil.virtual_memory()
             self._header._text = (

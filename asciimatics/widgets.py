@@ -1843,15 +1843,17 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
     An Internal class to contain common function between list box types.
     """
 
-    def __init__(self, height, options, label=None, name=None, on_change=None):
+    def __init__(self, height, options, titles=None, label=None, name=None, on_change=None):
         """
         :param height: The required number of input lines for this widget.
+        :param options: The options for each row in the widget.
         :param label: An optional label for the widget.
         :param name: The name for the widget.
         :param on_change: Optional function to call when selection changes.
         """
         super(_BaseListBox, self).__init__(name)
         self._options = options
+        self._titles = titles
         self._label = label
         self._line = 0
         self._start_line = 0
@@ -1889,6 +1891,8 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
                     # Use property to trigger events.
                     self._line = min(new_event.y - self._y,
                                      len(self._options) - 1)
+                    if self._titles and self._line > 0:
+                        self._line -= 1
                     self.value = self._options[self._line][1]
                     return
             # Ignore other mouse events.
@@ -1939,15 +1943,25 @@ class ListBox(_BaseListBox):
     the user can select one option.
     """
 
-    def __init__(self, height, options, label=None, name=None, on_change=None):
+    def __init__(self, height, options, title=None, label=None, name=None, on_change=None):
         """
         :param height: The required number of input lines for this ListBox.
+        :param options: The options for each row in the widget.
         :param label: An optional label for the widget.
         :param name: The name for the ListBox.
         :param on_change: Optional function to call when selection changes.
+
+        The `options` are a list of tuples, where the first value is the string
+        to be displayed to the user and the second is an interval value to
+        identify the entry to the program.  For example:
+
+            options=[
+                ("First option", 1),
+                ("Second option", 2)
+            ]
         """
-        super(ListBox, self).__init__(height, options, label=label, name=name,
-                                      on_change=on_change)
+        super(ListBox, self).__init__(
+                height, options, label=label, name=name, on_change=on_change)
 
     def update(self, frame_no):
         self._draw_label()
@@ -1989,12 +2003,14 @@ class MultiColumnListBox(_BaseListBox):
     columns, from which the user can select a line.
     """
 
-    def __init__(self, height, columns, options, label=None, name=None,
-                 on_change=None):
+    def __init__(self, height, columns, options, titles=None, label=None,
+                 name=None, on_change=None):
         """
         :param height: The required number of input lines for this ListBox.
         :param columns: A list of widths for each column.
         :param options: The options for each row in the widget.
+        :param titles: Optional list of titles for each column.  Must match
+            the length of `columns`.
         :param label: An optional label for the widget.
         :param name: The name for the ListBox.
         :param on_change: Optional function to call when selection changes.
@@ -2013,10 +2029,9 @@ class MultiColumnListBox(_BaseListBox):
         `options` property on this widget.
         """
         super(MultiColumnListBox, self).__init__(
-            height, options, label=label, name=name, on_change=on_change)
+                height, options, titles=titles, label=label, name=name,
+                on_change=on_change)
         # TODO: Should widths be absolute, relative or both?
-        # TODO: headings?
-        # TODO:
         self._columns = columns
 
     def update(self, frame_no):
@@ -2040,11 +2055,26 @@ class MultiColumnListBox(_BaseListBox):
         if len(self._options) <= 0:
             return
 
+        # Allow space for titles if needed.
+        if self._titles:
+            dy += 1
+            row_dx = 0
+            colour, attr, bg = self._frame.palette["title"]
+            for i, title in enumerate(self._titles):
+                width = self._columns[i]
+                self._frame.canvas.print_at(
+                        "{:{}}".format(title, width),
+                        self._x + self._offset + row_dx,
+                        self._y,
+                        colour, attr, bg)
+                row_dx += width
+
         # Render visible portion of the text.
-        self._start_line = max(0, max(self._line - height + 1,
+        # TODO: Fix up rendition of widget based on titles or not.
+        self._start_line = max(0, max(self._line - height + 2,
                                       min(self._start_line, self._line)))
         for i, [row, _] in enumerate(self._options):
-            if self._start_line <= i < self._start_line + height:
+            if self._start_line <= i < self._start_line + height - 1:
                 colour, attr, bg = self._pick_colours("field", i == self._line)
                 row_dx = 0
                 # Try to handle badly formatted data, where row lists don't
