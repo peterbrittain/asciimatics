@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
+from past.builtins import basestring
 from locale import getlocale, getdefaultlocale
 import struct
 from builtins import object
