@@ -7,7 +7,7 @@ import sys
 try:
     import psutil
 except ImportError:
-    print("This sample requires psutil.")
+    print("This sample requires the psutil package.")
     print("Please run `pip install psutil` and try again.")
     sys.exit(0)
 
@@ -48,11 +48,7 @@ class DemoFrame(Frame):
         self.palette["title"] = (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_WHITE)
 
     def process_event(self, event):
-        # Allow for normal handling in all widgets.
-        event = super(DemoFrame, self).process_event(event)
-
-        # Now do some global key handling for this Frame.
-        # TODO: Should this actually be more of a global handler?
+        # Do the key handling for this Frame.
         if isinstance(event, KeyboardEvent):
             if event.key_code in [ord('q'), ord('Q'), Screen.ctrl("c")]:
                 raise StopApplication("User quit")
@@ -66,6 +62,9 @@ class DemoFrame(Frame):
             # Force a refresh for improved responsiveness
             self._last_frame = 0
 
+        # Now pass on to lower levels for normal handling of the event.
+        return super(DemoFrame, self).process_event(event)
+
     def _update(self, frame_no):
         # Refresh the list view if needed
         if frame_no - self._last_frame >= 20 or self._last_frame == 0:
@@ -77,19 +76,23 @@ class DemoFrame(Frame):
             last_start = self._list._start_line
             list_data = []
             for process in psutil.process_iter():
-                memory = process.memory_info()
-                data = [
-                    process.pid,
-                    process.username(),
-                    process.nice(),
-                    memory.vms,
-                    memory.rss,
-                    process.cpu_percent(),
-                    process.memory_percent(),
-                    (" ".join(process.cmdline()) if process.cmdline() else
-                     "[{}]".format(process.name()))
-                ]
-                list_data.append(data)
+                try:
+                    memory = process.memory_info()
+                    data = [
+                        process.pid,
+                        process.username(),
+                        process.nice(),
+                        memory.vms,
+                        memory.rss,
+                        process.cpu_percent(),
+                        process.memory_percent(),
+                        (" ".join(process.cmdline()) if process.cmdline() else
+                         "[{}]".format(process.name()))
+                    ]
+                    list_data.append(data)
+                except psutil.AccessDenied:
+                    # Some platforms don't allow querying of all processes...
+                    pass
 
             # Apply current sort and reformat for humans
             list_data = sorted(list_data,

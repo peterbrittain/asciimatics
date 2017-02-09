@@ -548,20 +548,18 @@ class Frame(Effect):
 
         # No need to do anything if this Frame has no Layouts - and hence no
         # widgets.  Swallow all Keyboard events while we have focus.
+        #
+        # Also don't bother trying to process widgets if there is no defined
+        # focus.  This means there is no enabled widget in the Frame.
         # TODO: Is concept of Frame focus well defined?
-        if not self._layouts:
+        if (self._focus < 0 or self._focus >= len(self._layouts) or
+                not self._layouts):
             if event is not None and isinstance(event, KeyboardEvent):
                 return
             else:
                 # Don't allow mouse events to bubble down if this window owns
                 # the Screen - as already calculated when taking te focus.
                 return None if claimed_focus else event
-
-        # Don't bother trying to process widgets if there is no well-defined
-        # focus.  This means there is no enabled widget in the Frame.
-        # TODO: Why should this be different from the above?  Global key handling needs fixing...
-        if self._focus < 0 or self._focus >= len(self._layouts):
-            return None if claimed_focus else event
 
         # Give the current widget in focus first chance to process the event.
         event = self._layouts[self._focus].process_event(event,
