@@ -1890,7 +1890,7 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
                         self.is_mouse_over(new_event, include_label=False)):
                     # Use property to trigger events.
                     self._line = min(new_event.y - self._y,
-                                     len(self._options) - 1)
+                                     len(self._options) - 1) + self._start_line
                     if self._titles and self._line > 0:
                         self._line -= 1
                     self.value = self._options[self._line][1]
@@ -2058,6 +2058,7 @@ class MultiColumnListBox(_BaseListBox):
         # Allow space for titles if needed.
         if self._titles:
             dy += 1
+            height -= 1
             row_dx = 0
             colour, attr, bg = self._frame.palette["title"]
             for i, title in enumerate(self._titles):
@@ -2070,11 +2071,10 @@ class MultiColumnListBox(_BaseListBox):
                 row_dx += width
 
         # Render visible portion of the text.
-        # TODO: Fix up rendition of widget based on titles or not.
-        self._start_line = max(0, max(self._line - height + 2,
+        self._start_line = max(0, max(self._line - height + 1,
                                       min(self._start_line, self._line)))
         for i, [row, _] in enumerate(self._options):
-            if self._start_line <= i < self._start_line + height - 1:
+            if self._start_line <= i < self._start_line + height:
                 colour, attr, bg = self._pick_colours("field", i == self._line)
                 row_dx = 0
                 # Try to handle badly formatted data, where row lists don't
