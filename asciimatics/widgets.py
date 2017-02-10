@@ -2005,13 +2005,27 @@ class MultiColumnListBox(_BaseListBox):
                  name=None, on_change=None):
         """
         :param height: The required number of input lines for this ListBox.
-        :param columns: A list of widths for each column.
+        :param columns: A list of widths and alignments for each column.
         :param options: The options for each row in the widget.
         :param titles: Optional list of titles for each column.  Must match
             the length of `columns`.
         :param label: An optional label for the widget.
         :param name: The name for the ListBox.
         :param on_change: Optional function to call when selection changes.
+
+        The `columns` parameter is a list of integers or strings.  If it is an
+        integer, this is the absolute width of the column in characters.  If it
+        is a string, it must be of the format "[<align>]<width>", where
+
+        * <align> is the alignment string ("<" = left, ">" = right,
+          "^" = centre)
+        * <width> is the width in characters.
+
+        Column widths need to encompass any space required between columns, so
+        for example, if your column is 5 characters, allow 6 for an extra space
+        at the end.  It is not possible to do this when you have a
+        right-justified column next to a left-justified column, so this widget
+        will automatically space them for you.
 
         The number of columns is for this widget is determined from the number
         of entries in the `columns` parameter.  The `options` list is then a
@@ -2030,7 +2044,19 @@ class MultiColumnListBox(_BaseListBox):
                 height, options, titles=titles, label=label, name=name,
                 on_change=on_change)
         # TODO: Should widths be absolute, relative or both?
-        self._columns = columns
+        self._columns = []
+        self._align = []
+        self._spacing = []
+        for i, column in enumerate(columns):
+            if isinstance(column, int):
+                self._columns.append(column)
+                self._align.append("<")
+            else:
+                match = re.match("([<>^]?)(\d+)", column)
+                self._columns.append(int(match.group(2)))
+                self._align.append(match.group(1) if match.group(1) else "<")
+            self._spacing.append(1 if i > 0 and self._align[i] == "<" and
+                                 self._align[i - 1] == ">" else 0)
 
     def update(self, frame_no):
         self._draw_label()
@@ -2059,14 +2085,15 @@ class MultiColumnListBox(_BaseListBox):
             height -= 1
             row_dx = 0
             colour, attr, bg = self._frame.palette["title"]
-            for i, title in enumerate(self._titles):
+            for i, [title, align, space] in enumerate(
+                    zip(self._titles, self._align, self._spacing)):
                 width = self._columns[i]
                 self._frame.canvas.print_at(
-                        "{:{}}".format(title, width),
+                        "{}{:{}{}}".format(" " * space, title, align, width),
                         self._x + self._offset + row_dx,
                         self._y,
                         colour, attr, bg)
-                row_dx += width
+                row_dx += width + space
 
         # Render visible portion of the text.
         self._start_line = max(0, max(self._line - height + 1,
@@ -2077,18 +2104,19 @@ class MultiColumnListBox(_BaseListBox):
                 row_dx = 0
                 # Try to handle badly formatted data, where row lists don't
                 # match the expected number of columns.
-                for j, [text, width] in enumerate(
-                        zip_longest(row, self._columns, fillvalue="")):
+                for j, [text, width, align, space] in enumerate(
+                        zip_longest(row, self._columns, self._align,
+                                    self._spacing, fillvalue="")):
                     if width == "":
                         break
                     if len(text) >= width:
                         text = text[:width - 3] + "..."
                     self._frame.canvas.print_at(
-                        "{:{}}".format(text, width),
+                        "{}{:{}{}}".format(" " * space, text, align, width),
                         self._x + self._offset + dx + row_dx,
                         self._y + i + dy - self._start_line,
                         colour, attr, bg)
-                    row_dx += width
+                    row_dx += width + space
 
 
 class Button(Widget):
