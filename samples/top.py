@@ -12,6 +12,21 @@ except ImportError:
     sys.exit(0)
 
 
+def readable_mem(mem):
+    for suffix in ["", "K", "M", "G", "T"]:
+        if mem < 10000:
+            return "{}{}".format(int(mem), suffix)
+        mem /= 1024
+    return "{}P".format(int(mem))
+
+
+def readable_pc(percent):
+    if percent < 100:
+        return str(round(percent * 10, 0) / 10)
+    else:
+        return str(int(percent))
+
+
 class DemoFrame(Frame):
     def __init__(self, screen):
         super(DemoFrame, self).__init__(screen,
@@ -19,16 +34,17 @@ class DemoFrame(Frame):
                                         screen.width,
                                         has_border=False,
                                         name="My Form")
-        # Internal state for doing periodic updates
+        # Internal state required for doing periodic updates
         self._last_frame = 0
         self._sort = 5
         self._reverse = True
-        self._list = MultiColumnListBox(Widget.FILL_FRAME,
-                                        [6, 10, 3, 10, 10, 5, 5, 100],
-                                        [],
-                                        titles=["PID", "USER", "NICE", "VIRT", "RSS", "CPU%", "MEM%", "COMMAND"],
-                                        name="mc_list")
-        # self._list.disabled = True
+        self._list = MultiColumnListBox(
+                Widget.FILL_FRAME,
+                [">6", "10", ">4", ">7", ">7", ">5", ">5", 100],
+                [],
+                titles=[
+                    "PID", "USER", "NI", "VIRT", "RSS", "CPU%", "MEM%", "CMD"],
+                name="mc_list")
 
         # Create the basic form layout...
         layout = Layout([1], fill_frame=True)
@@ -103,10 +119,10 @@ class DemoFrame(Frame):
                     str(x[0]),
                     x[1],
                     str(x[2]),
-                    str(int(x[3] / 1024 / 1024)),
-                    str(int(x[4] / 1024 / 1024)),
-                    str(round(x[5] * 10, 0) / 10),
-                    str(round(x[6] * 10, 0) / 10),
+                    readable_mem(x[3]),
+                    readable_mem(x[4]),
+                    readable_pc(x[5]),
+                    readable_pc(x[6]),
                     x[7]
                 ], x[0]) for x in list_data
             ]
@@ -115,8 +131,6 @@ class DemoFrame(Frame):
             self._list.options = new_data
             self._list.value = last_selection
             self._list._start_line = last_start
-            # TODO: Should I expose a way of separating selection from view?
-
             # TODO: better options for formatting layouts within a text box?
             memory = psutil.virtual_memory()
             self._header._text = (
@@ -129,7 +143,7 @@ class DemoFrame(Frame):
 
     @property
     def frame_update_count(self):
-        # Refresh once a second...
+        # Refresh once every 2 seconds by default.
         return 40
 
 
