@@ -672,6 +672,14 @@ The ordering is important.  The effects at the bottom of the list are at the top
 of the screen Z order and so will be displayed in preference to those lower in
 the Z order (i.e. those earlier in the list).
 
+Full-screen Frames
+~~~~~~~~~~~~~~~~~~
+By default, asciimatics assumes that you are putting multiple Frames into one
+Scene and so provides defaults (e.g. borders) to optimize this type of UI.
+However, some UIs only need a single full-screen Frame.  This can easily be
+achieved by declaring a Frame the full width and height of the screen and then
+specifying `has_border=False`.
+
 Pop-up dialogs
 ~~~~~~~~~~~~~~
 Along a similar line, you can also add a :py:obj:`.PopUpDialog` to your Scenes
