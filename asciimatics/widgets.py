@@ -1903,6 +1903,19 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         return self._required_height
 
     @property
+    def start_line(self):
+        """
+        The line that will be drawn at the top of the visible section of this
+        list.
+        """
+        return self._start_line
+
+    @start_line.setter
+    def start_line(self, new_value):
+        if 0 <= new_value < len(self._options):
+            self._start_line = new_value
+
+    @property
     def value(self):
         return self._value
 
@@ -2015,11 +2028,13 @@ class MultiColumnListBox(_BaseListBox):
 
         The `columns` parameter is a list of integers or strings.  If it is an
         integer, this is the absolute width of the column in characters.  If it
-        is a string, it must be of the format "[<align>]<width>", where
+        is a string, it must be of the format "[<align>]<width>[%]", where
 
         * <align> is the alignment string ("<" = left, ">" = right,
           "^" = centre)
-        * <width> is the width in characters.
+        * <width> is the width in characters
+        * % is an optional qualifier that says the number is a percentage of
+          the width of the widget.
 
         Column widths need to encompass any space required between columns, so
         for example, if your column is 5 characters, allow 6 for an extra space
@@ -2043,7 +2058,6 @@ class MultiColumnListBox(_BaseListBox):
         super(MultiColumnListBox, self).__init__(
                 height, options, titles=titles, label=label, name=name,
                 on_change=on_change)
-        # TODO: Should widths be absolute, relative or both?
         self._columns = []
         self._align = []
         self._spacing = []
@@ -2052,8 +2066,9 @@ class MultiColumnListBox(_BaseListBox):
                 self._columns.append(column)
                 self._align.append("<")
             else:
-                match = re.match("([<>^]?)(\d+)", column)
-                self._columns.append(int(match.group(2)))
+                match = re.match("([<>^]?)(\d+)([%]?)", column)
+                self._columns.append(float(match.group(2)) / 100
+                                     if match.group(3) else int(match.group(2)))
                 self._align.append(match.group(1) if match.group(1) else "<")
             self._spacing.append(1 if i > 0 and self._align[i] == "<" and
                                  self._align[i - 1] == ">" else 0)
@@ -2088,6 +2103,8 @@ class MultiColumnListBox(_BaseListBox):
             for i, [title, align, space] in enumerate(
                     zip(self._titles, self._align, self._spacing)):
                 width = self._columns[i]
+                if isinstance(width, float):
+                    width = int(self._w * width)
                 self._frame.canvas.print_at(
                         "{}{:{}{}}".format(" " * space, title, align, width),
                         self._x + self._offset + row_dx,
@@ -2109,6 +2126,8 @@ class MultiColumnListBox(_BaseListBox):
                                     self._spacing, fillvalue="")):
                     if width == "":
                         break
+                    if isinstance(width, float):
+                        width = int(self._w * width)
                     if len(text) >= width:
                         text = text[:width - 3] + "..."
                     self._frame.canvas.print_at(

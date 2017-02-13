@@ -41,12 +41,12 @@ class DemoFrame(Frame):
         self._sort = 5
         self._reverse = True
         self._list = MultiColumnListBox(
-                Widget.FILL_FRAME,
-                [">6", "10", ">4", ">7", ">7", ">5", ">5", 100],
-                [],
-                titles=[
-                    "PID", "USER", "NI", "VIRT", "RSS", "CPU%", "MEM%", "CMD"],
-                name="mc_list")
+            Widget.FILL_FRAME,
+            [">6", 10, ">4", ">7", ">7", ">5", ">5", "100%"],
+            [],
+            titles=[
+                "PID", "USER", "NI", "VIRT", "RSS", "CPU%", "MEM%", "CMD"],
+            name="mc_list")
 
         # Create the basic form layout...
         layout = Layout([1], fill_frame=True)
@@ -60,7 +60,7 @@ class DemoFrame(Frame):
 
         # Add my own colour palette
         self.palette = defaultdict(
-                lambda: (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK))
+            lambda: (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK))
         for key in ["selected_focus_field", "label"]:
             self.palette[key] = (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLACK)
         self.palette["title"] = (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_WHITE)
@@ -85,13 +85,12 @@ class DemoFrame(Frame):
 
     def _update(self, frame_no):
         # Refresh the list view if needed
-        if frame_no - self._last_frame >= 20 or self._last_frame == 0:
+        if frame_no - self._last_frame >= self.frame_update_count or self._last_frame == 0:
             self._last_frame = frame_no
 
             # Create the data to go in the multi-column list...
             last_selection = self._list.value
-            # TODO: Is this really right?  If so expose the API...
-            last_start = self._list._start_line
+            last_start = self._list.start_line
             list_data = []
             for process in psutil.process_iter():
                 try:
@@ -132,13 +131,13 @@ class DemoFrame(Frame):
             # Update the list and try to reset the last selection.
             self._list.options = new_data
             self._list.value = last_selection
-            self._list._start_line = last_start
+            self._list.start_line = last_start
             # TODO: better options for formatting layouts within a text box?
             memory = psutil.virtual_memory()
             self._header._text = (
                 "CPU usage: {}%   Memory available: {}M".format(
-                        str(round(psutil.cpu_percent() * 10, 0) / 10),
-                        str(int(memory.available / 1024 / 1024))))
+                    str(round(psutil.cpu_percent() * 10, 0) / 10),
+                    str(int(memory.available / 1024 / 1024))))
 
         # Now redraw as normal
         super(DemoFrame, self)._update(frame_no)
