@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from asciimatics.event import KeyboardEvent
 from asciimatics.widgets import Frame, Layout, MultiColumnListBox, Widget, Label
 from asciimatics.scene import Scene
@@ -57,8 +59,8 @@ class DemoFrame(Frame):
         self.fix()
 
         # Add my own colour palette
-        for key in self.palette:
-            self.palette[key] = (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK)
+        self.palette = defaultdict(
+                lambda: (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK))
         for key in ["selected_focus_field", "label"]:
             self.palette[key] = (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLACK)
         self.palette["title"] = (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_WHITE)
@@ -97,7 +99,7 @@ class DemoFrame(Frame):
                     data = [
                         process.pid,
                         process.username(),
-                        process.nice(),
+                        int(process.nice()),
                         memory.vms,
                         memory.rss,
                         process.cpu_percent(),
@@ -112,7 +114,7 @@ class DemoFrame(Frame):
 
             # Apply current sort and reformat for humans
             list_data = sorted(list_data,
-                               key=lambda x: x[self._sort],
+                               key=lambda f: f[self._sort],
                                reverse=self._reverse)
             new_data = [
                 ([
