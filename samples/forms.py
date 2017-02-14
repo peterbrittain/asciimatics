@@ -113,7 +113,7 @@ class DemoFrame(Frame):
 
     @staticmethod
     def _check_email(value):
-        m = re.match("^[a-zA-Z0-9_\-\.]+@[a-zA-Z0-9_\-\.]+\.[a-zA-Z0-9_\-\.]+$",
+        m = re.match(r"^[a-zA-Z0-9_\-\.]+@[a-zA-Z0-9_\-\.]+\.[a-zA-Z0-9_\-\.]+$",
                      value)
         return len(value) == 0 or m is not None
 

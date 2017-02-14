@@ -1954,7 +1954,7 @@ class ListBox(_BaseListBox):
     the user can select one option.
     """
 
-    def __init__(self, height, options, title=None, label=None, name=None, on_change=None):
+    def __init__(self, height, options, label=None, name=None, on_change=None):
         """
         :param height: The required number of input lines for this ListBox.
         :param options: The options for each row in the widget.
@@ -2056,8 +2056,7 @@ class MultiColumnListBox(_BaseListBox):
         `options` property on this widget.
         """
         super(MultiColumnListBox, self).__init__(
-                height, options, titles=titles, label=label, name=name,
-                on_change=on_change)
+            height, options, titles=titles, label=label, name=name, on_change=on_change)
         self._columns = []
         self._align = []
         self._spacing = []
@@ -2066,7 +2065,7 @@ class MultiColumnListBox(_BaseListBox):
                 self._columns.append(column)
                 self._align.append("<")
             else:
-                match = re.match("([<>^]?)(\d+)([%]?)", column)
+                match = re.match(r"([<>^]?)(\d+)([%]?)", column)
                 self._columns.append(float(match.group(2)) / 100
                                      if match.group(3) else int(match.group(2)))
                 self._align.append(match.group(1) if match.group(1) else "<")
@@ -2106,10 +2105,10 @@ class MultiColumnListBox(_BaseListBox):
                 if isinstance(width, float):
                     width = int(self._w * width)
                 self._frame.canvas.print_at(
-                        "{}{:{}{}}".format(" " * space, title, align, width),
-                        self._x + self._offset + row_dx,
-                        self._y,
-                        colour, attr, bg)
+                    "{}{:{}{}}".format(" " * space, title, align, width),
+                    self._x + self._offset + row_dx,
+                    self._y,
+                    colour, attr, bg)
                 row_dx += width + space
 
         # Render visible portion of the text.
@@ -2121,9 +2120,8 @@ class MultiColumnListBox(_BaseListBox):
                 row_dx = 0
                 # Try to handle badly formatted data, where row lists don't
                 # match the expected number of columns.
-                for j, [text, width, align, space] in enumerate(
-                        zip_longest(row, self._columns, self._align,
-                                    self._spacing, fillvalue="")):
+                for text, width, align, space in zip_longest(
+                        row, self._columns, self._align, self._spacing, fillvalue=""):
                     if width == "":
                         break
                     if isinstance(width, float):
