@@ -1971,8 +1971,7 @@ class ListBox(_BaseListBox):
                 ("Second option", 2)
             ]
         """
-        super(ListBox, self).__init__(
-                height, options, label=label, name=name, on_change=on_change)
+        super(ListBox, self).__init__(height, options, label=label, name=name, on_change=on_change)
 
     def update(self, frame_no):
         self._draw_label()
