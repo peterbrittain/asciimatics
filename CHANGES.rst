@@ -3,6 +3,7 @@ CHANGE HISTORY
 
 2.0.0
 -----
+- Added MultiColumnListBox for displaying tabular data in widgets.
 - Improved efficiency of screen refresh on curses systems.
 - Improved start-up time by avoiding use of deepcopy()
 - Added unicode characters to ColourFileImage to increase rendering resolution.

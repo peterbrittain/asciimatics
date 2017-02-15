@@ -52,8 +52,9 @@ Note that the cursor keys will not traverse between Layouts.  In addition,
 asciimatics will not allow you to navigate to a disabled widget.
 
 Inside the standard text edit Widgets, the cursor key actions are overridden and
-instead they will allow you to for navigate around the editable text as you
-would expect.  In addition you can also use the following extra keys.
+instead they will allow you to for navigate around the editable text (or
+lists) as you would expect.  In addition you can also use the following extra
+keys.
 
 ===================  ==========================================================
 Key                  Action
@@ -291,20 +292,21 @@ and how you're going to achieve that.  In short:
 At this point, you can now decide which Widgets you want to use.  The standard
 selection is as follows.
 
-========================    ====================================================
-Widget type                 Description
-========================    ====================================================
-:py:obj:`.Button`           Action buttons - e.g. ok/cancel/etc.
-:py:obj:`.CheckBox`         Simple yes/no tick boxes.
-:py:obj:`.Divider`          A spacer between widgets (for aesthetics).
-:py:obj:`.Label`            A label for a group of related widgets.
-:py:obj:`.ListBox`          A list of possible options from which the user can
-                            select one value.
-:py:obj:`.RadioButtons`     A list of radio buttons.  These allow the user to
-                            select one value from a list of options.
-:py:obj:`.Text`             A single line of editable text.
-:py:obj:`.TextBox`          A multi-line box of editable text.
-========================    ====================================================
+========================      =================================================
+Widget type                   Description
+========================      =================================================
+:py:obj:`.Button`             Action buttons - e.g. ok/cancel/etc.
+:py:obj:`.CheckBox`           Simple yes/no tick boxes.
+:py:obj:`.Divider`            A spacer between widgets (for aesthetics).
+:py:obj:`.Label`              A label for a group of related widgets.
+:py:obj:`.ListBox`            A list of possible options from which users can
+                              select one value.
+:py:obj:`.MultiColumnListBox` Like a ListBox, but for displaying tabular data.
+:py:obj:`.RadioButtons`       A list of radio buttons.  These allow users to
+                              select one value from a list of options.
+:py:obj:`.Text`               A single line of editable text.
+:py:obj:`.TextBox`            A multi-line box of editable text.
+========================      =================================================
 
 Asciimatics will automatically arrange these for you with just a little extra
 help.  All you need to do is decide how many columns you want for your fields
@@ -429,6 +431,14 @@ code.
 
     Note that you can only have one Layout and/or Widget that fills the Frame.
     Trying to set more than one will be rejected.
+
+Full-screen Frames
+~~~~~~~~~~~~~~~~~~
+By default, asciimatics assumes that you are putting multiple Frames into one
+Scene and so provides defaults (e.g. borders) to optimize this type of UI.
+However, some UIs only need a single full-screen Frame.  This can easily be
+achieved by declaring a Frame the full width and height of the screen and then
+specifying `has_border=False`.
 
 Large forms
 ~~~~~~~~~~~
@@ -671,14 +681,6 @@ animated Julia set Effect:
 The ordering is important.  The effects at the bottom of the list are at the top
 of the screen Z order and so will be displayed in preference to those lower in
 the Z order (i.e. those earlier in the list).
-
-Full-screen Frames
-~~~~~~~~~~~~~~~~~~
-By default, asciimatics assumes that you are putting multiple Frames into one
-Scene and so provides defaults (e.g. borders) to optimize this type of UI.
-However, some UIs only need a single full-screen Frame.  This can easily be
-achieved by declaring a Frame the full width and height of the screen and then
-specifying `has_border=False`.
 
 Pop-up dialogs
 ~~~~~~~~~~~~~~
