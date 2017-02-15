@@ -11,7 +11,7 @@ from asciimatics.exceptions import NextScene, StopApplication, InvalidFields
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen, Canvas
 from asciimatics.widgets import Frame, Layout, Button, Label, TextBox, Text, \
-    Divider, RadioButtons, CheckBox, PopUpDialog, ListBox, Widget
+    Divider, RadioButtons, CheckBox, PopUpDialog, ListBox, Widget, MultiColumnListBox
 
 
 class TestFrame(Frame):
@@ -692,7 +692,7 @@ class TestWidgets(unittest.TestCase):
 
     def test_list_box(self):
         """
-        Check widget tab stops work as expected.
+        Check ListBox widget works as expected.
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         scene = MagicMock(spec=Scene)
@@ -735,6 +735,75 @@ class TestWidgets(unittest.TestCase):
         self.process_mouse(form, [(2, 1, MouseEvent.LEFT_CLICK)])
         form.save()
         self.assertEqual(form.data, {"contacts": 1})
+
+        # Check that the current focus ignores unknown events.
+        event = object()
+        self.assertEqual(event, form.process_event(event))
+
+    def test_multi_column_list_box(self):
+        """
+        Check MultiColumnListBox works as expected.
+        """
+        # Create a dummy screen.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        layout.add_widget(MultiColumnListBox(
+            Widget.FILL_FRAME,
+            [3, "4", ">4", "<4", ">10%", "100%"],
+            [
+                (["1", "2", "3", "4", "5", "6"], 1),
+                (["11", "222", "333", "444", "555", "6"], 2),
+                (["111", "2", "3", "4", "5", "6"], 3),
+                (["1", "2", "33333", "4", "5", "6"], 4),
+                (["1", "2", "3", "4", "5", "6666666666666666666666"], 5),
+            ],
+            titles=["A", "B", "C", "D", "E", "F"],
+            name="mc_list"))
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        # Check we have a default value for our list.
+        form.save()
+        self.assertEqual(form.data, {"mc_list": 1})
+
+        # Check that UP/DOWN change selection.
+        self.process_keys(form, [Screen.KEY_DOWN])
+        form.save()
+        self.assertEqual(form.data, {"mc_list": 2})
+        self.process_keys(form, [Screen.KEY_UP])
+        form.save()
+        self.assertEqual(form.data, {"mc_list": 1})
+
+        # Check that the widget is rendered correctly.
+        self.maxDiff = None
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "A  B      C D      E F                  \n" +
+            "1  2      3 4      5 6                  \n" +
+            "11 222  333 444  555 6                  \n" +
+            "...2      3 4      5 6                  \n" +
+            "1  2   3... 4      5 6                  \n" +
+            "1  2      3 4      5 6666666666666666666\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        # Check that mouse input changes selection.
+        self.process_mouse(form, [(2, 2, MouseEvent.LEFT_CLICK)])
+        form.save()
+        self.assertEqual(form.data, {"mc_list": 2})
+        self.process_mouse(form, [(2, 1, MouseEvent.LEFT_CLICK)])
+        form.save()
+        self.assertEqual(form.data, {"mc_list": 1})
 
         # Check that the current focus ignores unknown events.
         event = object()
