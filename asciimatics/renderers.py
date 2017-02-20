@@ -425,7 +425,7 @@ class ColourImageFile(StaticRenderer):
                         if ((real_col == real_col2 == background) or
                                 (col == col2 == 16)):
                             if fill_background or uni:
-                                ascii_image += "${%d,2,%d} " % (bg, bg)
+                                ascii_image += "${%d,2,%d}." % (bg, bg)
                             else:
                                 ascii_image += "${%d} " % bg
                         else:

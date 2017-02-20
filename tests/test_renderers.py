@@ -226,8 +226,9 @@ class TestRenderers(unittest.TestCase):
                 fill_background=True,
                 height=10)
 
-            # Check BG rendering doesn't change the text output.
-            image2 = next(renderer2.images)
+            # Check BG rendering doesn't change the visible text output.
+            # Note that BG rendering needs to print dots for some terminals.
+            image2 = [x.replace(".", " ") for x in next(renderer2.images)]
             self.assertEqual(image, image2)
 
             # Check BG rendering gives same colours for FG and BG as original
@@ -276,16 +277,16 @@ class TestRenderers(unittest.TestCase):
             self.assertEqual(
                 image,
                 ['.',
-                 '     ▄▄▄▄▄▄▄▄▄▄     .',
-                 '   ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄  .',
-                 ' ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ .',
-                 ' ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄.',
+                 '.....▄▄▄▄▄▄▄▄▄▄......',
+                 '...▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄...',
+                 '.▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄..',
+                 '.▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄.',
                  '▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄.',
                  '▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄.',
-                 ' ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄.',
-                 ' ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ .',
-                 '   ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄  .',
-                 '     ▄▄▄▄▄▄▄▄▄▄▄    .'])
+                 '.▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄.',
+                 '.▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄..',
+                 '...▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄...',
+                 '.....▄▄▄▄▄▄▄▄▄▄▄.....'])
 
         Screen.wrapper(internal_checks, height=15)
 

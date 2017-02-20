@@ -1,6 +1,3 @@
-import re
-
-from asciimatics.effects import Julia, Clock
 from asciimatics.widgets import Frame, TextBox, Layout, Label, Divider, Text, \
     CheckBox, RadioButtons, Button, PopUpDialog
 from asciimatics.scene import Scene
@@ -8,6 +5,7 @@ from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, NextScene, StopApplication, \
     InvalidFields
 import sys
+import re
 
 # Initial data for the form
 form_data = {
@@ -124,29 +122,8 @@ class DemoFrame(Frame):
             raise StopApplication("User requested exit")
 
 
-class ClockFrame(Frame):
-    def __init__(self, screen, x, y):
-        super(ClockFrame, self).__init__(screen, 13, 26,
-                                         name="Clock",
-                                         has_shadow=True,
-                                         x=x, y=y)
-        self.add_effect(Clock(self._canvas, 13, 7, 7, Screen.COLOUR_BLUE))
-        self.fix()
-
-
 def demo(screen, scene):
-    scenes = []
-    effects = [
-        Julia(screen),
-        ClockFrame(screen, 0, 0),
-        ClockFrame(screen, screen.width - 26, 0),
-        ClockFrame(screen, 0, screen.height - 13),
-        ClockFrame(screen, screen.width - 26, screen.height - 13),
-        DemoFrame(screen),
-    ]
-    scenes.append(Scene(effects, -1))
-
-    screen.play(scenes, stop_on_resize=True, start_scene=scene)
+    screen.play([Scene([DemoFrame(screen)], -1)], stop_on_resize=True, start_scene=scene)
 
 last_scene = None
 while True:
