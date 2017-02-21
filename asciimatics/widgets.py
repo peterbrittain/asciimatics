@@ -1044,6 +1044,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         self._is_tab_stop = tab_stop
         self._is_disabled = False
         self._is_valid = True
+        self._custom_colour = None
 
     @property
     def is_valid(self):
@@ -1066,16 +1067,28 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         return self._is_disabled
 
+    @disabled.setter
+    def disabled(self, new_value):
+        self._is_disabled = new_value
+
+    @property
+    def custom_colour(self):
+        """
+        A custom colour to use instead of the normal calculated one when drawing this widget.  This
+        must be a key name from the palette dictionary.
+        """
+        return self._custom_colour
+
+    @custom_colour.setter
+    def custom_colour(self, new_value):
+        self._custom_colour = new_value
+
     @property
     def frame_update_count(self):
         """
         The number of frames before this Widget should be updated.
         """
         return 0
-
-    @disabled.setter
-    def disabled(self, new_value):
-        self._is_disabled = new_value
 
     def register_frame(self, frame):
         """
@@ -1176,7 +1189,9 @@ class Widget(with_metaclass(ABCMeta, object)):
         :param selected: Whether this item is selected or not.
         :returns: A colour tuple (fg, attr, bg) to be used.
         """
-        if self.disabled:
+        if self._custom_colour:
+            key = self._custom_colour
+        elif self.disabled:
             key = "disabled"
         elif not self._is_valid:
             key = "invalid"
@@ -1877,6 +1892,15 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
                 # Move down one line in text - use value to trigger on_select.
                 self._line = min(len(self._options) - 1, self._line + 1)
                 self.value = self._options[self._line][1]
+            elif len(self._options) > 0 and event.key_code == Screen.KEY_PAGE_UP:
+                # Move up one page.
+                self._line = max(0, self._line - self._h + (1 if self._titles else 0))
+                self.value = self._options[self._line][1]
+            elif len(self._options) > 0 and event.key_code == Screen.KEY_PAGE_DOWN:
+                # Move down one page.
+                self._line = min(
+                        len(self._options) - 1, self._line + self._h - (1 if self._titles else 0))
+                self.value = self._options[self._line][1]
             else:
                 # Ignore any other key press.
                 return event
@@ -1966,10 +1990,7 @@ class ListBox(_BaseListBox):
         to be displayed to the user and the second is an interval value to
         identify the entry to the program.  For example:
 
-            options=[
-                ("First option", 1),
-                ("Second option", 2)
-            ]
+            options=[("First option", 1), ("Second option", 2)]
         """
         super(ListBox, self).__init__(height, options, label=label, name=name, on_change=on_change)
 
@@ -2046,10 +2067,7 @@ class MultiColumnListBox(_BaseListBox):
         list of tuples of the form ([val1, val2, ... , valn], index).  For
         example, this data provides 2 rows for a 3 column widget:
 
-            options=[
-                (["One", "row", "here"], 1),
-                (["Second", "row", "here"], 2)
-            ]
+            options=[(["One", "row", "here"], 1), (["Second", "row", "here"], 2)]
 
         The options list may be None and then can be set later using the
         `options` property on this widget.

@@ -1,11 +1,10 @@
-from collections import defaultdict
-
 from asciimatics.event import KeyboardEvent
-from asciimatics.widgets import Frame, Layout, MultiColumnListBox, Widget, Label
+from asciimatics.widgets import Frame, Layout, MultiColumnListBox, Widget, Label, TextBox
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, StopApplication
 import sys
+from collections import defaultdict
 try:
     import psutil
 except ImportError:
@@ -40,22 +39,23 @@ class DemoFrame(Frame):
         self._last_frame = 0
         self._sort = 5
         self._reverse = True
+
+        # Create the basic form layout...
+        layout = Layout([1], fill_frame=True)
+        self._header = TextBox(1, as_string=True)
+        self._header.disabled = True
+        self._header.custom_colour = "label"
         self._list = MultiColumnListBox(
             Widget.FILL_FRAME,
             [">6", 10, ">4", ">7", ">7", ">5", ">5", "100%"],
             [],
-            titles=[
-                "PID", "USER", "NI", "VIRT", "RSS", "CPU%", "MEM%", "CMD"],
+            titles=["PID", "USER", "NI", "VIRT", "RSS", "CPU%", "MEM%", "CMD"],
             name="mc_list")
-
-        # Create the basic form layout...
-        layout = Layout([1], fill_frame=True)
-        self._header = Label("")
-        footer = Label("Press `<`/`>` to change sort, `r` to toggle order, or `q` to quit.")
         self.add_layout(layout)
         layout.add_widget(self._header)
         layout.add_widget(self._list)
-        layout.add_widget(footer)
+        layout.add_widget(
+                Label("Press `<`/`>` to change sort, `r` to toggle order, or `q` to quit."))
         self.fix()
 
         # Add my own colour palette
@@ -132,12 +132,10 @@ class DemoFrame(Frame):
             self._list.options = new_data
             self._list.value = last_selection
             self._list.start_line = last_start
-            # TODO: better options for formatting layouts within a text box?
-            memory = psutil.virtual_memory()
-            self._header._text = (
+            self._header.value = (
                 "CPU usage: {}%   Memory available: {}M".format(
                     str(round(psutil.cpu_percent() * 10, 0) / 10),
-                    str(int(memory.available / 1024 / 1024))))
+                    str(int(psutil.virtual_memory().available / 1024 / 1024))))
 
         # Now redraw as normal
         super(DemoFrame, self)._update(frame_no)
