@@ -9,6 +9,7 @@ CHANGE HISTORY
 - Added unicode characters to ColourFileImage to increase rendering resolution.
 - Added support for validated free-form text to Text widgets.
 - Added force_update() to allow background refresh of the Screen.
+- Added custom_colour property to widgets.
 - Added support for DELETE key to text widgets.
 - Fixed ZeroDivisionError in Frames.
 - Tweaked widget navigation using cursor keys to be more like web forms.

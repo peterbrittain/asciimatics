@@ -809,6 +809,40 @@ class TestWidgets(unittest.TestCase):
         event = object()
         self.assertEqual(event, form.process_event(event))
 
+    def test_disabled_text(self):
+        """
+        Check disabled TextBox can be used for pre-formatted output.
+        """
+        # Create a dummy screen.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        text_box = TextBox(1, as_string=True)
+        text_box.disabled = True
+        layout.add_widget(text_box)
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that input has no effect on the programmed value.
+        text_box.value = "A test"
+        self.process_keys(form, ["A"])
+        form.save()
+        self.assertEqual(text_box.value, "A test")
+
+        # Check that we can provide a custom colour.  Since the default palette has no "custom"
+        # key, this will throw an exception.
+        self.assertEqual(text_box._pick_colours("blah"), form.palette["disabled"])
+        with self.assertRaises(KeyError) as cm:
+            text_box.custom_colour = "custom"
+            text_box._pick_colours("blah")
+        self.assertEqual("custom", cm.exception.message)
+
     def test_pop_up_widget(self):
         """
         Check widget tab stops work as expected.
