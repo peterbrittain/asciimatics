@@ -1,8 +1,11 @@
 Troubleshooting
 ===============
 
-Installing on Android
----------------------
+Installation issues
+-------------------
+
+Android
+^^^^^^^
 To run on Android, you need access to a CLI environment.  I've found that 
 https://termux.com does the trick, but you need to install some extra packages
 before you can install asciimatics.
@@ -15,6 +18,17 @@ After installing termux, start up the app and run the following commands:
     apt-get install clang python-dev libjpeg-dev
     LDFLAGS=-L/system/lib pip install Pillow
     pip install asciimatics
+
+Linux
+^^^^^
+Although asciimatics is a pure python implementation, it depends on Pillow (a fork of the Python
+Imaging Library).  This package depends on some native libraries that must be installed first.
+For details of what libararies you need, see `the Pillow documentation
+<http://pillow.readthedocs.io/en/latest/installation.html#external-libraries>`__.
+
+For a list of possible solutions, see the `answer on Stackoverflow
+<http://stackoverflow.com/q/24646305/4994021>`__.  In short, either install the native libraries
+you need, or force an installation of an older version (2.9.0) of Pillow.
 
 256 colours not working
 -----------------------
