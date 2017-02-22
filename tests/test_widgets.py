@@ -841,7 +841,7 @@ class TestWidgets(unittest.TestCase):
         with self.assertRaises(KeyError) as cm:
             text_box.custom_colour = "custom"
             text_box._pick_colours("blah")
-        self.assertEqual("custom", cm.exception.message)
+        self.assertIn("custom", str(cm.exception))
 
     def test_pop_up_widget(self):
         """
