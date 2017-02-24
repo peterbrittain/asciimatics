@@ -2106,10 +2106,6 @@ class MultiColumnListBox(_BaseListBox):
                 self._y + i + dy,
                 colour, attr, bg)
 
-        # Don't bother with anything else if there are no options to render.
-        if len(self._options) <= 0:
-            return
-
         # Allow space for titles if needed.
         if self._titles:
             dy += 1
@@ -2127,6 +2123,10 @@ class MultiColumnListBox(_BaseListBox):
                     self._y,
                     colour, attr, bg)
                 row_dx += width + space
+
+        # Don't bother with anything else if there are no options to render.
+        if len(self._options) <= 0:
+            return
 
         # Render visible portion of the text.
         self._start_line = max(0, max(self._line - height + 1,
