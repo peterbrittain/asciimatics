@@ -1856,13 +1856,16 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
     An Internal class to contain common function between list box types.
     """
 
-    def __init__(self, height, options, titles=None, label=None, name=None, on_change=None):
+    def __init__(self, height, options, titles=None, label=None, name=None, on_change=None,
+                 on_select=None):
         """
         :param height: The required number of input lines for this widget.
         :param options: The options for each row in the widget.
         :param label: An optional label for the widget.
         :param name: The name for the widget.
         :param on_change: Optional function to call when selection changes.
+        :param on_select: Optional function to call when the user actually selects an entry from
+            this list - e.g. by double-clicking or pressing Enter.
         """
         super(_BaseListBox, self).__init__(name)
         self._options = options
@@ -1872,6 +1875,7 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         self._start_line = 0
         self._required_height = height
         self._on_change = on_change
+        self._on_select = on_select
 
     def reset(self):
         # Reset selection - use value to trigger on_select
@@ -1901,6 +1905,10 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
                 self._line = min(
                         len(self._options) - 1, self._line + self._h - (1 if self._titles else 0))
                 self.value = self._options[self._line][1]
+            elif event.key_code in [Screen.ctrl("m"), Screen.ctrl("j")]:
+                # Fire select callback.
+                if self._on_select:
+                    self._on_select()
             else:
                 # Ignore any other key press.
                 return event
@@ -1910,13 +1918,20 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
             if event.buttons != 0:
                 if (len(self._options) > 0 and
                         self.is_mouse_over(new_event, include_label=False)):
-                    # Use property to trigger events.
-                    self._line = min(new_event.y - self._y,
-                                     len(self._options) - 1) + self._start_line
-                    if self._titles and self._line > 0:
-                        self._line -= 1
-                    self.value = self._options[self._line][1]
+                    # Figure out selected line
+                    new_line = new_event.y - self._y + self._start_line
+                    if self._titles:
+                        new_line -= 1
+                    new_line = min(new_line, len(self._options) - 1)
+
+                    # Update selection and fire select callback if needed.
+                    if new_line >= 0:
+                        self._line = new_line
+                        self.value = self._options[self._line][1]
+                        if event.buttons & MouseEvent.DOUBLE_CLICK != 0 and self._on_select:
+                            self._on_select()
                     return
+
             # Ignore other mouse events.
             return event
         else:
@@ -2035,7 +2050,7 @@ class MultiColumnListBox(_BaseListBox):
     """
 
     def __init__(self, height, columns, options, titles=None, label=None,
-                 name=None, on_change=None):
+                 name=None, on_change=None, on_select=None):
         """
         :param height: The required number of input lines for this ListBox.
         :param columns: A list of widths and alignments for each column.
@@ -2048,7 +2063,7 @@ class MultiColumnListBox(_BaseListBox):
 
         The `columns` parameter is a list of integers or strings.  If it is an
         integer, this is the absolute width of the column in characters.  If it
-        is a string, it must be of the format "[<align>]<width>[%]", where
+        is a string, it must be of the format "[<align>]<width>[%]" where:
 
         * <align> is the alignment string ("<" = left, ">" = right,
           "^" = centre)
@@ -2062,6 +2077,10 @@ class MultiColumnListBox(_BaseListBox):
         right-justified column next to a left-justified column, so this widget
         will automatically space them for you.
 
+        An integer value of 0 is interpreted to be use whatever space is left
+        available after the rest of the columns have been calculated.  There
+        must be only one of these columns.
+
         The number of columns is for this widget is determined from the number
         of entries in the `columns` parameter.  The `options` list is then a
         list of tuples of the form ([val1, val2, ... , valn], index).  For
@@ -2073,7 +2092,8 @@ class MultiColumnListBox(_BaseListBox):
         `options` property on this widget.
         """
         super(MultiColumnListBox, self).__init__(
-            height, options, titles=titles, label=label, name=name, on_change=on_change)
+            height, options, titles=titles, label=label, name=name, on_change=on_change,
+            on_select=on_select)
         self._columns = []
         self._align = []
         self._spacing = []
@@ -2088,6 +2108,19 @@ class MultiColumnListBox(_BaseListBox):
                 self._align.append(match.group(1) if match.group(1) else "<")
             self._spacing.append(1 if i > 0 and self._align[i] == "<" and
                                  self._align[i - 1] == ">" else 0)
+
+    def _get_width(self, width):
+        """
+        Helper function to figure out the actual column width from the various options.
+
+        :param width: The size of column requested
+        :return: the integer width of the column in characters
+        """
+        if isinstance(width, float):
+            return int(self._w * width)
+        if width == 0:
+            width = self._w - sum([self._get_width(x) for x in self._columns if x != 0])
+        return width
 
     def update(self, frame_no):
         self._draw_label()
@@ -2114,9 +2147,7 @@ class MultiColumnListBox(_BaseListBox):
             colour, attr, bg = self._frame.palette["title"]
             for i, [title, align, space] in enumerate(
                     zip(self._titles, self._align, self._spacing)):
-                width = self._columns[i]
-                if isinstance(width, float):
-                    width = int(self._w * width)
+                width = self._get_width(self._columns[i])
                 self._frame.canvas.print_at(
                     "{}{:{}{}}".format(" " * space, title, align, width),
                     self._x + self._offset + row_dx,
@@ -2141,8 +2172,7 @@ class MultiColumnListBox(_BaseListBox):
                         row, self._columns, self._align, self._spacing, fillvalue=""):
                     if width == "":
                         break
-                    if isinstance(width, float):
-                        width = int(self._w * width)
+                    width = self._get_width(width)
                     if len(text) >= width:
                         text = text[:width - 3] + "..."
                     self._frame.canvas.print_at(
