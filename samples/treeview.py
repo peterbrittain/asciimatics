@@ -1,12 +1,16 @@
 from datetime import date, datetime
-from asciimatics.event import KeyboardEvent, MouseEvent
-from asciimatics.widgets import Frame, Layout, MultiColumnListBox, Widget, Label, TextBox
+from asciimatics.event import KeyboardEvent
+from asciimatics.widgets import Frame, Layout, MultiColumnListBox, Widget, Label, PopUpDialog
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, StopApplication
 import sys
 import os
-from collections import defaultdict
+
+
+# Global state for the application
+# TODO: Figure out how to remember this across resize when actually a widget...
+root_dir = os.path.abspath(".")
 
 
 # TODO: Consider exposing these and others in utilities?
@@ -34,10 +38,11 @@ class DemoFrame(Frame):
                                         name="My Form")
         # Internal state required for doing periodic updates
         self._last_frame = 0
-        self._root = os.path.abspath(".")
+        self._root = root_dir
 
         # Create the basic form layout...
         layout = Layout([1], fill_frame=True)
+        # TODO: Create a new widget for the file viewer?
         self._list = MultiColumnListBox(
             Widget.FILL_FRAME,
             [0, ">8", ">14"],
@@ -53,10 +58,14 @@ class DemoFrame(Frame):
         self._populate_list()
 
     def on_select(self):
+        global root_dir
         # Update the list data as needed.
         if self._list.value and os.path.isdir(self._list.value):
-            self._root = self._list.value
+            self._root = root_dir = self._list.value
             self._populate_list()
+        else:
+            self._scene.add_effect(
+                PopUpDialog(self._screen, "You selected: {}".format(self._list.value), ["OK"]))
 
         # Force a refresh for improved responsiveness
         self._last_frame = 0
@@ -103,12 +112,13 @@ class DemoFrame(Frame):
         self._list._titles[0] = self._root
 
 
-def demo(screen):
-    screen.play([Scene([DemoFrame(screen)], -1)], stop_on_resize=True)
+def demo(screen, old_scene):
+    screen.play([Scene([DemoFrame(screen)], -1)], stop_on_resize=True, start_scene=old_scene)
 
+last_scene = None
 while True:
     try:
-        Screen.wrapper(demo, catch_interrupt=True)
+        Screen.wrapper(demo, catch_interrupt=False, arguments=[last_scene])
         sys.exit(0)
-    except ResizeScreenError:
-        pass
+    except ResizeScreenError as e:
+        last_scene = e.scene
