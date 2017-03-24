@@ -20,6 +20,7 @@ import sys
 import signal
 from asciimatics.event import KeyboardEvent, MouseEvent
 from .exceptions import ResizeScreenError, StopApplication, NextScene
+from wcwidth import wcwidth, wcswidth
 
 # Logging
 from logging import getLogger
@@ -348,7 +349,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         # Reset our screen buffer
         self._start_line = 0
         self._x = self._y = None
-        line = [(u" ", Screen.COLOUR_WHITE, 0, 0) for _ in range(self.width)]
+        line = [(u" ", Screen.COLOUR_WHITE, 0, 0, 1) for _ in range(self.width)]
 
         # Note that we use json to duplicate the data as copy.deepcopy is an
         # order of magnitude slower.
@@ -421,15 +422,31 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         if y < 0 or y >= self._buffer_height or x > self.width:
             return
         if x < 0:
+            # TODO: Fix up for double-width chars?
             text = text[-x:]
             x = 0
-        if x + len(text) >= self.width:
+
+        # Don't do double width checks here as it is hugely costly - do it inline below instead.
+        if x + len(text) > self.width:
             text = text[:self.width - x]
 
         if len(text) > 0:
+            j = 0
             for i, c in enumerate(text):
+                # Handle overrun of double-width glyphs now.
+                if x + i + j >= self.width:
+                    return
+
+                # Now handle the update.
                 if c != " " or not transparent:
-                    self._double_buffer[y][x + i] = (str(c), colour, attr, bg)
+                    # Make sure that we populate the second character correctly for double-width
+                    # glyphs.  This ensures that if the glyph gets overwritten with a normal width
+                    # it will clear both cells in the refresh.
+                    self._double_buffer[y][x + i + j] = (str(c), colour, attr, bg, wcwidth(c))
+                    if self._double_buffer[y][x + i + j][4] == 2:
+                        j += 1
+                        if x + i + j < self.width:
+                            self._double_buffer[y][x + i + j] = (str(c), colour, attr, bg, 0)
 
     @property
     def start_line(self):
@@ -477,7 +494,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         The colours and attributes are the COLOUR_xxx and A_yyy constants
         defined in the Screen class.
         """
-        x = (self.width - len(text)) // 2
+        x = (self.width - wcswidth(text)) // 2
         self.paint(text, x, y, colour, attr, colour_map=colour_map)
 
     def paint(self, text, x, y, colour=7, attr=0, bg=0, transparent=False,
@@ -588,7 +605,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                 new_bg = self._blend(bg, old[3], blend)
                 new_fg = self._blend(fg, old[1], blend)
                 self._double_buffer[y + j][x + i] = \
-                    (old[0], new_fg, old[2], new_bg)
+                    (old[0], new_fg, old[2], new_bg, old[4])
 
     def is_visible(self, x, y):
         """
@@ -742,8 +759,8 @@ class Canvas(_AbstractCanvas):
         for y in range(self.height):
             for x in range(self.width):
                 c = self._double_buffer[y + self._start_line][x]
-                self._screen.print_at(
-                    c[0], x + self._dx, y + self._dy, c[1], c[2], c[3])
+                if c[4] != 0:
+                    self._screen.print_at(c[0], x + self._dx, y + self._dy, c[1], c[2], c[3])
 
     def _reset(self):
         # Nothing needed for a Canvas
@@ -1033,14 +1050,35 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             self._scroll(self._start_line - self._last_start_line)
             self._last_start_line = self._start_line
 
-        # Now draw any deltas to the scrolled screen.
+        # Now draw any deltas to the scrolled screen.  Note that CJK character sets sometimes
+        # use double-width characters, so don't try to draw the next character if we hit one.
         for y in range(min(self.height, self._buffer_height)):
+            skip_next = False
             for x in range(self.width):
+                old_cell = self._screen_buffer[y + self._start_line][x]
                 new_cell = self._double_buffer[y + self._start_line][x]
-                if self._screen_buffer[y + self._start_line][x] != new_cell:
-                    self._change_colours(new_cell[1], new_cell[2], new_cell[3])
-                    self._print_at(new_cell[0], x, y)
-                    self._screen_buffer[y + self._start_line][x] = new_cell
+
+                if skip_next:
+                    skip_next = False
+                else:
+                    # Check for orphaned half-characters from dual width glyphs (which occurs when
+                    # a new glyph is drawn over the top of part of such a glpyh).
+                    if (new_cell[4] == 0 or
+                            (new_cell[4] == 2 and x < self.width - 1 and
+                             self._double_buffer[y + self._start_line][x + 1][4] == 2)):
+                        new_cell = ("x", new_cell[1], new_cell[2], new_cell[3], 1)
+
+                    # Now check for any required updates.
+                    if old_cell != new_cell:
+                        self._change_colours(new_cell[1], new_cell[2], new_cell[3])
+                        self._print_at(new_cell[0], x, y, new_cell[4])
+
+                    # Skip the next character if the new cell was double-width.
+                    skip_next = new_cell[4] == 2
+
+                # Finally update the screen buffer to reflect reality.
+                self._screen_buffer[y + self._start_line][x] = new_cell
+
 
     def clear(self):
         """
@@ -1327,13 +1365,14 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         """
 
     @abstractmethod
-    def _print_at(self, text, x, y):
+    def _print_at(self, text, x, y, width):
         """
         Print string at the required location.
 
         :param text: The text string to print.
         :param x: The x coordinate
         :param y: The Y coordinate
+        :param width: The width of the character (for dual-width glyphs in CJK languages).
         """
 
     @abstractmethod
@@ -1667,13 +1706,14 @@ if sys.platform == "win32":
                 self._colour = colour
                 self._bg = bg
 
-        def _print_at(self, text, x, y):
+        def _print_at(self, text, x, y, width):
             """
             Print string at the required location.
 
             :param text: The text string to print.
             :param x: The x coordinate
             :param y: The Y coordinate
+            :param width: The width of the character (for dual-width glyphs in CJK languages).
             """
             # We can throw temporary errors on resizing, so catch and ignore
             # them on the assumption that we'll resize shortly.
@@ -1686,7 +1726,7 @@ if sys.platform == "win32":
                 # Print the text at the required location and update the current
                 # position.
                 self._stdout.WriteConsole(text)
-                self._cur_x = x + len(text)
+                self._cur_x = x + width
                 self._cur_y = y
             except pywintypes.error:
                 pass
@@ -2041,13 +2081,14 @@ else:
                     self._bg_color, bg).decode("utf-8"))
                 self._bg = bg
 
-        def _print_at(self, text, x, y):
+        def _print_at(self, text, x, y, width):
             """
             Print string at the required location.
 
             :param text: The text string to print.
             :param x: The x coordinate
             :param y: The Y coordinate
+            :param width: The width of the character (for dual-width glyphs in CJK languages).
             """
             # Move the cursor if necessary
             cursor = u""
@@ -2064,7 +2105,7 @@ else:
                 self._safe_write(cursor + "?" * len(text))
 
             # Update cursor position for next time...
-            self._cur_x = x + len(text)
+            self._cur_x = x + width
             self._cur_y = y
 
         def set_title(self, title):
