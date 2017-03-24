@@ -418,23 +418,20 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         The colours and attributes are the COLOUR_xxx and A_yyy constants
         defined in the Screen class.
         """
-        # Trim text to the buffer.
+        # Trim text to the buffer vertically.  Don't trim horizontally as we don't know whether any
+        # of these characters are dual-width yet.  Handle it on the fly below...
         if y < 0 or y >= self._buffer_height or x > self.width:
             return
-        if x < 0:
-            # TODO: Fix up for double-width chars?
-            text = text[-x:]
-            x = 0
-
-        # Don't do double width checks here as it is hugely costly - do it inline below instead.
-        if x + len(text) > self.width:
-            text = text[:self.width - x]
 
         if len(text) > 0:
             j = 0
             for i, c in enumerate(text):
-                # Handle overrun of double-width glyphs now.
-                if x + i + j >= self.width:
+                # Handle under-run and overrun of double-width glyphs now.
+                width = wcwidth(c)
+                if x + i + j < 0:
+                    x += (width - 1)
+                    continue
+                if x + i + j + width > self.width:
                     return
 
                 # Now handle the update.
@@ -442,7 +439,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                     # Make sure that we populate the second character correctly for double-width
                     # glyphs.  This ensures that if the glyph gets overwritten with a normal width
                     # it will clear both cells in the refresh.
-                    self._double_buffer[y][x + i + j] = (str(c), colour, attr, bg, wcwidth(c))
+                    self._double_buffer[y][x + i + j] = (str(c), colour, attr, bg, width)
                     if self._double_buffer[y][x + i + j][4] == 2:
                         j += 1
                         if x + i + j < self.width:

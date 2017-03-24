@@ -17,7 +17,7 @@ from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import Highlander, InvalidFields
 from asciimatics.screen import Screen, Canvas
-from wcwidth import wcswidth
+from wcwidth import wcswidth, wcwidth
 
 
 def _enforce_width(text, width):
@@ -28,9 +28,11 @@ def _enforce_width(text, width):
     :param width: The screen cell width to enforce
     :return: The resulting truncated text
     """
-    # TODO: Massively slow when this string is very long.  Optimize!
-    while text and wcswidth(text) > width:
-        text = text[:-1]
+    size = 0
+    for i, c in enumerate(text):
+        if size + wcwidth(c) > width:
+            return text[0:i]
+        size += wcwidth(c)
     return text
 
 
@@ -1383,6 +1385,7 @@ class Text(Widget):
         width = self._w - self._offset
         self._start_column = min(self._start_column, self._column)
         display_end = wcswidth(self._value[self._start_column:self._column + 1])
+        # TODO: Make this a function?  Also need to optimize performance for long strings
         while display_end > width:
             self._start_column += 1
             display_end = wcswidth(self._value[self._start_column:self._column + 1])
@@ -2059,7 +2062,7 @@ class ListBox(_BaseListBox):
             if self._start_line <= i < self._start_line + height:
                 colour, attr, bg = self._pick_colours("field", i == self._line)
                 self._frame.canvas.print_at(
-                    _enforce_width(text, width),
+                    "{:{}}".format(_enforce_width(text, width), width),
                     self._x + self._offset + dx,
                     self._y + i + dy - self._start_line,
                     colour, attr, bg)
