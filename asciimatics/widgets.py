@@ -17,6 +17,21 @@ from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import Highlander, InvalidFields
 from asciimatics.screen import Screen, Canvas
+from wcwidth import wcswidth
+
+
+def _enforce_width(text, width):
+    """
+    Enforce a displayed piece of text to be a certain number of cells wide.  This takes into
+    account double-width characters used in CJK languages.
+    :param text: The text to be truncated
+    :param width: The screen cell width to enforce
+    :return: The resulting truncated text
+    """
+    # TODO: Massively slow when this string is very long.  Optimize!
+    while text and wcswidth(text) > width:
+        text = text[:-1]
+    return text
 
 
 def _split_text(text, width, height):
@@ -35,7 +50,7 @@ def _split_text(text, width, height):
     current_line = ""
     for token in tokens:
         for i, line_token in enumerate(token.split("\n")):
-            if len(current_line + line_token) > width or i > 0:
+            if wcswidth(current_line + line_token) > width or i > 0:
                 result.append(current_line.rstrip())
                 current_line = line_token + " "
             else:
@@ -287,7 +302,7 @@ class Frame(Effect):
             (colour, attr, bg) = self.palette["title"]
             self._canvas.print_at(
                 self._title,
-                (self._canvas.width - len(self._title)) // 2,
+                (self._canvas.width - wcswidth(self._title)) // 2,
                 self._canvas.start_line,
                 colour, attr, bg)
 
@@ -764,8 +779,7 @@ class Layout(object):
             # For each column determine if we need a tab offset for labels.
             # Only allow labels to take up 1/3 of the column.
             if len(column) > 0:
-                offset = max([0 if w.label is None else len(w.label) + 1
-                              for w in column])
+                offset = max([0 if w.label is None else wcswidth(w.label) + 1 for w in column])
             else:
                 offset = 0
             offset = int(min(offset,
@@ -1367,13 +1381,16 @@ class Text(Widget):
 
         # Calculate new visible limits if needed.
         width = self._w - self._offset
-        self._start_column = max(0, max(self._column - width + 1,
-                                        min(self._start_column, self._column)))
+        self._start_column = min(self._start_column, self._column)
+        display_end = wcswidth(self._value[self._start_column:self._column + 1])
+        while display_end > width:
+            self._start_column += 1
+            display_end = wcswidth(self._value[self._start_column:self._column + 1])
 
         # Render visible portion of the text.
         (colour, attr, bg) = self._pick_colours("edit_text")
-        text = self._value[self._start_column:self._start_column + width]
-        text += " " * (width - len(text))
+        text = _enforce_width(self._value[self._start_column:], width)
+        text += " " * (width - wcswidth(text))
         self._frame.canvas.print_at(
             text,
             self._x + self._offset,
@@ -1387,7 +1404,7 @@ class Text(Widget):
                 " " if self._column >= len(self._value) else
                 self._value[self._column],
                 frame_no,
-                self._x + self._offset + self._column - self._start_column,
+                self._x + self._offset + wcswidth(self._value[self._start_column:self._column]),
                 self._y)
 
     def reset(self):
@@ -1685,8 +1702,11 @@ class TextBox(Widget):
         dx = dy = 0
         self._start_line = max(0, max(self._line - height + 1,
                                       min(self._start_line, self._line)))
-        self._start_column = max(0, max(self._column - width + 1,
-                                        min(self._start_column, self._column)))
+        self._start_column = min(self._start_column, self._column)
+        display_end = wcswidth(self._value[self._line][self._start_column:self._column + 1])
+        while display_end > width:
+            self._start_column += 1
+            display_end = wcswidth(self._value[self._line][self._start_column:self._column + 1])
 
         # Clear out the existing box content
         (colour, attr, bg) = self._pick_colours("edit_text")
@@ -1701,7 +1721,7 @@ class TextBox(Widget):
         for i, text in enumerate(self._value):
             if self._start_line <= i < self._start_line + height:
                 self._frame.canvas.print_at(
-                    text[self._start_column:self._start_column + width],
+                    _enforce_width(text[self._start_column:], width),
                     self._x + self._offset + dx,
                     self._y + i + dy - self._start_line,
                     colour, attr, bg)
@@ -1713,7 +1733,8 @@ class TextBox(Widget):
                 " " if self._column >= len(self._value[self._line]) else
                 self._value[self._line][self._column],
                 frame_no,
-                self._x + self._offset + self._column + dx - self._start_column,
+                self._x + self._offset + dx + wcswidth(
+                    self._value[self._line][self._start_column:self._column]),
                 self._y + self._line + dy - self._start_line)
 
     def reset(self):
@@ -1808,6 +1829,7 @@ class TextBox(Widget):
             new_event = self._frame.rebase_event(event)
             if event.buttons != 0:
                 if self.is_mouse_over(new_event, include_label=False):
+                    # TODO: Fix algorithm for calculating selected column.
                     self._line = max(0,
                                      new_event.y - self._y + self._start_line)
                     self._line = min(len(self._value) - 1, self._line)
@@ -2037,7 +2059,7 @@ class ListBox(_BaseListBox):
             if self._start_line <= i < self._start_line + height:
                 colour, attr, bg = self._pick_colours("field", i == self._line)
                 self._frame.canvas.print_at(
-                    "{:{width}}".format(text, width=width),
+                    _enforce_width(text, width),
                     self._x + self._offset + dx,
                     self._y + i + dy - self._start_line,
                     colour, attr, bg)
@@ -2119,7 +2141,8 @@ class MultiColumnListBox(_BaseListBox):
         if isinstance(width, float):
             return int(self._w * width)
         if width == 0:
-            width = self._w - sum([self._get_width(x) for x in self._columns if x != 0])
+            width = (self._w - self._offset - sum(self._spacing) -
+                     sum([self._get_width(x) for x in self._columns if x != 0]))
         return width
 
     def update(self, frame_no):
@@ -2149,7 +2172,7 @@ class MultiColumnListBox(_BaseListBox):
                     zip(self._titles, self._align, self._spacing)):
                 width = self._get_width(self._columns[i])
                 self._frame.canvas.print_at(
-                    "{}{:{}{}}".format(" " * space, title, align, width),
+                    "{}{:{}{}}".format(" " * space, _enforce_width(title, width), align, width),
                     self._x + self._offset + row_dx,
                     self._y,
                     colour, attr, bg)
@@ -2176,7 +2199,7 @@ class MultiColumnListBox(_BaseListBox):
                     if len(text) >= width:
                         text = text[:width - 3] + "..."
                     self._frame.canvas.print_at(
-                        "{}{:{}{}}".format(" " * space, text, align, width),
+                        "{}{:{}{}}".format(" " * space, _enforce_width(text, width), align, width),
                         self._x + self._offset + dx + row_dx,
                         self._y + i + dy - self._start_line,
                         colour, attr, bg)
@@ -2206,8 +2229,8 @@ class Button(Widget):
         # Do the usual layout work. then recalculate exact x/w values for the
         # rendered button.
         super(Button, self).set_layout(x, y, offset, w, h)
-        self._x += max(0, (self._w - self._offset - len(self._text)) // 2)
-        self._w = min(self._w, len(self._text))
+        self._x += max(0, (self._w - self._offset - wcswidth(self._text)) // 2)
+        self._w = min(self._w, wcswidth(self._text))
 
     def update(self, frame_no):
         self._draw_label()
@@ -2304,14 +2327,14 @@ class PopUpDialog(Frame):
         self._on_close = on_close
 
         # Decide on optimum width of the dialog.  Limit to 2/3 the screen width.
-        width = max([len(x) for x in text.split("\n")])
+        width = max([wcswidth(x) for x in text.split("\n")])
         width = max(width + 4,
-                    sum([len(x) + 4 for x in buttons]) + len(buttons) + 5)
+                    sum([wcswidth(x) + 4 for x in buttons]) + len(buttons) + 5)
         width = min(width, screen.width * 2 // 3)
 
         # Figure out the necessary message and allow for buttons and borders
         # when deciding on height.
-        self._message = _split_text(text, width, screen.height - 4)
+        self._message = _split_text(text, width - 4, screen.height - 4)
         height = len(self._message) + 4
 
         # Construct the Frame
