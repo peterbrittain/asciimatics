@@ -5,6 +5,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import os
+from mock import MagicMock
 from random import randint
 import unittest
 import sys
@@ -784,6 +785,36 @@ class TestScreen(unittest.TestCase):
         # Check other things return None - pick boundaries for checks.
         for char in ["?", "`", "\x7f"]:
             self.assertIsNone(Screen.ctrl(char))
+
+    def assert_line_equals(self, canvas, expected):
+        """
+        Assert first line of output to canvas is as expected.
+        """
+        output = ""
+        for x in range(canvas.width):
+            char, _, _, _ = canvas.get_from(x, 0)
+            output += chr(char)
+        self.assertEqual(output, expected)
+
+    def test_cjk_glyphs(self):
+        """
+        Check that CJK languages track double-width glyphs as expected.
+        """
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Check underflow and overflow work as expected for CJK languages.
+        # These languages actually use two characters for some glyphs, so when you query the
+        # contents, you will see the value for both characters.  Also, most terminals don't like
+        # displaying half glyphs, so asciimatics doesn't even allow it.
+        canvas.print_at("ab", -1, 0)
+        canvas.print_at("cd", canvas.width - 1, 0)
+        self.assert_line_equals(canvas, "b                                      c")
+
+        canvas.reset()
+        canvas.print_at("你確", -1, 0)
+        canvas.print_at("你確", canvas.width - 1, 0)
+        self.assert_line_equals(canvas, u" 確確                                     ")
 
 if __name__ == '__main__':
     unittest.main()

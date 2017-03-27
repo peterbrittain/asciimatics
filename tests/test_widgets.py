@@ -918,6 +918,35 @@ class TestWidgets(unittest.TestCase):
         event = object()
         self.assertIsNone(form.process_event(event))
 
+    def test_cjk_glyphs(self):
+        """
+        Check widgets work with CJK double-width characters.
+        """
+        # Apologies to anyone who actually speaks this language!  I just need some double-width
+        # glyphs so have re-used the ones from the original bug report.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = PopUpDialog(canvas, u"你確定嗎？ 你確定嗎？ 你確定嗎？", [u"是", u"否"])
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that the pop-up is rendered correctly.
+        form.update(0)
+        self.maxDiff = None
+        self.assert_canvas_equals(
+            canvas,
+            "                                        \n" +
+            "                                        \n" +
+            "       +------------------------+       \n" +
+            "       |你你確確定定嗎嗎？？ 你你確確定定嗎嗎？？   |       \n" +
+            "       |你你確確定定嗎嗎？？              O       \n" +
+            "       |                        |       \n" +
+            "       |   < 是是 >      < 否否 >   |       \n" +
+            "       +------------------------+       \n" +
+            "                                        \n" +
+            "                                        \n")
+
     def test_shadow(self):
         """
         Check Frames support shadows.

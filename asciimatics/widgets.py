@@ -36,6 +36,27 @@ def _enforce_width(text, width):
     return text
 
 
+def _get_offset(text, visible_width):
+    """
+    Find the character offset within some text for a given visible offset (taking into account the
+    fact that some character glyphs are double width).
+
+    :param text: The text to analyze
+    :param visible_width: The required location within that text (as seen on screen).
+    :return: The offset within text (as a character offset within the string).
+    """
+    result = 0
+    width = 0
+    for c in text:
+        if visible_width - width < 0:
+            result -= 1
+        if visible_width - width <= 0:
+            break
+        result += 1
+        width += wcwidth(c)
+    return result
+
+
 def _split_text(text, width, height):
     """
     Split text to required dimensions.  This will first try to split the
@@ -1453,10 +1474,10 @@ class Text(Widget):
             new_event = self._frame.rebase_event(event)
             if event.buttons != 0:
                 if self.is_mouse_over(new_event, include_label=False):
-                    self._column = min(
-                        len(self._value),
-                        new_event.x - self._x - self._offset +
-                        self._start_column)
+                    self._column = (self._start_column +
+                                    _get_offset(self._value[self._start_column:],
+                                                new_event.x - self._x - self._offset))
+                    self._column = min(len(self._value), self._column)
                     self._column = max(0, self._column)
                     return
             # Ignore other mouse events.
@@ -1832,14 +1853,16 @@ class TextBox(Widget):
             new_event = self._frame.rebase_event(event)
             if event.buttons != 0:
                 if self.is_mouse_over(new_event, include_label=False):
-                    # TODO: Fix algorithm for calculating selected column.
+                    # Fine the line first.
                     self._line = max(0,
                                      new_event.y - self._y + self._start_line)
                     self._line = min(len(self._value) - 1, self._line)
-                    self._column = min(
-                        len(self._value[self._line]),
-                        new_event.x - self._x - self._offset +
-                        self._start_column)
+
+                    # Now figure out location in text based on width of each glyph.
+                    self._column = (self._start_column +
+                                    _get_offset(self._value[self._line][self._start_column:],
+                                                new_event.x - self._x - self._offset))
+                    self._column = min(len(self._value[self._line]), self._column)
                     self._column = max(0, self._column)
                     return
             # Ignore other mouse events.
