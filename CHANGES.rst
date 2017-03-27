@@ -12,6 +12,7 @@ CHANGE HISTORY
 - Added custom_colour property to widgets.
 - Added support for DELETE key to text widgets.
 - Fixed ZeroDivisionError in Frames.
+- Fixed issues with double-width glyphs as used by CJK languages.
 - Tweaked widget navigation using cursor keys to be more like web forms.
 
 1.7.0
