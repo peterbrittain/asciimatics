@@ -48,12 +48,12 @@ def _get_offset(text, visible_width):
     result = 0
     width = 0
     for c in text:
-        if visible_width - width < 0:
-            result -= 1
         if visible_width - width <= 0:
             break
         result += 1
         width += wcwidth(c)
+    if visible_width - width < 0:
+        result -= 1
     return result
 
 

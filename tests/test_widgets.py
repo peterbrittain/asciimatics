@@ -828,7 +828,6 @@ class TestWidgets(unittest.TestCase):
         self.assertEqual(mc_list.options, [])
 
         # Check that the form re-renders correctly afterwards.
-        self.maxDiff = None
         form.update(1)
         self.assert_canvas_equals(
             canvas,
@@ -918,9 +917,9 @@ class TestWidgets(unittest.TestCase):
         event = object()
         self.assertIsNone(form.process_event(event))
 
-    def test_cjk_glyphs(self):
+    def test_cjk_popup(self):
         """
-        Check widgets work with CJK double-width characters.
+        Check PopUpDialog widgets work with CJK double-width characters.
         """
         # Apologies to anyone who actually speaks this language!  I just need some double-width
         # glyphs so have re-used the ones from the original bug report.
@@ -933,7 +932,6 @@ class TestWidgets(unittest.TestCase):
 
         # Check that the pop-up is rendered correctly.
         form.update(0)
-        self.maxDiff = None
         self.assert_canvas_equals(
             canvas,
             "                                        \n" +
@@ -946,6 +944,71 @@ class TestWidgets(unittest.TestCase):
             "       +------------------------+       \n" +
             "                                        \n" +
             "                                        \n")
+
+    def test_cjk_forms(self):
+        """
+        Check form widgets work with CJK characters.
+        """
+        # Create a dummy screen.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        mc_list = MultiColumnListBox(
+            4,
+            [3, 5, 0],
+            [
+                (["1", "2", "3"], 1),
+                ([u"你", u"確", u"定"], 2),
+            ],
+            titles=[u"你確定嗎？", u"你確定嗎？", u"你確定嗎？"])
+        text = Text()
+        text_box = TextBox(3)
+        form.add_layout(layout)
+        layout.add_widget(mc_list)
+        layout.add_widget(text)
+        layout.add_widget(text_box)
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        # Set some interesting values...
+        text.value = u"你確定嗎？ 你確定嗎？ 你確定嗎？"
+        text_box.value = [u"你確定嗎", u"？"]
+
+        # Check that the CJK characters render correctly - no really this is correctly aligned!
+        self.maxDiff = None
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            u"你你 你你確確 你你確確定定嗎嗎？？                      \n" +
+            u"1  2    3                               \n" +
+            u"你你 確確   定定                              \n" +
+            u"                                        \n" +
+            u"你你確確定定嗎嗎？？ 你你確確定定嗎嗎？？ 你你確確定定嗎嗎？？        \n" +
+            u"你你確確定定嗎嗎                                \n" +
+            u"？？                                      \n" +
+            u"                                        \n" +
+            u"                                        \n" +
+            u"                                        \n")
+
+        # Check that mouse input takes into account the glyph width
+        self.process_mouse(form, [(5, 4, MouseEvent.LEFT_CLICK)])
+        self.process_keys(form, ["b"])
+        self.process_mouse(form, [(2, 4, MouseEvent.LEFT_CLICK)])
+        self.process_keys(form, ["p"])
+        form.save()
+        self.assertEqual(text.value, u"你p確b定嗎？ 你確定嗎？ 你確定嗎？")
+
+        self.process_mouse(form, [(2, 5, MouseEvent.LEFT_CLICK)])
+        self.process_keys(form, ["p"])
+        self.process_mouse(form, [(1, 6, MouseEvent.LEFT_CLICK)])
+        self.process_keys(form, ["b"])
+        form.save()
+        self.assertEqual(text_box.value, [u"你p確定嗎", u"b？"])
 
     def test_shadow(self):
         """
