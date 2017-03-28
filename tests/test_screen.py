@@ -616,8 +616,9 @@ class TestScreen(unittest.TestCase):
                 for c in reversed(bytes(chr(char).encode("utf-8"))):
                     curses.ungetch(c)
             else:
-                # Should I be reverse mapping here?
-                curses.ungetch(char)
+                reverse = dict((v, k) for k, v in
+                               screen._KEY_MAP.items())
+                curses.ungetch(reverse[char])
 
     @staticmethod
     def _inject_mouse(screen, x, y, button):
