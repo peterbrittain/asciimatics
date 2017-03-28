@@ -18,20 +18,19 @@
 ASCIIMATICS
 ===========
 
-Asciimatics is a package to help people create full-screen text UIs (from 
-interactive forms to ASCII animations) on any platform.  It is licensed
-under the Apache Software Foundation License 2.0.
+Asciimatics is a package to help people create full-screen text UIs (from interactive forms to
+ASCII animations) on any platform.  It is licensed under the Apache Software Foundation License 2.0.
 
-It originated from some work that I did on PiConga to create a retro text
-credits roll for the project.  This worked so well, I re-used it for another
-project.  At that point I felt it might be fun to share with others.
+It originated from some work that I did on PiConga to create a retro text credits roll for the
+project.  This worked so well, I re-used it for another project.  At that point I felt it might be
+fun to share with others.
 
 Why?
 ----
 
-Why not?  It brings a little joy to anyone who was programming in the 80s...
-Oh and it provides a single cross-platform Python class to do all the low-level
-console function you could ask for, including:
+Why not?  It brings a little joy to anyone who was programming in the 80s...  Oh and it provides a
+single cross-platform Python class to do all the low-level console function you could ask for,
+including:
 
 * Coloured/styled text - including 256 colour terminals and unicode characters (even CJK languages)
 * Cursor positioning
@@ -40,27 +39,27 @@ console function you could ask for, including:
 * Detecting and handling when the console resizes
 * Screen scraping
 
-In addition, it provides some simple, high-level APIs to provide more complex
-features including:
+In addition, it provides some simple, high-level APIs to provide more complex features including:
 
 * Anti-aliased ASCII line-drawing
 * Image to ASCII conversion - including JPEG and GIF formats
 * Many animation effects - e.g. sprites, particle systems, banners, etc.
 * Various widgets for text UIs - e.g. buttons, text boxes, radio buttons, etc.
 
-Currently this package has been proven to work on CentOS 6 & 7, Raspbian (i.e.
-Debian wheezy), Ubuntu 14.04, Windows 7, 8 & 10, OSX 10.11 and Android 
-Marshmallow (courtesy of https://termux.com), though it should
-also work for any other platform that provides a working curses implementation.  
+Currently this package has been proven to work on CentOS 6 & 7, Raspbian (i.e. Debian wheezy),
+Ubuntu 14.04, Windows 7, 8 & 10, OSX 10.11 and Android Marshmallow (courtesy of https://termux.com),
+though it should also work for any other platform that provides a working curses implementation.
 
-(Please let me know if you successfully verified it on other platforms so
-that I can update this list).
+It should be implementation agnostic and has been successfully tested on the CPython and PyPy2.
+
+(Please let me know if you successfully verified it on other platforms so that I can update this
+list).
 
 Installation
 ------------
 
-Asciimatics supports Python versions 2 & 3.  For the precise list of tested
-versions, refer to `pypi <https://pypi.python.org/pypi/asciimatics>`_.
+Asciimatics supports Python versions 2 & 3, having .  For the precise list of tested versions,
+refer to `pypi <https://pypi.python.org/pypi/asciimatics>`_.
 
 To install asciimatics, simply install with `pip` as follows:
 
@@ -68,18 +67,15 @@ To install asciimatics, simply install with `pip` as follows:
 
     $ pip install asciimatics
 
-This should install all your dependencies for you.  If you don't use pip
-or it fails to install them, you can install the dependencies directly 
-using the packages listed in `requirements.txt 
+This should install all your dependencies for you.  If you don't use pip or it fails to install
+them, you can install the dependencies directly using the packages listed in `requirements.txt
 <https://github.com/peterbrittain/asciimatics/blob/master/requirements.txt>`_.
-Additionally, Windows users (who aren't using `pip`) will need to install
-`pypiwin32`.
+Additionally, Windows users (who aren't using `pip`) will need to install `pypiwin32`.
 
 How to use it?
 --------------
-To use the low-level API, simply create a Screen and use it to print
-coloured text at any location, or get mouse/keyboard input.  For example,
-here is a variant on the classic "hello world":
+To use the low-level API, simply create a Screen and use it to print coloured text at any location,
+or get mouse/keyboard input.  For example, here is a variant on the classic "hello world":
 
 .. code-block:: python
 
@@ -99,10 +95,9 @@ here is a variant on the classic "hello world":
 
     Screen.wrapper(demo)
 
-That same code works on Windows, OSX and Linux and paves the way for
-all the higher level features.  These still need the Screen, but now
-you also create a Scene using some Effects and then get the Screen 
-to play it.  For example, this code:
+That same code works on Windows, OSX and Linux and paves the way for all the higher level features.
+These still need the Screen, but now you also create a Scene using some Effects and then get the
+Screen to play it.  For example, this code:
 
 .. code-block:: python
 
@@ -134,8 +129,8 @@ should produce something like this:
    :target: https://asciinema.org/a/18756?autoplay=1
 
 Or maybe you're looking to create a TUI?  In which case this
-`simple code <https://github.com/peterbrittain/asciimatics/
-blob/master/samples/contact_list.py>`__ will give you this:
+`simple code <https://github.com/peterbrittain/asciimatics/blob/master/samples/contact_list.py>`__
+will give you this:
 
 .. image:: https://asciinema.org/a/45946.png
     :alt: contact list sample
@@ -144,32 +139,28 @@ blob/master/samples/contact_list.py>`__ will give you this:
 Documentation
 -------------
 
-Full documentation of all the above (and more!) is available at 
-http://asciimatics.readthedocs.org/
+Full documentation of all the above (and more!) is available at http://asciimatics.readthedocs.org/
 
 More examples
 -------------
 
-More examples of what you can do are available in the project samples
-directory, hosted on GitHub.  See
-https://github.com/peterbrittain/asciimatics/tree/v1.7/samples.
+More examples of what you can do are available in the project samples directory, hosted on GitHub.
+See https://github.com/peterbrittain/asciimatics/tree/v1.7/samples.
 
-To view them, simply download these files and then simply run them directly
-with `python`.  Alternatively, you can browse recordings of many of the samples
-in the gallery at https://github.com/peterbrittain/asciimatics/wiki.
+To view them, simply download these files and then simply run them directly with `python`.
+Alternatively, you can browse recordings of many of the samples in the gallery at
+https://github.com/peterbrittain/asciimatics/wiki.
 
 Bugs and enhancements
 ---------------------
 
-If you have a problem, please check out the troubleshooting guide
-at http://asciimatics.readthedocs.io/en/latest/troubleshooting.html.
-If this doesn't solve your problem, you can report bugs (or submit 
-enhancement requests) at
+If you have a problem, please check out the troubleshooting guide at
+http://asciimatics.readthedocs.io/en/latest/troubleshooting.html.  If this doesn't solve your
+problem, you can report bugs (or submit enhancement requests) at
 https://github.com/peterbrittain/asciimatics/issues.
 
 Contributing to the project
 ---------------------------
 
-If you'd like to take part in this project (and see your name in the credits!),
-check out the guidance at
-http://asciimatics.readthedocs.org/en/latest/intro.html#contributing-to-this-project.
+If you'd like to take part in this project (and see your name in the credits!), check out the
+guidance at http://asciimatics.readthedocs.org/en/latest/intro.html#contributing-to-this-project.
