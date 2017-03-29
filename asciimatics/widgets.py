@@ -36,6 +36,22 @@ def _enforce_width(text, width):
     return text
 
 
+def _find_min_start(text, max_width):
+    """
+    TODO: doc!!
+    :param text:
+    :param max_width:
+    :return:
+    """
+    result = 0
+    display_end = wcswidth(text)
+    while display_end > max_width:
+        result += 1
+        display_end -= wcwidth(text[0])
+        text = text[1:]
+    return result
+
+
 def _get_offset(text, visible_width):
     """
     Find the character offset within some text for a given visible offset (taking into account the
@@ -1405,11 +1421,8 @@ class Text(Widget):
         # Calculate new visible limits if needed.
         width = self._w - self._offset
         self._start_column = min(self._start_column, self._column)
-        display_end = wcswidth(self._value[self._start_column:self._column + 1])
-        # TODO: Make this a function?  Also need to optimize performance for long strings
-        while display_end > width:
-            self._start_column += 1
-            display_end = wcswidth(self._value[self._start_column:self._column + 1])
+        self._start_column += _find_min_start(self._value[self._start_column:self._column + 1],
+                                              width)
 
         # Render visible portion of the text.
         (colour, attr, bg) = self._pick_colours("edit_text")
@@ -1727,10 +1740,8 @@ class TextBox(Widget):
         self._start_line = max(0, max(self._line - height + 1,
                                       min(self._start_line, self._line)))
         self._start_column = min(self._start_column, self._column)
-        display_end = wcswidth(self._value[self._line][self._start_column:self._column + 1])
-        while display_end > width:
-            self._start_column += 1
-            display_end = wcswidth(self._value[self._line][self._start_column:self._column + 1])
+        self._start_column += _find_min_start(
+                self._value[self._line][self._start_column:self._column + 1], width)
 
         # Clear out the existing box content
         (colour, attr, bg) = self._pick_colours("edit_text")
