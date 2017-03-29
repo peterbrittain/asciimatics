@@ -23,7 +23,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read().split("\n")
 while long_description[0] != "ASCIIMATICS":
     long_description = long_description[1:]
-"\n".join(long_description)
+long_description = "\n".join(long_description)
 
 setup(
     name='asciimatics',
