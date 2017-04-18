@@ -441,6 +441,9 @@ class Frame(Effect):
         for layout in self._layouts:
             if layout.frame_update_count > 0:
                 result = min(result, layout.frame_update_count)
+        for effect in self._effects:
+            if effect.frame_update_count > 0:
+                result = min(result, effect.frame_update_count)
         return result
 
     @property
