@@ -6,10 +6,10 @@ from __future__ import unicode_literals
 from builtins import object
 from builtins import range
 import copy
-from random import randint, random
+from random import randint, random, choice
 from future.utils import with_metaclass
 from abc import ABCMeta, abstractproperty, abstractmethod
-from math import sin, pi, sqrt
+from math import sin, cos, pi, sqrt, atan2
 from pyfiglet import Figlet, DEFAULT_FONT
 from PIL import Image
 import re
@@ -893,8 +893,8 @@ class Plasma(DynamicRenderer):
 
     def __init__(self, height, width, colours):
         """
-        :param height: Height of the box to contain the flames.
-        :param width: Width of the box to contain the flames.
+        :param height: Height of the box to contain the plasma.
+        :param width: Width of the box to contain the plasma.
         :param colours: Number of colours the screen supports.
         """
         super(Plasma, self).__init__(height, width)
@@ -920,5 +920,95 @@ class Plasma(DynamicRenderer):
                     int(round(value * (len(self._palette) - 1)))]
                 char = self._greyscale[int((len(self._greyscale) - 1) * value)]
                 self._write(char, x, y, fg, attr, 0)
+
+        return self._plain_image, self._colour_map
+
+
+class Kaleidoscope(DynamicRenderer):
+    """
+    Renderer to create a kaleidoscope effect.
+    """
+
+    # TODO: expose palette?
+    _PALETTE = [0, 40, 88, 124, 160, 196, 202, 208, 214, 220, 226, 227, 228, 229, 230, 231]
+
+    def __init__(self, height, width, colours, symmetry):
+        """
+        :param height: Height of the box to contain the kaleidoscope.
+        :param width: Width of the box to contain the kaleidoscope.
+        :param colours: Number of colours the screen supports.
+        :param symmetry: The desired rotational symmetry.
+        """
+        super(Kaleidoscope, self).__init__(height, width)
+        # TODO: Consider palette array instead.
+        self._colours = colours
+        self._symmetry = symmetry
+        self._rotation = 0
+        # TODO: Consider exposing array directly instead of populating seeds.
+        self._seeds = []
+        if False:
+            text = Figlet(font="banner", width=width // 2).renderText("ASCII Rules").split("\n")
+            w = max(text)
+            h = len(text)
+            s = (height - 2 * h) // 2
+            for y in range(height):
+                if s <= y < s + h:
+                    self._seeds.append(self._spawn(text[y - s]))
+                elif s + h <= y < s + 2 *h:
+                    self._seeds.append(self._spawn((text[2 * h + s - y - 1]))[::-1])
+                else:
+                    self._seeds.append(self._spawn(""))
+        else:
+            for y in range(height):
+                self._seeds.append([("::", self._PALETTE[y % len(self._PALETTE)]) for _ in range(width // 2)])
+
+    def _spawn(self, text):
+        return [(x * 2, i % 255) for i, x in enumerate("{}{}".format(text, " " * (self._width // 2 - len(text))))]
+
+    def _render_now(self):
+        super(Kaleidoscope, self)._render_now()
+
+        # Integer maths will result in gaps between characters if you rotate from the starting
+        # point to desired end-point.  We therefore look for the reverse mapping from the final
+        # character and trace-back instead.
+        for x in range((self._width // 2 - 1)):
+            for y in range(self._height):
+                # Figure out which mapping we're using based on location in the destination.
+                # Flip on y axis for normal Cartesian coordinates.
+                ox = (x - self._width / 4)
+                oy = y - self._height / 2
+                segment = round(atan2(oy, ox) * self._symmetry / pi)
+                if segment % 2 == 0:
+                    # Rotate for this section
+                    theta = 0 if self._symmetry == 0 else -segment * pi / self._symmetry
+                    x1 = round(ox * cos(theta) - oy * sin(theta))
+                    y1 = round(ox * sin(theta) + oy * cos(theta))
+                else:
+                    # Rotate then reflect.
+                    theta = 0 if self._symmetry == 0 else (1 - segment) * pi / self._symmetry
+                    x1 = round(ox * cos(theta) - oy * sin(theta))
+                    y1 = round(ox * sin(theta) + oy * cos(theta))
+
+                    ox = x1
+                    oy = y1
+                    theta = pi / self._symmetry / 2
+                    x1 = round(ox * cos(2 * theta) + oy * sin(2 * theta))
+                    y1 = round(ox * sin(2 * theta) - oy * cos(2 * theta))
+
+                # Rotate back-image for animation
+                ox = x1
+                oy = y1
+                theta = self._rotation
+                x1 = round(ox * cos(theta) - oy * sin(theta))
+                y1 = round(ox * sin(theta) + oy * cos(theta))
+
+                # Re-normalize back to the box coordinates and draw.
+                x2 = int(x1 + self._width / 4)
+                y2 = int(y1 + self._height / 2)
+                if (0 <= x2 < self._width // 2) and (0 <= y2 < self._height):
+                    self._write(self._seeds[y2][x2][0], x * 2, y, self._seeds[y2][x2][1], Screen.A_BOLD, 0)
+
+        # Now rotate the background.
+        self._rotation += pi / 180
 
         return self._plain_image, self._colour_map
