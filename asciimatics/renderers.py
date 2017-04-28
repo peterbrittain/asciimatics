@@ -131,9 +131,10 @@ class StaticRenderer(Renderer):
                                           int(match.group(4)))
                         elif match.group(5) is not None:
                             attributes = (int(match.group(5)),
-                                          ATTRIBUTES[match.group(6)])
+                                          ATTRIBUTES[match.group(6)],
+                                          None)
                         else:
-                            attributes = (int(match.group(7)), 0)
+                            attributes = (int(match.group(7)), 0, None)
                         line = match.group(8)
                 new_image.append(new_line)
                 colour_map.append(colours)
@@ -275,13 +276,14 @@ class FigletText(StaticRenderer):
     See http://www.figlet.org/ for details of available fonts.
     """
 
-    def __init__(self, text, font=DEFAULT_FONT):
+    def __init__(self, text, font=DEFAULT_FONT, width=200):
         """
         :param text: The text string to convert with Figlet.
         :param font: The Figlet font to use (optional).
+        :param width: The maximum width for this text in characters.
         """
         super(FigletText, self).__init__()
-        self._images = [Figlet(font=font, width=200).renderText(text)]
+        self._images = [Figlet(font=font, width=width).renderText(text)]
 
 
 class _ImageSequence(object):
@@ -924,91 +926,107 @@ class Plasma(DynamicRenderer):
         return self._plain_image, self._colour_map
 
 
+class RotatedDuplicate(StaticRenderer):
+    """
+    Chained renderer to add a rotated version of the original renderer underneath.
+    """
+
+    def __init__(self, screen, renderer):
+        """
+        :param screen: The screen object for this renderer.
+        :param renderer: The renderer to wrap.
+        """
+        super(RotatedDuplicate, self).__init__()
+        for image in renderer.images:
+            # TODO: Really do this manipulation?
+            mx = (screen.width // 2 - max([len(x) for x in image])) // 2
+            my = screen.height // 2 - len(image)
+            tab = "\n" + " " * mx
+            new_image = tab * my
+            new_image += tab.join(image)
+            new_image += tab.join(["".join(x[::-1]) for x in reversed(image)])
+            self._images.append(new_image)
+
+
 class Kaleidoscope(DynamicRenderer):
     """
-    Renderer to create a kaleidoscope effect.
+    Renderer to create a 2-mirror kaleidoscope effect.
+
+    This is a chained renderer (i.e. it acts upon the output of another Renderer which is
+    passed to it on construction).  The other Renderer is used as the cell that is rotated over
+    time to create the animation.
+
+    You can specify the desired rotational symmetry of the kaleidoscope (which determines the
+    angle between the mirrors).  If you chose values of less than 2, you are effectively removing
+    one or both mirrors, thus either getting the original cell or a simple mirrored image of the
+    cell.
     """
 
-    # TODO: expose palette?
-    _PALETTE = [0, 40, 88, 124, 160, 196, 202, 208, 214, 220, 226, 227, 228, 229, 230, 231]
-
-    def __init__(self, height, width, colours, symmetry):
+    def __init__(self, height, width, cell, symmetry):
         """
         :param height: Height of the box to contain the kaleidoscope.
         :param width: Width of the box to contain the kaleidoscope.
-        :param colours: Number of colours the screen supports.
-        :param symmetry: The desired rotational symmetry.
+        :param cell: A Renderer to use as the backing cell for the kaleidoscope.
+        :param symmetry: The desired rotational symmetry.  Must be a non-negative integer.
         """
         super(Kaleidoscope, self).__init__(height, width)
-        # TODO: Consider palette array instead.
-        self._colours = colours
         self._symmetry = symmetry
         self._rotation = 0
-        # TODO: Consider exposing array directly instead of populating seeds.
-        self._seeds = []
-        if False:
-            text = Figlet(font="banner", width=width // 2).renderText("ASCII Rules").split("\n")
-            w = max(text)
-            h = len(text)
-            s = (height - 2 * h) // 2
-            for y in range(height):
-                if s <= y < s + h:
-                    self._seeds.append(self._spawn(text[y - s]))
-                elif s + h <= y < s + 2 *h:
-                    self._seeds.append(self._spawn((text[2 * h + s - y - 1]))[::-1])
-                else:
-                    self._seeds.append(self._spawn(""))
-        else:
-            for y in range(height):
-                self._seeds.append([("::", self._PALETTE[y % len(self._PALETTE)]) for _ in range(width // 2)])
+        self._cell = cell
 
-    def _spawn(self, text):
-        return [(x * 2, i % 255) for i, x in enumerate("{}{}".format(text, " " * (self._width // 2 - len(text))))]
+        # TODO: Sort aspect ratio?
 
     def _render_now(self):
         super(Kaleidoscope, self)._render_now()
+
+        # Rotate a point (x, y) through an angle theta.
+        def _rotate(x, y, theta):
+            return (round(x * cos(theta) - y * sin(theta)),
+                    round(x * sin(theta) + y * cos(theta)))
+
+        # Reflect a point (x, y) in a line at angle theta
+        def _reflect(x, y, theta):
+            return (round(x * cos(2 * theta) + y * sin(2 * theta)),
+                    round(x * sin(2 * theta) - y * cos(2 * theta)))
+
+        # Get the base cell now - so we can pick out characters as needed.
+        text, colour_map = self._cell.rendered_text
 
         # Integer maths will result in gaps between characters if you rotate from the starting
         # point to desired end-point.  We therefore look for the reverse mapping from the final
         # character and trace-back instead.
         for x in range((self._width // 2 - 1)):
             for y in range(self._height):
-                # Figure out which mapping we're using based on location in the destination.
-                # Flip on y axis for normal Cartesian coordinates.
+                # Figure out which segment of the circle we're in, so we know what affine
+                # transformations to apply.
                 ox = (x - self._width / 4)
                 oy = y - self._height / 2
                 segment = round(atan2(oy, ox) * self._symmetry / pi)
                 if segment % 2 == 0:
-                    # Rotate for this section
-                    theta = 0 if self._symmetry == 0 else -segment * pi / self._symmetry
-                    x1 = round(ox * cos(theta) - oy * sin(theta))
-                    y1 = round(ox * sin(theta) + oy * cos(theta))
+                    # Just a rotation required for even segments.
+                    x1, y1 = _rotate(
+                            ox, oy, 0 if self._symmetry == 0 else -segment * pi / self._symmetry)
                 else:
-                    # Rotate then reflect.
-                    theta = 0 if self._symmetry == 0 else (1 - segment) * pi / self._symmetry
-                    x1 = round(ox * cos(theta) - oy * sin(theta))
-                    y1 = round(ox * sin(theta) + oy * cos(theta))
+                    # Odd segments require a rotation and then a reflection.
+                    x1, y1 = _rotate(ox, oy, (1 - segment) * pi / self._symmetry)
+                    x1, y1 = _reflect(x1, y1, pi / self._symmetry / 2)
 
-                    ox = x1
-                    oy = y1
-                    theta = pi / self._symmetry / 2
-                    x1 = round(ox * cos(2 * theta) + oy * sin(2 * theta))
-                    y1 = round(ox * sin(2 * theta) - oy * cos(2 * theta))
+                # Now rotate once more to simulate the rotation of the background cell too.
+                x1, y1 = _rotate(x1, y1, self._rotation)
 
-                # Rotate back-image for animation
-                ox = x1
-                oy = y1
-                theta = self._rotation
-                x1 = round(ox * cos(theta) - oy * sin(theta))
-                y1 = round(ox * sin(theta) + oy * cos(theta))
-
-                # Re-normalize back to the box coordinates and draw.
+                # Re-normalize back to the box coordinates and draw the character that we found
+                # from the reverse mapping.
                 x2 = int(x1 + self._width / 4)
                 y2 = int(y1 + self._height / 2)
-                if (0 <= x2 < self._width // 2) and (0 <= y2 < self._height):
-                    self._write(self._seeds[y2][x2][0], x * 2, y, self._seeds[y2][x2][1], Screen.A_BOLD, 0)
+                if (0 <= y2 < len(text)) and (0 <= x2 < len(text[y2])):
+                    self._write(text[y2][x2] * 2,
+                                x * 2,
+                                y,
+                                colour_map[y2][x2][0],
+                                colour_map[y2][x2][1],
+                                colour_map[y2][x2][2])
 
-        # Now rotate the background.
+        # Now rotate the background cell for the next frame.
         self._rotation += pi / 180
 
         return self._plain_image, self._colour_map
