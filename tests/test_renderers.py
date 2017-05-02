@@ -67,16 +67,16 @@ class TestRenderers(unittest.TestCase):
         output = renderer.rendered_text
         self.assertEqual(len(output[0]), len(output[1]))
         self.assertEqual(output[0], ["*"])
-        self.assertEqual(output[1][0][0], (Screen.COLOUR_YELLOW, Screen.A_BOLD))
+        self.assertEqual(output[1][0][0], (Screen.COLOUR_YELLOW, Screen.A_BOLD, None))
 
         # Check the ${fg} variant
         renderer = StaticRenderer(images=["${1}XY${2}Z"])
         output = renderer.rendered_text
         self.assertEqual(len(output[0]), len(output[1]))
         self.assertEqual(output[0], ["XYZ"])
-        self.assertEqual(output[1][0][0], (Screen.COLOUR_RED, 0))
-        self.assertEqual(output[1][0][1], (Screen.COLOUR_RED, 0))
-        self.assertEqual(output[1][0][2], (Screen.COLOUR_GREEN, 0))
+        self.assertEqual(output[1][0][0], (Screen.COLOUR_RED, 0, None))
+        self.assertEqual(output[1][0][1], (Screen.COLOUR_RED, 0, None))
+        self.assertEqual(output[1][0][2], (Screen.COLOUR_GREEN, 0, None))
 
     def test_figlet(self):
         """
@@ -318,12 +318,12 @@ class TestRenderers(unittest.TestCase):
             # Check rainbow colour scheme.
             self.assertEqual(
                 rainbow.rendered_text[1], [
-                    [(1, 1), (1, 1), (3, 1), (3, 1), (2, 1), (2, 1), (6, 1),
-                     (6, 1), (4, 1)],
-                    [(1, 1), (3, 1), (3, 1), (2, 1), (2, 1), (6, 1), (6, 1),
-                     (4, 1), (4, 1)],
-                    [(3, 1), (3, 1), (2, 1), (2, 1), (6, 1), (6, 1), (4, 1),
-                     (4, 1), (5, 1)],
+                    [(1, 1, None), (1, 1, None), (3, 1, None), (3, 1, None), (2, 1, None),
+                     (2, 1, None), (6, 1, None), (6, 1, None), (4, 1, None)],
+                    [(1, 1, None), (3, 1, None), (3, 1, None), (2, 1, None), (2, 1, None),
+                     (6, 1, None), (6, 1, None), (4, 1, None), (4, 1, None)],
+                    [(3, 1, None), (3, 1, None), (2, 1, None), (2, 1, None), (6, 1, None),
+                     (6, 1, None), (4, 1, None), (4, 1, None), (5, 1, None)],
                     []])
 
         Screen.wrapper(internal_checks, height=15)
