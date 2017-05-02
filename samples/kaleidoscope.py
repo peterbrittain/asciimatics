@@ -17,7 +17,7 @@ def demo(screen):
                                                   RotatedDuplicate(screen,
                                                                    FigletText("ASCII rules",
                                                                               font="banner",
-                                                                              width=screen.width//2))),
+                                                                              width=screen.width // 2))),
                                           i),
                              0,
                              speed=1,

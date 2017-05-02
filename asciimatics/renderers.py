@@ -935,7 +935,9 @@ class RotatedDuplicate(StaticRenderer):
             # TODO: Really do this manipulation?
             mx = (screen.width // 2 - max([len(x) for x in image])) // 2
             my = screen.height // 2 - len(image)
+            mx = max(0, mx)
             tab = "\n" + " " * mx
+            my = max(1, my)
             new_image = tab * my
             new_image += tab.join(image)
             new_image += tab.join(["".join(x[::-1]) for x in reversed(image)])
@@ -954,6 +956,11 @@ class Kaleidoscope(DynamicRenderer):
     angle between the mirrors).  If you chose values of less than 2, you are effectively removing
     one or both mirrors, thus either getting the original cell or a simple mirrored image of the
     cell.
+
+    Since this renderer rotates the background cell, it needs operate on square pixels, which
+    means each character in the cell is drawn as 2 next to each other on the screen.  In other
+    words the cell needs to be half the width of the desired output (when measured in text
+    characters).
     """
 
     def __init__(self, height, width, cell, symmetry):
@@ -968,18 +975,14 @@ class Kaleidoscope(DynamicRenderer):
         self._rotation = 0
         self._cell = cell
 
-        # TODO: Sort aspect ratio?
-
     def _render_now(self):
         # Rotate a point (x, y) through an angle theta.
         def _rotate(x, y, theta):
-            return (round(x * cos(theta) - y * sin(theta)),
-                    round(x * sin(theta) + y * cos(theta)))
+            return x * cos(theta) - y * sin(theta), x * sin(theta) + y * cos(theta)
 
         # Reflect a point (x, y) in a line at angle theta
         def _reflect(x, y, theta):
-            return (round(x * cos(2 * theta) + y * sin(2 * theta)),
-                    round(x * sin(2 * theta) - y * cos(2 * theta)))
+            return x * cos(2 * theta) + y * sin(2 * theta), x * sin(2 * theta) - y * cos(2 * theta)
 
         # Get the base cell now - so we can pick out characters as needed.
         text, colour_map = self._cell.rendered_text
@@ -987,7 +990,7 @@ class Kaleidoscope(DynamicRenderer):
         # Integer maths will result in gaps between characters if you rotate from the starting
         # point to desired end-point.  We therefore look for the reverse mapping from the final
         # character and trace-back instead.
-        for x in range((self._width // 2 - 1)):
+        for x in range(self._width // 2 - 1):
             for y in range(self._height):
                 # Figure out which segment of the circle we're in, so we know what affine
                 # transformations to apply.
