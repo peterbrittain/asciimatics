@@ -596,8 +596,6 @@ class BarChart(DynamicRenderer):
         self._keys = keys
 
     def _render_now(self):
-        super(BarChart, self)._render_now()
-
         # Dimensions for the chart.
         int_h = self._height
         int_w = self._width
@@ -800,8 +798,6 @@ class Fire(DynamicRenderer):
         self._y = height - e_height
 
     def _render_now(self):
-        super(Fire, self)._render_now()
-
         # First make the fire rise with convection
         for y in range(len(self._buffer) - 1):
             self._buffer[y] = self._buffer[y + 1]
@@ -904,8 +900,6 @@ class Plasma(DynamicRenderer):
         self._t = 0
 
     def _render_now(self):
-        super(Plasma, self)._render_now()
-
         # Internal function for creating a sine wave radiating out from a point
         def f(x1, y1, xp, yp, n):
             return sin(sqrt((x1 - self._width * xp) ** 2 +
@@ -977,8 +971,6 @@ class Kaleidoscope(DynamicRenderer):
         # TODO: Sort aspect ratio?
 
     def _render_now(self):
-        super(Kaleidoscope, self)._render_now()
-
         # Rotate a point (x, y) through an angle theta.
         def _rotate(x, y, theta):
             return (round(x * cos(theta) - y * sin(theta)),
