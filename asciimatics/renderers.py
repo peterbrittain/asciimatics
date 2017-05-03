@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 from builtins import object
 from builtins import range
 import copy
-from random import randint, random, choice
+from random import randint, random
 from future.utils import with_metaclass
 from abc import ABCMeta, abstractproperty, abstractmethod
 from math import sin, cos, pi, sqrt, atan2
@@ -922,26 +922,30 @@ class Plasma(DynamicRenderer):
 
 class RotatedDuplicate(StaticRenderer):
     """
-    Chained renderer to add a rotated version of the original renderer underneath.
+    Chained renderer to add a rotated version of the original renderer underneath and centre the
+    whole thing within within the specified dimensions.
     """
 
-    def __init__(self, screen, renderer):
+    def __init__(self, width, height, renderer):
         """
-        :param screen: The screen object for this renderer.
+        :param width: The maximum width of the rendered text.
+        :param height: The maximum height of the rendered text.
         :param renderer: The renderer to wrap.
         """
         super(RotatedDuplicate, self).__init__()
         for image in renderer.images:
-            # TODO: Really do this manipulation?
-            mx = (screen.width // 2 - max([len(x) for x in image])) // 2
-            my = screen.height // 2 - len(image)
-            mx = max(0, mx)
-            tab = "\n" + " " * mx
-            my = max(1, my)
-            new_image = tab * my
-            new_image += tab.join(image)
-            new_image += tab.join(["".join(x[::-1]) for x in reversed(image)])
-            self._images.append(new_image)
+            mx = (width - max([len(x) for x in image])) // 2
+            my = height // 2 - len(image)
+            tab = "\n" + (" " * mx if mx > 0 else "")
+            new_image = []
+            new_image.extend(["" for _ in range(max(0, my))])
+            new_image.extend(image)
+            new_image.extend([x[::-1] for x in reversed(image)])
+            if mx < 0:
+                new_image = [x[-mx:mx] for x in new_image]
+            if my < 0:
+                new_image = new_image[-my:my]
+            self._images.append(tab.join(new_image))
 
 
 class Kaleidoscope(DynamicRenderer):
@@ -990,12 +994,12 @@ class Kaleidoscope(DynamicRenderer):
         # Integer maths will result in gaps between characters if you rotate from the starting
         # point to desired end-point.  We therefore look for the reverse mapping from the final
         # character and trace-back instead.
-        for x in range(self._width // 2 - 1):
-            for y in range(self._height):
+        for dx in range(self._width // 2):
+            for dy in range(self._height):
                 # Figure out which segment of the circle we're in, so we know what affine
                 # transformations to apply.
-                ox = (x - self._width / 4)
-                oy = y - self._height / 2
+                ox = (dx - self._width / 4)
+                oy = dy - self._height / 2
                 segment = round(atan2(oy, ox) * self._symmetry / pi)
                 if segment % 2 == 0:
                     # Just a rotation required for even segments.
@@ -1014,9 +1018,9 @@ class Kaleidoscope(DynamicRenderer):
                 x2 = int(x1 + self._width / 4)
                 y2 = int(y1 + self._height / 2)
                 if (0 <= y2 < len(text)) and (0 <= x2 < len(text[y2])):
-                    self._write(text[y2][x2] * 2,
-                                x * 2,
-                                y,
+                    self._write(text[y2][x2] + text[y2][x2],
+                                dx * 2,
+                                dy,
                                 colour_map[y2][x2][0],
                                 colour_map[y2][x2][1],
                                 colour_map[y2][x2][2])
