@@ -1,6 +1,10 @@
 CHANGE HISTORY
 ==============
 
+LATEST
+------
+- Added the Kaleidoscope and RotatedDuplicate renderers.
+
 1.8.0
 -----
 - Added MultiColumnListBox for displaying tabular data in widgets.
