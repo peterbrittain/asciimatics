@@ -1856,15 +1856,18 @@ else:
             # Non-blocking key checks.
             self._screen.nodelay(1)
 
+            # Store previous handlers for restoration at close
+            self._signal_state = _SignalState()
+
             # Set up signal handler for screen resizing.
             self._re_sized = False
-            signal.signal(signal.SIGWINCH, self._resize_handler)
+            self._signal_state.set(signal.SIGWINCH, self._resize_handler)
 
             # Catch SIGINTs and translated them to ctrl-c if needed.
             if catch_interrupt:
                 # Ignore SIGINT (ctrl-c) and SIGTSTP (ctrl-z) signals.
-                signal.signal(signal.SIGINT, self._catch_interrupt)
-                signal.signal(signal.SIGTSTP, self._catch_interrupt)
+                self._signal_state.set(signal.SIGINT, self._catch_interrupt)
+                self._signal_state.set(signal.SIGTSTP, self._catch_interrupt)
 
             # Enable mouse events
             curses.mousemask(curses.ALL_MOUSE_EVENTS |
@@ -1909,6 +1912,7 @@ else:
 
             :param restore: whether to restore the environment or not.
             """
+            self._signal_state.restore()
             if restore:
                 self._screen.keypad(0)
                 curses.echo()
@@ -2115,3 +2119,33 @@ else:
             if self._start_line is not None:
                 self._safe_write("{}{}{}".format(self._start_title, title,
                                                  self._end_title))
+
+
+    class _SignalState(object):
+        """
+        Save previous user signal state while setting signals.
+
+        Used for signal restoration when asciimatics no longer has control
+        of the user program.
+        """
+        def __init__(self):
+            self._old_signal_states = []
+
+        def set(self, signalnum, handler):
+            """
+            Set signal handler and record their previous values.
+
+            :param signalnum: The const/enum matching to the signal to be set.
+            :param handler: The function/const to set the signal to
+            """
+            old_handler = signal.getsignal(signalnum)
+            self._old_signal_states.append((signalnum, old_handler))
+            signal.signal(signalnum, handler)
+
+        def restore(self):
+            """
+            Restore saved signals to their previous handles.
+            """
+            for signalnum, handler in self._old_signal_states:
+                signal.signal(signalnum, handler)
+            self._old_signal_states = []

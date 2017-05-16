@@ -14,6 +14,10 @@ from builtins import chr
 from builtins import bytes
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import StopApplication, NextScene
+try:
+    from asciimatics.screen import _SignalState
+except ImportError:
+    pass
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen, Canvas
 from tests.mock_objects import MockEffect
@@ -816,6 +820,47 @@ class TestScreen(unittest.TestCase):
         canvas.print_at("你確", -1, 0)
         canvas.print_at("你確", canvas.width - 1, 0)
         self.assert_line_equals(canvas, u" 確確                                     ")
+
+    def test_save_signal_state(self):
+        """Tests that the signal state class works properly.
+
+        The _SignalState class must set, save, and restore signals
+        when needed.
+        """
+        if sys.platform == "win32":
+            self.skipTest("Windows does not have signals.")
+        def dummy_handler():
+            """Assign dummy handler to an arbitrary signal."""
+            pass
+        self.assertNotEqual(signal.getsignal(signal.SIGWINCH), dummy_handler)
+        signal_state = _SignalState()
+        signal_state.set(signal.SIGWINCH, dummy_handler)
+        self.assertEqual(signal.getsignal(signal.SIGWINCH), dummy_handler)
+        signal_state.restore()
+        self.assertNotEqual(signal.getsignal(signal.SIGWINCH), dummy_handler)
+
+    def test_signal(self):
+        """
+        Check that signals are restored after using _CursesScreen
+        """
+        if sys.platform == "win32":
+            self.skipTest("Windows does not have signals.")
+        def dummy_signal_handler():
+            """Dummy previous signal handler."""
+            pass
+        outer_state = _SignalState()
+        self.assertNotEqual(signal.getsignal(signal.SIGWINCH), dummy_signal_handler)
+        outer_state.set(signal.SIGWINCH, dummy_signal_handler)
+        self.assertEqual(signal.getsignal(signal.SIGWINCH), dummy_signal_handler)
+        Screen.wrapper(self.signal_check)
+        self.assertEqual(signal.getsignal(signal.SIGWINCH), dummy_signal_handler)
+        outer_state.restore()
+        self.assertNotEqual(signal.getsignal(signal.SIGWINCH), dummy_signal_handler)
+
+    def signal_check(self, screen):
+        """Dummy callback for screen wrapper."""
+        self.assertEqual(signal.getsignal(signal.SIGWINCH), screen._resize_handler)
+
 
 if __name__ == '__main__':
     unittest.main()
