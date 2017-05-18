@@ -4,6 +4,7 @@ CHANGE HISTORY
 LATEST
 ------
 - Added the Kaleidoscope and RotatedDuplicate renderers.
+- Fixed up signal handling to re-instate old handlers on Screen.close().
 
 1.8.0
 -----
