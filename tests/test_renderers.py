@@ -520,7 +520,7 @@ class TestRenderers(unittest.TestCase):
 
         # Check positive padding
         renderer = RotatedDuplicate(7, 4, StaticRenderer(["ASCII"]))
-        self.assertEqual(renderer.rendered_text[0], ['', ' ASCII', ' IICSA'])
+        self.assertEqual(renderer.rendered_text[0], [' ', ' ASCII ', ' IICSA ', ' '])
 
 
 if __name__ == '__main__':

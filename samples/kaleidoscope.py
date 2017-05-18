@@ -1,3 +1,5 @@
+from math import sqrt
+
 from asciimatics.renderers import Kaleidoscope, FigletText, Rainbow, RotatedDuplicate, \
     StaticRenderer
 from asciimatics.scene import Scene
@@ -11,14 +13,15 @@ def demo(screen):
     scenes = []
     cell1 = Rainbow(screen,
                     RotatedDuplicate(screen.width // 2,
-                                     screen.height,
+                                     max(screen.width // 2, screen.height),
                                      FigletText("ASCII" if screen.width < 80 else "ASCII rules",
                                                 font="banner",
                                                 width=screen.width // 2)))
     cell2 = ""
-    for y in range(screen.height):
-        for x in range(screen.width // 2):
-            c = (x + y) % screen.colours
+    size = int(sqrt(screen.height ** 2 + screen.width ** 2 // 4))
+    for y in range(size):
+        for x in range(size):
+            c = x * screen.colours // size
             cell2 += "${%d,2,%d}:" % (c, c)
         cell2 += "\n"
     for i in range(8):
