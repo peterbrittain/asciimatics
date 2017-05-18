@@ -1,6 +1,6 @@
 from __future__ import division
 from asciimatics.effects import BannerText, Print, Scroll
-from asciimatics.renderers import ColourImageFile, FigletText
+from asciimatics.renderers import ColourImageFile, FigletText, ImageFile
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError
@@ -10,6 +10,12 @@ import sys
 def demo(screen):
     scenes = []
     effects = [
+        Print(screen, ImageFile("globe.gif", screen.height - 2, colours=screen.colours),
+              0,
+              stop_frame=100),
+    ]
+    scenes.append(Scene(effects))
+    effects = [
         Print(screen,
               ColourImageFile(screen, "colour_globe.gif", screen.height-2,
                               uni=screen.unicode_aware,
@@ -17,7 +23,8 @@ def demo(screen):
               0,
               stop_frame=200),
         Print(screen,
-              FigletText("ASCIIMATICS NEWS", font='banner3'),
+              FigletText("ASCIIMATICS",
+                         font='banner3' if screen.width > 80 else 'banner'),
               screen.height//2-3,
               colour=7, bg=7 if screen.unicode_aware else 0),
     ]
