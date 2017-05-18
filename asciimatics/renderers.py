@@ -936,11 +936,12 @@ class RotatedDuplicate(StaticRenderer):
         for image in renderer.images:
             mx = (width - max([len(x) for x in image])) // 2
             my = height // 2 - len(image)
-            tab = "\n" + (" " * mx if mx > 0 else "")
+            tab = (" " * mx if mx > 0 else "") + "\n" + (" " * mx if mx > 0 else "")
             new_image = []
             new_image.extend(["" for _ in range(max(0, my))])
             new_image.extend(image)
             new_image.extend([x[::-1] for x in reversed(image)])
+            new_image.extend(["" for _ in range(max(0, my))])
             if mx < 0:
                 new_image = [x[-mx:mx] for x in new_image]
             if my < 0:
@@ -1015,8 +1016,8 @@ class Kaleidoscope(DynamicRenderer):
 
                 # Re-normalize back to the box coordinates and draw the character that we found
                 # from the reverse mapping.
-                x2 = int(x1 + self._width / 4)
-                y2 = int(y1 + self._height / 2)
+                x2 = int(x1 + self._cell.max_width / 2)
+                y2 = int(y1 + self._cell.max_height / 2)
                 if (0 <= y2 < len(text)) and (0 <= x2 < len(text[y2])):
                     self._write(text[y2][x2] + text[y2][x2],
                                 dx * 2,
