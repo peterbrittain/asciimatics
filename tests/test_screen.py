@@ -50,6 +50,22 @@ class TestScreen(unittest.TestCase):
             if curses.tigetstr("ri") is None:
                 self.skipTest("No valid terminal definition")
 
+    def assert_canvas_equals(self, canvas, expected, height=10, width=60):
+        """
+        Assert output to canvas/screen is as expected.
+        """
+        # TODO: Merge with widget test function of the same name.
+        output = ""
+        for y in range(height):
+            for x in range(width):
+                try:
+                    char, _, _, _ = canvas.get_from(x, y)
+                except Exception:
+                    raise RuntimeError("{} {}".format(x, y))
+                output += chr(char)
+            output += "\n"
+        self.assertEqual(output, expected)
+
     def test_wrapper(self):
         """
         Check that you can create a blank Screen.
@@ -284,6 +300,34 @@ class TestScreen(unittest.TestCase):
         Screen.wrapper(
             check_screen_and_canvas,
             height=15,
+            unicode_aware=False,
+            arguments=[internal_checks])
+
+    def test_polygons(self):
+        """
+        Check that filled polygons work as expected.
+        """
+        def internal_checks(screen):
+            screen.fill_polygon([(0, 0), (10, 0), (0, 10), (10, 10)])
+            screen.fill_polygon([(20, 0), (30, 0), (30, 10), (25, 5), (20, 10)])
+            screen.fill_polygon([(40, 0), (45, 5), (50, 0), (50, 10), (40, 10)])
+            self.maxDiff= None
+            self.assert_canvas_equals(
+                screen,
+                "Y########7          ##########          .        .          \n" +
+                " Y######7           ##########          #.      .#          \n" +
+                "  Y####7            ##########          ##.    .##          \n" +
+                "   Y##7             ##########          ###.  .###          \n" +
+                "    Y7              ##########          ####..####          \n" +
+                "    ..              ####7Y####          ##########          \n" +
+                "   .##.             ###7  Y###          ##########          \n" +
+                "  .####.            ##7    Y##          ##########          \n" +
+                " .######.           #7      Y#          ##########          \n" +
+                ".########.          7        Y          ##########          \n")
+
+        Screen.wrapper(
+            check_screen_and_canvas,
+            height=10,
             unicode_aware=False,
             arguments=[internal_checks])
 

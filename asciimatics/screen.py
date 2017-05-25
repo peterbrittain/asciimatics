@@ -3,6 +3,9 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
+
+from collections import namedtuple
+
 from past.builtins import basestring
 from locale import getlocale, getdefaultlocale
 import struct
@@ -623,8 +626,8 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         :param x: The column (x coord) for the location to check.
         :param y: The line (y coord) for the location to check.
         """
-        self._x = int(round(x, 1)) * 2
-        self._y = int(round(y, 1)) * 2
+        self._x = int(round(x * 2, 0))
+        self._y = int(round(y * 2, 0))
 
     def draw(self, x, y, char=None, colour=7, bg=0, thin=False):
         """
@@ -721,6 +724,100 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
             _draw_on_y(x0, y0)
             if not thin:
                 _draw_on_y(x0 + 1, y0)
+
+    def fill_polygon(self, points, colour=7, bg=0):
+        """
+        Draw a filled polygon.
+
+        This function uses the scan line algorithm to create the polygon.  See
+        https://www.cs.uic.edu/~jbell/CourseNotes/ComputerGraphics/PolygonFilling.html for details.
+
+        :param points: A list of (x,y) coordinates for the points of the polygon.
+        :param colour: The foreground colour to use for the polygon
+        :param bg: The background colour to use for the polygon
+        """
+        class _dotdict(dict):
+            """See https://stackoverflow.com/q/2352181/4994021"""
+            __getattr__ = dict.get
+            __setattr__ = dict.__setitem__
+            __delattr__ = dict.__delitem__
+
+        def _add_edge(a, b):
+            # Ignore horizontal lines - they are redundant
+            if a[1] == b[1]:
+                return
+
+            # Save off the edge, always starting at the lowest value of y.
+            edge = _dotdict()
+            if a[1] < b[1]:
+                edge.min_y = a[1]
+                edge.max_y = b[1]
+                edge.x = a[0]
+                edge.dx = b[0] - a[0]
+                edge.dy = b[1] - a[1]
+            else:
+                edge.min_y = b[1]
+                edge.max_y = a[1]
+                edge.x = b[0]
+                edge.dx = a[0] - b[0]
+                edge.dy = a[1] - b[1]
+            edges.append(edge)
+
+        def _sort(a, b):
+            if a.x < b.x:
+                return -1
+            elif a.x > b.x:
+                return 1
+            else:
+                return 0
+
+        # Find bounding limits for the polygon.
+        _, y = zip(*points)
+        min_y = min(y)
+        max_y = max(y)
+
+        # Create a table of all the edges in the polygon, sorted on smallest y.
+        edges = []
+        last = None
+        for i, point in enumerate(points):
+            if i != 0:
+                _add_edge(last, point)
+            last = point
+        _add_edge(points[0], points[-1])
+        edges = sorted(edges, cmp=_sort)
+
+        # Render each line in the bounding rectangle.
+        for y in [(min_y + x / 2) for x in range(0, int(max_y - min_y) * 2)]:
+            # Create a list of live edges (for drawing this raster line) and edges for next
+            # iteration of the raster.
+            live_edges = []
+            new_edges = []
+            for edge in edges:
+                if edge.min_y <= y <= edge.max_y:
+                    live_edges.append(edge)
+                if y < edge.max_y:
+                    new_edges.append(edge)
+
+            # Draw the portions of the line that are inside the polygon.
+            count = 0
+            last_x = 0
+            for edge in live_edges:
+                # Draw the next segment
+                if edge.max_y != y:
+                    count += 1
+                    if count % 2 == 1:
+                        last_x = edge.x
+                if count % 2 == 0:
+                    self.move(last_x, y)
+                    self.draw(edge.x, y, colour=colour, bg=bg, thin=True)
+
+                # Update the x location for this active edge.
+                if edge.dy != 0:
+                    edge.x += edge.dx / edge.dy / 2
+
+            # Rely on the fact that we have the same dicts in both live_edges and new_edges, so
+            # we just need to resort new_edges for the next iteration.
+            edges = sorted(new_edges, _sort)
 
 
 class Canvas(_AbstractCanvas):
