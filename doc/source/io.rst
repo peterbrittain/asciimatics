@@ -198,8 +198,8 @@ location.  This is often referred to as screen scraping.  You can do this using 
     <https://en.wikipedia.org/wiki/Halfwidth_and_fullwidth_forms>`__ and `here
     <http://denisbider.blogspot.co.uk/2015/09/when-monospace-fonts-arent-unicode.html>`__.
 
-Line drawing
-------------
+Drawing shapes
+--------------
 The Screen object also provides some anti-aliased line drawing facilities, using ASCII characters
 to represent the line.  The :py:meth:`~.Screen.move` method will move the drawing cursor to the
 specified coordinates and then the :py:meth:`~.Screen.draw` method will draw a straight line from
@@ -221,14 +221,11 @@ clear what was already drawn.  For example:
 If the resulting line is too thick, you can also pick a thinner pen by specifying ``thin=True``.
 Examples of both styles can be found in the Clock sample code.
 
-.. code-block:: python
+In addition, there is the :py:meth:`~.Screen.fill_polygon` method which will draw a filled
+polygon in the specified colour using a set of points passed in to define the required shape.
 
-    COLOUR_BLACK = 0
-    COLOUR_RED = 1
-    COLOUR_GREEN = 2
-    COLOUR_YELLOW = 3
-    COLOUR_BLUE = 4
-    COLOUR_MAGENTA = 5
-    COLOUR_CYAN = 6
-    COLOUR_WHITE = 7
-
+Unicode drawing
+---------------
+The drawing methods covered above are unicode aware and will default to the correct character
+set for your terminal, using unicode block characters where possible and falling back to pure
+ASCII text if not.

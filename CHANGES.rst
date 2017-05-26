@@ -3,6 +3,7 @@ CHANGE HISTORY
 
 LATEST
 ------
+- Added fill_polygon to Screen and Canvas.
 - Added the Kaleidoscope and RotatedDuplicate renderers.
 - Fixed up signal handling to re-instate old handlers on Screen.close().
 
