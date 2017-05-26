@@ -768,7 +768,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         min_y = min(y)
         max_y = max(y)
 
-        # Create a table of all the edges in the polygon, sorted on smallest y.
+        # Create a table of all the edges in the polygon, sorted on smallest x.
         edges = []
         last = None
         for i, point in enumerate(points):
