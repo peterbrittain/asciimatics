@@ -763,14 +763,6 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                 edge.dy = a[1] - b[1]
             edges.append(edge)
 
-        def _sort(a, b):
-            if a.x < b.x:
-                return -1
-            elif a.x > b.x:
-                return 1
-            else:
-                return 0
-
         # Find bounding limits for the polygon.
         _, y = zip(*points)
         min_y = min(y)
@@ -784,7 +776,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                 _add_edge(last, point)
             last = point
         _add_edge(points[0], points[-1])
-        edges = sorted(edges, cmp=_sort)
+        edges = sorted(edges, key=lambda e: e.x)
 
         # Render each line in the bounding rectangle.
         for y in [(min_y + x / 2) for x in range(0, int(max_y - min_y) * 2)]:
@@ -817,7 +809,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
 
             # Rely on the fact that we have the same dicts in both live_edges and new_edges, so
             # we just need to resort new_edges for the next iteration.
-            edges = sorted(new_edges, _sort)
+            edges = sorted(new_edges, key=lambda e: e.x)
 
 
 class Canvas(_AbstractCanvas):
