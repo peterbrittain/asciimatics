@@ -283,6 +283,7 @@ Widget type                   Description
 ============================= =====================================================================
 :py:obj:`.Button`             Action buttons - e.g. ok/cancel/etc.
 :py:obj:`.CheckBox`           Simple yes/no tick boxes.
+:py:obj:`.MultiCheckBox`      Like a CheckBox, but assumes arbitrary number of possibly non-Boolean values.
 :py:obj:`.Divider`            A spacer between widgets (for aesthetics).
 :py:obj:`.Label`              A label for a group of related widgets.
 :py:obj:`.ListBox`            A list of possible options from which users can select one value.
