@@ -50,7 +50,7 @@ class TestScreen(unittest.TestCase):
             if curses.tigetstr("ri") is None:
                 self.skipTest("No valid terminal definition")
 
-    def assert_canvas_equals(self, canvas, expected, height=10, width=60):
+    def assert_canvas_equals(self, canvas, expected, height=10, width=75):
         """
         Assert output to canvas/screen is as expected.
         """
@@ -308,22 +308,24 @@ class TestScreen(unittest.TestCase):
         Check that filled polygons work as expected.
         """
         def internal_checks(screen):
-            screen.fill_polygon([(0, 0), (10, 0), (0, 10), (10, 10)])
-            screen.fill_polygon([(20, 0), (30, 0), (30, 10), (25, 5), (20, 10)])
-            screen.fill_polygon([(40, 0), (45, 5), (50, 0), (50, 10), (40, 10)])
-            self.maxDiff= None
+            screen.fill_polygon([[(0, 0), (10, 0), (0, 10), (10, 10)]])
+            screen.fill_polygon([[(20, 0), (30, 0), (30, 10), (25, 5), (20, 10)]])
+            screen.fill_polygon([[(40, 0), (45, 5), (50, 0), (50, 10), (40, 10)]])
+            screen.fill_polygon([[(60, 0), (70, 0), (70, 10), (60, 10)],
+                                 [(63, 2), (67, 2), (67, 8), (63, 8)]])
+            self.maxDiff = None
             self.assert_canvas_equals(
                 screen,
-                "Y########7          ##########          .        .          \n" +
-                " Y######7           ##########          #.      .#          \n" +
-                "  Y####7            ##########          ##.    .##          \n" +
-                "   Y##7             ##########          ###.  .###          \n" +
-                "    Y7              ##########          ####..####          \n" +
-                "    ..              ####7Y####          ##########          \n" +
-                "   .##.             ###7  Y###          ##########          \n" +
-                "  .####.            ##7    Y##          ##########          \n" +
-                " .######.           #7      Y#          ##########          \n" +
-                ".########.          7        Y          ##########          \n")
+                "Y########7          ##########          .        .          ##########     \n" +
+                " Y######7           ##########          #.      .#          ##########     \n" +
+                "  Y####7            ##########          ##.    .##          ###    ###     \n" +
+                "   Y##7             ##########          ###.  .###          ###    ###     \n" +
+                "    Y7              ##########          ####..####          ###    ###     \n" +
+                "    ..              ####7Y####          ##########          ###    ###     \n" +
+                "   .##.             ###7  Y###          ##########          ###    ###     \n" +
+                "  .####.            ##7    Y##          ##########          ###    ###     \n" +
+                " .######.           #7      Y#          ##########          ##########     \n" +
+                ".########.          7        Y          ##########          ##########     \n")
 
         Screen.wrapper(
             check_screen_and_canvas,

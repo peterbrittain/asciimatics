@@ -38,10 +38,13 @@ def _enforce_width(text, width):
 
 def _find_min_start(text, max_width):
     """
-    TODO: doc!!
-    :param text:
-    :param max_width:
-    :return:
+    Find the starting point in the string that will reduce it to be less than or equal to the
+    specified width when displayed on screen.
+
+    :param text: The text to analyze.
+    :param max_width: The required maximum width
+
+    :return: The offset within `text` to start at to reduce it to the required length.
     """
     result = 0
     display_end = wcswidth(text)
