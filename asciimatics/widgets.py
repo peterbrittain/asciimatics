@@ -1547,6 +1547,7 @@ class CheckBox(Widget):
         self._text = text
         self._label = label
         self._on_change = on_change
+        self._default_value = False
 
     def update(self, frame_no):
         self._draw_label()
@@ -1602,7 +1603,7 @@ class CheckBox(Widget):
     def value(self, new_value):
         # Only trigger the notification after we've changed the value.
         old_value = self._value
-        self._value = new_value if new_value else False
+        self._value = new_value if new_value else self._default_value
         if old_value != self._value and self._on_change:
             self._on_change()
 
