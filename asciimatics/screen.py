@@ -725,14 +725,15 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
             if not thin:
                 _draw_on_y(x0 + 1, y0)
 
-    def fill_polygon(self, points, colour=7, bg=0):
+    def fill_polygon(self, polygons, colour=7, bg=0):
         """
         Draw a filled polygon.
 
         This function uses the scan line algorithm to create the polygon.  See
         https://www.cs.uic.edu/~jbell/CourseNotes/ComputerGraphics/PolygonFilling.html for details.
 
-        :param points: A list of (x,y) coordinates for the points of the polygon.
+        :param polygons: A list of polygons (which are each a list of (x,y) coordinates for the
+            points of the polygon) - i.e. nested list of 2-tuples.
         :param colour: The foreground colour to use for the polygon
         :param bg: The background colour to use for the polygon
         """
@@ -745,6 +746,10 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         def _add_edge(a, b):
             # Ignore horizontal lines - they are redundant
             if a[1] == b[1]:
+                return
+
+            # Ignore any edges that do not intersect the visible raster lines.
+            if (a[1] < 0 and b[1] < 0) or (a[1] >= self.height and b[1] >= self.height):
                 return
 
             # Save off the edge, always starting at the lowest value of y.
@@ -763,20 +768,34 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                 edge.dy = a[1] - b[1]
             edges.append(edge)
 
-        # Find bounding limits for the polygon.
-        _, y = zip(*points)
-        min_y = min(y)
-        max_y = max(y)
+        # Find bounding limits for the polygons.
+        min_y = self.height
+        max_y = -1
+        for polygon in polygons:
+            # Ignore lines and polygons.
+            if len(polygon) <= 2:
+                continue
+            _, y = zip(*polygon)
+            min_y = min(min(y), min_y)
+            max_y = max(max(y), max_y)
 
         # Create a table of all the edges in the polygon, sorted on smallest x.
         edges = []
         last = None
-        for i, point in enumerate(points):
-            if i != 0:
-                _add_edge(last, point)
-            last = point
-        _add_edge(points[0], points[-1])
-        edges = sorted(edges, key=lambda e: e.x)
+        for polygon in polygons:
+            # Ignore lines and polygons.
+            if len(polygon) <= 2:
+                continue
+            for i, point in enumerate(polygon):
+                if i != 0:
+                    _add_edge(last, point)
+                last = point
+            _add_edge(polygon[0], polygon[-1])
+            edges = sorted(edges, key=lambda e: e.x)
+
+        # Check we still have something to do:
+        if len(edges) == 0:
+            return
 
         # Render each line in the bounding rectangle.
         for y in [(min_y + x / 2) for x in range(0, int(max_y - min_y) * 2)]:
@@ -795,13 +814,19 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
             last_x = 0
             for edge in live_edges:
                 # Draw the next segment
-                if edge.max_y != y:
-                    count += 1
-                    if count % 2 == 1:
-                        last_x = edge.x
-                if count % 2 == 0:
-                    self.move(last_x, y)
-                    self.draw(edge.x, y, colour=colour, bg=bg, thin=True)
+                if 0 <= y < self.height:
+                    if edge.max_y != y:
+                        count += 1
+                        if count % 2 == 1:
+                            last_x = edge.x
+                        else:
+                            # Don't bother drawing lines entirely off the screen.
+                            if ((last_x < 0 and edge.x < 0) or
+                                    (last_x >= self.width and edge.x >= self.width)):
+                                continue
+
+                            self.move(last_x, y)
+                            self.draw(edge.x, y, colour=colour, bg=bg, thin=True)
 
                 # Update the x location for this active edge.
                 if edge.dy != 0:
