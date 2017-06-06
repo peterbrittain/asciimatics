@@ -1608,6 +1608,81 @@ class CheckBox(Widget):
             self._on_change()
 
 
+class MultiCheckBox(CheckBox):
+    """
+    A MultiCheckBox widget is used like CheckBox widget, but instead of
+    assuming only simple Boolean (i.e. yes/no) states, it can receive arbitrary
+    number of states where the values of those states are strings of length one.
+    The options are given as a list or a set by passing them to the `options`
+    paramater upon instantiation.
+    It consists of an optional label (typically used for the first in a group of
+    CheckBoxes), the box and a field name.
+    """
+    def __init__(self, text, options, label=None, name=None, on_change=None):
+        """
+        :param text: The text to explain this specific field to the user.
+        :param options: The list of all the possible states of the checkbox. States should be strings of length one.
+        :param label: An optional label for the widget.
+        :param name: The internal name for the widget.
+        :param on_change: Optional function to call when text changes.
+        """
+        super(MultiCheckBox, self).__init__(
+            text=text, label=label, name=name, on_change=on_change)
+
+        if not isinstance(options, (list, set)):
+            raise TypeError("options argumen must receive either a list or a set")
+        if len(set(options)) != len(options):
+            raise ValueError("options can't be duplicate")
+        if " " in options:
+            raise ValueError("Empty space can't be a valid option")
+
+        self._default_value = None
+        self._options = [self._default_value] + [str(x) for x in options]
+
+        # Checking to see if all the value after default value (with index 0)
+        # are strings of length one.
+        if any([x for x in self._options[1:] if len(x) > 1]):
+            raise ValueError("All options must have length of one")
+
+    def next_option(self):
+        """
+        Cycles through the available options. Starts from the value of empty
+        field (i.e. None) after reaching the end.
+        """
+        return self._options[(self._options.index(self._value) + 1) %
+                             len(self._options)]
+
+    def update(self, frame_no):
+        self._draw_label()
+        (colour, attr, bg) = self._pick_colours("control", self._has_focus)
+        self._frame.canvas.print_at(
+            "[{}]".format(self._value if self._value is not None else " "),
+            self._x + self._offset,
+            self._y,
+            colour, attr, bg)
+        self._frame.canvas.print_at(
+            self._text,
+            self._x + self._offset + 4,
+            self._y,
+            colour, attr, bg)
+
+    def process_event(self, event):
+        if isinstance(event, KeyboardEvent):
+            if event.key_code in [ord(" "), 10, 13]:
+                self.value = self.next_option()
+            else:
+                return event
+        elif isinstance(event, MouseEvent):
+            new_event = self._frame.rebase_event(event)
+            if event.buttons != 0:
+                if self.is_mouse_over(new_event, include_label=False):
+                    self.value = self.next_option()
+                    return
+            return event
+        else:
+            return event
+
+
 class RadioButtons(Widget):
     """
     A RadioButtons widget is used to ask for one of a list of values to be

@@ -10,8 +10,9 @@ from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import NextScene, StopApplication, InvalidFields
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen, Canvas
-from asciimatics.widgets import Frame, Layout, Button, Label, TextBox, Text, \
-    Divider, RadioButtons, CheckBox, PopUpDialog, ListBox, Widget, MultiColumnListBox
+from asciimatics.widgets import (
+    Frame, Layout, Button, Label, TextBox, Text, Divider, RadioButtons,
+    CheckBox, MultiCheckBox, PopUpDialog, ListBox, Widget, MultiColumnListBox)
 
 
 class TestFrame(Frame):
@@ -59,6 +60,9 @@ class TestFrame(Frame):
             CheckBox("Field 2", name="CB", on_change=self._on_change), 1)
         layout.add_widget(
             CheckBox("Field 3", name="CC", on_change=self._on_change), 1)
+        layout.add_widget(
+            MultiCheckBox("MultiCheckBox", options=list("abcd"),
+                          name="MC", on_change=self._on_change), 1)
         layout.add_widget(Divider(height=3), 1)
         layout2 = Layout([1, 1, 1])
         self.add_layout(layout2)
@@ -212,6 +216,7 @@ class TestWidgets(unittest.TestCase):
                 'CA': False,
                 'CB': False,
                 'CC': False,
+                'MC': None,
                 'TA': [''],
                 'TB': '',
                 'TC': '',
@@ -266,11 +271,11 @@ class TestWidgets(unittest.TestCase):
             canvas,
             "+--------------------------------------+\n" +
             "|            [ ] Field 3               |\n" +
+            "|            [ ] MultiCheckBox         |\n" +
             "|                                      |\n" +
             "| ----------------------------------   |\n" +
             "|                                      |\n" +
             "| < Reset >  < View Data > < Quit >    |\n" +
-            "|                                      |\n" +
             "|                                      O\n" +
             "|                                      |\n" +
             "+--------------------------------------+\n")
@@ -322,11 +327,11 @@ class TestWidgets(unittest.TestCase):
             canvas,
             "┌──────────────────────────────────────┐\n" +
             "│            [ ] Field 3               │\n" +
+            "│            [ ] MultiCheckBox         ░\n" +
             "│                                      ░\n" +
             "│ ──────────────────────────────────   ░\n" +
             "│                                      ░\n" +
             "│ < Reset >  < View Data > < Quit >    ░\n" +
-            "│                                      ░\n" +
             "│                                      █\n" +
             "│                                      │\n" +
             "└──────────────────────────────────────┘\n")
@@ -368,8 +373,8 @@ class TestWidgets(unittest.TestCase):
             "  A very si...[ ] Field 1               \n" +
             "              [ ] Field 2               \n" +
             "              [ ] Field 3               \n" +
-            "                                        \n" +
-            "  ------------------------------------  \n")
+            "              [ ] MultiCheckBox         \n" +
+            "                                        \n")
 
     def test_form_input(self):
         """
@@ -389,6 +394,7 @@ class TestWidgets(unittest.TestCase):
                 'CA': True,
                 'CB': False,
                 'CC': True,
+                'MC': None,
                 'TA': ['ABC', 'DEF'],
                 'TB': 'GHI',
                 'TC': 'jkl',
@@ -564,6 +570,41 @@ class TestWidgets(unittest.TestCase):
         event = object()
         self.assertEqual(event, form.process_event(event))
 
+    def test_multicheckbox_input(self):
+        """
+        Check MultiCheckbox input works as expected.
+        """
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame(canvas)
+        form.reset()
+
+        # Check basic selection keys
+        self.process_keys(
+            form,
+            ([Screen.KEY_TAB] * 8) + [" "])
+        form.save()
+        self.assertEqual(form.data["MC"], "a")
+        self.process_keys(form, ["\n"])
+        form.save()
+        self.assertEqual(form.data["MC"], "b")
+        self.process_keys(form, ["\r"])
+        form.save()
+        self.assertEqual(form.data["MC"], "c")
+        self.process_keys(form, ["\n"])
+        form.save()
+        self.assertEqual(form.data["MC"], "d")
+        self.process_keys(form, ["\n"])
+        form.save()
+        self.assertEqual(form.data["MC"], None)
+        self.process_keys(form, ["\n"])
+        form.save()
+        self.assertEqual(form.data["MC"], "a")
+
+        # Check that the current focus ignores unknown events.
+        event = object()
+        self.assertEqual(event, form.process_event(event))
+
     def test_radiobutton_input(self):
         """
         Check RadioButton input works as expected.
@@ -626,10 +667,10 @@ class TestWidgets(unittest.TestCase):
 
         # Check focus moves when clicked on a checkbox or radiobutton
         self.process_mouse(form, [(29, 1, MouseEvent.LEFT_CLICK)])
-        self.assertEqual(form._layouts[form._focus]._live_widget, 7)
+        self.assertEqual(form._layouts[form._focus]._live_widget, 8)
         # Note that the above changes the Frame start-line.
         self.process_mouse(form, [(29, 5, MouseEvent.LEFT_CLICK)])
-        self.assertEqual(form._layouts[form._focus]._live_widget, 9)
+        self.assertEqual(form._layouts[form._focus]._live_widget, 12)
 
         # Check focus moves when hovering over a widget
         self.process_mouse(form, [(39, 7, MouseEvent.LEFT_CLICK), (3, 8, 0)])
@@ -680,7 +721,7 @@ class TestWidgets(unittest.TestCase):
         # Tab out into buttons and check LEFT/RIGHT keys.
         self.process_keys(form, [Screen.KEY_TAB, Screen.KEY_TAB, Screen.KEY_TAB,
                                  Screen.KEY_TAB, Screen.KEY_TAB, Screen.KEY_TAB,
-                                 Screen.KEY_TAB])
+                                 Screen.KEY_TAB, Screen.KEY_TAB])
         self.assertEqual(form._focus, 1)
         self.assertEqual(form._layouts[form._focus]._live_col, 1)
         self.assertEqual(form._layouts[form._focus]._live_widget, 0)

@@ -1,5 +1,5 @@
 from asciimatics.widgets import Frame, TextBox, Layout, Label, Divider, Text, \
-    CheckBox, RadioButtons, Button, PopUpDialog
+    CheckBox, MultiCheckBox, RadioButtons, Button, PopUpDialog
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, NextScene, StopApplication, \
@@ -17,6 +17,7 @@ form_data = {
     "CA": False,
     "CB": True,
     "CC": False,
+    "MC": None,
 }
 
 
@@ -67,6 +68,9 @@ class DemoFrame(Frame):
             CheckBox("Field 2", name="CB", on_change=self._on_change), 1)
         layout.add_widget(
             CheckBox("Field 3", name="CC", on_change=self._on_change), 1)
+        layout.add_widget(
+            MultiCheckBox("MultiCheckBox", options=list("abcd"),
+                          name="MC", on_change=self._on_change), 1)
         layout.add_widget(Divider(height=3), 1)
         layout2 = Layout([1, 1, 1])
         self.add_layout(layout2)
