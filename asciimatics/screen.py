@@ -657,6 +657,11 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         self._x = x1
         self._y = y1
 
+        # Quit now for clipped lines.
+        if ((x0 < 0 and x1 < 0) or (x0 >= self.width * 2 and x1 >= self.width * 2) or
+                (y0 < 0 and y1 < 0) or (y0 >= self.height * 2 and y1 >= self.height * 2)):
+            return
+
         dx = abs(x1 - x0)
         dy = abs(y1 - y0)
 
