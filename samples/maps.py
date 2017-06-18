@@ -24,7 +24,7 @@ except ImportError:
 
 class Map(Effect):
     # Replace this value with the free one that you get from signing up with www.mapbox.com
-    _KEY = ""
+    _KEY = "pk.eyJ1IjoicGV0ZXJicml0dGFpbiIsImEiOiJjajMxdXpidzIwMDAyMzNteTFkYTdzZm9wIn0.5WWO7DuNz3v3lqGj9ZUzIw"
     _URL = "http://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7/{}/{}/{}.mvt?access_token={}"
     _START_SIZE = 64
     _ZOOM_IN_SIZE = _START_SIZE * 2
@@ -78,8 +78,8 @@ class Map(Effect):
             y_centre = int(y_offset // size)
 
             # Get the visible tiles around that location.
-            for x in range(-1, 2):
-                for y in range(-1, 2):
+            for x in [0, 1, -1]:
+                for y in [0, 1, -1]:
                     # Don't get tile if it falls off the grid
                     x_tile = x_centre + x
                     y_tile = y_centre + y
