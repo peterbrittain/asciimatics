@@ -24,7 +24,7 @@ except ImportError:
 
 class Map(Effect):
     # Replace this value with the free one that you get from signing up with www.mapbox.com
-    _KEY = "pk.eyJ1IjoicGV0ZXJicml0dGFpbiIsImEiOiJjajMxdXpidzIwMDAyMzNteTFkYTdzZm9wIn0.5WWO7DuNz3v3lqGj9ZUzIw"
+    _KEY = ""
     _URL = "http://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7/{}/{}/{}.mvt?access_token={}"
     _START_SIZE = 64
     _ZOOM_IN_SIZE = _START_SIZE * 2
