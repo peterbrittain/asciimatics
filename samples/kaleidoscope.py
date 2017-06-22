@@ -19,7 +19,7 @@ def demo(screen):
                                                 width=screen.width // 2)))
     cell2 = ""
     size = int(sqrt(screen.height ** 2 + screen.width ** 2 // 4))
-    for y in range(size):
+    for _ in range(size):
         for x in range(size):
             c = x * screen.colours // size
             cell2 += "${%d,2,%d}:" % (c, c)

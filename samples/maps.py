@@ -1,4 +1,5 @@
 from __future__ import division
+from __future__ import print_function
 from math import pi, exp, atan, log, tan
 import sys
 import os
@@ -35,7 +36,7 @@ class Map(Effect):
         super(Map, self).__init__()
         # Current state of the map
         self._screen = screen
-        self._zoom = 0
+        self._zoom = 19
         self._latitude = 51.4778
         self._longitude = -0.0015
         self._tiles = OrderedDict()
@@ -66,7 +67,40 @@ class Map(Effect):
     def _convert_latitude(self, latitude):
         # Convert from latitude to the y position in overall map.
         return int((180 - (180 / pi * log(tan(
-                pi / 4 + latitude * pi / 360)))) * (2 ** self._zoom) * self._size / 360)
+            pi / 4 + latitude * pi / 360)))) * (2 ** self._zoom) * self._size / 360)
+
+    def _inc_lat(self, latitude, delta):
+        # Shift the latitude by the required number of pixels (i.e. text lines).
+        y = self._convert_latitude(latitude)
+        y += delta
+        return 360 / pi * atan(
+            exp((180 - y * 360 / (2 ** self._zoom) / self._size) * pi / 180)) - 90
+
+    def _get_tile(self, x_tile, y_tile, z_tile):
+        # Load up a single tile - check for in memory or file cache before downloading.
+        try:
+            cache_file = "mapscache/{}.{}.{}.json".format(z_tile, x_tile, y_tile)
+            if cache_file not in self._tiles:
+                if os.path.isfile(cache_file):
+                    with open(cache_file, 'rb') as f:
+                        tile = json.load(f)
+                else:
+                    url = self._URL.format(z_tile, x_tile, y_tile, self._KEY)
+                    data = requests.get(url).content
+                    try:
+                        tile = mapbox_vector_tile.decode(data)
+                        with open(cache_file, 'wb') as f:
+                            json.dump(literal_eval(repr(tile)), f)
+                    except DecodeError:
+                        tile = None
+                if tile:
+                    self._tiles[cache_file] = [x_tile, y_tile, z_tile, tile]
+                    if len(self._tiles) > 80:
+                        self._tiles.popitem(False)
+                    self._screen.force_update()
+        # pylint: disable=broad-except
+        except Exception as e:
+            self._oops = "{} {} {}".format(e, x_tile, y_tile)
 
     def _get_tiles(self):
         # Background thread to download tiles as required.
@@ -79,17 +113,15 @@ class Map(Effect):
             size = self._size
             n = 2 ** zoom
             x_offset = self._convert_longitude(self._longitude)
-            x_centre = int(x_offset // size)
             y_offset = self._convert_latitude(self._latitude)
-            y_centre = int(y_offset // size)
 
             # Get the visible tiles around that location - getting most relevant first
             for x, y, z in [(0, 0, 0), (1, 0, 0), (0, 1, 0), (-1, 0, 0), (0, -1, 0),
                             (0, 0, -1), (0, 0, 1),
                             (1, 1, 0), (1, -1, 0), (-1, -1, 0), (-1, 1, 0)]:
                 # Don't get tile if it falls off the grid
-                x_tile = x_centre + x
-                y_tile = y_centre + y
+                x_tile = int(x_offset // size) + x
+                y_tile = int(y_offset // size) + y
                 z_tile = zoom + z
                 if (x_tile < 0 or x_tile >= n or y_tile < 0 or y_tile >= n or
                         z_tile < 0 or z_tile > 20):
@@ -102,29 +134,7 @@ class Map(Effect):
                         top > self._screen.height or top + self._size < 0):
                     continue
 
-                # Check for in memory or file cache before downloading.
-                try:
-                    cache_file = "mapscache/{}.{}.{}.json".format(z_tile, x_tile, y_tile)
-                    if cache_file not in self._tiles:
-                        if os.path.isfile(cache_file):
-                            with open(cache_file, 'rb') as f:
-                                tile = json.load(f)
-                        else:
-                            url = self._URL.format(z_tile, x_tile, y_tile, self._KEY)
-                            data = requests.get(url).content
-                            try:
-                                tile = mapbox_vector_tile.decode(data)
-                                with open(cache_file, 'wb') as f:
-                                    json.dump(literal_eval(repr(tile)), f)
-                            except DecodeError:
-                                tile = None
-                        if tile:
-                            self._tiles[cache_file] = [x_tile, y_tile, z_tile, tile]
-                            if len(self._tiles) > 80:
-                                self._tiles.popitem(False)
-                            self._screen.force_update()
-                except Exception as e:
-                    self._oops = "{} {} {} {} {}".format(e, x_tile, y_tile, x, y)
+                self._get_tile(x_tile, y_tile, z_tile)
 
             # Generally refresh screen after we've downloaded everything
             self._screen.force_update()
@@ -170,47 +180,86 @@ class Map(Effect):
                 ("poi_label", [], [], 8),
             ]
 
+    def _draw_polygons(self, bg, colour, extent, polygons, xo, yo):
+        coords = []
+        for polygon in polygons:
+            coords.append([self._scale_coords(x, y, extent, xo, yo) for x, y in polygon])
+        self._screen.fill_polygon(coords, colour=colour, bg=bg)
+
+    def _draw_lines(self, bg, colour, extent, line, xo, yo):
+        coords = [self._scale_coords(x, y, extent, xo, yo) for x, y in line]
+        for i, (x, y) in enumerate(coords):
+            if i == 0:
+                self._screen.move(x, y)
+            else:
+                self._screen.draw(x, y, colour=colour, bg=bg, thin=True)
+
     def _draw_feature(self, feature, extent, colour, bg, xo, yo):
         # Draw a single feature from a layer in a map tile.
         geometry = feature["geometry"]
         if geometry["type"] == "Polygon":
-            coords = []
-            for polygon in geometry["coordinates"]:
-                coords.append([self._scale_coords(x, y, extent, xo, yo) for x, y in polygon])
-                self._screen.fill_polygon(coords, colour=colour, bg=bg)
+            self._draw_polygons(bg, colour, extent, geometry["coordinates"], xo, yo)
         elif feature["geometry"]["type"] == "MultiPolygon":
             for multi_polygon in geometry["coordinates"]:
-                coords = []
-                for polygon in multi_polygon:
-                    coords.append([self._scale_coords(x, y, extent, xo, yo) for x, y in polygon])
-                self._screen.fill_polygon(coords, colour=colour, bg=bg)
+                self._draw_polygons(bg, colour, extent, multi_polygon, xo, yo)
         elif feature["geometry"]["type"] == "LineString":
-            coords = [self._scale_coords(x, y, extent, xo, yo) for x, y in geometry["coordinates"]]
-            for i, (x, y) in enumerate(coords):
-                if i == 0:
-                    self._screen.move(x, y)
-                else:
-                    self._screen.draw(x, y, colour=colour, bg=bg, thin=True)
+            self._draw_lines(bg, colour, extent, geometry["coordinates"], xo, yo)
         elif feature["geometry"]["type"] == "MultiLineString":
             for line in geometry["coordinates"]:
-                coords = [self._scale_coords(x, y, extent, xo, yo) for x, y in line]
-                for i, (x, y) in enumerate(coords):
-                    if i == 0:
-                        self._screen.move(x, y)
-                    else:
-                        self._screen.draw(x, y, colour=colour, bg=bg, thin=True)
+                self._draw_lines(bg, colour, extent, line, xo, yo)
         elif feature["geometry"]["type"] == "Point":
             x, y = self._scale_coords(
-                    geometry["coordinates"][0], geometry["coordinates"][1], extent, xo, yo)
+                geometry["coordinates"][0], geometry["coordinates"][1], extent, xo, yo)
             text = u" {} ".format(feature["properties"]["name_en"])
             self._screen.print_at(text, int(x - len(text) / 2), int(y), colour=colour, bg=bg)
 
-    def _update(self, frame_no):
-        # Check for any fatal errors from the background thread and quit if we hit anything.
-        if self._oops:
-            raise RuntimeError(self._oops)
+    def _draw_tile_layer(self, tile, layer_name, c_filters, colour, t_filters, x, y, z, bg):
+        # Draw the visible geometry in the specified map tile.
 
-        # Glide towards desired location
+        # Don't bother rendering if the tile is not visible
+        left = (x + self._screen.width // 4) * 2
+        top = y + self._screen.height // 2
+        if (left > self._screen.width or left + self._size * 2 < 0 or
+                top > self._screen.height or top + self._size < 0 or
+                z != self._zoom):
+            return 0
+
+        try:
+            _layer = tile[layer_name]
+            _extent = float(_layer["extent"])
+        except KeyError:
+            return 0
+
+        for _feature in _layer["features"]:
+            try:
+                if c_filters and _feature["properties"]["class"] not in c_filters:
+                    continue
+                if (t_filters and _feature["type"] not in t_filters and
+                        _feature["properties"]["type"] not in t_filters):
+                    continue
+                self._draw_feature(
+                    _feature, _extent, colour, bg,
+                    (x + self._screen.width // 4) * 2, y + self._screen.height // 2)
+            except KeyError:
+                pass
+        return 1
+
+    def _draw_tiles(self, x_offset, y_offset, bg):
+        # Render all visible tiles a layer at a time.
+        count = 0
+        for layer_name, c_filters, t_filters, colour in self._get_features():
+            for x, y, z, tile in self._tiles.values():
+                # Convert tile location into pixels
+                x *= self._size
+                y *= self._size
+
+                # Draw the features from this tile
+                count += self._draw_tile_layer(tile, layer_name, c_filters, colour, t_filters,
+                                               x - x_offset, y - y_offset, z, bg)
+        return count
+
+    def _move_to_desired_location(self):
+        # Increment locations so that we glide towards the new desired location.
         self._next_update = 100000
         if self._zoom != self._desired_zoom:
             self._next_update = 1
@@ -233,7 +282,6 @@ class Map(Effect):
                         self._updated.set()
                     else:
                         self._size = self._ZOOM_IN_SIZE
-
         if self._longitude != self._desired_longitude:
             self._next_update = 1
             self._updated.set()
@@ -243,7 +291,6 @@ class Map(Effect):
             else:
                 self._longitude = min(self._longitude + 360 / 2 ** self._zoom / self._size * 2,
                                       self._desired_longitude)
-
         if self._latitude != self._desired_latitude:
             self._next_update = 1
             self._updated.set()
@@ -251,6 +298,14 @@ class Map(Effect):
                 self._latitude = max(self._inc_lat(self._latitude, 2), self._desired_latitude)
             else:
                 self._latitude = min(self._inc_lat(self._latitude, -2), self._desired_latitude)
+
+    def _update(self, frame_no):
+        # Check for any fatal errors from the background thread and quit if we hit anything.
+        if self._oops:
+            raise RuntimeError(self._oops)
+
+        # Calculate new positions for animated movement.
+        self._move_to_desired_location()
 
         # Re-draw the tiles - if we have any suitable ones downloaded.
         count = 0
@@ -262,39 +317,8 @@ class Map(Effect):
             for y in range(self._screen.height):
                 self._screen.print_at("." * self._screen.width, 0, y, colour=bg, bg=bg)
 
-            # Render all visible tiles a layer at a time.
-            for layer_name, c_filters, t_filters, colour in self._get_features():
-                try:
-                    for x, y, z, tile in self._tiles.values():
-                        # Convert tile location into pixels
-                        x *= self._size
-                        y *= self._size
-
-                        # Don't bother rendering if the tile is not visible
-                        left = (x - x_offset + self._screen.width // 4) * 2
-                        top = y - y_offset + self._screen.height // 2
-                        if (left > self._screen.width or left + self._size * 2 < 0 or
-                                top > self._screen.height or top + self._size < 0 or
-                                z != self._zoom):
-                            continue
-
-                        # Now we can draw the visible geometry in the map tile.
-                        count += 1
-                        _layer = tile[layer_name]
-                        _extent = float(_layer["extent"])
-                        for _feature in _layer["features"]:
-                            if c_filters and _feature["properties"]["class"] not in c_filters:
-                                continue
-                            if (t_filters and _feature["type"] not in t_filters and
-                                    _feature["properties"]["type"] not in t_filters):
-                                continue
-
-                            self._draw_feature(
-                                    _feature, _extent, colour, bg,
-                                    (x - x_offset + self._screen.width // 4) * 2,
-                                    y - y_offset + self._screen.height // 2)
-                except KeyError:
-                    pass
+            # Now draw all the available tiles.
+            count = self._draw_tiles(x_offset, y_offset, bg)
 
         # Just a few pointers on what the user should do...
         if count == 0:
@@ -310,12 +334,7 @@ class Map(Effect):
         # We're ready to go - flush it all to screen.
         self._screen.refresh()
 
-    def _inc_lat(self, latitude, delta):
-        # Shift the latitude by the required number of pixels (i.e. text lines).
-        y = self._convert_latitude(latitude)
-        y += delta
-        return 360 / pi * atan(
-                exp((180 - y * 360 / (2 ** self._zoom) / self._size) * pi / 180)) - 90
+        return count
 
     def process_event(self, event):
         # Key handling for the demo.
@@ -323,10 +342,10 @@ class Map(Effect):
             if event.key_code in [ord('q'), ord('Q'), Screen.ctrl("c")]:
                 raise StopApplication("User quit")
             elif event.key_code == ord("+") and self._zoom <= 20:
-                if self._desired_zoom < 20 and self._KEY != "":
+                if self._desired_zoom < 20:
                     self._desired_zoom += 1
             elif event.key_code == ord("-") and self._zoom >= 0:
-                if self._desired_zoom > 0 and self._KEY != "":
+                if self._desired_zoom > 0:
                     self._desired_zoom -= 1
             elif event.key_code == ord("0"):
                 self._desired_zoom = 0
