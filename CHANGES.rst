@@ -3,8 +3,9 @@ CHANGE HISTORY
 
 LATEST
 ------
-- Added fill_polygon to Screen and Canvas.
+- Added fill_polygon() to Screen and Canvas.
 - Added the Kaleidoscope and RotatedDuplicate renderers.
+- Created map demo - which renders vector map tiles from Mapbox.
 - Fixed up signal handling to re-instate old handlers on Screen.close().
 
 1.8.0
