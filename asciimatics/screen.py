@@ -3,9 +3,6 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
-
-from collections import namedtuple
-
 from past.builtins import basestring
 from locale import getlocale, getdefaultlocale
 import struct
@@ -657,6 +654,11 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         self._x = x1
         self._y = y1
 
+        # Don't bother drawing anything if we're guaranteed to be off-screen
+        if ((x0 < 0 and x1 < 0) or (x0 >= self.width * 2 and x1 >= self.width * 2) or
+                (y0 < 0 and y1 < 0) or (y0 >= self.height * 2 and y1 >= self.height * 2)):
+            return
+
         dx = abs(x1 - x0)
         dy = abs(y1 - y0)
 
@@ -670,6 +672,17 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                 if colour == cfg and bg == cbg and chr(letter) in line_chars:
                     return line_chars.find(chr(letter))
             return 0
+
+        def _fast_fill(start_x, end_x, iy):
+            next_char = -1
+            for ix in range(start_x, end_x):
+                if ix % 2 == 0 or next_char == -1:
+                    next_char = _get_start_char(ix // 2, iy // 2)
+                next_char |= 2 ** abs(ix % 2) * 4 ** (iy % 2)
+                if ix % 2 == 1:
+                    self.print_at(line_chars[next_char], ix // 2, iy // 2, colour, bg=bg)
+            if end_x % 2 == 1:
+                self.print_at(line_chars[next_char], end_x // 2, iy // 2, colour, bg=bg)
 
         def _draw_on_x(ix, iy):
             err = dx
@@ -716,7 +729,11 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                                   px // 2, py // 2, colour, bg=bg)
                 else:
                     self.print_at(char, px // 2, py // 2, colour, bg=bg)
-        if dx > dy:
+
+        if dy == 0 and thin and char is None:
+            # Fast-path for polygon filling
+            _fast_fill(min(x0, x1), max(x0, x1), y0)
+        elif dx > dy:
             _draw_on_x(x0, y0)
             if not thin:
                 _draw_on_x(x0, y0 + 1)
@@ -737,7 +754,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         :param colour: The foreground colour to use for the polygon
         :param bg: The background colour to use for the polygon
         """
-        class _dotdict(dict):
+        class _DotDict(dict):
             """See https://stackoverflow.com/q/2352181/4994021"""
             __getattr__ = dict.get
             __setattr__ = dict.__setitem__
@@ -748,44 +765,47 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
             if a[1] == b[1]:
                 return
 
-            # Ignore any edges that do not intersect the visible raster lines.
+            # Ignore any edges that do not intersect the visible raster lines at all.
             if (a[1] < 0 and b[1] < 0) or (a[1] >= self.height and b[1] >= self.height):
                 return
 
             # Save off the edge, always starting at the lowest value of y.
-            edge = _dotdict()
+            new_edge = _DotDict()
             if a[1] < b[1]:
-                edge.min_y = a[1]
-                edge.max_y = b[1]
-                edge.x = a[0]
-                edge.dx = b[0] - a[0]
-                edge.dy = b[1] - a[1]
+                new_edge.min_y = a[1]
+                new_edge.max_y = b[1]
+                new_edge.x = a[0]
+                new_edge.dx = (b[0] - a[0]) / (b[1] - a[1]) / 2
             else:
-                edge.min_y = b[1]
-                edge.max_y = a[1]
-                edge.x = b[0]
-                edge.dx = a[0] - b[0]
-                edge.dy = a[1] - b[1]
-            edges.append(edge)
-
-        # Find bounding limits for the polygons.
-        min_y = self.height
-        max_y = -1
-        for polygon in polygons:
-            # Ignore lines and polygons.
-            if len(polygon) <= 2:
-                continue
-            _, y = zip(*polygon)
-            min_y = min(min(y), min_y)
-            max_y = max(max(y), max_y)
+                new_edge.min_y = b[1]
+                new_edge.max_y = a[1]
+                new_edge.x = b[0]
+                new_edge.dx = (a[0] - b[0]) / (a[1] - b[1]) / 2
+            edges.append(new_edge)
 
         # Create a table of all the edges in the polygon, sorted on smallest x.
+        logger.debug("Processing polygon: %s", polygons)
+        min_y = self.height
+        max_y = -1
         edges = []
         last = None
         for polygon in polygons:
             # Ignore lines and polygons.
             if len(polygon) <= 2:
                 continue
+
+            # Ignore any polygons completely off the screen
+            x, y = zip(*polygon)
+            p_min_x = min(x)
+            p_max_x = max(x)
+            p_min_y = min(y)
+            p_max_y = max(y)
+            if p_max_x < 0 or p_min_x >= self.width or p_max_y < 0 or p_min_y > self.height:
+                continue
+
+            # Build up the edge list, maintaining bounding coordinates on the Y axis.
+            min_y = min(p_min_y, min_y)
+            max_y = max(p_max_y, max_y)
             for i, point in enumerate(polygon):
                 if i != 0:
                     _add_edge(last, point)
@@ -797,8 +817,18 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         if len(edges) == 0:
             return
 
+        # Re-base all edges to visible Y coordinates of the screen.
+        for edge in edges:
+            if edge.min_y < 0:
+                edge.x -= int(edge.min_y * 2) * edge.dx
+                edge.min_y = 0
+        min_y = max(0, min_y)
+        max_y = min(max_y - min_y, self.height)
+
+        logger.debug("Resulting edges: %s", edges)
+
         # Render each line in the bounding rectangle.
-        for y in [(min_y + x / 2) for x in range(0, int(max_y - min_y) * 2)]:
+        for y in [min_y + (x / 2) for x in range(0, int(max_y) * 2)]:
             # Create a list of live edges (for drawing this raster line) and edges for next
             # iteration of the raster.
             live_edges = []
@@ -821,16 +851,15 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                             last_x = edge.x
                         else:
                             # Don't bother drawing lines entirely off the screen.
-                            if ((last_x < 0 and edge.x < 0) or
+                            if not ((last_x < 0 and edge.x < 0) or
                                     (last_x >= self.width and edge.x >= self.width)):
-                                continue
-
-                            self.move(last_x, y)
-                            self.draw(edge.x, y, colour=colour, bg=bg, thin=True)
+                                # Clip raster to screen width.
+                                self.move(max(0, last_x), y)
+                                self.draw(
+                                        min(edge.x, self.width), y, colour=colour, bg=bg, thin=True)
 
                 # Update the x location for this active edge.
-                if edge.dy != 0:
-                    edge.x += edge.dx / edge.dy / 2
+                edge.x += edge.dx
 
             # Rely on the fact that we have the same dicts in both live_edges and new_edges, so
             # we just need to resort new_edges for the next iteration.

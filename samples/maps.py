@@ -29,17 +29,23 @@ class Map(Effect):
     _START_SIZE = 64
     _ZOOM_IN_SIZE = _START_SIZE * 2
     _ZOOM_OUT_SIZE = _START_SIZE // 2
+    _ZOOM_STEP = exp(log(2) / 6)
 
     def __init__(self, screen):
         super(Map, self).__init__()
-        # Current state for the image to download
+        # Current state of the map
         self._screen = screen
         self._zoom = 0
         self._latitude = 51.4778
         self._longitude = -0.0015
         self._tiles = OrderedDict()
         self._size = self._START_SIZE
-        self._zoom_step = exp(log(2) / 4)
+
+        # Desired viewing location and animation flags
+        self._desired_zoom = self._zoom
+        self._desired_latitude = self._latitude
+        self._desired_longitude = self._longitude
+        self._next_update = 100000
 
         # Start the thread to read in the tiles
         self._updated = threading.Event()
@@ -77,45 +83,51 @@ class Map(Effect):
             y_offset = self._convert_latitude(self._latitude)
             y_centre = int(y_offset // size)
 
-            # Get the visible tiles around that location.
-            for x in range(-1, 2):
-                for y in range(-1, 2):
-                    # Don't get tile if it falls off the grid
-                    x_tile = x_centre + x
-                    y_tile = y_centre + y
-                    if x_tile < 0 or x_tile >= n or y_tile < 0 or y_tile >= n:
-                        continue
+            # Get the visible tiles around that location - getting most relevant first
+            for x, y, z in [(0, 0, 0), (1, 0, 0), (0, 1, 0), (-1, 0, 0), (0, -1, 0),
+                            (0, 0, -1), (0, 0, 1),
+                            (1, 1, 0), (1, -1, 0), (-1, -1, 0), (-1, 1, 0)]:
+                # Don't get tile if it falls off the grid
+                x_tile = x_centre + x
+                y_tile = y_centre + y
+                z_tile = zoom + z
+                if (x_tile < 0 or x_tile >= n or y_tile < 0 or y_tile >= n or
+                        z_tile < 0 or z_tile > 20):
+                    continue
 
-                    # Don't bother rendering if the tile is not visible
-                    top = y_tile * size - y_offset + self._screen.height // 2
-                    left = (x_tile * size - x_offset + self._screen.width // 4) * 2
-                    if (left > self._screen.width or left + self._size * 2 < 0 or
-                            top > self._screen.height or top + self._size < 0):
-                        continue
+                # Don't bother rendering if the tile is not visible
+                top = y_tile * size - y_offset + self._screen.height // 2
+                left = (x_tile * size - x_offset + self._screen.width // 4) * 2
+                if (left > self._screen.width or left + self._size * 2 < 0 or
+                        top > self._screen.height or top + self._size < 0):
+                    continue
 
-                    # Check for in memory or file cache before downloading.
-                    try:
-                        cache_file = "mapscache/{}.{}.{}.json".format(zoom, x_tile, y_tile)
-                        if cache_file not in self._tiles:
-                            if os.path.isfile(cache_file):
-                                with open(cache_file, 'rb') as f:
-                                    tile = json.load(f)
-                            else:
-                                url = self._URL.format(zoom, x_tile, y_tile, self._KEY)
-                                data = requests.get(url).content
-                                try:
-                                    tile = mapbox_vector_tile.decode(data)
-                                    with open(cache_file, 'wb') as f:
-                                        json.dump(literal_eval(repr(tile)), f)
-                                except DecodeError:
-                                    tile = None
-                            if tile:
-                                self._tiles[cache_file] = [x_tile, y_tile, zoom, tile]
-                                if len(self._tiles) > 50:
-                                    self._tiles.popitem(False)
-                                self._screen.force_update()
-                    except Exception as e:
-                        self._oops = "{} {} {} {} {}".format(e, x_tile, y_tile, x, y)
+                # Check for in memory or file cache before downloading.
+                try:
+                    cache_file = "mapscache/{}.{}.{}.json".format(z_tile, x_tile, y_tile)
+                    if cache_file not in self._tiles:
+                        if os.path.isfile(cache_file):
+                            with open(cache_file, 'rb') as f:
+                                tile = json.load(f)
+                        else:
+                            url = self._URL.format(z_tile, x_tile, y_tile, self._KEY)
+                            data = requests.get(url).content
+                            try:
+                                tile = mapbox_vector_tile.decode(data)
+                                with open(cache_file, 'wb') as f:
+                                    json.dump(literal_eval(repr(tile)), f)
+                            except DecodeError:
+                                tile = None
+                        if tile:
+                            self._tiles[cache_file] = [x_tile, y_tile, z_tile, tile]
+                            if len(self._tiles) > 80:
+                                self._tiles.popitem(False)
+                            self._screen.force_update()
+                except Exception as e:
+                    self._oops = "{} {} {} {} {}".format(e, x_tile, y_tile, x, y)
+
+            # Generally refresh screen after we've downloaded everything
+            self._screen.force_update()
 
     def _get_features(self):
         # Decide which layers to render based on current zoom level.
@@ -198,6 +210,48 @@ class Map(Effect):
         if self._oops:
             raise RuntimeError(self._oops)
 
+        # Glide towards desired location
+        self._next_update = 100000
+        if self._zoom != self._desired_zoom:
+            self._next_update = 1
+            if self._desired_zoom < self._zoom:
+                self._size /= self._ZOOM_STEP
+                if self._size <= self._ZOOM_OUT_SIZE:
+                    if self._zoom > 0:
+                        self._zoom -= 1
+                        self._size *= 2
+                        self._updated.set()
+                    else:
+                        self._size = self._ZOOM_OUT_SIZE
+                        self._next_update = 100000
+            else:
+                self._size *= self._ZOOM_STEP
+                if self._size >= self._ZOOM_IN_SIZE:
+                    if self._zoom < 20:
+                        self._zoom += 1
+                        self._size /= 2
+                        self._updated.set()
+                    else:
+                        self._size = self._ZOOM_IN_SIZE
+
+        if self._longitude != self._desired_longitude:
+            self._next_update = 1
+            self._updated.set()
+            if self._desired_longitude < self._longitude:
+                self._longitude = max(self._longitude - 360 / 2 ** self._zoom / self._size * 2,
+                                      self._desired_longitude)
+            else:
+                self._longitude = min(self._longitude + 360 / 2 ** self._zoom / self._size * 2,
+                                      self._desired_longitude)
+
+        if self._latitude != self._desired_latitude:
+            self._next_update = 1
+            self._updated.set()
+            if self._desired_latitude < self._latitude:
+                self._latitude = max(self._inc_lat(self._latitude, 2), self._desired_latitude)
+            else:
+                self._latitude = min(self._inc_lat(self._latitude, -2), self._desired_latitude)
+
         # Re-draw the tiles - if we have any suitable ones downloaded.
         count = 0
         x_offset = self._convert_longitude(self._longitude)
@@ -256,11 +310,11 @@ class Map(Effect):
         # We're ready to go - flush it all to screen.
         self._screen.refresh()
 
-    def _inc_lat(self, delta):
+    def _inc_lat(self, latitude, delta):
         # Shift the latitude by the required number of pixels (i.e. text lines).
-        y = self._convert_latitude(self._latitude)
+        y = self._convert_latitude(latitude)
         y += delta
-        self._latitude = 360 / pi * atan(
+        return 360 / pi * atan(
                 exp((180 - y * 360 / (2 ** self._zoom) / self._size) * pi / 180)) - 90
 
     def process_event(self, event):
@@ -269,29 +323,23 @@ class Map(Effect):
             if event.key_code in [ord('q'), ord('Q'), Screen.ctrl("c")]:
                 raise StopApplication("User quit")
             elif event.key_code == ord("+") and self._zoom <= 20:
-                self._size *= self._zoom_step
-                if self._size >= self._ZOOM_IN_SIZE:
-                    if self._zoom < 20 and self._KEY != "":
-                        self._zoom += 1
-                        self._size = self._START_SIZE
-                    else:
-                        self._size = self._ZOOM_IN_SIZE
+                if self._desired_zoom < 20 and self._KEY != "":
+                    self._desired_zoom += 1
             elif event.key_code == ord("-") and self._zoom >= 0:
-                self._size /= self._zoom_step
-                if self._size <= self._ZOOM_OUT_SIZE:
-                    if self._zoom > 0 and self._KEY != "":
-                        self._zoom -= 1
-                        self._size = self._START_SIZE
-                    else:
-                        self._size = self._ZOOM_OUT_SIZE
+                if self._desired_zoom > 0 and self._KEY != "":
+                    self._desired_zoom -= 1
+            elif event.key_code == ord("0"):
+                self._desired_zoom = 0
+            elif event.key_code == ord("9"):
+                self._desired_zoom = 20
             elif event.key_code == Screen.KEY_LEFT:
-                self._longitude -= 360 / 2 ** self._zoom / self._size * 10
+                self._desired_longitude -= 360 / 2 ** self._zoom / self._size * 10
             elif event.key_code == Screen.KEY_RIGHT:
-                self._longitude += 360 / 2 ** self._zoom / self._size * 10
+                self._desired_longitude += 360 / 2 ** self._zoom / self._size * 10
             elif event.key_code == Screen.KEY_UP:
-                self._inc_lat(-self._size / 10)
+                self._desired_latitude = self._inc_lat(self._desired_latitude, -self._size / 10)
             elif event.key_code == Screen.KEY_DOWN:
-                self._inc_lat(self._size / 10)
+                self._desired_latitude = self._inc_lat(self._desired_latitude, self._size / 10)
             else:
                 return
 
@@ -301,16 +349,16 @@ class Map(Effect):
 
     @property
     def frame_update_count(self):
-        # Don't bother refreshing unless triggered by user input.
-        return 100000
+        # Only redraw if required - as determined by the update logic.
+        return self._next_update
 
     @property
     def stop_frame(self):
-        # No specific end point for this Effect.
+        # No specific end point for this Effect.  Carry on running forever.
         return 0
 
     def reset(self):
-        # Nothing special to do.  Just need to satisfy the ABC.
+        # Nothing special to do.  Just need this to satisfy the ABC.
         pass
 
 
