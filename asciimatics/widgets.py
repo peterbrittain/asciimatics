@@ -1054,7 +1054,10 @@ class Layout(object):
                 if widget.name in self._frame.data:
                     widget.value = self._frame.data[widget.name]
                 elif widget.is_tab_stop:
-                    widget.value = None
+                    # Make sure every active widget is properly initialised, by calling the setter.
+                    # This will fix up any dodgy NoneType values, but preserve any values overridden
+                    # by other code.
+                    widget.value = widget.value
 
     def reset(self):
         """
