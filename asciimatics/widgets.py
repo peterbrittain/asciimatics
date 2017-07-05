@@ -19,6 +19,10 @@ from asciimatics.exceptions import Highlander, InvalidFields
 from asciimatics.screen import Screen, Canvas
 from wcwidth import wcswidth, wcwidth
 
+# Logging
+from logging import getLogger
+logger = getLogger(__name__)
+
 
 def _enforce_width(text, width):
     """
@@ -168,7 +172,7 @@ class Frame(Effect):
 
     def __init__(self, screen, height, width, data=None, on_load=None,
                  has_border=True, hover_focus=False, name=None, title=None,
-                 x=None, y=None, has_shadow=False, reduce_cpu=False):
+                 x=None, y=None, has_shadow=False, reduce_cpu=False, is_modal=False):
         """
         :param screen: The Screen that owns this Frame.
         :param width: The desired width of the Frame.
@@ -188,6 +192,8 @@ class Frame(Effect):
             a shadow when drawn.
         :param reduce_cpu: Whether to minimize CPU usage (for use on low spec
             systems).
+        :param is_modal: Whether this Frame is "modal" - i.e. will stop all other Effects
+            from receiving input events.
         """
         super(Frame, self).__init__()
         self._focus = 0
@@ -204,6 +210,7 @@ class Frame(Effect):
         self._title = " " + title[0:width - 4] + " " if title else ""
         self._has_shadow = has_shadow
         self._reduce_cpu = reduce_cpu
+        self._is_modal = is_modal
 
         # A unique name is needed for cloning.  Try our best to get one!
         self._name = title if name is None else name
@@ -617,13 +624,12 @@ class Frame(Effect):
             if event is not None and isinstance(event, KeyboardEvent):
                 return
             else:
-                # Don't allow mouse events to bubble down if this window owns
-                # the Screen - as already calculated when taking te focus.
-                return None if claimed_focus else event
+                # Don't allow events to bubble down if this window owns the Screen - as already
+                # calculated when taking te focus - or is modal.
+                return None if claimed_focus or self._is_modal else event
 
         # Give the current widget in focus first chance to process the event.
-        event = self._layouts[self._focus].process_event(event,
-                                                         self._hover_focus)
+        event = self._layouts[self._focus].process_event(event, self._hover_focus)
 
         # If the underlying widgets did not process the event, try processing
         # it now.
@@ -680,9 +686,9 @@ class Frame(Effect):
                         self._canvas.scroll_to(sb_pos)
                         return
 
-        # Don't allow mouse events to bubble down if this window owns
-        # the Screen - as already calculated when taking te focus.
-        return None if claimed_focus else event
+        # Don't allow events to bubble down if this window owns the Screen (as already
+        # calculated when taking te focus) or if the Frame is modal.
+        return None if claimed_focus or self._is_modal else event
 
 
 class Layout(object):
@@ -929,7 +935,10 @@ class Layout(object):
         """
         # Check whether this Layout is read-only - i.e. has no active focus.
         if self._live_col < 0 or self._live_widget < 0:
-            return event
+            # Might just be that we've unset the focus - so check we can't find a focus.
+            self._find_next_widget(1)
+            if self._live_col < 0 or self._live_widget < 0:
+                return event
 
         # Give the active widget the first refusal for this event.
         event = self._columns[
@@ -1001,6 +1010,7 @@ class Layout(object):
             elif isinstance(event, MouseEvent):
                 # Mouse event - rebase coordinates to Frame context.
                 new_event = self._frame.rebase_event(event)
+                logger.debug("Check layout: %d, %d", new_event.x, new_event.y)
                 if ((hover_focus and event.buttons >= 0) or
                         event.buttons > 0):
                     # Mouse click - look to move focus.
@@ -1195,6 +1205,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         :returns: True if the mouse is over the active parts of the widget.
         """
         # Disabled widgets should not react to the mouse.
+        logger.debug("Widget: %s (%d, %d) (%d, %d)", self, self._x, self._y, self._w, self._h)
         if self._is_disabled:
             return False
 
@@ -2386,7 +2397,7 @@ class PopUpDialog(Frame):
         # Construct the Frame
         self._data = {"message": self._message}
         super(PopUpDialog, self).__init__(
-            screen, height, width, self._data, has_shadow=has_shadow)
+            screen, height, width, self._data, has_shadow=has_shadow, is_modal=True)
 
         # Build up the message box
         layout = Layout([100], fill_frame=True)
@@ -2400,11 +2411,6 @@ class PopUpDialog(Frame):
             func = partial(self._destroy, i)
             layout2.add_widget(Button(button, func), i)
         self.fix()
-
-    def process_event(self, event):
-        # Only allow this effect to handle events.
-        super(PopUpDialog, self).process_event(event)
-        return None
 
     def _destroy(self, selected):
         self._scene.remove_effect(self)

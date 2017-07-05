@@ -5,8 +5,9 @@ LATEST
 ------
 - Added fill_polygon() to Screen and Canvas.
 - Added the Kaleidoscope and RotatedDuplicate renderers.
-- Created map demo - which renders vector map tiles from Mapbox.
+- Created map demo - which renders vector tiles and satellite images from Mapbox.
 - Fixed up signal handling to re-instate old handlers on Screen.close().
+- Added modal property to Frames.
 
 1.8.0
 -----

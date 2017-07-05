@@ -528,6 +528,15 @@ your terminal/console and the settings of your Frame.  At a minimum, clicking on
 always work.  If you specify `hover_focus=True` and your terminal supports reporting mouse move
 events, just hovering over the Widget with the mouse pointer will move the focus.
 
+Modal Frames
+~~~~~~~~~~~~
+When constructing a Frame, you can specify whether it is modal or not using the `is_modal`
+parameter.  Modal Frames will not allow any input to filter through to other Effects in the Scene,
+so when one is on top of all other Effects, this means that only it will see the user input.
+
+This is commonly used for, but not limited to, notifications to the user that must be acknowledged
+(as implemented by :py:obj:`.PopUpDialog`).
+
 Global key handling
 ~~~~~~~~~~~~~~~~~~~
 In addition to mouse control to switch focus, you can also set up a global event handler to
@@ -553,7 +562,7 @@ To set up this handler, you need to pass it into your screen on the `play()` Met
     Note that the global handler is only called if the focus does not process the event.  Some
     widgets - e.g. TextBox - take any printable text and so the only keys that always get to this
     handler are the control codes.  Others will sometimes get here depending on the type of Widget
-    in focus.
+    in focus and whether the Frame is modal or not..
 
 By default, the global handler will do nothing if you are playing any Scenes containing a Frame.
 Otherwise it contains the top-level logic for skipping to the next Scene (on space or enter), or
