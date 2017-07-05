@@ -1,6 +1,7 @@
 from __future__ import division
 from __future__ import print_function
-from math import pi, exp, atan, log, tan
+import traceback
+from math import pi, exp, atan, log, tan, sqrt
 import sys
 import os
 import json
@@ -8,39 +9,90 @@ import threading
 from ast import literal_eval
 from collections import OrderedDict
 from asciimatics.event import KeyboardEvent
-from asciimatics.widgets import Effect
+from asciimatics.renderers import ColourImageFile
+from asciimatics.widgets import Effect, Button, Text, Layout, Frame, Divider, PopUpDialog
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
-from asciimatics.exceptions import ResizeScreenError, StopApplication
-
-# Handle external dependencies for this sample
+from asciimatics.exceptions import ResizeScreenError, StopApplication, InvalidFields
 try:
     import mapbox_vector_tile
     import requests
     from google.protobuf.message import DecodeError
 except ImportError:
     print("Run `pip install mapbox-vector-tile protobuf requests` to fix your dependencies.")
+    print("Also https://github.com/Toblerity/Shapely#installing-shapely-16b2 for Shapely install.")
     sys.exit(0)
+
+# Global constants for the applications
+# Replace `_KEY` with the free one that you get from signing up with www.mapbox.com
+_KEY = ""
+_VECTOR_URL = \
+    "http://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7/{}/{}/{}.mvt?access_token={}"
+_IMAGE_URL = \
+    "https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{}/{}/{}?access_token={}"
+_START_SIZE = 64
+_ZOOM_IN_SIZE = _START_SIZE * 2
+_ZOOM_OUT_SIZE = _START_SIZE // 2
+_ZOOM_ANIMATION_STEPS = 6
+_ZOOM_STEP = exp(log(2) / _ZOOM_ANIMATION_STEPS)
+_CACHE_SIZE = 180
+_HELP = """
+You can moved around using the cursor keys.  To jump to any location in the world, press Enter and \
+then fill in the longitude and latitude of the location and press 'OK'.
+
+To zoom in and out use '+'/'-'.  To zoom all the way in/out, press '9'/'0'.
+
+To swap between satellite and vector views, press 'T'.  To quit, press 'Q'.
+"""
+
+
+class EnterLocation(Frame):
+    """Form to enter a new desired location to display on the map."""
+    def __init__(self, screen, longitude, latitude, on_ok):
+        super(EnterLocation, self).__init__(
+                screen, 7, 40, data={"long": str(longitude), "lat": str(latitude)}, name="loc",
+                title="Enter New Location", is_modal=True)
+
+        # Remember the callback to use when OK is clicked
+        self._on_ok = on_ok
+
+        # Create the form
+        layout = Layout([1, 18, 1])
+        self.add_layout(layout)
+        layout.add_widget(Divider(draw_line=False), 1)
+        layout.add_widget(Text(label="Longitude:", name="long", validator="^[-]?\d+?\.\d+?$"), 1)
+        layout.add_widget(Text(label="Latitude:", name="lat", validator="^[-]?\d+?\.\d+?$"), 1)
+        layout.add_widget(Divider(draw_line=False), 1)
+        layout2 = Layout([1, 1, 1])
+        self.add_layout(layout2)
+        layout2.add_widget(Button("OK", self._ok), 1)
+        layout2.add_widget(Button("Cancel", self._cancel), 2)
+        self.fix()
+
+    def _ok(self):
+        try:
+            self.save(validate=True)
+        except InvalidFields:
+            return
+        self._on_ok(self)
+        self._scene.remove_effect(self)
+
+    def _cancel(self):
+        self._scene.remove_effect(self)
 
 
 class Map(Effect):
-    # Replace this value with the free one that you get from signing up with www.mapbox.com
-    _KEY = ""
-    _URL = "http://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v7/{}/{}/{}.mvt?access_token={}"
-    _START_SIZE = 64
-    _ZOOM_IN_SIZE = _START_SIZE * 2
-    _ZOOM_OUT_SIZE = _START_SIZE // 2
-    _ZOOM_STEP = exp(log(2) / 6)
-
+    """Effect to display a satellite image or vector map of the world."""
     def __init__(self, screen):
         super(Map, self).__init__()
         # Current state of the map
         self._screen = screen
-        self._zoom = 19
+        self._zoom = 0
         self._latitude = 51.4778
         self._longitude = -0.0015
         self._tiles = OrderedDict()
-        self._size = self._START_SIZE
+        self._size = _START_SIZE
+        self._satellite = False
 
         # Desired viewing location and animation flags
         self._desired_zoom = self._zoom
@@ -49,6 +101,7 @@ class Map(Effect):
         self._next_update = 100000
 
         # Start the thread to read in the tiles
+        self._running = True
         self._updated = threading.Event()
         self._updated.set()
         self._oops = None
@@ -57,58 +110,70 @@ class Map(Effect):
         self._thread.start()
 
     def _scale_coords(self, x, y, extent, xo, yo):
-        # Convert from tile coordinates to "pixels" - i.e. text characters.
+        """Convert from tile coordinates to "pixels" - i.e. text characters."""
         return xo + (x * self._size * 2 / extent), yo + ((extent - y) * self._size / extent)
 
     def _convert_longitude(self, longitude):
-        # Convert from longitude to the x position in overall map.
+        """Convert from longitude to the x position in overall map."""
         return int((180 + longitude) * (2 ** self._zoom) * self._size / 360)
 
     def _convert_latitude(self, latitude):
-        # Convert from latitude to the y position in overall map.
+        """Convert from latitude to the y position in overall map."""
         return int((180 - (180 / pi * log(tan(
             pi / 4 + latitude * pi / 360)))) * (2 ** self._zoom) * self._size / 360)
 
     def _inc_lat(self, latitude, delta):
-        # Shift the latitude by the required number of pixels (i.e. text lines).
+        """Shift the latitude by the required number of pixels (i.e. text lines)."""
         y = self._convert_latitude(latitude)
         y += delta
         return 360 / pi * atan(
             exp((180 - y * 360 / (2 ** self._zoom) / self._size) * pi / 180)) - 90
 
-    def _get_tile(self, x_tile, y_tile, z_tile):
-        # Load up a single tile - check for in memory or file cache before downloading.
-        try:
-            cache_file = "mapscache/{}.{}.{}.json".format(z_tile, x_tile, y_tile)
-            if cache_file not in self._tiles:
-                if os.path.isfile(cache_file):
-                    with open(cache_file, 'rb') as f:
-                        tile = json.load(f)
-                else:
-                    url = self._URL.format(z_tile, x_tile, y_tile, self._KEY)
-                    data = requests.get(url).content
-                    try:
-                        tile = mapbox_vector_tile.decode(data)
-                        with open(cache_file, 'wb') as f:
-                            json.dump(literal_eval(repr(tile)), f)
-                    except DecodeError:
-                        tile = None
-                if tile:
-                    self._tiles[cache_file] = [x_tile, y_tile, z_tile, tile]
-                    if len(self._tiles) > 80:
-                        self._tiles.popitem(False)
-                    self._screen.force_update()
-        # pylint: disable=broad-except
-        except Exception as e:
-            self._oops = "{} {} {}".format(e, x_tile, y_tile)
+    def _get_satellite_tile(self, x_tile, y_tile, z_tile):
+        """Load up a single satellite image tile."""
+        cache_file = "mapscache/{}.{}.{}.jpg".format(z_tile, x_tile, y_tile)
+        if cache_file not in self._tiles:
+            if not os.path.isfile(cache_file):
+                url = _IMAGE_URL.format(z_tile, x_tile, y_tile, _KEY)
+                data = requests.get(url).content
+                with open(cache_file, 'wb') as f:
+                    f.write(data)
+            self._tiles[cache_file] = [x_tile, y_tile, z_tile, ColourImageFile(
+                self._screen, cache_file, height=_START_SIZE, dither=True, uni=True), True]
+            if len(self._tiles) > _CACHE_SIZE:
+                self._tiles.popitem(False)
+            self._screen.force_update()
+
+    def _get_vector_tile(self, x_tile, y_tile, z_tile):
+        """Load up a single vector tile."""
+        cache_file = "mapscache/{}.{}.{}.json".format(z_tile, x_tile, y_tile)
+        if cache_file not in self._tiles:
+            if os.path.isfile(cache_file):
+                with open(cache_file, 'rb') as f:
+                    tile = json.load(f)
+            else:
+                url = _VECTOR_URL.format(z_tile, x_tile, y_tile, _KEY)
+                data = requests.get(url).content
+                try:
+                    tile = mapbox_vector_tile.decode(data)
+                    with open(cache_file, 'wb') as f:
+                        json.dump(literal_eval(repr(tile)), f)
+                except DecodeError:
+                    tile = None
+            if tile:
+                self._tiles[cache_file] = [x_tile, y_tile, z_tile, tile, False]
+                if len(self._tiles) > _CACHE_SIZE:
+                    self._tiles.popitem(False)
+                self._screen.force_update()
 
     def _get_tiles(self):
-        # Background thread to download tiles as required.
-        while True:
+        """Background thread to download map tiles as required."""
+        while self._running:
             self._updated.wait()
             self._updated.clear()
 
             # Save off current view and find the nearest tile.
+            satellite = self._satellite
             zoom = self._zoom
             size = self._size
             n = 2 ** zoom
@@ -126,22 +191,32 @@ class Map(Effect):
                 if (x_tile < 0 or x_tile >= n or y_tile < 0 or y_tile >= n or
                         z_tile < 0 or z_tile > 20):
                     continue
+                try:
 
-                # Don't bother rendering if the tile is not visible
-                top = y_tile * size - y_offset + self._screen.height // 2
-                left = (x_tile * size - x_offset + self._screen.width // 4) * 2
-                if (left > self._screen.width or left + self._size * 2 < 0 or
-                        top > self._screen.height or top + self._size < 0):
-                    continue
+                    # Don't bother rendering if the tile is not visible
+                    top = y_tile * size - y_offset + self._screen.height // 2
+                    left = (x_tile * size - x_offset + self._screen.width // 4) * 2
+                    if z == 0 and (left > self._screen.width or left + self._size * 2 < 0 or
+                                   top > self._screen.height or top + self._size < 0):
+                        continue
 
-                self._get_tile(x_tile, y_tile, z_tile)
+                    if satellite:
+                        self._get_satellite_tile(x_tile, y_tile, z_tile)
+                    else:
+                        self._get_vector_tile(x_tile, y_tile, z_tile)
+                # pylint: disable=broad-except
+                except Exception:
+                    self._oops = "{} - tile loc: {} {} {}".format(
+                            traceback.format_exc(), x_tile, y_tile, z_tile)
 
-            # Generally refresh screen after we've downloaded everything
-            self._screen.force_update()
+                # Generally refresh screen after we've downloaded everything
+                self._screen.force_update()
 
     def _get_features(self):
-        # Decide which layers to render based on current zoom level.
-        if self._zoom <= 2:
+        """Decide which layers to render based on current zoom level and view type."""
+        if self._satellite:
+            return [("", [], [], 0)]
+        elif self._zoom <= 2:
             return [
                 ("water", [], [], 153),
                 ("marine_label", [], [1], 12),
@@ -173,20 +248,33 @@ class Map(Effect):
                 ("waterway", ["river", "canal"], [], 153),
                 ("building", [], [], 252),
                 ("road",
-                 ["motorway", "motorway_link", "trunk", "primary"] if self._zoom <= 14 else
+                 ["motorway", "motorway_link", "trunk", "primary", "secondary"]
+                 if self._zoom <= 14 else
                  ["motorway", "motorway_link", "trunk", "primary", "secondary", "tertiary",
                   "link", "street", "tunnel"],
                  [], 15),
                 ("poi_label", [], [], 8),
             ]
 
-    def _draw_polygons(self, bg, colour, extent, polygons, xo, yo):
+    def _draw_polygons(self, feature, bg, colour, extent, polygons, xo, yo):
+        """Draw a set of polygons from a vector tile."""
         coords = []
         for polygon in polygons:
             coords.append([self._scale_coords(x, y, extent, xo, yo) for x, y in polygon])
-        self._screen.fill_polygon(coords, colour=colour, bg=bg)
+        # Polygons are expensive to draw and the buildings layer is huge - so we convert to
+        # lines in order to process updates fast enough to animate.
+        if "type" in feature["properties"] and "building" in feature["properties"]["type"]:
+            for line in coords:
+                for i, (x, y) in enumerate(line):
+                    if i == 0:
+                        self._screen.move(x, y)
+                    else:
+                        self._screen.draw(x, y, colour=colour, bg=bg, thin=True)
+        else:
+            self._screen.fill_polygon(coords, colour=colour, bg=bg)
 
     def _draw_lines(self, bg, colour, extent, line, xo, yo):
+        """Draw a set of lines from a vector tile."""
         coords = [self._scale_coords(x, y, extent, xo, yo) for x, y in line]
         for i, (x, y) in enumerate(coords):
             if i == 0:
@@ -195,13 +283,13 @@ class Map(Effect):
                 self._screen.draw(x, y, colour=colour, bg=bg, thin=True)
 
     def _draw_feature(self, feature, extent, colour, bg, xo, yo):
-        # Draw a single feature from a layer in a map tile.
+        """Draw a single feature from a layer in a vector tile."""
         geometry = feature["geometry"]
         if geometry["type"] == "Polygon":
-            self._draw_polygons(bg, colour, extent, geometry["coordinates"], xo, yo)
+            self._draw_polygons(feature, bg, colour, extent, geometry["coordinates"], xo, yo)
         elif feature["geometry"]["type"] == "MultiPolygon":
             for multi_polygon in geometry["coordinates"]:
-                self._draw_polygons(bg, colour, extent, multi_polygon, xo, yo)
+                self._draw_polygons(feature, bg, colour, extent, multi_polygon, xo, yo)
         elif feature["geometry"]["type"] == "LineString":
             self._draw_lines(bg, colour, extent, geometry["coordinates"], xo, yo)
         elif feature["geometry"]["type"] == "MultiLineString":
@@ -213,17 +301,16 @@ class Map(Effect):
             text = u" {} ".format(feature["properties"]["name_en"])
             self._screen.print_at(text, int(x - len(text) / 2), int(y), colour=colour, bg=bg)
 
-    def _draw_tile_layer(self, tile, layer_name, c_filters, colour, t_filters, x, y, z, bg):
-        # Draw the visible geometry in the specified map tile.
-
+    def _draw_tile_layer(self, tile, layer_name, c_filters, colour, t_filters, x, y, bg):
+        """Draw the visible geometry in the specified map tile."""
         # Don't bother rendering if the tile is not visible
         left = (x + self._screen.width // 4) * 2
         top = y + self._screen.height // 2
         if (left > self._screen.width or left + self._size * 2 < 0 or
-                top > self._screen.height or top + self._size < 0 or
-                z != self._zoom):
+                top > self._screen.height or top + self._size < 0):
             return 0
 
+        # Not all layers are available in every tile.
         try:
             _layer = tile[layer_name]
             _extent = float(_layer["extent"])
@@ -244,47 +331,68 @@ class Map(Effect):
                 pass
         return 1
 
+    def _draw_satellite_tile(self, tile, x, y):
+        """Draw a satellite image tile to screen."""
+        image, colours = tile.rendered_text
+        for (i, line) in enumerate(image):
+            self._screen.paint(line, x, y + i, colour_map=colours[i])
+        return 1
+
     def _draw_tiles(self, x_offset, y_offset, bg):
-        # Render all visible tiles a layer at a time.
+        """Render all visible tiles a layer at a time."""
         count = 0
         for layer_name, c_filters, t_filters, colour in self._get_features():
-            for x, y, z, tile in self._tiles.values():
-                # Convert tile location into pixels
+            for x, y, z, tile, satellite in sorted(self._tiles.values(), key=lambda k: k[0]):
+                # Don't draw the wrong type or zoom of tile.
+                if satellite != self._satellite or z != self._zoom:
+                    continue
+
+                # Convert tile location into pixels and draw the tile.
                 x *= self._size
                 y *= self._size
-
-                # Draw the features from this tile
-                count += self._draw_tile_layer(tile, layer_name, c_filters, colour, t_filters,
-                                               x - x_offset, y - y_offset, z, bg)
+                if satellite:
+                    count += self._draw_satellite_tile(
+                            tile,
+                            int((x-x_offset + self._screen.width // 4) * 2),
+                            int(y-y_offset + self._screen.height // 2))
+                else:
+                    count += self._draw_tile_layer(tile, layer_name, c_filters, colour, t_filters,
+                                                   x - x_offset, y - y_offset, bg)
         return count
 
-    def _move_to_desired_location(self):
-        # Increment locations so that we glide towards the new desired location.
-        self._next_update = 100000
-        if self._zoom != self._desired_zoom:
-            self._next_update = 1
-            if self._desired_zoom < self._zoom:
-                self._size /= self._ZOOM_STEP
-                if self._size <= self._ZOOM_OUT_SIZE:
-                    if self._zoom > 0:
-                        self._zoom -= 1
-                        self._size *= 2
-                        self._updated.set()
-                    else:
-                        self._size = self._ZOOM_OUT_SIZE
-                        self._next_update = 100000
+    def _zoom_map(self, zoom_out=True):
+        """Animate the zoom in/out as appropriate for the displayed map tile."""
+        size_step = 1 / _ZOOM_STEP if zoom_out else _ZOOM_STEP
+        self._next_update = 1
+        if self._satellite:
+            size_step **= _ZOOM_ANIMATION_STEPS
+        self._size *= size_step
+        if self._size <= _ZOOM_OUT_SIZE:
+            if self._zoom > 0:
+                self._zoom -= 1
+                self._size = _START_SIZE
             else:
-                self._size *= self._ZOOM_STEP
-                if self._size >= self._ZOOM_IN_SIZE:
-                    if self._zoom < 20:
-                        self._zoom += 1
-                        self._size /= 2
-                        self._updated.set()
-                    else:
-                        self._size = self._ZOOM_IN_SIZE
+                self._size = _ZOOM_OUT_SIZE
+        elif self._size >= _ZOOM_IN_SIZE:
+            if self._zoom < 20:
+                self._zoom += 1
+                self._size = _START_SIZE
+            else:
+                self._size = _ZOOM_IN_SIZE
+
+    def _move_to_desired_location(self):
+        """Animate movement to desired location on map."""
+        self._next_update = 100000
+        x_start = self._convert_longitude(self._longitude)
+        y_start = self._convert_latitude(self._latitude)
+        x_end = self._convert_longitude(self._desired_longitude)
+        y_end = self._convert_latitude(self._desired_latitude)
+        if sqrt((x_end - x_start) ** 2 + (y_end - y_start) ** 2) > _START_SIZE // 4:
+            self._zoom_map(True)
+        elif self._zoom != self._desired_zoom:
+            self._zoom_map(self._desired_zoom < self._zoom)
         if self._longitude != self._desired_longitude:
             self._next_update = 1
-            self._updated.set()
             if self._desired_longitude < self._longitude:
                 self._longitude = max(self._longitude - 360 / 2 ** self._zoom / self._size * 2,
                                       self._desired_longitude)
@@ -293,13 +401,15 @@ class Map(Effect):
                                       self._desired_longitude)
         if self._latitude != self._desired_latitude:
             self._next_update = 1
-            self._updated.set()
             if self._desired_latitude < self._latitude:
                 self._latitude = max(self._inc_lat(self._latitude, 2), self._desired_latitude)
             else:
                 self._latitude = min(self._inc_lat(self._latitude, -2), self._desired_latitude)
+        if self._next_update == 1:
+            self._updated.set()
 
     def _update(self, frame_no):
+        """Draw the latest set of tiles to the Screen."""
         # Check for any fatal errors from the background thread and quit if we hit anything.
         if self._oops:
             raise RuntimeError(self._oops)
@@ -324,23 +434,30 @@ class Map(Effect):
         if count == 0:
             self._screen.centre(" Loading - please wait... ", self._screen.height // 2, 1)
 
-        self._screen.centre("Use cursor keys and '+'/'-' to navigate around.", 0, 1)
-        if self._KEY == "":
+        self._screen.centre("Press '?' for help.", 0, 1)
+        if _KEY == "":
             footer = "Using local cached data - go to https://www.mapbox.com/ and get a free key."
         else:
             footer = "Zoom: {} Location: {}, {}".format(self._zoom, self._longitude, self._latitude)
         self._screen.centre(footer, self._screen.height - 1, 1)
 
-        # We're ready to go - flush it all to screen.
-        self._screen.refresh()
-
         return count
 
     def process_event(self, event):
-        # Key handling for the demo.
+        """User input for the main map view."""
         if isinstance(event, KeyboardEvent):
-            if event.key_code in [ord('q'), ord('Q'), Screen.ctrl("c")]:
+            if event.key_code in [Screen.ctrl("m"), Screen.ctrl("j")]:
+                self._scene.add_effect(
+                    EnterLocation(
+                        self._screen, self._longitude, self._latitude, self._on_new_location))
+            elif event.key_code in [ord('q'), ord('Q'), Screen.ctrl("c")]:
                 raise StopApplication("User quit")
+            elif event.key_code in [ord('t'), ord('T')]:
+                self._satellite = not self._satellite
+                if self._satellite:
+                    self._size = _START_SIZE
+            elif event.key_code == ord("?"):
+                self._scene.add_effect(PopUpDialog(self._screen, _HELP, ["OK"]))
             elif event.key_code == ord("+") and self._zoom <= 20:
                 if self._desired_zoom < 20:
                     self._desired_zoom += 1
@@ -366,6 +483,17 @@ class Map(Effect):
             self._updated.set()
             self._screen.force_update()
 
+    def _on_new_location(self, form):
+        """Set a new desired location entered in the pop-up form."""
+        self._desired_longitude = float(form.data["long"])
+        self._desired_latitude = float(form.data["lat"])
+        self._desired_zoom = 13
+        self._screen.force_update()
+
+    def clone(self, new_screen, new_scene):
+        # On resize, there will be a new Map - kill the thread in this one.
+        self._running = False
+
     @property
     def frame_update_count(self):
         # Only redraw if required - as determined by the update logic.
@@ -381,14 +509,15 @@ class Map(Effect):
         pass
 
 
-def demo(screen):
-    screen.play([Scene([Map(screen)], -1)], stop_on_resize=True)
+def demo(screen, scene):
+    screen.play([Scene([Map(screen)], -1)], stop_on_resize=True, start_scene=scene)
 
 
 if __name__ == "__main__":
+    last_scene = None
     while True:
         try:
-            Screen.wrapper(demo)
+            Screen.wrapper(demo, catch_interrupt=False, arguments=[last_scene])
             sys.exit(0)
-        except ResizeScreenError:
-            pass
+        except ResizeScreenError as e:
+            last_scene = e.scene
