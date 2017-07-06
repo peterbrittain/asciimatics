@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import division
 from __future__ import print_function
 import traceback
@@ -438,7 +439,8 @@ class Map(Effect):
         if _KEY == "":
             footer = "Using local cached data - go to https://www.mapbox.com/ and get a free key."
         else:
-            footer = "Zoom: {} Location: {}, {}".format(self._zoom, self._longitude, self._latitude)
+            footer = u"Zoom: {} Location: {:.6}, {:.6} Maps: © Mapbox, © OpenStreetMap".format(
+                    self._zoom, self._longitude, self._latitude)
         self._screen.centre(footer, self._screen.height - 1, 1)
 
         return count
