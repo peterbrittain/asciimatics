@@ -2072,13 +2072,14 @@ class ListBox(_BaseListBox):
     the user can select one option.
     """
 
-    def __init__(self, height, options, label=None, name=None, on_change=None):
+    def __init__(self, height, options, label=None, name=None, on_change=None, on_select=None):
         """
         :param height: The required number of input lines for this ListBox.
         :param options: The options for each row in the widget.
         :param label: An optional label for the widget.
         :param name: The name for the ListBox.
         :param on_change: Optional function to call when selection changes.
+        :param on_select: Optional function to call when the user actually selects an entry from
 
         The `options` are a list of tuples, where the first value is the string
         to be displayed to the user and the second is an interval value to
@@ -2086,7 +2087,7 @@ class ListBox(_BaseListBox):
 
             options=[("First option", 1), ("Second option", 2)]
         """
-        super(ListBox, self).__init__(height, options, label=label, name=name, on_change=on_change)
+        super(ListBox, self).__init__(height, options, label=label, name=name, on_change=on_change, on_select=on_select)
 
     def update(self, frame_no):
         self._draw_label()
@@ -2139,6 +2140,7 @@ class MultiColumnListBox(_BaseListBox):
         :param label: An optional label for the widget.
         :param name: The name for the ListBox.
         :param on_change: Optional function to call when selection changes.
+        :param on_select: Optional function to call when the user actually selects an entry from
 
         The `columns` parameter is a list of integers or strings.  If it is an
         integer, this is the absolute width of the column in characters.  If it
