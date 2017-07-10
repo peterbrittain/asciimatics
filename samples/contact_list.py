@@ -45,7 +45,7 @@ class ContactModel(object):
 
     def get_current_contact(self):
         if self.current_id is None:
-            return {}
+            return {"name": "", "address": "", "phone": "", "email": "", "notes": ""}
         else:
             return self.get_contact(self.current_id)
 
@@ -101,9 +101,9 @@ class ListView(Frame):
         self._edit_button.disabled = self._list_view.value is None
         self._delete_button.disabled = self._list_view.value is None
 
-    def _reload_list(self):
+    def _reload_list(self, new_value=None):
         self._list_view.options = self._model.get_summary()
-        self._model.current_id = None
+        self._list_view.value = new_value
 
     def _add(self):
         self._model.current_id = None
