@@ -151,13 +151,13 @@ class Map(Effect):
         if cache_file not in self._tiles:
             if os.path.isfile(cache_file):
                 with open(cache_file, 'rb') as f:
-                    tile = json.load(f)
+                    tile = json.loads(f.read().decode('utf-8'))
             else:
                 url = _VECTOR_URL.format(z_tile, x_tile, y_tile, _KEY)
                 data = requests.get(url).content
                 try:
                     tile = mapbox_vector_tile.decode(data)
-                    with open(cache_file, 'wb') as f:
+                    with open(cache_file, mode='w') as f:
                         json.dump(literal_eval(repr(tile)), f)
                 except DecodeError:
                     tile = None
