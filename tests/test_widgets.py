@@ -105,13 +105,15 @@ class TestFrame2(Frame):
         super(TestFrame2, self).__init__(screen,
                                          screen.height,
                                          screen.width,
+                                         data={"selected": "None"},
                                          title="Test Frame 2")
         # Create the form for displaying the list of contacts.
         self._list_view = ListBox(
             Widget.FILL_FRAME,
             init_values,
             name="contacts",
-            on_change=self._on_pick)
+            on_change=self._on_pick,
+            on_select=self._on_select)
         self._edit_button = Button("Edit", self._edit)
         self._delete_button = Button("Delete", self._delete)
         layout = Layout([100], fill_frame=True)
@@ -124,8 +126,17 @@ class TestFrame2(Frame):
         layout2.add_widget(self._edit_button, 1)
         layout2.add_widget(self._delete_button, 2)
         layout2.add_widget(Button("Quit", self._quit), 3)
+        layout3 = Layout([100])
+        self.add_layout(layout3)
+        self._info_text = Text(label="Selected:", name="selected")
+        self._info_text.disabled = True
+        layout3.add_widget(self._info_text)
         self.fix()
         self._on_pick()
+
+    def _on_select(self):
+        self._info_text.value = str(self._list_view.value)
+        self.save()
 
     def _on_pick(self):
         self._edit_button.disabled = self._list_view.value is None
@@ -703,15 +714,15 @@ class TestWidgets(unittest.TestCase):
 
         # Check we have a default value for our list.
         form.save()
-        self.assertEqual(form.data, {"contacts": 1})
+        self.assertEqual(form.data, {"selected": "None", "contacts": 1})
 
         # Check that UP/DOWN change selection.
         self.process_keys(form, [Screen.KEY_DOWN])
         form.save()
-        self.assertEqual(form.data, {"contacts": 2})
+        self.assertEqual(form.data, {"selected": "None", "contacts": 2})
         self.process_keys(form, [Screen.KEY_UP])
         form.save()
-        self.assertEqual(form.data, {"contacts": 1})
+        self.assertEqual(form.data, {"selected": "None", "contacts": 1})
 
         # Check that the listbox is rendered correctly.
         form.update(0)
@@ -723,18 +734,56 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
-            "|                                      |\n" +
             "|--------------------------------------|\n" +
             "| < Add > < Edit > < Delete < Quit >   |\n" +
+            "|Selected: None                        |\n" +
             "+--------------------------------------+\n")
 
         # Check that mouse input changes selection.
         self.process_mouse(form, [(2, 2, MouseEvent.LEFT_CLICK)])
         form.save()
-        self.assertEqual(form.data, {"contacts": 2})
+        self.assertEqual(form.data, {"selected": "None", "contacts": 2})
         self.process_mouse(form, [(2, 1, MouseEvent.LEFT_CLICK)])
         form.save()
-        self.assertEqual(form.data, {"contacts": 1})
+        self.assertEqual(form.data, {"selected": "None", "contacts": 1})
+
+        # Check that enter key handles correctly.
+        self.process_keys(form, [Screen.ctrl("m")])
+        form.save()
+        self.assertEqual(form.data, {"selected": "1", "contacts": 1})
+
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+------------ Test Frame 2 ------------+\n" +
+            "|One                                   |\n" +
+            "|Two                                   O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|--------------------------------------|\n" +
+            "| < Add > < Edit > < Delete < Quit >   |\n" +
+            "|Selected: 1                           |\n" +
+            "+--------------------------------------+\n")
+
+        # Check that mouse double click handles correctly.
+        self.process_mouse(form, [(2, 2, MouseEvent.DOUBLE_CLICK)])
+        form.save()
+        self.assertEqual(form.data, {"selected": "2", "contacts": 2})
+
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+------------ Test Frame 2 ------------+\n" +
+            "|One                                   |\n" +
+            "|Two                                   O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|--------------------------------------|\n" +
+            "| < Add > < Edit > < Delete < Quit >   |\n" +
+            "|Selected: 2                           |\n" +
+            "+--------------------------------------+\n")
 
         # Check that the current focus ignores unknown events.
         event = object()
