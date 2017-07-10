@@ -5,9 +5,10 @@ LATEST
 ------
 - Added fill_polygon() to Screen and Canvas.
 - Added the Kaleidoscope and RotatedDuplicate renderers.
-- Created map demo - which renders vector tiles and satellite images from Mapbox.
-- Fixed up signal handling to re-instate old handlers on Screen.close().
+- Created Maps demo - which renders vector tiles and satellite images from Mapbox.
 - Added modal property to Frames.
+- Fixed up signal handling to re-instate old handlers on Screen.close().
+- Fixed missing on_select handler for ListBox.
 
 1.8.0
 -----
