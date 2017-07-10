@@ -130,7 +130,7 @@ basic classes:
 
             def get_current_contact(self):
                 if self.current_id is None:
-                    return {}
+                    return {"name": "", "address": "", "phone": "", "email": "", "notes": ""}
                 else:
                     return self.get_contact(self.current_id)
 
