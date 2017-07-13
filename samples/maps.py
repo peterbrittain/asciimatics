@@ -21,7 +21,7 @@ try:
     from google.protobuf.message import DecodeError
 except ImportError:
     print("Run `pip install mapbox-vector-tile protobuf requests` to fix your dependencies.")
-    print("Also https://github.com/Toblerity/Shapely#installing-shapely-16b2 for Shapely install.")
+    print("See https://github.com/Toblerity/Shapely#installing-shapely-16b2 for Shapely install.")
     sys.exit(0)
 
 # Global constants for the applications
@@ -53,11 +53,7 @@ class EnterLocation(Frame):
         super(EnterLocation, self).__init__(
                 screen, 7, 40, data={"long": str(longitude), "lat": str(latitude)}, name="loc",
                 title="Enter New Location", is_modal=True)
-
-        # Remember the callback to use when OK is clicked
         self._on_ok = on_ok
-
-        # Create the form
         layout = Layout([1, 18, 1])
         self.add_layout(layout)
         layout.add_widget(Divider(draw_line=False), 1)
@@ -84,6 +80,35 @@ class EnterLocation(Frame):
 
 class Map(Effect):
     """Effect to display a satellite image or vector map of the world."""
+
+    # Colour palettes
+    _256_PALETTE = {
+        "landuse": 193,
+        "water": 153,
+        "waterway": 153,
+        "marine_label": 12,
+        "admin": 7,
+        "country_label": 9,
+        "state_label": 1,
+        "place_label": 0,
+        "building": 252,
+        "road": 15,
+        "poi_label": 8
+    }
+    _16_PALETTE = {
+        "landuse": Screen.COLOUR_GREEN,
+        "water": Screen.COLOUR_BLUE,
+        "waterway": Screen.COLOUR_BLUE,
+        "marine_label": Screen.COLOUR_BLUE,
+        "admin": Screen.COLOUR_WHITE,
+        "country_label": Screen.COLOUR_RED,
+        "state_label": Screen.COLOUR_RED,
+        "place_label": Screen.COLOUR_YELLOW,
+        "building": Screen.COLOUR_WHITE,
+        "road": Screen.COLOUR_WHITE,
+        "poi_label": Screen.COLOUR_RED
+    }
+
     def __init__(self, screen):
         super(Map, self).__init__()
         # Current state of the map
@@ -101,7 +126,7 @@ class Map(Effect):
         self._desired_longitude = self._longitude
         self._next_update = 100000
 
-        # Start the thread to read in the tiles
+        # State for the background thread which reads in the tiles
         self._running = True
         self._updated = threading.Event()
         self._updated.set()
@@ -139,8 +164,11 @@ class Map(Effect):
                 data = requests.get(url).content
                 with open(cache_file, 'wb') as f:
                     f.write(data)
-            self._tiles[cache_file] = [x_tile, y_tile, z_tile, ColourImageFile(
-                self._screen, cache_file, height=_START_SIZE, dither=True, uni=True), True]
+            self._tiles[cache_file] = [
+                x_tile, y_tile, z_tile,
+                ColourImageFile(self._screen, cache_file, height=_START_SIZE, dither=True,
+                                uni=self._screen.unicode_aware),
+                True]
             if len(self._tiles) > _CACHE_SIZE:
                 self._tiles.popitem(False)
             self._screen.force_update()
@@ -185,6 +213,10 @@ class Map(Effect):
             for x, y, z in [(0, 0, 0), (1, 0, 0), (0, 1, 0), (-1, 0, 0), (0, -1, 0),
                             (0, 0, -1), (0, 0, 1),
                             (1, 1, 0), (1, -1, 0), (-1, -1, 0), (-1, 1, 0)]:
+                # Restart if we've already zoomed to another level
+                if self._zoom != zoom:
+                    break
+
                 # Don't get tile if it falls off the grid
                 x_tile = int(x_offset // size) + x
                 y_tile = int(y_offset // size) + y
@@ -216,46 +248,54 @@ class Map(Effect):
     def _get_features(self):
         """Decide which layers to render based on current zoom level and view type."""
         if self._satellite:
-            return [("", [], [], 0)]
+            return [("water", [], [])]
         elif self._zoom <= 2:
             return [
-                ("water", [], [], 153),
-                ("marine_label", [], [1], 12),
+                ("water", [], []),
+                ("marine_label", [], [1]),
             ]
         elif self._zoom <= 7:
             return [
-                ("admin", [], [], 7),
-                ("water", [], [], 153),
-                ("road", ["motorway"], [], 15),
-                ("country_label", [], [], 9),
-                ("marine_label", [], [1], 12),
-                ("state_label", [], [], 1),
-                ("place_label", [], ["city", "town"], 0),
+                ("admin", [], []),
+                ("water", [], []),
+                ("road", ["motorway"], []),
+                ("country_label", [], []),
+                ("marine_label", [], [1]),
+                ("state_label", [], []),
+                ("place_label", [], ["city", "town"]),
             ]
         elif self._zoom <= 10:
             return [
-                ("admin", [], [], 7),
-                ("water", [], [], 153),
-                ("road", ["motorway", "motorway_link", "trunk"], [], 15),
-                ("country_label", [], [], 9),
-                ("marine_label", [], [1], 12),
-                ("state_label", [], [], 1),
-                ("place_label", [], ["city", "town"], 0),
+                ("admin", [], []),
+                ("water", [], []),
+                ("road", ["motorway", "motorway_link", "trunk"], []),
+                ("country_label", [], []),
+                ("marine_label", [], [1]),
+                ("state_label", [], []),
+                ("place_label", [], ["city", "town"]),
             ]
         else:
             return [
-                ("landuse", ["agriculture", "grass", "park"], [], 193),
-                ("water", [], [], 153),
-                ("waterway", ["river", "canal"], [], 153),
-                ("building", [], [], 252),
+                ("landuse", ["agriculture", "grass", "park"], []),
+                ("water", [], []),
+                ("waterway", ["river", "canal"], []),
+                ("building", [], []),
                 ("road",
                  ["motorway", "motorway_link", "trunk", "primary", "secondary"]
                  if self._zoom <= 14 else
                  ["motorway", "motorway_link", "trunk", "primary", "secondary", "tertiary",
                   "link", "street", "tunnel"],
-                 [], 15),
-                ("poi_label", [], [], 8),
+                 []),
+                ("poi_label", [], []),
             ]
+
+    def _draw_lines_internal(self, coords, colour, bg):
+        """Helper to draw lines connecting a set of nodes that are scaled for the Screen."""
+        for i, (x, y) in enumerate(coords):
+            if i == 0:
+                self._screen.move(x, y)
+            else:
+                self._screen.draw(x, y, colour=colour, bg=bg, thin=True)
 
     def _draw_polygons(self, feature, bg, colour, extent, polygons, xo, yo):
         """Draw a set of polygons from a vector tile."""
@@ -266,22 +306,14 @@ class Map(Effect):
         # lines in order to process updates fast enough to animate.
         if "type" in feature["properties"] and "building" in feature["properties"]["type"]:
             for line in coords:
-                for i, (x, y) in enumerate(line):
-                    if i == 0:
-                        self._screen.move(x, y)
-                    else:
-                        self._screen.draw(x, y, colour=colour, bg=bg, thin=True)
+                self._draw_lines_internal(line, colour, bg)
         else:
             self._screen.fill_polygon(coords, colour=colour, bg=bg)
 
     def _draw_lines(self, bg, colour, extent, line, xo, yo):
         """Draw a set of lines from a vector tile."""
         coords = [self._scale_coords(x, y, extent, xo, yo) for x, y in line]
-        for i, (x, y) in enumerate(coords):
-            if i == 0:
-                self._screen.move(x, y)
-            else:
-                self._screen.draw(x, y, colour=colour, bg=bg, thin=True)
+        self._draw_lines_internal(coords, colour, bg)
 
     def _draw_feature(self, feature, extent, colour, bg, xo, yo):
         """Draw a single feature from a layer in a vector tile."""
@@ -342,7 +374,9 @@ class Map(Effect):
     def _draw_tiles(self, x_offset, y_offset, bg):
         """Render all visible tiles a layer at a time."""
         count = 0
-        for layer_name, c_filters, t_filters, colour in self._get_features():
+        for layer_name, c_filters, t_filters in self._get_features():
+            colour = (self._256_PALETTE[layer_name]
+                      if self._screen.colours >= 256 else self._16_PALETTE[layer_name])
             for x, y, z, tile, satellite in sorted(self._tiles.values(), key=lambda k: k[0]):
                 # Don't draw the wrong type or zoom of tile.
                 if satellite != self._satellite or z != self._zoom:
@@ -424,7 +458,7 @@ class Map(Effect):
         y_offset = self._convert_latitude(self._latitude)
         if self._tiles:
             # Clear the area first.
-            bg = 253 if self._screen.unicode_aware else 0
+            bg = 253 if self._screen.unicode_aware and self._screen.colours >= 256 else 0
             for y in range(self._screen.height):
                 self._screen.print_at("." * self._screen.width, 0, y, colour=bg, bg=bg)
 
@@ -495,6 +529,7 @@ class Map(Effect):
     def clone(self, new_screen, new_scene):
         # On resize, there will be a new Map - kill the thread in this one.
         self._running = False
+        self._updated.set()
 
     @property
     def frame_update_count(self):
