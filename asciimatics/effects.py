@@ -922,6 +922,7 @@ class Cog(Effect):
         :param radius: The radius of the cog.
         :param direction: The direction of rotation. Positive numbers are
             anti-clockwise, negative numbers clockwise.
+        :param colour: The colour of the cog.
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
