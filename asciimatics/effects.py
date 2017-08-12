@@ -914,7 +914,7 @@ class Cog(Effect):
     A rotating cog.
     """
 
-    def __init__(self, screen, x, y, radius, direction=1, **kwargs):
+    def __init__(self, screen, x, y, radius, direction=1, colour=7, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param x: X coordinate of the centre of the cog.
@@ -922,6 +922,7 @@ class Cog(Effect):
         :param radius: The radius of the cog.
         :param direction: The direction of rotation. Positive numbers are
             anti-clockwise, negative numbers clockwise.
+        :param colour: The colour of the cog.
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
@@ -933,6 +934,7 @@ class Cog(Effect):
         self._old_frame = 0
         self._rate = 2
         self._direction = direction
+        self._colour = colour
 
     def reset(self):
         pass
@@ -961,7 +963,7 @@ class Cog(Effect):
         self._old_frame += self._direction
         self._screen.move(f(0), g(0))
         for x in range(81):
-            self._screen.draw(f(x), g(x))
+            self._screen.draw(f(x), g(x), colour=self._colour)
 
     @property
     def stop_frame(self):
