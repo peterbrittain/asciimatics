@@ -9,7 +9,8 @@ class Scene(object):
     """
     Class to store the details of a single scene to be displayed.  This is
     made up of a set of :py:obj:`.Effect` objects.  See the documentation for
-    Effect to understand the interaction between the two classes.
+    Effect to understand the interaction between the two classes and
+    http://asciimatics.readthedocs.io/en/latest/animation.html for how to use them together.
     """
 
     def __init__(self, effects, duration=0, clear=True, name=None):

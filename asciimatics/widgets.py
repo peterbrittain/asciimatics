@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+This module allows you to create interactive text user interfaces.  For more details see
+http://asciimatics.readthedocs.io/en/latest/widgets.html
+"""
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function

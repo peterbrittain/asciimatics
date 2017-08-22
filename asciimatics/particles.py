@@ -1,3 +1,7 @@
+"""
+This module implements a particle system for complex animcation effects.  For more details, see
+http://asciimatics.readthedocs.io/en/latest/animation.html
+"""
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function

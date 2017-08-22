@@ -1,3 +1,9 @@
+"""
+This module defines basic input events.  For more details, see
+http://asciimatics.readthedocs.io/en/latest/io.html
+"""
+
+
 class Event(object):
     """
     A class to hold information about an input event.  The exact contents
