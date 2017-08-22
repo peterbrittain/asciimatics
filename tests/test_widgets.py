@@ -15,7 +15,7 @@ from asciimatics.widgets import Frame, Layout, Button, Label, TextBox, Text, \
 
 
 class TestFrame(Frame):
-    def __init__(self, screen, has_border=True, reduce_cpu=False):
+    def __init__(self, screen, has_border=True, reduce_cpu=False, label_height=1):
         super(TestFrame, self).__init__(screen,
                                         screen.height,
                                         screen.width,
@@ -26,7 +26,7 @@ class TestFrame(Frame):
         layout = Layout([1, 18, 1])
         self.add_layout(layout)
         self._reset_button = Button("Reset", self._reset)
-        self.label = Label("Group 1:")
+        self.label = Label("Group 1:", height=label_height)
         layout.add_widget(self.label, 1)
         layout.add_widget(TextBox(5,
                                   label="My First Box:",
@@ -1243,7 +1243,7 @@ class TestWidgets(unittest.TestCase):
         form.save()
         self.assertEqual(form.data, {})
 
-    def test_labels(self):
+    def test_label_change(self):
         """
         Check Labels can be dynamically updated.
         """
@@ -1281,6 +1281,47 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "| Text1:                               |\n" +
             "| Text2:                               |\n" +
+            "+--------------------------------------+\n")
+
+    def test_label_height(self):
+        """
+        Check Labels can be dynamically updated.
+        """
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame(canvas, label_height=2)
+        form.reset()
+
+        # Check Label obeys required height
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "| Group 1:                             |\n" +
+            "|                                      O\n" +
+            "| My First                             |\n" +
+            "| Box:                                 |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "| Text1:                               |\n" +
+            "+--------------------------------------+\n")
+
+        # Now check wrapping works too...
+        form.label.text = "A longer piece of text that should wrap across multiple lines:"
+        form.update(1)
+        self.maxDiff = None
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "| A longer piece of text that should   |\n" +
+            "| wrap across multiple lines:          O\n" +
+            "| My First                             |\n" +
+            "| Box:                                 |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "| Text1:                               |\n" +
             "+--------------------------------------+\n")
 
 if __name__ == '__main__':
