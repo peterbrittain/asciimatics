@@ -7,7 +7,9 @@ LATEST
 - Added the Kaleidoscope and RotatedDuplicate renderers.
 - Created Maps demo - which renders vector tiles and satellite images from Mapbox.
 - Added modal property to Frames.
-- Added colour property to Cogs Effect. 
+- Added colour property to Cogs Effect.
+- Added title property to Frame.
+- Added text property to Label.
 - Allowed programs to set "default" values for Widgets - which means you need to reset each field
   in a Frame explicitly rather than relying on reset to blank out uninitialized fields.
 - Fixed up signal handling to re-instate old handlers on Screen.close().
