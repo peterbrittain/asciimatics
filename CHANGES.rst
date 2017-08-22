@@ -9,7 +9,8 @@ LATEST
 - Added modal property to Frames.
 - Added colour property to Cogs Effect.
 - Added title property to Frame.
-- Added text property to Label.
+- Added text and property to Label.
+- Added optional height to Label on construction.
 - Allowed programs to set "default" values for Widgets - which means you need to reset each field
   in a Frame explicitly rather than relying on reset to blank out uninitialized fields.
 - Fixed up signal handling to re-instate old handlers on Screen.close().

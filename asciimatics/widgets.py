@@ -1358,15 +1358,17 @@ class Label(Widget):
     A simple text label.
     """
 
-    def __init__(self, label):
+    def __init__(self, label, height=1):
         """
         :param label: The text to be displayed for the Label.
+        :param height: Optional height for the label.  Defaults to 1 line.
         """
         # Labels have no value and so should have no name for look-ups either.
         super(Label, self).__init__(None, tab_stop=False)
         # Although this is a label, we don't want it to contribute to the layout
         # tab calculations, so leave internal `_label` value as None.
         self._text = label
+        self._required_height = height
 
     def process_event(self, event):
         # Labels have no user interactions
@@ -1374,15 +1376,16 @@ class Label(Widget):
 
     def update(self, frame_no):
         (colour, attr, bg) = self._frame.palette["label"]
-        self._frame.canvas.print_at(
-            self._text, self._x, self._y, colour, attr, bg)
+        for i, text in enumerate(_split_text(self._text, self._w, self._h)):
+            self._frame.canvas.paint(
+                text, self._x, self._y + i, colour, attr, bg)
 
     def reset(self):
         pass
 
     def required_height(self, offset, width):
         # Allow one line for text and a blank spacer before it.
-        return 1
+        return self._required_height
 
     @property
     def text(self):
