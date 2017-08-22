@@ -211,7 +211,8 @@ class Frame(Effect):
         self._has_border = has_border
         self._hover_focus = hover_focus
         self._initial_data = data if data else {}
-        self._title = " " + title[0:width - 4] + " " if title else ""
+        self._title = None
+        self.title = title  # Use property to re-format text as required.
         self._has_shadow = has_shadow
         self._reduce_cpu = reduce_cpu
         self._is_modal = is_modal
@@ -399,6 +400,17 @@ class Frame(Effect):
                 1,
                 self._canvas.height,
                 fg=colour, bg=bg, blend=50)
+
+    @property
+    def title(self):
+        """
+        Title for this Frame.
+        """
+        return self._title
+
+    @title.setter
+    def title(self, new_value):
+        self._title = " " + new_value[0:self._canvas.width - 4] + " " if new_value else ""
 
     @property
     def data(self):
@@ -1371,6 +1383,17 @@ class Label(Widget):
     def required_height(self, offset, width):
         # Allow one line for text and a blank spacer before it.
         return 1
+
+    @property
+    def text(self):
+        """
+        The current text for this Label.
+        """
+        return self._text
+
+    @text.setter
+    def text(self, new_value):
+        self._text = new_value
 
     @property
     def value(self):

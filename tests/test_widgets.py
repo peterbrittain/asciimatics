@@ -26,7 +26,8 @@ class TestFrame(Frame):
         layout = Layout([1, 18, 1])
         self.add_layout(layout)
         self._reset_button = Button("Reset", self._reset)
-        layout.add_widget(Label("Group 1:"), 1)
+        self.label = Label("Group 1:")
+        layout.add_widget(self.label, 1)
         layout.add_widget(TextBox(5,
                                   label="My First Box:",
                                   name="TA",
@@ -789,6 +790,48 @@ class TestWidgets(unittest.TestCase):
         event = object()
         self.assertEqual(event, form.process_event(event))
 
+    def test_title(self):
+        """
+        Check Frame titles work as expected.
+        """
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame2(canvas, [("One", 1), ("Two", 2)])
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that the title is rendered correctly.
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+------------ Test Frame 2 ------------+\n" +
+            "|One                                   |\n" +
+            "|Two                                   O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|--------------------------------------|\n" +
+            "| < Add > < Edit > < Delete < Quit >   |\n" +
+            "|Selected: None                        |\n" +
+            "+--------------------------------------+\n")
+
+        # Check that a new title is rendered correctly.
+        form.title = "A New Title!"
+        form.update(1)
+        self.assert_canvas_equals(
+            canvas,
+            "+------------ A New Title! ------------+\n" +
+            "|One                                   |\n" +
+            "|Two                                   O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|--------------------------------------|\n" +
+            "| < Add > < Edit > < Delete < Quit >   |\n" +
+            "|Selected: None                        |\n" +
+            "+--------------------------------------+\n")
+
     def test_multi_column_list_box(self):
         """
         Check MultiColumnListBox works as expected.
@@ -1199,6 +1242,46 @@ class TestWidgets(unittest.TestCase):
         # Check form data is empty.
         form.save()
         self.assertEqual(form.data, {})
+
+    def test_labels(self):
+        """
+        Check Labels can be dynamically updated.
+        """
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame(canvas)
+        form.reset()
+
+        # Check initial rendering
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "| Group 1:                             |\n" +
+            "| My First                             O\n" +
+            "| Box:                                 |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "| Text1:                               |\n" +
+            "| Text2:                               |\n" +
+            "+--------------------------------------+\n")
+
+        # Check dynamic updates change the rendering.
+        form.label.text = "New text here:"
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "| New text here:                       |\n" +
+            "| My First                             O\n" +
+            "| Box:                                 |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "| Text1:                               |\n" +
+            "| Text2:                               |\n" +
+            "+--------------------------------------+\n")
 
 if __name__ == '__main__':
     unittest.main()
