@@ -436,8 +436,14 @@ The colours for any Widget are determined by the `palette` property of the Frame
 Widget.  If desired, it is possible to have a different palette for every Frame, however your
 users may prefer a more consistent approach.
 
-The palette is just a simple dictionary to map Widget components to a
-colour tuple.  The following table shows the required keys.
+The palette is just a simple dictionary to map Widget components to a colour tuple.  A colour tuple
+is simply the foreground colour, attribute and background colour.  For example:
+
+.. code-block:: python
+
+    (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLUE)
+
+The following table shows the required keys for the `palette`.
 
 ========================  =========================================================================
 Key                       Usage

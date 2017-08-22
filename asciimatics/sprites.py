@@ -1,3 +1,7 @@
+"""
+This module provides `Sprites` to create animation effects with Paths.  For more details see
+http://asciimatics.readthedocs.io/en/latest/animation.html
+"""
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
