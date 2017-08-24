@@ -22,10 +22,12 @@ you have to call :py:meth:`.close` before exiting your application to restore th
 
 Output
 ------
-Once you have a Screen, the simplest way to output text is using the :py:meth:`~.Screen.print_at`
-method.  This allows you to place a string at a desired location in a specified colour.  The
-coordinates are zero-indexed starting at the top left of the screen and move down and right, so the
-example above displays `Hello world!` at (0, 0) which is the top left of the screen.
+Once you have a Screen, you probably want to ensure that it is clear before you do anything.  To
+do this call :py:meth:`~.Screen.clear`.  Now that it's blank, the simplest way to output text is
+using the :py:meth:`~.Screen.print_at` method.  This allows you to place a string at a desired
+location in a specified colour.  The coordinates are zero-indexed starting at the top left of the
+screen and move down and right, so the example above displays `Hello world!` at (0, 0) which is the
+top left of the screen.
 
 Colours
 ^^^^^^^
