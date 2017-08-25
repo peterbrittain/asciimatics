@@ -9,6 +9,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from types import FunctionType
 import re
+import os
 from builtins import chr
 from builtins import range
 from builtins import object
@@ -22,6 +23,7 @@ from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import Highlander, InvalidFields
 from asciimatics.screen import Screen, Canvas
 from wcwidth import wcswidth, wcwidth
+from asciimatics.utilities import readable_timestamp, readable_mem
 
 # Logging
 from logging import getLogger
@@ -479,20 +481,36 @@ class Frame(Effect):
         """
         return self._reduce_cpu
 
+    def find_widget(self, name):
+        """
+        Look for a widget with a specified name.
+
+        :param name: The name to search for.
+
+        :returns: The widget that matches or None if one couldn't be found.
+        """
+        result = None
+        for layout in self._layouts:
+            result = layout.find_widget(name)
+            if result:
+                break
+        return result
+
     def clone(self, _, scene):
         """
         Create a clone of this Frame into a new Screen.
 
         :param scene: The new Scene object to clone into.
         """
-        # Default implementation is to assume that the application creates a
-        # new set of Frames and so we need to match up the data from the old
-        # object to the new (using the name).
+        # Assume that the application creates a new set of Frames and so we need to match up the
+        # data from the old object to the new (using the name).
         if self._name is not None:
             for effect in scene.effects:
                 if isinstance(effect, Frame):
                     if effect._name == self._name:
                         effect.data = self.data
+                        for layout in self._layouts:
+                            layout.update_widgets(new_frame=effect)
 
     def reset(self):
         # Reset form to default state.
@@ -1070,13 +1088,31 @@ class Layout(object):
         if len(invalid) > 0:
             raise InvalidFields(invalid)
 
-    def update_widgets(self):
+    def find_widget(self, name):
         """
-        Reset the values for any Widgets in this Layout based on the current
-        Frame data store.
+        Look for a widget with a specified name.
+
+        :param name: The name to search for.
+
+        :returns: The widget that matches or None if one couldn't be found.
+        """
+        result = None
+        for column in self._columns:
+            for widget in column:
+                if widget.name is not None and name == widget.name:
+                    result = widget
+                    break
+        return result
+
+    def update_widgets(self, new_frame=None):
+        """
+        Reset the values for any Widgets in this Layout based on the current Frame data store.
+
+        :param new_frame: optional old Frame - used when cloning scenes.
         """
         for column in self._columns:
             for widget in column:
+                # First handle the normal case - pull the default data from the current frame.
                 if widget.name in self._frame.data:
                     widget.value = self._frame.data[widget.name]
                 elif widget.is_tab_stop:
@@ -1084,6 +1120,14 @@ class Layout(object):
                     # This will fix up any dodgy NoneType values, but preserve any values overridden
                     # by other code.
                     widget.value = widget.value
+
+                # If an old frame was present, give the widget a chance to clone internal state
+                # from the previous view.  If there is no clone function, ignore the error.
+                if new_frame:
+                    try:
+                        widget.clone(new_frame.find_widget(widget.name))
+                    except AttributeError:
+                        pass
 
     def reset(self):
         """
@@ -2069,7 +2113,7 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
 
     @value.setter
     def value(self, new_value):
-        # Only trigger notification after we've changed selection
+        # Only trigger change notification after we've changed selection
         old_value = self._value
         self._value = new_value
         for i, [_, value] in enumerate(self._options):
@@ -2293,6 +2337,114 @@ class MultiColumnListBox(_BaseListBox):
                         self._y + i + dy - self._start_line,
                         colour, attr, bg)
                     row_dx += width + space
+
+
+class FileBrowser(MultiColumnListBox):
+    """
+    A FileBrowser is a widget for finding a file on the local disk.
+    """
+
+    def __init__(self, height, root, name=None, on_select=None, on_change=None):
+        """
+        :param height: The desired height for this widget.
+        :param root: The starting root directory to display in the widget.
+        :param name: The name of this widget.
+        :param on_select: Optional function that gets called when user selects a file (by pressing
+            enter or double-clicking).
+        :param on_change: Optional function that gets called on any movement of the selection.
+        """
+        super(FileBrowser, self).__init__(
+            height,
+            [0, ">8", ">14"],
+            [],
+            titles=["Filename", "Size", "Last modified"],
+            name=name,
+            on_select=self._on_select,
+            on_change=on_change)
+
+        # Remember the on_select handler for external notification.  This allows us to wrap the
+        # normal on_select notification with a function that will open new sub-directories as
+        # needed.
+        self._external_notification = on_select
+        self._root = root
+        self._in_update = False
+        self._initialized = False
+
+    def update(self, frame_no):
+        # Defer initial population until we first display the widget in order to avoid race
+        # conditions in the Frame that may be using this widget.
+        if not self._initialized:
+            self._populate_list(self._root)
+            self._initialized = True
+        super(FileBrowser, self).update(frame_no)
+
+    def _on_select(self):
+        """
+        Internal function to handle directory traversal or bubble notifications up to user of the
+        Widget as needed.
+        """
+        if self.value and os.path.isdir(self.value):
+            self._populate_list(self.value)
+        elif self._external_notification:
+            self._external_notification()
+
+    def clone(self, new_widget):
+        # Copy the data into the new widget.  Notes:
+        # 1) I don't really want to expose these methods, so am living with the protected access.
+        # 2) I need to populate the list and then assign the values to ensure that we get the
+        #    right selection on re-sizing.
+        new_widget._populate_list(self._root)
+        new_widget._start_line = self._start_line
+        new_widget._root = self._root
+        new_widget.value = self.value
+
+    def _populate_list(self, value):
+        """
+        Populate the current multi-column list with the contents of the selected directory.
+
+        :param value: The new value to use.
+        """
+        # Nothing to do if the value is rubbish.
+        if value is None:
+            return
+
+        # Stop any recursion - no more returns from here to end of fn please!
+        if self._in_update:
+            return
+        self._in_update = True
+
+        # We need to update the tree view.
+        self._root = os.path.abspath(value if os.path.isdir(value) else os.path.dirname(value))
+
+        # The absolute expansion of "/" or "\" is the root of the disk, so is a cross-platform
+        # way of spotting when to insert ".." or not.
+        tree_view = []
+        if len(self._root) > len(os.path.abspath(os.sep)):
+            tree_view.append((["|-+ .."], os.path.join(self._root, "..")))
+
+        tree_dirs = []
+        tree_files = []
+        files = os.listdir(self._root)
+        for my_file in files:
+            full_path = os.path.join(self._root, my_file)
+            details = os.stat(full_path)
+            if os.path.isdir(full_path):
+                tree_dirs.append((["|-+ {}".format(my_file),
+                                   "",
+                                   readable_timestamp(details.st_mtime)], full_path))
+            else:
+                tree_files.append((["|-- {}".format(my_file),
+                                    readable_mem(details.st_size),
+                                    readable_timestamp(details.st_mtime)], full_path))
+
+        tree_view.extend(sorted(tree_dirs))
+        tree_view.extend(sorted(tree_files))
+
+        self.options = tree_view
+        self._titles[0] = self._root
+
+        # We're out of the function - unset recursion flag.
+        self._in_update = False
 
 
 class Button(Widget):
