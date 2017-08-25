@@ -3,6 +3,7 @@ CHANGE HISTORY
 
 LATEST
 ------
+- Added FileBrowser widget and sample code using it.
 - Added fill_polygon() to Screen and Canvas.
 - Added the Kaleidoscope and RotatedDuplicate renderers.
 - Created Maps demo - which renders vector tiles and satellite images from Mapbox.

@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
+
+from mock import patch
+
 from builtins import chr
 import unittest
 from mock.mock import MagicMock
@@ -11,7 +15,7 @@ from asciimatics.exceptions import NextScene, StopApplication, InvalidFields
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen, Canvas
 from asciimatics.widgets import Frame, Layout, Button, Label, TextBox, Text, \
-    Divider, RadioButtons, CheckBox, PopUpDialog, ListBox, Widget, MultiColumnListBox
+    Divider, RadioButtons, CheckBox, PopUpDialog, ListBox, Widget, MultiColumnListBox, FileBrowser
 
 
 class TestFrame(Frame):
@@ -166,6 +170,33 @@ class TestFrame3(Frame):
                                          name="Blank",
                                          has_shadow=True)
         self.fix()
+
+
+class TestFrame4(Frame):
+    def __init__(self, screen):
+        super(TestFrame4, self).__init__(
+            screen, screen.height, screen.width, has_border=False, name="My Form")
+
+        # State tracking for callbacks
+        self.selected = None
+        self.highlighted = None
+
+        # Simple full-page Widget
+        layout = Layout([1], fill_frame=True)
+        self.add_layout(layout)
+        self.file_list = FileBrowser(Widget.FILL_FRAME,
+                                     "/",
+                                     name="file_list",
+                                     on_select=self.select,
+                                     on_change=self.change)
+        layout.add_widget(self.file_list)
+        self.fix()
+
+    def select(self):
+        self.selected = self.file_list.value
+
+    def change(self):
+        self.highlighted = self.file_list.value
 
 
 class TestWidgets(unittest.TestCase):
@@ -1072,7 +1103,6 @@ class TestWidgets(unittest.TestCase):
         text_box.value = [u"你確定嗎", u"？"]
 
         # Check that the CJK characters render correctly - no really this is correctly aligned!
-        self.maxDiff = None
         form.update(0)
         self.assert_canvas_equals(
             canvas,
@@ -1310,7 +1340,6 @@ class TestWidgets(unittest.TestCase):
         # Now check wrapping works too...
         form.label.text = "A longer piece of text that should wrap across multiple lines:"
         form.update(1)
-        self.maxDiff = None
         self.assert_canvas_equals(
             canvas,
             "+--------------------------------------+\n" +
@@ -1323,6 +1352,89 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "| Text1:                               |\n" +
             "+--------------------------------------+\n")
+
+    @patch("os.path.isdir")
+    @patch("os.stat")
+    @patch("os.listdir")
+    def test_file_browser(self, mock_list, mock_stat, mock_path):
+        """
+        Check FileBrowser widget works as expected.
+        """
+        # First we need to mock out the file system calls to have a regressible test
+        mock_list.return_value = ["A Directory", "A File"]
+        mock_result = MagicMock()
+        mock_result.st_mtime = 0
+        mock_result.st_size = 10000
+        mock_stat.return_value = mock_result
+        mock_path.side_effect = lambda x: "File" not in x
+
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame4(canvas)
+        form.register_scene(scene)
+        form.reset()
+
+        # Check we have a default value for our list.
+        form.save()
+        self.assertIsNone(form.selected)
+        self.assertIsNone(form.highlighted)
+        self.assertEqual(form.data, {"file_list": None})
+
+
+        # Check that the listbox is rendered correctly.
+        self.maxDiff = None
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "/                     Size Last modified\n" +
+            "|-+ A Directory               1970-01-01\n" +
+            "|-- A File              9K    1970-01-01\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        # Check that mouse inpput changes selection.
+        self.process_mouse(form, [(2, 2, MouseEvent.LEFT_CLICK)])
+        form.save()
+        self.assertEqual(form.data, {"file_list": "/A File"})
+        self.assertEqual(form.highlighted, "/A File")
+        self.assertIsNone(form.selected)
+
+        # Check that UP/DOWN change selection.
+        self.process_keys(form, [Screen.KEY_UP])
+        form.save()
+        self.assertEqual(form.data, {"file_list": "/A Directory"})
+        self.assertEqual(form.highlighted, "/A Directory")
+        self.assertIsNone(form.selected)
+
+        # Check that enter key handles correctly on directories.
+        self.process_keys(form, [Screen.ctrl("m")])
+        self.assertEqual(form.highlighted, "/A Directory/..")
+        self.assertIsNone(form.selected)
+        form.update(1)
+        self.assert_canvas_equals(
+            canvas,
+            "/A Directory          Size Last modified\n" +
+            "|-+ ..                                  \n" +
+            "|-+ A Directory               1970-01-01\n" +
+            "|-- A File              9K    1970-01-01\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        # Check that enter key handles correctly on files.
+        self.process_keys(form, [Screen.KEY_DOWN, Screen.KEY_DOWN, Screen.ctrl("m")])
+        self.assertEqual(form.highlighted, "/A Directory/A File")
+        self.assertEqual(form.selected, "/A Directory/A File")
 
 if __name__ == '__main__':
     unittest.main()
