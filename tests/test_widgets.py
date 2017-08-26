@@ -1361,6 +1361,9 @@ class TestWidgets(unittest.TestCase):
         Check FileBrowser widget works as expected.
         """
         # First we need to mock out the file system calls to have a regressible test
+        if sys.platform == "win32":
+            self.skipTest("File names wrong for windows")
+
         mock_list.return_value = ["A Directory", "A File"]
         mock_result = MagicMock()
         mock_result.st_mtime = 0
@@ -1381,7 +1384,6 @@ class TestWidgets(unittest.TestCase):
         self.assertIsNone(form.selected)
         self.assertIsNone(form.highlighted)
         self.assertEqual(form.data, {"file_list": None})
-
 
         # Check that the listbox is rendered correctly.
         self.maxDiff = None
