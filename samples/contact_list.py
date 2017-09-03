@@ -41,7 +41,7 @@ class ContactModel(object):
 
     def get_contact(self, contact_id):
         return self._db.cursor().execute(
-            "SELECT * from contacts where id=?", str(contact_id)).fetchone()
+            "SELECT * from contacts WHERE id=:id", {"id": contact_id}).fetchone()
 
     def get_current_contact(self):
         if self.current_id is None:
