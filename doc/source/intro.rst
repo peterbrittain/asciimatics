@@ -99,7 +99,7 @@ So you want to join in?  Great!  There's a few ground rules...
    such as flake8 and pylint or editors like pycharm really help here.
 #. Please run the existing unit tests against your new code to make sure that
    it still works as expected.  I normally use nosetests to do this.  In
-   addition, i fyou are adding significant extra function, please write some
+   addition, if you are adding significant extra function, please write some
    new tests for your code.
 
 When you've got something you're happy with, please feel free to submit a pull
