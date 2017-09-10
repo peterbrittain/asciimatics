@@ -1,11 +1,12 @@
 from asciimatics.widgets import Frame, TextBox, Layout, Label, Divider, Text, \
-    CheckBox, RadioButtons, Button, PopUpDialog
+    CheckBox, RadioButtons, Button, PopUpDialog, TimePicker
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, NextScene, StopApplication, \
     InvalidFields
 import sys
 import re
+import logging
 
 # Initial data for the form
 form_data = {
@@ -18,6 +19,8 @@ form_data = {
     "CB": True,
     "CC": False,
 }
+
+logging.basicConfig(filename="forms.log", level=logging.DEBUG)
 
 
 class DemoFrame(Frame):
@@ -67,6 +70,7 @@ class DemoFrame(Frame):
             CheckBox("Field 2", name="CB", on_change=self._on_change), 1)
         layout.add_widget(
             CheckBox("Field 3", name="CC", on_change=self._on_change), 1)
+        layout.add_widget(TimePicker("Time", name="TIME"), 1)
         layout.add_widget(Divider(height=3), 1)
         layout2 = Layout([1, 1, 1])
         self.add_layout(layout2)
