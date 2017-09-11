@@ -2635,6 +2635,7 @@ class _TimePickerPopup(Frame):
         """
         :param parent: The widget that spawned this pop-up.
         """
+        # TODO: Fix me!  There is way too much internal access here.
         # Set up the new palette for this Frame
         self.palette = defaultdict(lambda: parent._frame.palette["focus_field"])
         self.palette["selected_field"] = parent._frame.palette["selected_field"]
@@ -2642,28 +2643,35 @@ class _TimePickerPopup(Frame):
 
         # Construct the Frame
         self._parent = parent
-        # TODO: Really do all this internal acces
         super(_TimePickerPopup, self).__init__(
             self._parent._frame._screen,
-            5, 7,
+            5, 10 if self._parent.include_seconds else 7,
             x=parent._x + parent._frame._canvas._dx + parent._offset - 1,
-            y=parent._y + parent._frame._canvas._dy - parent._frame._canvas._start_line - 2,
+            y=parent._y + parent._frame._canvas._dy - parent._frame._canvas.start_line - 2,
             has_border=True, is_modal=True)
 
         # Build the widget to display the time selection.
         self._hours = ListBox(3, [("{:02}".format(x), x) for x in range(24)], centre=True)
         self._minutes = ListBox(3, [("{:02}".format(x), x) for x in range(60)], centre=True)
-        layout = Layout([2, 1, 2], fill_frame=True)
+        self._seconds = ListBox(3, [("{:02}".format(x), x) for x in range(60)], centre=True)
+        if self._parent.include_seconds:
+            layout = Layout([2, 1, 2, 1, 2], fill_frame=True)
+        else:
+            layout = Layout([2, 1, 2], fill_frame=True)
         self.add_layout(layout)
         layout.add_widget(self._hours, 0)
         layout.add_widget(Label("\n:", height=3), 1)
         layout.add_widget(self._minutes, 2)
+        if self._parent.include_seconds:
+            layout.add_widget(Label("\n:", height=3), 3)
+            layout.add_widget(self._seconds, 4)
         self.add_layout(layout)
         self.fix()
 
         # Set up the correct time.
         self._hours.value = parent.value.hour
         self._minutes.value = parent.value.minute
+        self._seconds.value = parent.value.second
 
     def process_event(self, event):
         if event is not None:
@@ -2671,16 +2679,17 @@ class _TimePickerPopup(Frame):
                 if event.key_code in [Screen.ctrl("M"), Screen.ctrl("J"), ord(" ")]:
                     event = None
             elif isinstance(event, MouseEvent):
-                # TODO: fix up internal access.
-                if event.y < self._canvas._dy or event.y >= self._canvas._dy + self._canvas.height:
+                origin = self._canvas.origin
+                if event.y < origin[1] or event.y >= origin[1] + self._canvas.height:
                     event = None
-                elif event.x < self._canvas._dx or event.x >= self._canvas._dx + self._canvas.width:
+                elif event.x < origin[0] or event.x >= origin[0] + self._canvas.width:
                     event = None
 
         # Remove this pop-up if we're done
         if event is None:
             self._parent.value = self._parent.value.replace(hour=self._hours.value,
-                                                            minute=self._minutes.value)
+                                                            minute=self._minutes.value,
+                                                            second=self._seconds.value)
             self._scene.remove_effect(self)
 
         return super(_TimePickerPopup, self).process_event(event)
@@ -2691,17 +2700,19 @@ class TimePicker(Widget):
     A TimePicker widget allows you to pick a time.
     """
 
-    def __init__(self, label=None, name=None, on_change=None):
+    def __init__(self, label=None, name=None, seconds=False, on_change=None):
         """
         :param label: An optional label for the widget.
         :param name: The name for the widget.
+        :param seconds: Whether to include selection of seconds or not.
         :param on_change: Optional function to call when the selected time changes.
         """
         super(TimePicker, self).__init__(name)
         self._label = label
         self._on_change = on_change
-        self._value = self._original_value = datetime.now()
+        self._value = None
         self._child = None
+        self.include_seconds = seconds
 
     def update(self, frame_no):
         self._draw_label()
@@ -2710,13 +2721,13 @@ class TimePicker(Widget):
         # the clever stuff when it has the focus.
         (colour, attr, bg) = self._pick_colours("edit_text")
         self._frame.canvas.print_at(
-            self._value.strftime("%H:%M"),
+            self._value.strftime("%H:%M:%S" if self.include_seconds else "%H:%M"),
             self._x + self._offset,
             self._y,
             colour, attr, bg)
 
     def reset(self):
-        self._value = self._original_value
+        pass
 
     def process_event(self, event):
         if event is not None:
@@ -2729,8 +2740,6 @@ class TimePicker(Widget):
             elif isinstance(event, MouseEvent):
                 # Mouse event - rebase coordinates to Frame context.
                 new_event = self._frame.rebase_event(event)
-                logger.error("@@@: (%d, %d) (%d, %d) (%d, %d)", new_event.x, new_event.y, self._x,
-                             self._y, self._w, self._h)
                 if event.buttons != 0:
                     if self.is_mouse_over(new_event, include_label=False):
                         # TODO:Fix me!
@@ -2750,7 +2759,7 @@ class TimePicker(Widget):
     def value(self, new_value):
         # Only trigger the notification after we've changed the value.
         old_value = self._value
-        self._value = new_value if new_value else self._original_value
+        self._value = new_value
         if old_value != self._value and self._on_change:
             self._on_change()
 

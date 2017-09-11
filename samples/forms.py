@@ -6,6 +6,7 @@ from asciimatics.exceptions import ResizeScreenError, NextScene, StopApplication
     InvalidFields
 import sys
 import re
+import datetime
 import logging
 
 # Initial data for the form
@@ -18,6 +19,7 @@ form_data = {
     "CA": False,
     "CB": True,
     "CC": False,
+    "TIME": datetime.datetime.now().time()
 }
 
 logging.basicConfig(filename="forms.log", level=logging.DEBUG)
@@ -70,7 +72,7 @@ class DemoFrame(Frame):
             CheckBox("Field 2", name="CB", on_change=self._on_change), 1)
         layout.add_widget(
             CheckBox("Field 3", name="CC", on_change=self._on_change), 1)
-        layout.add_widget(TimePicker("Time", name="TIME"), 1)
+        layout.add_widget(TimePicker("Time", name="TIME", on_change=self._on_change, seconds=True), 1)
         layout.add_widget(Divider(height=3), 1)
         layout2 = Layout([1, 1, 1])
         self.add_layout(layout2)
