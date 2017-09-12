@@ -7,6 +7,8 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
+
+from calendar import monthrange
 from collections import defaultdict
 from types import FunctionType
 import re
@@ -16,7 +18,7 @@ from builtins import range
 from builtins import object
 from copy import copy, deepcopy
 from functools import partial
-from datetime import datetime
+from datetime import date
 from future.moves.itertools import zip_longest
 from future.utils import with_metaclass
 from abc import ABCMeta, abstractmethod, abstractproperty
@@ -2697,7 +2699,7 @@ class _TimePickerPopup(Frame):
 
 class TimePicker(Widget):
     """
-    A TimePicker widget allows you to pick a time.
+    A TimePicker widget allows you to pick a time from a compact, temporary, pop-up Frame.
     """
 
     def __init__(self, label=None, name=None, seconds=False, on_change=None):
@@ -2744,6 +2746,144 @@ class TimePicker(Widget):
                     if self.is_mouse_over(new_event, include_label=False):
                         # TODO:Fix me!
                         self._child = _TimePickerPopup(self)
+                        self._frame._scene.add_effect(self._child)
+                        event = None
+        return event
+
+    def required_height(self, offset, width):
+        return 1
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, new_value):
+        # Only trigger the notification after we've changed the value.
+        old_value = self._value
+        self._value = new_value
+        if old_value != self._value and self._on_change:
+            self._on_change()
+
+
+class _DatePickerPopup(Frame):
+    """
+    An internal Frame for editing the currently selected date.
+    """
+
+    def __init__(self, parent):
+        """
+        :param parent: The widget that spawned this pop-up.
+        """
+        # TODO: Fix me!  There is way too much internal access here.
+        # Set up the new palette for this Frame
+        self.palette = defaultdict(lambda: parent._frame.palette["focus_field"])
+        self.palette["selected_field"] = parent._frame.palette["selected_field"]
+        self.palette["selected_focus_field"] = parent._frame.palette["selected_focus_field"]
+
+        # Create the lists for each entry.
+        # TODO: populate the days list!
+        # TODO: Pick range of years available.
+        # TODO: Add on_change handlers to re-populate the days.
+        now = parent.value if parent.value else date.today()
+        self._days = ListBox(3, [("{:02}".format(x), x) for x in range(1, monthrange(now.year, now.month)[1] + 1)], centre=True)
+        self._months = ListBox(3, [(now.replace(month=x).strftime("%b"), x) for x in range(1, 13)], centre=True)
+        self._years = ListBox(3, [("{:04}".format(x), x) for x in range(now.year - 50, now.year + 50)], centre=True)
+
+        # Construct the Frame
+        self._parent = parent
+        super(_DatePickerPopup, self).__init__(
+            self._parent._frame._screen,
+            5, 13,
+            x=parent._x + parent._frame._canvas._dx + parent._offset - 1,
+            y=parent._y + parent._frame._canvas._dy - parent._frame._canvas.start_line - 2,
+            has_border=True, is_modal=True)
+
+        # Build the widget to display the time selection.
+        layout = Layout([2, 1, 3, 1, 4], fill_frame=True)
+        self.add_layout(layout)
+        layout.add_widget(self._days, 0)
+        layout.add_widget(Label("\n/", height=3), 1)
+        layout.add_widget(self._months, 2)
+        layout.add_widget(Label("\n/", height=3), 3)
+        layout.add_widget(self._years, 4)
+        self.add_layout(layout)
+        self.fix()
+
+        # Set up the correct time.
+        self._days.value = parent.value.day
+        self._months.value = parent.value.month
+        self._years.value = parent.value.year
+
+    def process_event(self, event):
+        if event is not None:
+            if isinstance(event, KeyboardEvent):
+                if event.key_code in [Screen.ctrl("M"), Screen.ctrl("J"), ord(" ")]:
+                    event = None
+            elif isinstance(event, MouseEvent):
+                origin = self._canvas.origin
+                if event.y < origin[1] or event.y >= origin[1] + self._canvas.height:
+                    event = None
+                elif event.x < origin[0] or event.x >= origin[0] + self._canvas.width:
+                    event = None
+
+        # Remove this pop-up if we're done
+        if event is None:
+            self._parent.value = self._parent.value.replace(day=self._days.value,
+                                                            month=self._months.value,
+                                                            year=self._years.value)
+            self._scene.remove_effect(self)
+
+        return super(_DatePickerPopup, self).process_event(event)
+
+
+class DatePicker(Widget):
+    """
+    A DatePicker widget allows you to pick a date from a compact, temporary, pop-up Frame.
+    """
+
+    def __init__(self, label=None, name=None, on_change=None):
+        """
+        :param label: An optional label for the widget.
+        :param name: The name for the widget.
+        :param on_change: Optional function to call when the selected time changes.
+        """
+        super(DatePicker, self).__init__(name)
+        self._label = label
+        self._on_change = on_change
+        self._value = None
+        self._child = None
+
+    def update(self, frame_no):
+        self._draw_label()
+
+        # This widget only ever needs display the current selection - the separate Frame does all
+        # the clever stuff when it has the focus.
+        (colour, attr, bg) = self._pick_colours("edit_text")
+        self._frame.canvas.print_at(
+            self._value.strftime("%d/%b/%Y"),
+            self._x + self._offset,
+            self._y,
+            colour, attr, bg)
+
+    def reset(self):
+        pass
+
+    def process_event(self, event):
+        if event is not None:
+            if isinstance(event, KeyboardEvent):
+                if event.key_code in [Screen.ctrl("M"), Screen.ctrl("J"), ord(" ")]:
+                    # TODO:Fix me!
+                    self._child = _DatePickerPopup(self)
+                    self._frame._scene.add_effect(self._child)
+                    event = None
+            elif isinstance(event, MouseEvent):
+                # Mouse event - rebase coordinates to Frame context.
+                new_event = self._frame.rebase_event(event)
+                if event.buttons != 0:
+                    if self.is_mouse_over(new_event, include_label=False):
+                        # TODO:Fix me!
+                        self._child = _DatePickerPopup(self)
                         self._frame._scene.add_effect(self._child)
                         event = None
         return event
