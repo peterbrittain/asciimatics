@@ -1,5 +1,5 @@
 from asciimatics.widgets import Frame, TextBox, Layout, Label, Divider, Text, \
-    CheckBox, RadioButtons, Button, PopUpDialog, TimePicker, DatePicker
+    CheckBox, RadioButtons, Button, PopUpDialog, TimePicker, DatePicker, Background
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, NextScene, StopApplication, \
@@ -131,7 +131,10 @@ class DemoFrame(Frame):
 
 
 def demo(screen, scene):
-    screen.play([Scene([DemoFrame(screen)], -1)], stop_on_resize=True, start_scene=scene)
+    screen.play([Scene([
+        Background(screen),
+        DemoFrame(screen)
+    ], -1)], stop_on_resize=True, start_scene=scene)
 
 last_scene = None
 while True:
