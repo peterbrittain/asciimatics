@@ -128,6 +128,38 @@ def _split_text(text, width, height):
     return result
 
 
+class Background(Effect):
+    """
+    Background
+    """
+
+    def __init__(self, screen, bg=0, **kwargs):
+        """
+        :param screen: The Screen being used for the Scene.
+        :param bg: Optional colour for the background.
+
+        Also see the common keyword arguments in :py:obj:`.Effect`.
+        """
+        super(Background, self).__init__(**kwargs)
+        self._screen = screen
+        self._bg = bg
+
+    def reset(self):
+        pass
+
+    def _update(self, frame_no):
+        for y in range(self._screen.height):
+            self._screen.print_at(" " * self._screen.width, 0, y, bg=self._bg)
+
+    @property
+    def frame_update_count(self):
+        return 1000000
+
+    @property
+    def stop_frame(self):
+        return self._stop_frame
+
+
 class Frame(Effect):
     """
     A Frame is a special Effect for controlling and displaying Widgets and
@@ -2780,15 +2812,16 @@ class _DatePickerPopup(Frame):
         self.palette = defaultdict(lambda: parent._frame.palette["focus_field"])
         self.palette["selected_field"] = parent._frame.palette["selected_field"]
         self.palette["selected_focus_field"] = parent._frame.palette["selected_focus_field"]
+        self.palette["invalid"] = parent._frame.palette["invalid"]
 
         # Create the lists for each entry.
         # TODO: populate the days list!
         # TODO: Pick range of years available.
         # TODO: Add on_change handlers to re-populate the days.
         now = parent.value if parent.value else date.today()
-        self._days = ListBox(3, [("{:02}".format(x), x) for x in range(1, monthrange(now.year, now.month)[1] + 1)], centre=True)
-        self._months = ListBox(3, [(now.replace(month=x).strftime("%b"), x) for x in range(1, 13)], centre=True)
-        self._years = ListBox(3, [("{:04}".format(x), x) for x in range(now.year - 50, now.year + 50)], centre=True)
+        self._days = ListBox(3, [("{:02}".format(x), x) for x in range(1, 32)], centre=True, on_change=self._check_date)
+        self._months = ListBox(3, [(now.replace(day=1, month=x).strftime("%b"), x) for x in range(1, 13)], centre=True, on_change=self._check_date)
+        self._years = ListBox(3, [("{:04}".format(x), x) for x in range(now.year - 50, now.year + 50)], centre=True, on_change=self._check_date)
 
         # Construct the Frame
         self._parent = parent
@@ -2815,6 +2848,14 @@ class _DatePickerPopup(Frame):
         self._months.value = parent.value.month
         self._years.value = parent.value.year
 
+    def _check_date(self):
+        try:
+            # TODO: Fix up internal access (again)!
+            date(self._years.value, self._months.value, self._days.value)
+            self._days._is_valid = True
+        except (TypeError, ValueError):
+            self._days._is_valid = False
+
     def process_event(self, event):
         if event is not None:
             if isinstance(event, KeyboardEvent):
@@ -2829,10 +2870,14 @@ class _DatePickerPopup(Frame):
 
         # Remove this pop-up if we're done
         if event is None:
-            self._parent.value = self._parent.value.replace(day=self._days.value,
-                                                            month=self._months.value,
-                                                            year=self._years.value)
-            self._scene.remove_effect(self)
+            try:
+                # TODO: Fix up internal access (again)!
+                self._parent.value = self._parent.value.replace(day=self._days.value,
+                                                                month=self._months.value,
+                                                                year=self._years.value)
+                self._scene.remove_effect(self)
+            except ValueError:
+                pass
 
         return super(_DatePickerPopup, self).process_event(event)
 
