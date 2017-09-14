@@ -73,8 +73,12 @@ class DemoFrame(Frame):
             CheckBox("Field 2", name="CB", on_change=self._on_change), 1)
         layout.add_widget(
             CheckBox("Field 3", name="CC", on_change=self._on_change), 1)
-        layout.add_widget(DatePicker("Date", name="DATE", on_change=self._on_change), 1)
-        layout.add_widget(TimePicker("Time", name="TIME", on_change=self._on_change, seconds=True), 1)
+        layout.add_widget(DatePicker("Date",
+                                     name="DATE",
+                                     year_range=range(1999, 2100),
+                                     on_change=self._on_change), 1)
+        layout.add_widget(
+            TimePicker("Time", name="TIME", on_change=self._on_change, seconds=True), 1)
         layout.add_widget(Divider(height=3), 1)
         layout2 = Layout([1, 1, 1])
         self.add_layout(layout2)

@@ -8,7 +8,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from calendar import monthrange
 from collections import defaultdict
 from types import FunctionType
 import re
@@ -140,8 +139,7 @@ class Background(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Background, self).__init__(**kwargs)
-        self._screen = screen
+        super(Background, self).__init__(screen, **kwargs)
         self._bg = bg
 
     def reset(self):
@@ -237,12 +235,11 @@ class Frame(Effect):
         :param is_modal: Whether this Frame is "modal" - i.e. will stop all other Effects
             from receiving input events.
         """
-        super(Frame, self).__init__()
+        super(Frame, self).__init__(screen)
         self._focus = 0
         self._max_height = 0
         self._layouts = []
         self._effects = []
-        self._screen = screen
         self._canvas = Canvas(screen, height, width, x, y)
         self._data = None
         self._on_load = on_load
@@ -1215,6 +1212,13 @@ class Widget(with_metaclass(ABCMeta, object)):
         self._custom_colour = None
 
     @property
+    def frame(self):
+        """
+        The Frame that contains this Widget.
+        """
+        return self._frame
+
+    @property
     def is_valid(self):
         """
         Whether this widget has passed its data validation or not.
@@ -1283,6 +1287,17 @@ class Widget(with_metaclass(ABCMeta, object)):
         self._offset = offset
         self._w = w
         self._h = h
+
+    def get_location(self):
+        """
+        Return the absolute location of this widget on the Screen, taking into account the
+        current state of the Frame that is displaying it and any label offsets of the Widget.
+
+        :returns: A tuple of the form (<X coordinate>, <Y coordinate>).
+        """
+        origin = self._frame.canvas.origin
+        return (self._x + origin[0] + self._offset,
+                self._y + origin[1] - self._frame.canvas.start_line)
 
     def focus(self):
         """
@@ -2046,7 +2061,7 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
     """
 
     def __init__(self, height, options, titles=None, label=None, name=None, on_change=None,
-                 on_select=None):
+                 on_select=None, validator=None):
         """
         :param height: The required number of input lines for this widget.
         :param options: The options for each row in the widget.
@@ -2055,6 +2070,7 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         :param on_change: Optional function to call when selection changes.
         :param on_select: Optional function to call when the user actually selects an entry from
             this list - e.g. by double-clicking or pressing Enter.
+        :param validator: Optional function to validate selection for this widget.
         """
         super(_BaseListBox, self).__init__(name)
         self._options = options
@@ -2065,6 +2081,7 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         self._required_height = height
         self._on_change = on_change
         self._on_select = on_select
+        self._validator = validator
 
     def reset(self):
         # Reset selection - use value to trigger on_select
@@ -2159,6 +2176,8 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         else:
             self._value = None
             self._line = -1
+        if self._validator:
+            self._is_valid = self._validator(self._value)
         if old_value != self._value and self._on_change:
             self._on_change()
 
@@ -2183,7 +2202,7 @@ class ListBox(_BaseListBox):
     """
 
     def __init__(self, height, options, centre=False, label=None, name=None, on_change=None,
-                 on_select=None):
+                 on_select=None, validator=None):
         """
         :param height: The required number of input lines for this ListBox.
         :param options: The options for each row in the widget.
@@ -2192,6 +2211,7 @@ class ListBox(_BaseListBox):
         :param name: The name for the ListBox.
         :param on_change: Optional function to call when selection changes.
         :param on_select: Optional function to call when the user actually selects an entry from
+        :param validator: Optional function to validate selection for this widget.
 
         The `options` are a list of tuples, where the first value is the string
         to be displayed to the user and the second is an interval value to
@@ -2199,7 +2219,9 @@ class ListBox(_BaseListBox):
 
             options=[("First option", 1), ("Second option", 2)]
         """
-        super(ListBox, self).__init__(height, options, label=label, name=name, on_change=on_change, on_select=on_select)
+        super(ListBox, self).__init__(
+            height, options, label=label, name=name, on_change=on_change, on_select=on_select,
+            validator=validator)
         self._centre = centre
 
     def update(self, frame_no):
@@ -2225,22 +2247,21 @@ class ListBox(_BaseListBox):
 
         # Render visible portion of the text.
         y_offset = 0
+        start_line = self._start_line
         if self._centre:
             self._start_line = self._line - (height // 2)
             if self._start_line < 0:
-                # TODO: Need to fix up for mouse operations?
                 y_offset = -self._start_line
-                self._start_line = 0
+                start_line = 0
         else:
-            self._start_line = max(0, max(self._line - height + 1,
-                                          min(self._start_line, self._line)))
+            self._start_line = max(0, max(self._line - height + 1, min(start_line, self._line)))
         for i, (text, _) in enumerate(self._options):
-            if self._start_line <= i < self._start_line + height:
+            if self._start_line <= i < start_line + height:
                 colour, attr, bg = self._pick_colours("field", i == self._line)
                 self._frame.canvas.print_at(
                     "{:{}}".format(_enforce_width(text, width), width),
                     self._x + self._offset + dx,
-                    self._y + y_offset + i + dy - self._start_line,
+                    self._y + y_offset + i + dy - start_line,
                     colour, attr, bg)
 
 
@@ -2660,7 +2681,67 @@ class PopUpDialog(Frame):
             PopUpDialog(screen, self._text, self._buttons, self._on_close))
 
 
-class _TimePickerPopup(Frame):
+class _TempPopup(Frame):
+    """
+    An internal Frame for creating a temporary pop-up for a Widget in another Frame.
+    """
+
+    def __init__(self, screen, parent, x, y, w, h):
+        """
+        :param screen: The Screen being used for this pop-up.
+        :param parent: The widget that spawned this pop-up.
+        :param x: The X coordinate for the desired pop-up.
+        :param y: The Y coordinate for the desired pop-up.
+        :param w: The width of the desired pop-up.
+        :param h: The height of the desired pop-up.
+        """
+        # Set up the new palette for this Frame
+        self.palette = defaultdict(lambda: parent.frame.palette["focus_field"])
+        self.palette["selected_field"] = parent.frame.palette["selected_field"]
+        self.palette["selected_focus_field"] = parent.frame.palette["selected_focus_field"]
+        self.palette["invalid"] = parent.frame.palette["invalid"]
+
+        # Construct the Frame
+        super(_TempPopup, self).__init__(screen, h, w, x=x, y=y, has_border=True, is_modal=True)
+
+        # Internal state for the pop-up
+        self._parent = parent
+
+    def process_event(self, event):
+        # Look for events that will close the pop-up - e.g. clicking outside the Frame or Enter key.
+        if event is not None:
+            if isinstance(event, KeyboardEvent):
+                if event.key_code in [Screen.ctrl("M"), Screen.ctrl("J"), ord(" ")]:
+                    event = None
+            elif isinstance(event, MouseEvent):
+                origin = self._canvas.origin
+                if event.y < origin[1] or event.y >= origin[1] + self._canvas.height:
+                    event = None
+                elif event.x < origin[0] or event.x >= origin[0] + self._canvas.width:
+                    event = None
+
+        # Remove this pop-up if we're done; otherwise bubble up the event.
+        if event is None:
+            try:
+                self._on_close()
+                self._scene.remove_effect(self)
+            except InvalidFields:
+                # Nothing to do as we've already prevented the Effect from being removed.
+                pass
+        return super(_TempPopup, self).process_event(event)
+
+    @abstractmethod
+    def _on_close(self):
+        """
+        Method to handle any communication back to the parent widget on closure of this pop-up.
+
+        This method can raise an InvalidFields exception to indicate that the current selection is
+        invalid and so the pop-up cannot be dismissed.
+        """
+        pass
+
+
+class _TimePickerPopup(_TempPopup):
     """
     An internal Frame for editing the currently selected time.
     """
@@ -2669,20 +2750,12 @@ class _TimePickerPopup(Frame):
         """
         :param parent: The widget that spawned this pop-up.
         """
-        # TODO: Fix me!  There is way too much internal access here.
-        # Set up the new palette for this Frame
-        self.palette = defaultdict(lambda: parent._frame.palette["focus_field"])
-        self.palette["selected_field"] = parent._frame.palette["selected_field"]
-        self.palette["selected_focus_field"] = parent._frame.palette["selected_focus_field"]
-
         # Construct the Frame
-        self._parent = parent
-        super(_TimePickerPopup, self).__init__(
-            self._parent._frame._screen,
-            5, 10 if self._parent.include_seconds else 7,
-            x=parent._x + parent._frame._canvas._dx + parent._offset - 1,
-            y=parent._y + parent._frame._canvas._dy - parent._frame._canvas.start_line - 2,
-            has_border=True, is_modal=True)
+        location = parent.get_location()
+        super(_TimePickerPopup, self).__init__(parent.frame.screen,
+                                               parent,
+                                               location[0] - 1, location[1] - 2,
+                                               10 if parent.include_seconds else 7, 5)
 
         # Build the widget to display the time selection.
         self._hours = ListBox(3, [("{:02}".format(x), x) for x in range(24)], centre=True)
@@ -2707,26 +2780,10 @@ class _TimePickerPopup(Frame):
         self._minutes.value = parent.value.minute
         self._seconds.value = parent.value.second
 
-    def process_event(self, event):
-        if event is not None:
-            if isinstance(event, KeyboardEvent):
-                if event.key_code in [Screen.ctrl("M"), Screen.ctrl("J"), ord(" ")]:
-                    event = None
-            elif isinstance(event, MouseEvent):
-                origin = self._canvas.origin
-                if event.y < origin[1] or event.y >= origin[1] + self._canvas.height:
-                    event = None
-                elif event.x < origin[0] or event.x >= origin[0] + self._canvas.width:
-                    event = None
-
-        # Remove this pop-up if we're done
-        if event is None:
-            self._parent.value = self._parent.value.replace(hour=self._hours.value,
-                                                            minute=self._minutes.value,
-                                                            second=self._seconds.value)
-            self._scene.remove_effect(self)
-
-        return super(_TimePickerPopup, self).process_event(event)
+    def _on_close(self):
+        self._parent.value = self._parent.value.replace(hour=self._hours.value,
+                                                        minute=self._minutes.value,
+                                                        second=self._seconds.value)
 
 
 class TimePicker(Widget):
@@ -2765,21 +2822,21 @@ class TimePicker(Widget):
 
     def process_event(self, event):
         if event is not None:
+            # Handle key or mouse selection events - e.g. click on widget or Enter.
             if isinstance(event, KeyboardEvent):
                 if event.key_code in [Screen.ctrl("M"), Screen.ctrl("J"), ord(" ")]:
-                    # TODO:Fix me!
-                    self._child = _TimePickerPopup(self)
-                    self._frame._scene.add_effect(self._child)
                     event = None
             elif isinstance(event, MouseEvent):
-                # Mouse event - rebase coordinates to Frame context.
                 new_event = self._frame.rebase_event(event)
                 if event.buttons != 0:
                     if self.is_mouse_over(new_event, include_label=False):
-                        # TODO:Fix me!
-                        self._child = _TimePickerPopup(self)
-                        self._frame._scene.add_effect(self._child)
                         event = None
+
+            # Create the pop-up if needed
+            if event is None:
+                self._child = _TimePickerPopup(self)
+                self.frame.scene.add_effect(self._child)
+
         return event
 
     def required_height(self, offset, width):
@@ -2798,39 +2855,40 @@ class TimePicker(Widget):
             self._on_change()
 
 
-class _DatePickerPopup(Frame):
+class _DatePickerPopup(_TempPopup):
     """
     An internal Frame for editing the currently selected date.
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, year_range=None):
         """
         :param parent: The widget that spawned this pop-up.
+        :param year_range: Optional range to limit the year selection to.
         """
-        # TODO: Fix me!  There is way too much internal access here.
-        # Set up the new palette for this Frame
-        self.palette = defaultdict(lambda: parent._frame.palette["focus_field"])
-        self.palette["selected_field"] = parent._frame.palette["selected_field"]
-        self.palette["selected_focus_field"] = parent._frame.palette["selected_focus_field"]
-        self.palette["invalid"] = parent._frame.palette["invalid"]
-
         # Create the lists for each entry.
-        # TODO: populate the days list!
-        # TODO: Pick range of years available.
-        # TODO: Add on_change handlers to re-populate the days.
         now = parent.value if parent.value else date.today()
-        self._days = ListBox(3, [("{:02}".format(x), x) for x in range(1, 32)], centre=True, on_change=self._check_date)
-        self._months = ListBox(3, [(now.replace(day=1, month=x).strftime("%b"), x) for x in range(1, 13)], centre=True, on_change=self._check_date)
-        self._years = ListBox(3, [("{:04}".format(x), x) for x in range(now.year - 50, now.year + 50)], centre=True, on_change=self._check_date)
+        if year_range is None:
+            year_range = range(now.year - 50, now.year + 50)
+        self._days = ListBox(3,
+                             [("{:02}".format(x), x) for x in range(1, 32)],
+                             centre=True,
+                             validator=self._check_date)
+        self._months = ListBox(3,
+                               [(now.replace(day=1, month=x).strftime("%b"), x)
+                                for x in range(1, 13)],
+                               centre=True,
+                               on_change=self._refresh_day)
+        self._years = ListBox(3,
+                              [("{:04}".format(x), x) for x in year_range],
+                              centre=True,
+                              on_change=self._refresh_day)
 
         # Construct the Frame
-        self._parent = parent
-        super(_DatePickerPopup, self).__init__(
-            self._parent._frame._screen,
-            5, 13,
-            x=parent._x + parent._frame._canvas._dx + parent._offset - 1,
-            y=parent._y + parent._frame._canvas._dy - parent._frame._canvas.start_line - 2,
-            has_border=True, is_modal=True)
+        location = parent.get_location()
+        super(_DatePickerPopup, self).__init__(parent.frame.screen,
+                                               parent,
+                                               location[0] - 1, location[1] - 2,
+                                               13, 5)
 
         # Build the widget to display the time selection.
         layout = Layout([2, 1, 3, 1, 4], fill_frame=True)
@@ -2844,42 +2902,27 @@ class _DatePickerPopup(Frame):
         self.fix()
 
         # Set up the correct time.
-        self._days.value = parent.value.day
-        self._months.value = parent.value.month
         self._years.value = parent.value.year
+        self._months.value = parent.value.month
+        self._days.value = parent.value.day
 
-    def _check_date(self):
+    def _check_date(self, value):
         try:
-            # TODO: Fix up internal access (again)!
-            date(self._years.value, self._months.value, self._days.value)
-            self._days._is_valid = True
+            date(self._years.value, self._months.value, value)
+            return True
         except (TypeError, ValueError):
-            self._days._is_valid = False
+            return False
 
-    def process_event(self, event):
-        if event is not None:
-            if isinstance(event, KeyboardEvent):
-                if event.key_code in [Screen.ctrl("M"), Screen.ctrl("J"), ord(" ")]:
-                    event = None
-            elif isinstance(event, MouseEvent):
-                origin = self._canvas.origin
-                if event.y < origin[1] or event.y >= origin[1] + self._canvas.height:
-                    event = None
-                elif event.x < origin[0] or event.x >= origin[0] + self._canvas.width:
-                    event = None
+    def _refresh_day(self):
+        self._days.value = self._days.value
 
-        # Remove this pop-up if we're done
-        if event is None:
-            try:
-                # TODO: Fix up internal access (again)!
-                self._parent.value = self._parent.value.replace(day=self._days.value,
-                                                                month=self._months.value,
-                                                                year=self._years.value)
-                self._scene.remove_effect(self)
-            except ValueError:
-                pass
-
-        return super(_DatePickerPopup, self).process_event(event)
+    def _on_close(self):
+        try:
+            self._parent.value = self._parent.value.replace(day=self._days.value,
+                                                            month=self._months.value,
+                                                            year=self._years.value)
+        except ValueError:
+            raise InvalidFields([self._days])
 
 
 class DatePicker(Widget):
@@ -2887,7 +2930,7 @@ class DatePicker(Widget):
     A DatePicker widget allows you to pick a date from a compact, temporary, pop-up Frame.
     """
 
-    def __init__(self, label=None, name=None, on_change=None):
+    def __init__(self, label=None, name=None, year_range= None, on_change=None):
         """
         :param label: An optional label for the widget.
         :param name: The name for the widget.
@@ -2898,6 +2941,7 @@ class DatePicker(Widget):
         self._on_change = on_change
         self._value = None
         self._child = None
+        self._year_range = year_range
 
     def update(self, frame_no):
         self._draw_label()
@@ -2918,19 +2962,16 @@ class DatePicker(Widget):
         if event is not None:
             if isinstance(event, KeyboardEvent):
                 if event.key_code in [Screen.ctrl("M"), Screen.ctrl("J"), ord(" ")]:
-                    # TODO:Fix me!
-                    self._child = _DatePickerPopup(self)
-                    self._frame._scene.add_effect(self._child)
                     event = None
             elif isinstance(event, MouseEvent):
-                # Mouse event - rebase coordinates to Frame context.
                 new_event = self._frame.rebase_event(event)
                 if event.buttons != 0:
                     if self.is_mouse_over(new_event, include_label=False):
-                        # TODO:Fix me!
-                        self._child = _DatePickerPopup(self)
-                        self._frame._scene.add_effect(self._child)
                         event = None
+            if event is None:
+                self._child = _DatePickerPopup(self, year_range=self._year_range)
+                self.frame.scene.add_effect(self._child)
+
         return event
 
     def required_height(self, offset, width):
@@ -2947,4 +2988,3 @@ class DatePicker(Widget):
         self._value = new_value
         if old_value != self._value and self._on_change:
             self._on_change()
-
