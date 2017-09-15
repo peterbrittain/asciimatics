@@ -17,7 +17,7 @@ from builtins import range
 from builtins import object
 from copy import copy, deepcopy
 from functools import partial
-from datetime import date
+from datetime import date, datetime, timedelta
 from future.moves.itertools import zip_longest
 from future.utils import with_metaclass
 from abc import ABCMeta, abstractmethod, abstractproperty
@@ -2082,6 +2082,8 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         self._on_change = on_change
         self._on_select = on_select
         self._validator = validator
+        self._search = ""
+        self._last_search = datetime.now()
 
     def reset(self):
         # Reset selection - use value to trigger on_select
@@ -2115,8 +2117,19 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
                 # Fire select callback.
                 if self._on_select:
                     self._on_select()
+            elif event.key_code > 0:
+                # Treat any other normal press as a search
+                now = datetime.now()
+                if now - self._last_search > timedelta(seconds=1):
+                    self._search = ""
+                self._search += chr(event.key_code)
+                self._last_search = now
+
+                # If we find a new match for the serach string, update the list selection
+                new_value = self._find_option(self._search)
+                if new_value:
+                    self.value = new_value
             else:
-                # Ignore any other key press.
                 return event
         elif isinstance(event, MouseEvent):
             # Mouse event - rebase coordinates to Frame context.
@@ -2143,6 +2156,15 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         else:
             # Ignore other events
             return event
+
+    @abstractmethod
+    def _find_option(self, search_value):
+        """
+        Internal function called by the BaseListBox to do a text search on user input.
+
+        :param search_value: The string value to search for in the list.
+        :return: The value of the matching option (or None if nothing matches).
+        """
 
     def required_height(self, offset, width):
         return self._required_height
@@ -2263,6 +2285,12 @@ class ListBox(_BaseListBox):
                     self._x + self._offset + dx,
                     self._y + y_offset + i + dy - start_line,
                     colour, attr, bg)
+
+    def _find_option(self, search_value):
+        for text, value in self._options:
+            if text.startswith(search_value):
+                return value
+        return None
 
 
 class MultiColumnListBox(_BaseListBox):
@@ -2405,6 +2433,13 @@ class MultiColumnListBox(_BaseListBox):
                         self._y + i + dy - self._start_line,
                         colour, attr, bg)
                     row_dx += width + space
+
+    def _find_option(self, search_value):
+        for row, value in self._options:
+            # TODO: Should this be aware of a sort column?
+            if row[0].startswith(search_value):
+                return value
+        return None
 
 
 class FileBrowser(MultiColumnListBox):
