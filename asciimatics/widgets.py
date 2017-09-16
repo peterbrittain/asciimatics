@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 This module allows you to create interactive text user interfaces.  For more details see
 http://asciimatics.readthedocs.io/en/latest/widgets.html
@@ -129,7 +130,8 @@ def _split_text(text, width, height):
 
 class Background(Effect):
     """
-    Background
+    Effect to be used as a Desktop background.  This simply sets the background to the specified
+    colour.
     """
 
     def __init__(self, screen, bg=0, **kwargs):

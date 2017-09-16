@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# -*- coding: utf-8 -*-
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
@@ -17,7 +16,7 @@ from asciimatics.scene import Scene
 from asciimatics.screen import Screen, Canvas
 from asciimatics.widgets import Frame, Layout, Button, Label, TextBox, Text, \
     Divider, RadioButtons, CheckBox, PopUpDialog, ListBox, Widget, MultiColumnListBox, FileBrowser, \
-    DatePicker, TimePicker
+    DatePicker, TimePicker, Background
 
 
 class TestFrame(Frame):
@@ -209,13 +208,21 @@ class TestFrame5(Frame):
         # Simple full-page Widget
         layout = Layout([1], fill_frame=True)
         self.add_layout(layout)
-        self.date_widget = DatePicker(label="Date:", name="date", year_range=range(1999, 2020))
+        self.date_widget = DatePicker(
+            label="Date:", name="date", year_range=range(1999, 2020), on_change=self._changed)
         self.date_widget.value = date(2017, 1, 2)
         layout.add_widget(self.date_widget)
-        self.time_widget = TimePicker(label="Time:", name="time", seconds=True)
+        self.time_widget = TimePicker(
+            label="Time:", name="time", seconds=True, on_change=self._changed)
         self.time_widget.value = time(12, 0, 59)
         layout.add_widget(self.time_widget)
         self.fix()
+
+        # State tracking for widgets
+        self.changed = False
+
+    def _changed(self):
+        self.changed = True
 
 
 class TestWidgets(unittest.TestCase):
@@ -1486,6 +1493,7 @@ class TestWidgets(unittest.TestCase):
 
         # Check that enter key brings up edit pop-up
         self.process_keys(scene, [Screen.ctrl("m")])
+        self.assertFalse(form.changed)
         for effect in scene.effects:
             effect.update(1)
         self.assert_canvas_equals(
@@ -1503,6 +1511,7 @@ class TestWidgets(unittest.TestCase):
 
         # Check that you can't select an invalid date.
         self.process_keys(scene, ["31", "Feb", Screen.ctrl("m")], separator=Screen.KEY_TAB)
+        self.assertFalse(form.changed)
         for effect in scene.effects:
             effect.update(2)
         self.assert_canvas_equals(
@@ -1521,6 +1530,7 @@ class TestWidgets(unittest.TestCase):
         # Check that a valid date updates the value - wait one second to allow search to reset.
         sleep(1)
         self.process_keys(scene, ["15", "Jun", Screen.ctrl("m")], separator=Screen.KEY_TAB)
+        self.assertTrue(form.changed)
         for effect in scene.effects:
             effect.update(2)
         self.assert_canvas_equals(
@@ -1552,6 +1562,7 @@ class TestWidgets(unittest.TestCase):
         # Check that the listbox is rendered correctly.
         for effect in scene.effects:
             effect.update(0)
+        self.assertFalse(form.changed)
         self.assert_canvas_equals(
             canvas,
             "+--------------------------------------+\n" +
@@ -1569,6 +1580,7 @@ class TestWidgets(unittest.TestCase):
         self.process_keys(scene, [Screen.KEY_DOWN, Screen.ctrl("m")])
         for effect in scene.effects:
             effect.update(1)
+        self.assertFalse(form.changed)
         self.assert_canvas_equals(
             canvas,
             "+-----+--------+-----------------------+\n" +
@@ -1587,6 +1599,7 @@ class TestWidgets(unittest.TestCase):
         self.process_mouse(scene, [(7, 1, MouseEvent.LEFT_CLICK)])
         self.process_keys(scene, [Screen.KEY_TAB, Screen.KEY_DOWN, Screen.KEY_TAB, Screen.KEY_UP])
         self.process_mouse(scene, [(10, 10, MouseEvent.LEFT_CLICK)])
+        self.assertTrue(form.changed)
         for effect in scene.effects:
             effect.update(2)
         self.assert_canvas_equals(
@@ -1602,6 +1615,43 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "+--------------------------------------+\n")
         self.assertEquals(form.time_widget.value, time(11, 1, 58))
+
+    def test_background(self):
+        """
+        Check Background widget works as expected.
+        """
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = Background(canvas, bg=7)
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that the widget is rendered correctly.
+        form.update(0)
+        for y in range(canvas.height):
+            for x in range(canvas.width):
+                char, _, _, bg = canvas.get_from(x, y)
+                self.assertEquals(char, ord(" "))
+                self.assertEquals(bg, 7)
+
+    def test_find_widget(self):
+        """
+        Check find_widget works as expected.
+        """
+        # Set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame5(canvas)
+        scene.add_effect(form)
+        scene.reset()
+
+        # Can't find a non-existent widget
+        self.assertIsNone(form.find_widget("ABLAH"))
+
+        # Can find a defined widget
+        self.assertEquals(form.find_widget("date"), form.date_widget)
 
 if __name__ == '__main__':
     unittest.main()
