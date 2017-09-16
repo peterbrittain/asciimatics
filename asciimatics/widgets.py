@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 This module allows you to create interactive text user interfaces.  For more details see
 http://asciimatics.readthedocs.io/en/latest/widgets.html
@@ -7,6 +8,8 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
+
+from collections import defaultdict
 from types import FunctionType
 import re
 import os
@@ -15,6 +18,7 @@ from builtins import range
 from builtins import object
 from copy import copy, deepcopy
 from functools import partial
+from datetime import date, datetime, timedelta
 from future.moves.itertools import zip_longest
 from future.utils import with_metaclass
 from abc import ABCMeta, abstractmethod, abstractproperty
@@ -124,6 +128,38 @@ def _split_text(text, width, height):
     return result
 
 
+class Background(Effect):
+    """
+    Effect to be used as a Desktop background.  This simply sets the background to the specified
+    colour.
+    """
+
+    def __init__(self, screen, bg=0, **kwargs):
+        """
+        :param screen: The Screen being used for the Scene.
+        :param bg: Optional colour for the background.
+
+        Also see the common keyword arguments in :py:obj:`.Effect`.
+        """
+        super(Background, self).__init__(screen, **kwargs)
+        self._bg = bg
+
+    def reset(self):
+        pass
+
+    def _update(self, frame_no):
+        for y in range(self._screen.height):
+            self._screen.print_at(" " * self._screen.width, 0, y, bg=self._bg)
+
+    @property
+    def frame_update_count(self):
+        return 1000000
+
+    @property
+    def stop_frame(self):
+        return self._stop_frame
+
+
 class Frame(Effect):
     """
     A Frame is a special Effect for controlling and displaying Widgets and
@@ -201,12 +237,11 @@ class Frame(Effect):
         :param is_modal: Whether this Frame is "modal" - i.e. will stop all other Effects
             from receiving input events.
         """
-        super(Frame, self).__init__()
+        super(Frame, self).__init__(screen)
         self._focus = 0
         self._max_height = 0
         self._layouts = []
         self._effects = []
-        self._screen = screen
         self._canvas = Canvas(screen, height, width, x, y)
         self._data = None
         self._on_load = on_load
@@ -1179,6 +1214,13 @@ class Widget(with_metaclass(ABCMeta, object)):
         self._custom_colour = None
 
     @property
+    def frame(self):
+        """
+        The Frame that contains this Widget.
+        """
+        return self._frame
+
+    @property
     def is_valid(self):
         """
         Whether this widget has passed its data validation or not.
@@ -1247,6 +1289,17 @@ class Widget(with_metaclass(ABCMeta, object)):
         self._offset = offset
         self._w = w
         self._h = h
+
+    def get_location(self):
+        """
+        Return the absolute location of this widget on the Screen, taking into account the
+        current state of the Frame that is displaying it and any label offsets of the Widget.
+
+        :returns: A tuple of the form (<X coordinate>, <Y coordinate>).
+        """
+        origin = self._frame.canvas.origin
+        return (self._x + origin[0] + self._offset,
+                self._y + origin[1] - self._frame.canvas.start_line)
 
     def focus(self):
         """
@@ -1835,7 +1888,7 @@ class TextBox(Widget):
                                       min(self._start_line, self._line)))
         self._start_column = min(self._start_column, self._column)
         self._start_column += _find_min_start(
-                self._value[self._line][self._start_column:self._column + 1], width)
+            self._value[self._line][self._start_column:self._column + 1], width)
 
         # Clear out the existing box content
         (colour, attr, bg) = self._pick_colours("edit_text")
@@ -2010,7 +2063,7 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
     """
 
     def __init__(self, height, options, titles=None, label=None, name=None, on_change=None,
-                 on_select=None):
+                 on_select=None, validator=None):
         """
         :param height: The required number of input lines for this widget.
         :param options: The options for each row in the widget.
@@ -2019,6 +2072,7 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         :param on_change: Optional function to call when selection changes.
         :param on_select: Optional function to call when the user actually selects an entry from
             this list - e.g. by double-clicking or pressing Enter.
+        :param validator: Optional function to validate selection for this widget.
         """
         super(_BaseListBox, self).__init__(name)
         self._options = options
@@ -2029,6 +2083,9 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         self._required_height = height
         self._on_change = on_change
         self._on_select = on_select
+        self._validator = validator
+        self._search = ""
+        self._last_search = datetime.now()
 
     def reset(self):
         # Reset selection - use value to trigger on_select
@@ -2056,14 +2113,25 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
             elif len(self._options) > 0 and event.key_code == Screen.KEY_PAGE_DOWN:
                 # Move down one page.
                 self._line = min(
-                        len(self._options) - 1, self._line + self._h - (1 if self._titles else 0))
+                    len(self._options) - 1, self._line + self._h - (1 if self._titles else 0))
                 self.value = self._options[self._line][1]
             elif event.key_code in [Screen.ctrl("m"), Screen.ctrl("j")]:
                 # Fire select callback.
                 if self._on_select:
                     self._on_select()
+            elif event.key_code > 0:
+                # Treat any other normal press as a search
+                now = datetime.now()
+                if now - self._last_search >= timedelta(seconds=1):
+                    self._search = ""
+                self._search += chr(event.key_code)
+                self._last_search = now
+
+                # If we find a new match for the serach string, update the list selection
+                new_value = self._find_option(self._search)
+                if new_value is not None:
+                    self.value = new_value
             else:
-                # Ignore any other key press.
                 return event
         elif isinstance(event, MouseEvent):
             # Mouse event - rebase coordinates to Frame context.
@@ -2090,6 +2158,15 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         else:
             # Ignore other events
             return event
+
+    @abstractmethod
+    def _find_option(self, search_value):
+        """
+        Internal function called by the BaseListBox to do a text search on user input.
+
+        :param search_value: The string value to search for in the list.
+        :return: The value of the matching option (or None if nothing matches).
+        """
 
     def required_height(self, offset, width):
         return self._required_height
@@ -2123,6 +2200,8 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         else:
             self._value = None
             self._line = -1
+        if self._validator:
+            self._is_valid = self._validator(self._value)
         if old_value != self._value and self._on_change:
             self._on_change()
 
@@ -2146,14 +2225,17 @@ class ListBox(_BaseListBox):
     the user can select one option.
     """
 
-    def __init__(self, height, options, label=None, name=None, on_change=None, on_select=None):
+    def __init__(self, height, options, centre=False, label=None, name=None, on_change=None,
+                 on_select=None, validator=None):
         """
         :param height: The required number of input lines for this ListBox.
         :param options: The options for each row in the widget.
+        :param centre: Whether to centre the selected line in the list.
         :param label: An optional label for the widget.
         :param name: The name for the ListBox.
         :param on_change: Optional function to call when selection changes.
         :param on_select: Optional function to call when the user actually selects an entry from
+        :param validator: Optional function to validate selection for this widget.
 
         The `options` are a list of tuples, where the first value is the string
         to be displayed to the user and the second is an interval value to
@@ -2161,7 +2243,10 @@ class ListBox(_BaseListBox):
 
             options=[("First option", 1), ("Second option", 2)]
         """
-        super(ListBox, self).__init__(height, options, label=label, name=name, on_change=on_change, on_select=on_select)
+        super(ListBox, self).__init__(
+            height, options, label=label, name=name, on_change=on_change, on_select=on_select,
+            validator=validator)
+        self._centre = centre
 
     def update(self, frame_no):
         self._draw_label()
@@ -2185,16 +2270,30 @@ class ListBox(_BaseListBox):
             return
 
         # Render visible portion of the text.
-        self._start_line = max(0, max(self._line - height + 1,
-                                      min(self._start_line, self._line)))
+        y_offset = 0
+        if self._centre:
+            self._start_line = self._line - (height // 2)
+        else:
+            self._start_line = max(
+                0, max(self._line - height + 1, min(self._start_line, self._line)))
+        start_line = self._start_line
+        if self._start_line < 0:
+            y_offset = -self._start_line
+            start_line = 0
         for i, (text, _) in enumerate(self._options):
-            if self._start_line <= i < self._start_line + height:
+            if start_line <= i < start_line + height - y_offset:
                 colour, attr, bg = self._pick_colours("field", i == self._line)
                 self._frame.canvas.print_at(
                     "{:{}}".format(_enforce_width(text, width), width),
                     self._x + self._offset + dx,
-                    self._y + i + dy - self._start_line,
+                    self._y + y_offset + i + dy - start_line,
                     colour, attr, bg)
+
+    def _find_option(self, search_value):
+        for text, value in self._options:
+            if text.startswith(search_value):
+                return value
+        return None
 
 
 class MultiColumnListBox(_BaseListBox):
@@ -2337,6 +2436,13 @@ class MultiColumnListBox(_BaseListBox):
                         self._y + i + dy - self._start_line,
                         colour, attr, bg)
                     row_dx += width + space
+
+    def _find_option(self, search_value):
+        for row, value in self._options:
+            # TODO: Should this be aware of a sort column?
+            if row[0].startswith(search_value):
+                return value
+        return None
 
 
 class FileBrowser(MultiColumnListBox):
@@ -2611,3 +2717,310 @@ class PopUpDialog(Frame):
         # Just create the same dialog in the new Screen/Scene objects.
         scene.add_effect(
             PopUpDialog(screen, self._text, self._buttons, self._on_close))
+
+
+class _TempPopup(Frame):
+    """
+    An internal Frame for creating a temporary pop-up for a Widget in another Frame.
+    """
+
+    def __init__(self, screen, parent, x, y, w, h):
+        """
+        :param screen: The Screen being used for this pop-up.
+        :param parent: The widget that spawned this pop-up.
+        :param x: The X coordinate for the desired pop-up.
+        :param y: The Y coordinate for the desired pop-up.
+        :param w: The width of the desired pop-up.
+        :param h: The height of the desired pop-up.
+        """
+        # Set up the new palette for this Frame
+        self.palette = defaultdict(lambda: parent.frame.palette["focus_field"])
+        self.palette["selected_field"] = parent.frame.palette["selected_field"]
+        self.palette["selected_focus_field"] = parent.frame.palette["selected_focus_field"]
+        self.palette["invalid"] = parent.frame.palette["invalid"]
+
+        # Construct the Frame
+        super(_TempPopup, self).__init__(screen, h, w, x=x, y=y, has_border=True, is_modal=True)
+
+        # Internal state for the pop-up
+        self._parent = parent
+
+    def process_event(self, event):
+        # Look for events that will close the pop-up - e.g. clicking outside the Frame or Enter key.
+        if event is not None:
+            if isinstance(event, KeyboardEvent):
+                if event.key_code in [Screen.ctrl("M"), Screen.ctrl("J"), ord(" ")]:
+                    event = None
+            elif isinstance(event, MouseEvent):
+                origin = self._canvas.origin
+                if event.y < origin[1] or event.y >= origin[1] + self._canvas.height:
+                    event = None
+                elif event.x < origin[0] or event.x >= origin[0] + self._canvas.width:
+                    event = None
+
+        # Remove this pop-up if we're done; otherwise bubble up the event.
+        if event is None:
+            try:
+                self._on_close()
+                self._scene.remove_effect(self)
+            except InvalidFields:
+                # Nothing to do as we've already prevented the Effect from being removed.
+                pass
+        return super(_TempPopup, self).process_event(event)
+
+    @abstractmethod
+    def _on_close(self):
+        """
+        Method to handle any communication back to the parent widget on closure of this pop-up.
+
+        This method can raise an InvalidFields exception to indicate that the current selection is
+        invalid and so the pop-up cannot be dismissed.
+        """
+        pass
+
+
+class _TimePickerPopup(_TempPopup):
+    """
+    An internal Frame for editing the currently selected time.
+    """
+
+    def __init__(self, parent):
+        """
+        :param parent: The widget that spawned this pop-up.
+        """
+        # Construct the Frame
+        location = parent.get_location()
+        super(_TimePickerPopup, self).__init__(parent.frame.screen,
+                                               parent,
+                                               location[0] - 1, location[1] - 2,
+                                               10 if parent.include_seconds else 7, 5)
+
+        # Build the widget to display the time selection.
+        self._hours = ListBox(3, [("{:02}".format(x), x) for x in range(24)], centre=True)
+        self._minutes = ListBox(3, [("{:02}".format(x), x) for x in range(60)], centre=True)
+        self._seconds = ListBox(3, [("{:02}".format(x), x) for x in range(60)], centre=True)
+        if self._parent.include_seconds:
+            layout = Layout([2, 1, 2, 1, 2], fill_frame=True)
+        else:
+            layout = Layout([2, 1, 2], fill_frame=True)
+        self.add_layout(layout)
+        layout.add_widget(self._hours, 0)
+        layout.add_widget(Label("\n:", height=3), 1)
+        layout.add_widget(self._minutes, 2)
+        if self._parent.include_seconds:
+            layout.add_widget(Label("\n:", height=3), 3)
+            layout.add_widget(self._seconds, 4)
+        self.fix()
+
+        # Set up the correct time.
+        self._hours.value = parent.value.hour
+        self._minutes.value = parent.value.minute
+        self._seconds.value = parent.value.second
+
+    def _on_close(self):
+        self._parent.value = self._parent.value.replace(hour=self._hours.value,
+                                                        minute=self._minutes.value,
+                                                        second=self._seconds.value)
+
+
+class TimePicker(Widget):
+    """
+    A TimePicker widget allows you to pick a time from a compact, temporary, pop-up Frame.
+    """
+
+    def __init__(self, label=None, name=None, seconds=False, on_change=None):
+        """
+        :param label: An optional label for the widget.
+        :param name: The name for the widget.
+        :param seconds: Whether to include selection of seconds or not.
+        :param on_change: Optional function to call when the selected time changes.
+        """
+        super(TimePicker, self).__init__(name)
+        self._label = label
+        self._on_change = on_change
+        self._value = None
+        self._child = None
+        self.include_seconds = seconds
+
+    def update(self, frame_no):
+        self._draw_label()
+
+        # This widget only ever needs display the current selection - the separate Frame does all
+        # the clever stuff when it has the focus.
+        (colour, attr, bg) = self._pick_colours("edit_text")
+        self._frame.canvas.print_at(
+            self._value.strftime("%H:%M:%S" if self.include_seconds else "%H:%M"),
+            self._x + self._offset,
+            self._y,
+            colour, attr, bg)
+
+    def reset(self):
+        pass
+
+    def process_event(self, event):
+        if event is not None:
+            # Handle key or mouse selection events - e.g. click on widget or Enter.
+            if isinstance(event, KeyboardEvent):
+                if event.key_code in [Screen.ctrl("M"), Screen.ctrl("J"), ord(" ")]:
+                    event = None
+            elif isinstance(event, MouseEvent):
+                new_event = self._frame.rebase_event(event)
+                if event.buttons != 0:
+                    if self.is_mouse_over(new_event, include_label=False):
+                        event = None
+
+            # Create the pop-up if needed
+            if event is None:
+                self._child = _TimePickerPopup(self)
+                self.frame.scene.add_effect(self._child)
+
+        return event
+
+    def required_height(self, offset, width):
+        return 1
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, new_value):
+        # Only trigger the notification after we've changed the value.
+        old_value = self._value
+        self._value = new_value
+        if old_value != self._value and self._on_change:
+            self._on_change()
+
+
+class _DatePickerPopup(_TempPopup):
+    """
+    An internal Frame for editing the currently selected date.
+    """
+
+    def __init__(self, parent, year_range=None):
+        """
+        :param parent: The widget that spawned this pop-up.
+        :param year_range: Optional range to limit the year selection to.
+        """
+        # Create the lists for each entry.
+        now = parent.value if parent.value else date.today()
+        if year_range is None:
+            year_range = range(now.year - 50, now.year + 50)
+        self._days = ListBox(3,
+                             [("{:02}".format(x), x) for x in range(1, 32)],
+                             centre=True,
+                             validator=self._check_date)
+        self._months = ListBox(3,
+                               [(now.replace(day=1, month=x).strftime("%b"), x)
+                                for x in range(1, 13)],
+                               centre=True,
+                               on_change=self._refresh_day)
+        self._years = ListBox(3,
+                              [("{:04}".format(x), x) for x in year_range],
+                              centre=True,
+                              on_change=self._refresh_day)
+
+        # Construct the Frame
+        location = parent.get_location()
+        super(_DatePickerPopup, self).__init__(parent.frame.screen,
+                                               parent,
+                                               location[0] - 1, location[1] - 2,
+                                               13, 5)
+
+        # Build the widget to display the time selection.
+        layout = Layout([2, 1, 3, 1, 4], fill_frame=True)
+        self.add_layout(layout)
+        layout.add_widget(self._days, 0)
+        layout.add_widget(Label("\n/", height=3), 1)
+        layout.add_widget(self._months, 2)
+        layout.add_widget(Label("\n/", height=3), 3)
+        layout.add_widget(self._years, 4)
+        self.fix()
+
+        # Set up the correct time.
+        self._years.value = parent.value.year
+        self._months.value = parent.value.month
+        self._days.value = parent.value.day
+
+    def _check_date(self, value):
+        try:
+            date(self._years.value, self._months.value, value)
+            return True
+        except (TypeError, ValueError):
+            return False
+
+    def _refresh_day(self):
+        self._days.value = self._days.value
+
+    def _on_close(self):
+        try:
+            self._parent.value = self._parent.value.replace(day=self._days.value,
+                                                            month=self._months.value,
+                                                            year=self._years.value)
+        except ValueError:
+            raise InvalidFields([self._days])
+
+
+class DatePicker(Widget):
+    """
+    A DatePicker widget allows you to pick a date from a compact, temporary, pop-up Frame.
+    """
+
+    def __init__(self, label=None, name=None, year_range=None, on_change=None):
+        """
+        :param label: An optional label for the widget.
+        :param name: The name for the widget.
+        :param on_change: Optional function to call when the selected time changes.
+        """
+        super(DatePicker, self).__init__(name)
+        self._label = label
+        self._on_change = on_change
+        self._value = None
+        self._child = None
+        self._year_range = year_range
+
+    def update(self, frame_no):
+        self._draw_label()
+
+        # This widget only ever needs display the current selection - the separate Frame does all
+        # the clever stuff when it has the focus.
+        (colour, attr, bg) = self._pick_colours("edit_text")
+        self._frame.canvas.print_at(
+            self._value.strftime("%d/%b/%Y"),
+            self._x + self._offset,
+            self._y,
+            colour, attr, bg)
+
+    def reset(self):
+        pass
+
+    def process_event(self, event):
+        if event is not None:
+            if isinstance(event, KeyboardEvent):
+                if event.key_code in [Screen.ctrl("M"), Screen.ctrl("J"), ord(" ")]:
+                    event = None
+            elif isinstance(event, MouseEvent):
+                new_event = self._frame.rebase_event(event)
+                if event.buttons != 0:
+                    if self.is_mouse_over(new_event, include_label=False):
+                        event = None
+            if event is None:
+                self._child = _DatePickerPopup(self, year_range=self._year_range)
+                self.frame.scene.add_effect(self._child)
+
+        return event
+
+    def required_height(self, offset, width):
+        return 1
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, new_value):
+        # Only trigger the notification after we've changed the value.
+        old_value = self._value
+        self._value = new_value
+        if old_value != self._value and self._on_change:
+            self._on_change()

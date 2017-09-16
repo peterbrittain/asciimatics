@@ -1009,7 +1009,7 @@ class Kaleidoscope(DynamicRenderer):
                 if segment % 2 == 0:
                     # Just a rotation required for even segments.
                     x1, y1 = _rotate(
-                            ox, oy, 0 if self._symmetry == 0 else -segment * pi / self._symmetry)
+                        ox, oy, 0 if self._symmetry == 0 else -segment * pi / self._symmetry)
                 else:
                     # Odd segments require a rotation and then a reflection.
                     x1, y1 = _rotate(ox, oy, (1 - segment) * pi / self._symmetry)
