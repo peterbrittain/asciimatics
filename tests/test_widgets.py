@@ -4,6 +4,8 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
+from datetime import date, time
+from time import sleep
 from mock import patch
 from builtins import chr
 import unittest
@@ -14,7 +16,8 @@ from asciimatics.exceptions import NextScene, StopApplication, InvalidFields
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen, Canvas
 from asciimatics.widgets import Frame, Layout, Button, Label, TextBox, Text, \
-    Divider, RadioButtons, CheckBox, PopUpDialog, ListBox, Widget, MultiColumnListBox, FileBrowser
+    Divider, RadioButtons, CheckBox, PopUpDialog, ListBox, Widget, MultiColumnListBox, FileBrowser, \
+    DatePicker, TimePicker
 
 
 class TestFrame(Frame):
@@ -196,6 +199,23 @@ class TestFrame4(Frame):
 
     def change(self):
         self.highlighted = self.file_list.value
+
+
+class TestFrame5(Frame):
+    def __init__(self, screen):
+        super(TestFrame5, self).__init__(
+            screen, screen.height, screen.width, has_border=True, name="My Form")
+
+        # Simple full-page Widget
+        layout = Layout([1], fill_frame=True)
+        self.add_layout(layout)
+        self.date_widget = DatePicker(label="Date:", name="date", year_range=range(1999, 2020))
+        self.date_widget.value = date(2017, 1, 2)
+        layout.add_widget(self.date_widget)
+        self.time_widget = TimePicker(label="Time:", name="time", seconds=True)
+        self.time_widget.value = time(12, 0, 59)
+        layout.add_widget(self.time_widget)
+        self.fix()
 
 
 class TestWidgets(unittest.TestCase):
@@ -1385,7 +1405,6 @@ class TestWidgets(unittest.TestCase):
         self.assertEqual(form.data, {"file_list": None})
 
         # Check that the listbox is rendered correctly.
-        self.maxDiff = None
         form.update(0)
         self.assert_canvas_equals(
             canvas,
@@ -1436,6 +1455,153 @@ class TestWidgets(unittest.TestCase):
         self.process_keys(form, [Screen.KEY_DOWN, Screen.KEY_DOWN, Screen.ctrl("m")])
         self.assertEqual(form.highlighted, "/A Directory/A File")
         self.assertEqual(form.selected, "/A Directory/A File")
+
+    def test_date_picker(self):
+        """
+        Check DatePicker widget works as expected.
+        """
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame5(canvas)
+        scene.add_effect(form)
+        scene.reset()
+
+        # Check that the listbox is rendered correctly.
+        for effect in scene.effects:
+            effect.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|Date: 02/Jan/2017                     |\n" +
+            "|Time: 12:00:59                        O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check that enter key brings up edit pop-up
+        self.process_keys(scene, [Screen.ctrl("m")])
+        for effect in scene.effects:
+            effect.update(1)
+        self.assert_canvas_equals(
+            canvas,
+            "+-----|01     2016|--------------------+\n" +
+            "|Date:|02/Jan/2017|                    |\n" +
+            "|Time:|03 Feb 2018|                    O\n" +
+            "|     +-----------+                    |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check that you can't select an invalid date.
+        self.process_keys(scene, ["31", "Feb", Screen.ctrl("m")], separator=Screen.KEY_TAB)
+        for effect in scene.effects:
+            effect.update(2)
+        self.assert_canvas_equals(
+            canvas,
+            "+-----|30 Jan 2016|--------------------+\n" +
+            "|Date:|31/Feb/2017|                    |\n" +
+            "|Time:|   Mar 2018|                    O\n" +
+            "|     +-----------+                    |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check that a valid date updates the value - wait one second to allow search to reset.
+        sleep(1)
+        self.process_keys(scene, ["15", "Jun", Screen.ctrl("m")], separator=Screen.KEY_TAB)
+        for effect in scene.effects:
+            effect.update(2)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|Date: 15/Jun/2017                     |\n" +
+            "|Time: 12:00:59                        O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+        self.assertEquals(form.date_widget.value, date(2017, 6, 15))
+
+    def test_time_picker(self):
+        """
+        Check TimePicker widget works as expected.
+        """
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame5(canvas)
+        scene.add_effect(form)
+        scene.reset()
+
+        # Check that the listbox is rendered correctly.
+        for effect in scene.effects:
+            effect.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|Date: 02/Jan/2017                     |\n" +
+            "|Time: 12:00:59                        O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check that enter key brings up edit pop-up
+        self.process_keys(scene, [Screen.KEY_DOWN, Screen.ctrl("m")])
+        for effect in scene.effects:
+            effect.update(1)
+        self.assert_canvas_equals(
+            canvas,
+            "+-----+--------+-----------------------+\n" +
+            "|Date:|11    58|17                     |\n" +
+            "|Time:|12:00:59|                       O\n" +
+            "|     |13 01   |                       |\n" +
+            "|     +--------+                       |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check that we can change the time with cursors keys and mouse selection - and click out
+        # to exit.
+        self.process_mouse(scene, [(7, 1, MouseEvent.LEFT_CLICK)])
+        self.process_keys(scene, [Screen.KEY_TAB, Screen.KEY_DOWN, Screen.KEY_TAB, Screen.KEY_UP])
+        self.process_mouse(scene, [(10, 10, MouseEvent.LEFT_CLICK)])
+        for effect in scene.effects:
+            effect.update(2)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|Date: 02/Jan/2017                     |\n" +
+            "|Time: 11:01:58                        O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+        self.assertEquals(form.time_widget.value, time(11, 1, 58))
 
 if __name__ == '__main__':
     unittest.main()
