@@ -2120,14 +2120,14 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
             elif event.key_code > 0:
                 # Treat any other normal press as a search
                 now = datetime.now()
-                if now - self._last_search > timedelta(seconds=1):
+                if now - self._last_search >= timedelta(seconds=1):
                     self._search = ""
                 self._search += chr(event.key_code)
                 self._last_search = now
 
                 # If we find a new match for the serach string, update the list selection
                 new_value = self._find_option(self._search)
-                if new_value:
+                if new_value is not None:
                     self.value = new_value
             else:
                 return event
@@ -2269,16 +2269,17 @@ class ListBox(_BaseListBox):
 
         # Render visible portion of the text.
         y_offset = 0
-        start_line = self._start_line
         if self._centre:
             self._start_line = self._line - (height // 2)
-            if self._start_line < 0:
-                y_offset = -self._start_line
-                start_line = 0
         else:
-            self._start_line = max(0, max(self._line - height + 1, min(start_line, self._line)))
+            self._start_line = max(
+                0, max(self._line - height + 1, min(self._start_line, self._line)))
+        start_line = self._start_line
+        if self._start_line < 0:
+            y_offset = -self._start_line
+            start_line = 0
         for i, (text, _) in enumerate(self._options):
-            if self._start_line <= i < start_line + height:
+            if start_line <= i < start_line + height - y_offset:
                 colour, attr, bg = self._pick_colours("field", i == self._line)
                 self._frame.canvas.print_at(
                     "{:{}}".format(_enforce_width(text, width), width),
@@ -2807,7 +2808,6 @@ class _TimePickerPopup(_TempPopup):
         if self._parent.include_seconds:
             layout.add_widget(Label("\n:", height=3), 3)
             layout.add_widget(self._seconds, 4)
-        self.add_layout(layout)
         self.fix()
 
         # Set up the correct time.
@@ -2933,7 +2933,6 @@ class _DatePickerPopup(_TempPopup):
         layout.add_widget(self._months, 2)
         layout.add_widget(Label("\n/", height=3), 3)
         layout.add_widget(self._years, 4)
-        self.add_layout(layout)
         self.fix()
 
         # Set up the correct time.
