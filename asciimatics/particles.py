@@ -219,8 +219,7 @@ class ParticleEffect(with_metaclass(ABCMeta, Effect)):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(ParticleEffect, self).__init__(**kwargs)
-        self._screen = screen
+        super(ParticleEffect, self).__init__(screen, **kwargs)
         self._x = x
         self._y = y
         self._life_time = life_time

@@ -1,11 +1,13 @@
 from asciimatics.widgets import Frame, TextBox, Layout, Label, Divider, Text, \
-    CheckBox, RadioButtons, Button, PopUpDialog
+    CheckBox, RadioButtons, Button, PopUpDialog, TimePicker, DatePicker, Background
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, NextScene, StopApplication, \
     InvalidFields
 import sys
 import re
+import datetime
+import logging
 
 # Initial data for the form
 form_data = {
@@ -17,7 +19,11 @@ form_data = {
     "CA": False,
     "CB": True,
     "CC": False,
+    "DATE": datetime.datetime.now().date(),
+    "TIME": datetime.datetime.now().time()
 }
+
+logging.basicConfig(filename="forms.log", level=logging.DEBUG)
 
 
 class DemoFrame(Frame):
@@ -67,6 +73,12 @@ class DemoFrame(Frame):
             CheckBox("Field 2", name="CB", on_change=self._on_change), 1)
         layout.add_widget(
             CheckBox("Field 3", name="CC", on_change=self._on_change), 1)
+        layout.add_widget(DatePicker("Date",
+                                     name="DATE",
+                                     year_range=range(1999, 2100),
+                                     on_change=self._on_change), 1)
+        layout.add_widget(
+            TimePicker("Time", name="TIME", on_change=self._on_change, seconds=True), 1)
         layout.add_widget(Divider(height=3), 1)
         layout2 = Layout([1, 1, 1])
         self.add_layout(layout2)
@@ -123,7 +135,10 @@ class DemoFrame(Frame):
 
 
 def demo(screen, scene):
-    screen.play([Scene([DemoFrame(screen)], -1)], stop_on_resize=True, start_scene=scene)
+    screen.play([Scene([
+        Background(screen),
+        DemoFrame(screen)
+    ], -1)], stop_on_resize=True, start_scene=scene)
 
 last_scene = None
 while True:
