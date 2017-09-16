@@ -1888,7 +1888,7 @@ class TextBox(Widget):
                                       min(self._start_line, self._line)))
         self._start_column = min(self._start_column, self._column)
         self._start_column += _find_min_start(
-                self._value[self._line][self._start_column:self._column + 1], width)
+            self._value[self._line][self._start_column:self._column + 1], width)
 
         # Clear out the existing box content
         (colour, attr, bg) = self._pick_colours("edit_text")
@@ -2113,7 +2113,7 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
             elif len(self._options) > 0 and event.key_code == Screen.KEY_PAGE_DOWN:
                 # Move down one page.
                 self._line = min(
-                        len(self._options) - 1, self._line + self._h - (1 if self._titles else 0))
+                    len(self._options) - 1, self._line + self._h - (1 if self._titles else 0))
                 self.value = self._options[self._line][1]
             elif event.key_code in [Screen.ctrl("m"), Screen.ctrl("j")]:
                 # Fire select callback.
@@ -2966,7 +2966,7 @@ class DatePicker(Widget):
     A DatePicker widget allows you to pick a date from a compact, temporary, pop-up Frame.
     """
 
-    def __init__(self, label=None, name=None, year_range= None, on_change=None):
+    def __init__(self, label=None, name=None, year_range=None, on_change=None):
         """
         :param label: An optional label for the widget.
         :param name: The name for the widget.

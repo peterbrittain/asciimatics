@@ -860,7 +860,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                                 # Clip raster to screen width.
                                 self.move(max(0, last_x), y)
                                 self.draw(
-                                        min(edge.x, self.width), y, colour=colour, bg=bg, thin=True)
+                                    min(edge.x, self.width), y, colour=colour, bg=bg, thin=True)
 
                 # Update the x location for this active edge.
                 edge.x += edge.dx
@@ -1222,7 +1222,6 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
 
                 # Finally update the screen buffer to reflect reality.
                 self._screen_buffer[y + self._start_line][x] = new_cell
-
 
     def clear(self):
         """
@@ -2266,7 +2265,6 @@ else:
             if self._start_line is not None:
                 self._safe_write("{}{}{}".format(self._start_title, title,
                                                  self._end_title))
-
 
     class _SignalState(object):
         """

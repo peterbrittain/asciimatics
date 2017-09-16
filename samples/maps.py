@@ -51,14 +51,14 @@ class EnterLocation(Frame):
     """Form to enter a new desired location to display on the map."""
     def __init__(self, screen, longitude, latitude, on_ok):
         super(EnterLocation, self).__init__(
-                screen, 7, 40, data={"long": str(longitude), "lat": str(latitude)}, name="loc",
-                title="Enter New Location", is_modal=True)
+            screen, 7, 40, data={"long": str(longitude), "lat": str(latitude)}, name="loc",
+            title="Enter New Location", is_modal=True)
         self._on_ok = on_ok
         layout = Layout([1, 18, 1])
         self.add_layout(layout)
         layout.add_widget(Divider(draw_line=False), 1)
-        layout.add_widget(Text(label="Longitude:", name="long", validator="^[-]?\d+?\.\d+?$"), 1)
-        layout.add_widget(Text(label="Latitude:", name="lat", validator="^[-]?\d+?\.\d+?$"), 1)
+        layout.add_widget(Text(label="Longitude:", name="long", validator=r"^[-]?\d+?\.\d+?$"), 1)
+        layout.add_widget(Text(label="Latitude:", name="lat", validator=r"^[-]?\d+?\.\d+?$"), 1)
         layout.add_widget(Divider(draw_line=False), 1)
         layout2 = Layout([1, 1, 1])
         self.add_layout(layout2)
@@ -110,7 +110,7 @@ class Map(Effect):
     }
 
     def __init__(self, screen):
-        super(Map, self).__init__()
+        super(Map, self).__init__(screen)
         # Current state of the map
         self._screen = screen
         self._zoom = 0
@@ -224,6 +224,7 @@ class Map(Effect):
                 if (x_tile < 0 or x_tile >= n or y_tile < 0 or y_tile >= n or
                         z_tile < 0 or z_tile > 20):
                     continue
+                # noinspection PyBroadException
                 try:
 
                     # Don't bother rendering if the tile is not visible
@@ -240,7 +241,7 @@ class Map(Effect):
                 # pylint: disable=broad-except
                 except Exception:
                     self._oops = "{} - tile loc: {} {} {}".format(
-                            traceback.format_exc(), x_tile, y_tile, z_tile)
+                        traceback.format_exc(), x_tile, y_tile, z_tile)
 
                 # Generally refresh screen after we've downloaded everything
                 self._screen.force_update()
@@ -387,9 +388,9 @@ class Map(Effect):
                 y *= self._size
                 if satellite:
                     count += self._draw_satellite_tile(
-                            tile,
-                            int((x-x_offset + self._screen.width // 4) * 2),
-                            int(y-y_offset + self._screen.height // 2))
+                        tile,
+                        int((x-x_offset + self._screen.width // 4) * 2),
+                        int(y-y_offset + self._screen.height // 2))
                 else:
                     count += self._draw_tile_layer(tile, layer_name, c_filters, colour, t_filters,
                                                    x - x_offset, y - y_offset, bg)
@@ -474,7 +475,7 @@ class Map(Effect):
             footer = "Using local cached data - go to https://www.mapbox.com/ and get a free key."
         else:
             footer = u"Zoom: {} Location: {:.6}, {:.6} Maps: © Mapbox, © OpenStreetMap".format(
-                    self._zoom, self._longitude, self._latitude)
+                self._zoom, self._longitude, self._latitude)
         self._screen.centre(footer, self._screen.height - 1, 1)
 
         return count
@@ -526,6 +527,8 @@ class Map(Effect):
         self._desired_zoom = 13
         self._screen.force_update()
 
+    # noinspection PyUnusedLocal
+    # pylint: disable=unused-argument
     def clone(self, new_screen, new_scene):
         # On resize, there will be a new Map - kill the thread in this one.
         self._running = False
