@@ -40,7 +40,7 @@ Left arrow           Move to the last Widget in the column to the left of the co
                      current input focus.
 Right arrow          Move to the first Widget in the column to the right of the column with the
                      current input focus.
-Space or Return      Select the current Widget - e.g. click a Button.
+Space or Return      Select the current Widget - e.g. click a Button, or pop-up a list of options.
 ===================  ==============================================================================
 
 Note that the cursor keys will not traverse between Layouts.  In addition, asciimatics will not
@@ -283,7 +283,9 @@ Widget type                   Description
 ============================= =====================================================================
 :py:obj:`.Button`             Action buttons - e.g. ok/cancel/etc.
 :py:obj:`.CheckBox`           Simple yes/no tick boxes.
+:py:obj:`.DatePicker`         A single-line widget for selecting a date (using a pop-up list).
 :py:obj:`.Divider`            A spacer between widgets (for aesthetics).
+:py:obj:`.FileBrowser`        A multi-line widget for listing the local file system.
 :py:obj:`.Label`              A label for a group of related widgets.
 :py:obj:`.ListBox`            A list of possible options from which users can select one value.
 :py:obj:`.MultiColumnListBox` Like a ListBox, but for displaying tabular data.
@@ -291,6 +293,7 @@ Widget type                   Description
                               a list of options.
 :py:obj:`.Text`               A single line of editable text.
 :py:obj:`.TextBox`            A multi-line box of editable text.
+:py:obj:`.TimePicker`         A single-line widget for selecting a time (using a pop-up list).
 ============================= =====================================================================
 
 Asciimatics will automatically arrange these for you with just a little extra help.  All you need
@@ -449,23 +452,24 @@ The following table shows the required keys for the `palette`.
 Key                       Usage
 ========================  =========================================================================
 "background"              Frame background
-"disabled"                Any disabled Widget
-"label"                   Widget labels
 "borders"                 Frame border and Divider Widget
-"scroll"                  Frame scroll bar 
-"title"                   Frame title
-"edit_text"               Text and TextBox
-"focus_edit_text"         Text and TextBox with input focus     
 "button"                  Buttons
-"focus_button"            Buttons with input focus
 "control"                 Checkboxes and RadioButtons
-"selected_control"        Checkboxes and RadioButtons when selected
-"focus_control"           Checkboxes and RadioButtons with input focus
-"selected_focus_control"  Checkboxes and RadioButtons with both
+"disabled"                Any disabled Widget
+"edit_text"               Text and TextBox
 "field"                   Value of an option for a Checkbox, RadioButton or Listbox
-"selected_field"          As above when selected
+"focus_button"            Buttons with input focus
+"focus_control"           Checkboxes and RadioButtons with input focus
+"focus_edit_text"         Text and TextBox with input focus
 "focus_field"             As above with input focus
+"invalid"                 The widget contains invalid data
+"label"                   Widget labels
+"scroll"                  Frame scroll bar
+"selected_control"        Checkboxes and RadioButtons when selected
+"selected_field"          As above when selected
+"selected_focus_control"  Checkboxes and RadioButtons with both
 "selected_focus_field"    As above with both
+"title"                   Frame title
 ========================  =========================================================================
 
 .. _custom-colours-ref:
@@ -487,6 +491,8 @@ find out what they entered?  There are 2 basic ways to do this:
    `None` for those `Widgets` where there is no value - e.g. buttons.
 2. You can query the `Frame`by looking at the `data` property.  This will return the value for
    every Widget in the former as a dictionary, using the Widget `name` properties for the keys.
+   Note that `data` is just a cache, which only gets updated when you call :py:meth:`~Frame.save`,
+   so you need to call this method to refresh the cache before accessing it.
 
 For example:
 

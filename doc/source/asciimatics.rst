@@ -76,6 +76,14 @@ asciimatics.sprites module
     :inherited-members:
     :show-inheritance:
 
+asciimatics.utilities module
+----------------------------
+
+.. automodule:: asciimatics.utilities
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
 asciimatics.version module
 --------------------------
 

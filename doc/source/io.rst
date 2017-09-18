@@ -212,7 +212,7 @@ clear what was already drawn.  For example:
 
 .. code-block:: python
 
-    # draw a diagonal line from the top-left of the screen.
+    # Draw a diagonal line from the top-left of the screen.
     screen.move(0, 0)
     screen.draw(10, 10)
 
@@ -224,7 +224,16 @@ If the resulting line is too thick, you can also pick a thinner pen by specifyin
 Examples of both styles can be found in the Clock sample code.
 
 In addition, there is the :py:meth:`~.Screen.fill_polygon` method which will draw a filled
-polygon in the specified colour using a set of points passed in to define the required shape.
+polygon in the specified colour using a set of points passed in to define the required shape.  This
+uses the scan-line algorithm, so you can cut holes inside the shape by defining one polygon inside
+another.  For example:
+
+.. code-block:: python
+
+    # Draw a large with a smaller rectangle hole in the middle.
+    screen.fill_polygon([[(60, 0), (70, 0), (70, 10), (60, 10)],
+                         [(63, 2), (67, 2), (67, 8), (63, 8)]])
+
 
 Unicode drawing
 ---------------
