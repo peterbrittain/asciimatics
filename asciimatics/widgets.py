@@ -1545,7 +1545,7 @@ class Text(Widget):
     label and an entry box.
     """
 
-    def __init__(self, label=None, name=None, on_change=None, validator=None):
+    def __init__(self, label=None, name=None, on_change=None, validator=None, hide_char=None):
         """
         :param label: An optional label for the widget.
         :param name: The name for the widget.
@@ -1554,6 +1554,7 @@ class Text(Widget):
             This can be a function (which takes the current value and returns
             True for valid content) or a regex string, which must match the
             entire allowed value.
+        :param hide_char: Character to use instead of what the user types - e.g. to hide passwords.
         """
         super(Text, self).__init__(name)
         self._label = label
@@ -1561,6 +1562,7 @@ class Text(Widget):
         self._start_column = 0
         self._on_change = on_change
         self._validator = validator
+        self._hide_char = hide_char
 
     def update(self, frame_no):
         self._draw_label()
@@ -1573,7 +1575,10 @@ class Text(Widget):
 
         # Render visible portion of the text.
         (colour, attr, bg) = self._pick_colours("edit_text")
-        text = _enforce_width(self._value[self._start_column:], width)
+        text = self._value[self._start_column:]
+        text = _enforce_width(text, width)
+        if self._hide_char:
+            text = self._hide_char[0] * len(text)
         text += " " * (width - wcswidth(text))
         self._frame.canvas.print_at(
             text,
@@ -1585,10 +1590,10 @@ class Text(Widget):
         # if we have the input focus.
         if self._has_focus:
             self._draw_cursor(
-                " " if self._column >= len(self._value) else
-                self._value[self._column],
+                " " if self._column >= len(self._value) else self._hide_char[0] if self._hide_char
+                else self._value[self._column],
                 frame_no,
-                self._x + self._offset + wcswidth(self._value[self._start_column:self._column]),
+                self._x + self._offset + wcswidth(text[:self._column - self._start_column]),
                 self._y)
 
     def reset(self):

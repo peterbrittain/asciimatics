@@ -16,6 +16,7 @@ LATEST
 - Added `colour` property to Cogs Effect.
 - Added `title` property to Frame.
 - Added `text` property to Label.
+- Added `hide_char` parameter to Text constructor to hide any entered text - e.g. for passwords.
 - Added optional `height` parameter to Label constructor.
 - Allowed programs to set "default" values for Widgets - which means you need to reset each field
   in a Frame explicitly rather than relying on reset to blank out uninitialized fields.
