@@ -88,8 +88,8 @@ be able to detect the Ctrl+S key.  See `here
 <http://stackoverflow.com/questions/26436581/is-it-possible-to-disable-system-
 console-xoff-xon-flow-control-processing-in-my>`__ for details.
 
-Backspace is not working
-------------------------
+Backspace or delete are not working
+-----------------------------------
 Some users have reported this on curses systems.  So far this has been tracked down to issues with
 the terminal configuration.  For an in-depth explanation of the problem and several possible
 solutions see `here <http://www.ibb.net/~anne/keyboard.html>`__.
