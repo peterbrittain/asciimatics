@@ -296,6 +296,9 @@ Widget type                   Description
 :py:obj:`.TimePicker`         A single-line widget for selecting a time (using a pop-up list).
 ============================= =====================================================================
 
+.. note:: You can use the `hide_char` option on Text widgets to hide sensitive data - e.g. for
+          passwords.
+
 Asciimatics will automatically arrange these for you with just a little extra help.  All you need
 to do is decide how many columns you want for your fields and which fields should be in which
 columns.  To tell asciimatics what to do you create a `Layout` (or more than one if you want a more

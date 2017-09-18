@@ -1653,5 +1653,36 @@ class TestWidgets(unittest.TestCase):
         # Can find a defined widget
         self.assertEquals(form.find_widget("date"), form.date_widget)
 
+    def test_password(self):
+        """
+        Check that we can do password input on Text widgets.
+        """
+        # Create a dummy screen.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 2, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        text = Text("Password", hide_char="*")
+        layout.add_widget(text)
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that input still saves off values as expected
+        self.process_keys(form, ["1234"])
+        form.save()
+        self.assertEqual(text.value, "1234")
+
+        # Check that it is drawn with the obscuring charav=cter, though.
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "Password ****                           \n" +
+            "                                        \n")
+
 if __name__ == '__main__':
     unittest.main()

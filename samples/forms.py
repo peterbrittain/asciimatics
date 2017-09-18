@@ -79,6 +79,7 @@ class DemoFrame(Frame):
                                      on_change=self._on_change), 1)
         layout.add_widget(
             TimePicker("Time", name="TIME", on_change=self._on_change, seconds=True), 1)
+        layout.add_widget(Text("Password", name="PWD", on_change=self._on_change, hide_char="*"), 1)
         layout.add_widget(Divider(height=3), 1)
         layout2 = Layout([1, 1, 1])
         self.add_layout(layout2)
