@@ -1098,6 +1098,8 @@ class Widget(with_metaclass(ABCMeta, object)):
         self._is_disabled = False
         self._is_valid = True
         self._custom_colour = None
+        self._on_focus = None
+        self._on_blur = None
 
     @property
     def is_valid(self):
@@ -1175,6 +1177,8 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         self._has_focus = True
         self._frame.move_to(self._x, self._y, self._h)
+        if self._on_focus is not None:
+            self._on_focus()
 
     def is_mouse_over(self, event, include_label=True):
         """
@@ -1202,6 +1206,8 @@ class Widget(with_metaclass(ABCMeta, object)):
         Call this to take the input focus from this Widget.
         """
         self._has_focus = False
+        if self._on_blur is not None:
+            self._on_blur()
 
     def _draw_label(self):
         """
