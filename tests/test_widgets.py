@@ -157,6 +157,9 @@ class TestFrame3(Frame):
 
 
 class TestWidgets(unittest.TestCase):
+    # see test_focus_callback
+    _did_blur = False
+    _did_focus = False
 
     def assert_canvas_equals(self, canvas, expected):
         """
@@ -739,6 +742,47 @@ class TestWidgets(unittest.TestCase):
         # Check that the current focus ignores unknown events.
         event = object()
         self.assertEqual(event, form.process_event(event))
+
+    def _on_focus(self):
+        self._did_focus = True
+
+    def _on_blur(self):
+        self._did_blur = True
+
+    def test_focus_callback(self):
+        """
+        Check that the _on_focus & _on_blur callbacks work as expected.
+        """
+        # Create a dummy screen
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 2, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        text = Text("Test")
+        layout.add_widget(text)
+        form.fix()
+        # Ensure that none of the callbacks have been called yet.
+        self.assertEqual(self._did_blur, False)
+        self.assertEqual(self._did_focus, False)
+        # Register the callbacks
+        text._on_focus = self._on_focus
+        text._on_blur = self._on_blur
+        form.register_scene(scene)
+        form.reset()
+
+        # Blur the Text field
+        self.process_keys(form, [Screen.KEY_TAB])
+        # Ensure that the callback was called.
+        self.assertEqual(self._did_blur, True)
+
+        # Focus the Text field
+        self.process_mouse(form, [(1, 20, MouseEvent.LEFT_CLICK)])
+        # Ensure that the callback was called.
+        self.assertEqual(self._did_focus, True)
 
     def test_multi_column_list_box(self):
         """
