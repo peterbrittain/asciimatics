@@ -13,6 +13,7 @@ LATEST
 - Added the Kaleidoscope and RotatedDuplicate renderers.
 - Created Maps demo - which renders vector tiles and satellite images from Mapbox.
 - Added optional `is_modal` parameter to Frame constructor.
+- Added `on_blur` and `on_focus` parameters to all interactive Widgets.
 - Added `colour` property to Cogs Effect.
 - Added `title` property to Frame.
 - Added `text` property to Label.
