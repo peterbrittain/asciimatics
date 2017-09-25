@@ -226,7 +226,6 @@ class TestFrame5(Frame):
 
 
 class TestWidgets(unittest.TestCase):
-
     def assert_canvas_equals(self, canvas, expected):
         """
         Assert output to canvas is as expected.
@@ -888,6 +887,46 @@ class TestWidgets(unittest.TestCase):
             "| < Add > < Edit > < Delete < Quit >   |\n" +
             "|Selected: None                        |\n" +
             "+--------------------------------------+\n")
+
+    def test_focus_callback(self):
+        """
+        Check that the _on_focus & _on_blur callbacks work as expected.
+        """
+        def _on_focus():
+            self._did_focus = True
+
+        def _on_blur():
+            self._did_blur = True
+
+        # Create a dummy screen
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 2, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        layout.add_widget(Text("Test"))
+        layout.add_widget(Text("Test2", on_blur=_on_blur, on_focus=_on_focus))
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        # Reset state for test
+        self._did_blur = False
+        self._did_focus = False
+
+        # Tab round to move the focus - check it has called the right function.
+        self.process_keys(form, [Screen.KEY_TAB])
+        self.assertEqual(self._did_blur, False)
+        self.assertEqual(self._did_focus, True)
+
+        # Reset the state and Now move the focus away with the mouse.
+        self._did_focus = False
+        self.process_mouse(form, [(0, 0, MouseEvent.LEFT_CLICK)])
+        self.assertEqual(self._did_blur, True)
+        self.assertEqual(self._did_focus, False)
 
     def test_multi_column_list_box(self):
         """

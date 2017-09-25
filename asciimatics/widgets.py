@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# -*- coding: utf-8 -*-
 """
 This module allows you to create interactive text user interfaces.  For more details see
 http://asciimatics.readthedocs.io/en/latest/widgets.html
@@ -1191,11 +1190,13 @@ class Widget(with_metaclass(ABCMeta, object)):
     #: fit the available vertical space in the Layout.
     FILL_FRAME = -135792468
 
-    def __init__(self, name, tab_stop=True):
+    def __init__(self, name, tab_stop=True, on_focus=None, on_blur=None):
         """
         :param name: The name of this Widget.
         :param tab_stop: Whether this widget should take focus or not when
                          tabbing around the Frame.
+        :param on_focus: Optional callback whenever this widget gets the focus.
+        :param on_blur: Optional callback whenever this widget loses the focus.
         """
         super(Widget, self).__init__()
         # Internal properties
@@ -1212,6 +1213,8 @@ class Widget(with_metaclass(ABCMeta, object)):
         self._is_disabled = False
         self._is_valid = True
         self._custom_colour = None
+        self._on_focus = on_focus
+        self._on_blur = on_blur
 
     @property
     def frame(self):
@@ -1307,6 +1310,8 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         self._has_focus = True
         self._frame.move_to(self._x, self._y, self._h)
+        if self._on_focus is not None:
+            self._on_focus()
 
     def is_mouse_over(self, event, include_label=True):
         """
@@ -1335,6 +1340,8 @@ class Widget(with_metaclass(ABCMeta, object)):
         Call this to take the input focus from this Widget.
         """
         self._has_focus = False
+        if self._on_blur is not None:
+            self._on_blur()
 
     def _draw_label(self):
         """
@@ -1545,7 +1552,8 @@ class Text(Widget):
     label and an entry box.
     """
 
-    def __init__(self, label=None, name=None, on_change=None, validator=None, hide_char=None):
+    def __init__(self, label=None, name=None, on_change=None, validator=None, hide_char=None,
+                 **kwargs):
         """
         :param label: An optional label for the widget.
         :param name: The name for the widget.
@@ -1555,8 +1563,10 @@ class Text(Widget):
             True for valid content) or a regex string, which must match the
             entire allowed value.
         :param hide_char: Character to use instead of what the user types - e.g. to hide passwords.
+
+        Also see the common keyword arguments in :py:obj:`.Widget`.
         """
-        super(Text, self).__init__(name)
+        super(Text, self).__init__(name, **kwargs)
         self._label = label
         self._column = 0
         self._start_column = 0
@@ -1685,14 +1695,16 @@ class CheckBox(Widget):
     CheckBoxes), the box and a field name.
     """
 
-    def __init__(self, text, label=None, name=None, on_change=None):
+    def __init__(self, text, label=None, name=None, on_change=None, **kwargs):
         """
         :param text: The text to explain this specific field to the user.
         :param label: An optional label for the widget.
         :param name: The internal name for the widget.
         :param on_change: Optional function to call when text changes.
+
+        Also see the common keyword arguments in :py:obj:`.Widget`.
         """
-        super(CheckBox, self).__init__(name)
+        super(CheckBox, self).__init__(name, **kwargs)
         self._text = text
         self._label = label
         self._on_change = on_change
@@ -1763,14 +1775,16 @@ class RadioButtons(Widget):
     selection bullets with field names.
     """
 
-    def __init__(self, options, label=None, name=None, on_change=None):
+    def __init__(self, options, label=None, name=None, on_change=None, **kwargs):
         """
         :param options: A list of (text, value) tuples for each radio button.
         :param label: An optional label for the widget.
         :param name: The internal name for the widget.
         :param on_change: Optional function to call when text changes.
+
+        Also see the common keyword arguments in :py:obj:`.Widget`.
         """
-        super(RadioButtons, self).__init__(name)
+        super(RadioButtons, self).__init__(name, **kwargs)
         self._options = options
         self._label = label
         self._selection = 0
@@ -1862,8 +1876,7 @@ class TextBox(Widget):
     framed box with option label.  It can take multi-line input.
     """
 
-    def __init__(self, height, label=None, name=None, as_string=False,
-                 on_change=None):
+    def __init__(self, height, label=None, name=None, as_string=False, on_change=None, **kwargs):
         """
         :param height: The required number of input lines for this TextBox.
         :param label: An optional label for the widget.
@@ -1871,8 +1884,10 @@ class TextBox(Widget):
         :param as_string: Use string with newline separator instead of a list
             for the value of this widget.
         :param on_change: Optional function to call when text changes.
+
+        Also see the common keyword arguments in :py:obj:`.Widget`.
         """
-        super(TextBox, self).__init__(name)
+        super(TextBox, self).__init__(name, **kwargs)
         self._label = label
         self._line = 0
         self._column = 0
@@ -2565,13 +2580,15 @@ class Button(Widget):
     a form).
     """
 
-    def __init__(self, text, on_click, label=None):
+    def __init__(self, text, on_click, label=None, **kwargs):
         """
         :param text: The text for the button.
         :param on_click: The function to invoke when the button is clicked.
         :param label: An optional label for the widget.
+
+        Also see the common keyword arguments in :py:obj:`.Widget`.
         """
-        super(Button, self).__init__(None)
+        super(Button, self).__init__(None, **kwargs)
         # We nly ever draw the button with borders, so calculate that once now.
         self._text = "< {} >".format(text)
         self._on_click = on_click
@@ -2833,14 +2850,16 @@ class TimePicker(Widget):
     A TimePicker widget allows you to pick a time from a compact, temporary, pop-up Frame.
     """
 
-    def __init__(self, label=None, name=None, seconds=False, on_change=None):
+    def __init__(self, label=None, name=None, seconds=False, on_change=None, **kwargs):
         """
         :param label: An optional label for the widget.
         :param name: The name for the widget.
         :param seconds: Whether to include selection of seconds or not.
         :param on_change: Optional function to call when the selected time changes.
+
+        Also see the common keyword arguments in :py:obj:`.Widget`.
         """
-        super(TimePicker, self).__init__(name)
+        super(TimePicker, self).__init__(name, **kwargs)
         self._label = label
         self._on_change = on_change
         self._value = None
@@ -2971,13 +2990,15 @@ class DatePicker(Widget):
     A DatePicker widget allows you to pick a date from a compact, temporary, pop-up Frame.
     """
 
-    def __init__(self, label=None, name=None, year_range=None, on_change=None):
+    def __init__(self, label=None, name=None, year_range=None, on_change=None, **kwargs):
         """
         :param label: An optional label for the widget.
         :param name: The name for the widget.
         :param on_change: Optional function to call when the selected time changes.
+
+        Also see the common keyword arguments in :py:obj:`.Widget`.
         """
-        super(DatePicker, self).__init__(name)
+        super(DatePicker, self).__init__(name, **kwargs)
         self._label = label
         self._on_change = on_change
         self._value = None
