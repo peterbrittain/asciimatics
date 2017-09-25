@@ -620,7 +620,7 @@ associated event occurs.  In asciimatics, they can usually be identified by the 
 start with `on` and correspond to a significant input action from the user, e.g. `on_click`.
 
 When writing your application, you simply need to decide which events you want to use to trigger
-some processing and create apropriate callbacks.  The most common pattern is to use a `Button` and
+some processing and create appropriate callbacks.  The most common pattern is to use a `Button` and
 define an `on_click` callback.
 
 In addition, there are other events that can be triggered when widget values change.  These can
