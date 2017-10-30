@@ -7,7 +7,6 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
-from past.builtins import basestring
 from locale import getlocale, getdefaultlocale
 import struct
 from builtins import object
@@ -1260,8 +1259,9 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         :param char: The key to convert to a control code.
         :return: The control code as an integer or None if unknown.
         """
-        # Convert string to int if needed.
-        if isinstance(char, basestring):
+        # Convert string to int... assuming any non-integer is a string.
+        # TODO: Consider asserting a more rigorous test without falling back to past basestring.
+        if not isinstance(char, int):
             char = ord(char.upper())
 
         # Only deal with the characters between '@' and '_'
