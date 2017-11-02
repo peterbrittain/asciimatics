@@ -61,13 +61,14 @@ setup(
              'color colour crossplatform console',
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
     install_requires=[
-        'pyfiglet >= 0.7.2',
-        'Pillow >= 2.7.0',
+        'pyfiglet >= 0.7.2; extra != "tui"',
+        'Pillow >= 2.7.0; extra != "tui"',
         'wcwidth',
         'future',
     ],
     extras_require={
         ':sys_platform == "win32"': ['pypiwin32'],
+        'tui': [],
     },
     setup_requires=['setuptools_scm'],
     tests_require=[

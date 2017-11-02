@@ -14,8 +14,13 @@ from random import randint, random
 from future.utils import with_metaclass
 from abc import ABCMeta, abstractproperty, abstractmethod
 from math import sin, cos, pi, sqrt, atan2
-from pyfiglet import Figlet, DEFAULT_FONT
-from PIL import Image
+try:
+    from pyfiglet import Figlet, DEFAULT_FONT
+    from PIL import Image
+except ImportError:
+    raise RuntimeError("""
+You cannot use renderers with a reduced ('tui') install.
+Please run `pip install -U asciimatics` for a full installation.""")
 import re
 from .screen import Screen
 
