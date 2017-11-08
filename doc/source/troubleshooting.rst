@@ -94,6 +94,16 @@ Some users have reported this on curses systems.  So far this has been tracked 
 the terminal configuration.  For an in-depth explanation of the problem and several possible
 solutions see `here <http://www.ibb.net/~anne/keyboard.html>`__.
 
+This seems to be particularly problematic for Mac OS X users, where the default terminal app as
+shipped with the OS doesn't match the terminfo definitions.  Genius!  If you're on OSX, running
+the following inside your terminal *should* fix up the mismatch.
+
+.. code-block:: bash
+
+    infocmp "$TERM" | sed -Ee 's/(kbs)=[^,]*/\1=\\177/' -e 's/(kdch1)=[^,]*/\1=\\E[3~/' > "$TERM"
+    tic "$TERM"
+    rm -f "$TERM"
+
 I can't run it inside PyCharm or other IDEs
 -------------------------------------------
 Depending on which version you're using, you may see pywintypes.error 6 (ERROR_INVALID_HANDLE), or
