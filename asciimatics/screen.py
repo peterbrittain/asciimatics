@@ -1770,6 +1770,7 @@ if sys.platform == "win32":
 else:
     # UNIX compatible platform - use curses
     import curses
+    import termios
 
     class _CursesScreen(Screen):
         """
@@ -1886,6 +1887,13 @@ else:
             self._a_reverse = curses.tigetstr("rev").decode("utf-8")
             self._a_underline = curses.tigetstr("smul").decode("utf-8")
             self._clear_screen = curses.tigetstr("clear").decode("utf-8")
+
+            # Look for a mismatch between the kernel terminal and the terminfo
+            # database for backspace.  Fix up keyboard mappings if needed.
+            kbs = curses.tigetstr("kbs").decode("utf-8")
+            tbs = termios.tcgetattr(sys.stdin)[6][termios.VERASE]
+            if tbs != kbs:
+                self._KEY_MAP[ord(tbs)] = Screen.KEY_BACK
 
             # Conversion from Screen attributes to curses equivalents.
             self._ATTRIBUTES = {
