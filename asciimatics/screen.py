@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
+"""
+This module defines common screen output function.  For more details, see
+http://asciimatics.readthedocs.io/en/latest/io.html
+"""
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
-from past.builtins import basestring
 from locale import getlocale, getdefaultlocale
 import struct
 from builtins import object
@@ -623,8 +626,8 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         :param x: The column (x coord) for the location to check.
         :param y: The line (y coord) for the location to check.
         """
-        self._x = int(round(x, 1)) * 2
-        self._y = int(round(y, 1)) * 2
+        self._x = int(round(x * 2, 0))
+        self._y = int(round(y * 2, 0))
 
     def draw(self, x, y, char=None, colour=7, bg=0, thin=False):
         """
@@ -654,6 +657,11 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         self._x = x1
         self._y = y1
 
+        # Don't bother drawing anything if we're guaranteed to be off-screen
+        if ((x0 < 0 and x1 < 0) or (x0 >= self.width * 2 and x1 >= self.width * 2) or
+                (y0 < 0 and y1 < 0) or (y0 >= self.height * 2 and y1 >= self.height * 2)):
+            return
+
         dx = abs(x1 - x0)
         dy = abs(y1 - y0)
 
@@ -667,6 +675,17 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                 if colour == cfg and bg == cbg and chr(letter) in line_chars:
                     return line_chars.find(chr(letter))
             return 0
+
+        def _fast_fill(start_x, end_x, iy):
+            next_char = -1
+            for ix in range(start_x, end_x):
+                if ix % 2 == 0 or next_char == -1:
+                    next_char = _get_start_char(ix // 2, iy // 2)
+                next_char |= 2 ** abs(ix % 2) * 4 ** (iy % 2)
+                if ix % 2 == 1:
+                    self.print_at(line_chars[next_char], ix // 2, iy // 2, colour, bg=bg)
+            if end_x % 2 == 1:
+                self.print_at(line_chars[next_char], end_x // 2, iy // 2, colour, bg=bg)
 
         def _draw_on_x(ix, iy):
             err = dx
@@ -713,7 +732,11 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                                   px // 2, py // 2, colour, bg=bg)
                 else:
                     self.print_at(char, px // 2, py // 2, colour, bg=bg)
-        if dx > dy:
+
+        if dy == 0 and thin and char is None:
+            # Fast-path for polygon filling
+            _fast_fill(min(x0, x1), max(x0, x1), y0)
+        elif dx > dy:
             _draw_on_x(x0, y0)
             if not thin:
                 _draw_on_x(x0, y0 + 1)
@@ -721,6 +744,129 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
             _draw_on_y(x0, y0)
             if not thin:
                 _draw_on_y(x0 + 1, y0)
+
+    def fill_polygon(self, polygons, colour=7, bg=0):
+        """
+        Draw a filled polygon.
+
+        This function uses the scan line algorithm to create the polygon.  See
+        https://www.cs.uic.edu/~jbell/CourseNotes/ComputerGraphics/PolygonFilling.html for details.
+
+        :param polygons: A list of polygons (which are each a list of (x,y) coordinates for the
+            points of the polygon) - i.e. nested list of 2-tuples.
+        :param colour: The foreground colour to use for the polygon
+        :param bg: The background colour to use for the polygon
+        """
+        class _DotDict(dict):
+            """See https://stackoverflow.com/q/2352181/4994021"""
+            __getattr__ = dict.get
+            __setattr__ = dict.__setitem__
+            __delattr__ = dict.__delitem__
+
+        def _add_edge(a, b):
+            # Ignore horizontal lines - they are redundant
+            if a[1] == b[1]:
+                return
+
+            # Ignore any edges that do not intersect the visible raster lines at all.
+            if (a[1] < 0 and b[1] < 0) or (a[1] >= self.height and b[1] >= self.height):
+                return
+
+            # Save off the edge, always starting at the lowest value of y.
+            new_edge = _DotDict()
+            if a[1] < b[1]:
+                new_edge.min_y = a[1]
+                new_edge.max_y = b[1]
+                new_edge.x = a[0]
+                new_edge.dx = (b[0] - a[0]) / (b[1] - a[1]) / 2
+            else:
+                new_edge.min_y = b[1]
+                new_edge.max_y = a[1]
+                new_edge.x = b[0]
+                new_edge.dx = (a[0] - b[0]) / (a[1] - b[1]) / 2
+            edges.append(new_edge)
+
+        # Create a table of all the edges in the polygon, sorted on smallest x.
+        logger.debug("Processing polygon: %s", polygons)
+        min_y = self.height
+        max_y = -1
+        edges = []
+        last = None
+        for polygon in polygons:
+            # Ignore lines and polygons.
+            if len(polygon) <= 2:
+                continue
+
+            # Ignore any polygons completely off the screen
+            x, y = zip(*polygon)
+            p_min_x = min(x)
+            p_max_x = max(x)
+            p_min_y = min(y)
+            p_max_y = max(y)
+            if p_max_x < 0 or p_min_x >= self.width or p_max_y < 0 or p_min_y > self.height:
+                continue
+
+            # Build up the edge list, maintaining bounding coordinates on the Y axis.
+            min_y = min(p_min_y, min_y)
+            max_y = max(p_max_y, max_y)
+            for i, point in enumerate(polygon):
+                if i != 0:
+                    _add_edge(last, point)
+                last = point
+            _add_edge(polygon[0], polygon[-1])
+            edges = sorted(edges, key=lambda e: e.x)
+
+        # Check we still have something to do:
+        if len(edges) == 0:
+            return
+
+        # Re-base all edges to visible Y coordinates of the screen.
+        for edge in edges:
+            if edge.min_y < 0:
+                edge.x -= int(edge.min_y * 2) * edge.dx
+                edge.min_y = 0
+        min_y = max(0, min_y)
+        max_y = min(max_y - min_y, self.height)
+
+        logger.debug("Resulting edges: %s", edges)
+
+        # Render each line in the bounding rectangle.
+        for y in [min_y + (x / 2) for x in range(0, int(max_y) * 2)]:
+            # Create a list of live edges (for drawing this raster line) and edges for next
+            # iteration of the raster.
+            live_edges = []
+            new_edges = []
+            for edge in edges:
+                if edge.min_y <= y <= edge.max_y:
+                    live_edges.append(edge)
+                if y < edge.max_y:
+                    new_edges.append(edge)
+
+            # Draw the portions of the line that are inside the polygon.
+            count = 0
+            last_x = 0
+            for edge in live_edges:
+                # Draw the next segment
+                if 0 <= y < self.height:
+                    if edge.max_y != y:
+                        count += 1
+                        if count % 2 == 1:
+                            last_x = edge.x
+                        else:
+                            # Don't bother drawing lines entirely off the screen.
+                            if not ((last_x < 0 and edge.x < 0) or
+                                    (last_x >= self.width and edge.x >= self.width)):
+                                # Clip raster to screen width.
+                                self.move(max(0, last_x), y)
+                                self.draw(
+                                    min(edge.x, self.width), y, colour=colour, bg=bg, thin=True)
+
+                # Update the x location for this active edge.
+                edge.x += edge.dx
+
+            # Rely on the fact that we have the same dicts in both live_edges and new_edges, so
+            # we just need to resort new_edges for the next iteration.
+            edges = sorted(new_edges, key=lambda e: e.x)
 
 
 class Canvas(_AbstractCanvas):
@@ -1076,7 +1222,6 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 # Finally update the screen buffer to reflect reality.
                 self._screen_buffer[y + self._start_line][x] = new_cell
 
-
     def clear(self):
         """
         Clear the Screen of all content.
@@ -1114,8 +1259,9 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         :param char: The key to convert to a control code.
         :return: The control code as an integer or None if unknown.
         """
-        # Convert string to int if needed.
-        if isinstance(char, basestring):
+        # Convert string to int... assuming any non-integer is a string.
+        # TODO: Consider asserting a more rigorous test without falling back to past basestring.
+        if not isinstance(char, int):
             char = ord(char.upper())
 
         # Only deal with the characters between '@' and '_'
@@ -1857,15 +2003,18 @@ else:
             # Non-blocking key checks.
             self._screen.nodelay(1)
 
+            # Store previous handlers for restoration at close
+            self._signal_state = _SignalState()
+
             # Set up signal handler for screen resizing.
             self._re_sized = False
-            signal.signal(signal.SIGWINCH, self._resize_handler)
+            self._signal_state.set(signal.SIGWINCH, self._resize_handler)
 
             # Catch SIGINTs and translated them to ctrl-c if needed.
             if catch_interrupt:
                 # Ignore SIGINT (ctrl-c) and SIGTSTP (ctrl-z) signals.
-                signal.signal(signal.SIGINT, self._catch_interrupt)
-                signal.signal(signal.SIGTSTP, self._catch_interrupt)
+                self._signal_state.set(signal.SIGINT, self._catch_interrupt)
+                self._signal_state.set(signal.SIGTSTP, self._catch_interrupt)
 
             # Enable mouse events
             curses.mousemask(curses.ALL_MOUSE_EVENTS |
@@ -1917,6 +2066,7 @@ else:
 
             :param restore: whether to restore the environment or not.
             """
+            self._signal_state.restore()
             if restore:
                 self._screen.keypad(0)
                 curses.echo()
@@ -2123,3 +2273,32 @@ else:
             if self._start_line is not None:
                 self._safe_write("{}{}{}".format(self._start_title, title,
                                                  self._end_title))
+
+    class _SignalState(object):
+        """
+        Save previous user signal state while setting signals.
+
+        Used for signal restoration when asciimatics no longer has control
+        of the user program.
+        """
+        def __init__(self):
+            self._old_signal_states = []
+
+        def set(self, signalnum, handler):
+            """
+            Set signal handler and record their previous values.
+
+            :param signalnum: The const/enum matching to the signal to be set.
+            :param handler: The function/const to set the signal to
+            """
+            old_handler = signal.getsignal(signalnum)
+            self._old_signal_states.append((signalnum, old_handler))
+            signal.signal(signalnum, handler)
+
+        def restore(self):
+            """
+            Restore saved signals to their previous handles.
+            """
+            for signalnum, handler in self._old_signal_states:
+                signal.signal(signalnum, handler)
+            self._old_signal_states = []

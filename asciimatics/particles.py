@@ -1,3 +1,7 @@
+"""
+This module implements a particle system for complex animcation effects.  For more details, see
+http://asciimatics.readthedocs.io/en/latest/animation.html
+"""
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
@@ -215,8 +219,7 @@ class ParticleEffect(with_metaclass(ABCMeta, Effect)):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(ParticleEffect, self).__init__(**kwargs)
-        self._screen = screen
+        super(ParticleEffect, self).__init__(screen, **kwargs)
         self._x = x
         self._y = y
         self._life_time = life_time

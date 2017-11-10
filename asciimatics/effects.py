@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+This module defines `Effects` which can be used for animations.  For more details see
+http://asciimatics.readthedocs.io/en/latest/animation.html
+"""
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
@@ -43,12 +47,14 @@ class Effect(with_metaclass(ABCMeta, object)):
     event (and so effects don't need to implement this method unless needed).
     """
 
-    def __init__(self, start_frame=0, stop_frame=0, delete_count=None):
+    def __init__(self, screen, start_frame=0, stop_frame=0, delete_count=None):
         """
+        :param screen: The Screen that will render this Effect.
         :param start_frame: Start index for the effect.
         :param stop_frame: Stop index for the effect.
         :param delete_count: Number of frames before this effect is deleted.
         """
+        self._screen = screen
         self._start_frame = start_frame
         self._stop_frame = stop_frame
         self._delete_count = delete_count
@@ -100,6 +106,13 @@ class Effect(with_metaclass(ABCMeta, object)):
         """
         return self._delete_count
 
+    @property
+    def screen(self):
+        """
+        The Screen that will render this Effect.
+        """
+        return self._screen
+
     @delete_count.setter
     def delete_count(self, value):
         self._delete_count = value
@@ -129,6 +142,13 @@ class Effect(with_metaclass(ABCMeta, object)):
         """
         return True
 
+    @property
+    def scene(self):
+        """
+        The Scene that owns this Effect.
+        """
+        return self._scene
+
     def process_event(self, event):
         """
         Process any input event.
@@ -154,8 +174,7 @@ class Scroll(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Scroll, self).__init__(**kwargs)
-        self._screen = screen
+        super(Scroll, self).__init__(screen, **kwargs)
         self._rate = rate
         self._last_frame = None
 
@@ -187,8 +206,7 @@ class Cycle(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Cycle, self).__init__(**kwargs)
-        self._screen = screen
+        super(Cycle, self).__init__(screen, **kwargs)
         self._renderer = renderer
         self._y = y
         self._colour = 0
@@ -230,8 +248,7 @@ class BannerText(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(BannerText, self).__init__(**kwargs)
-        self._screen = screen
+        super(BannerText, self).__init__(screen, **kwargs)
         self._renderer = renderer
         self._y = y
         self._colour = colour
@@ -291,8 +308,7 @@ class Print(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Print, self).__init__(**kwargs)
-        self._screen = screen
+        super(Print, self).__init__(screen, **kwargs)
         self._renderer = renderer
         self._transparent = transparent
         self._y = y
@@ -351,8 +367,7 @@ class Mirage(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Mirage, self).__init__(**kwargs)
-        self._screen = screen
+        super(Mirage, self).__init__(screen, **kwargs)
         self._renderer = renderer
         self._y = y
         self._colour = colour
@@ -450,8 +465,7 @@ class Stars(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Stars, self).__init__(**kwargs)
-        self._screen = screen
+        super(Stars, self).__init__(screen, **kwargs)
         self._max = count
         self._stars = []
 
@@ -541,8 +555,7 @@ class Matrix(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Matrix, self).__init__(**kwargs)
-        self._screen = screen
+        super(Matrix, self).__init__(screen, **kwargs)
         self._chars = []
 
     def reset(self):
@@ -572,8 +585,7 @@ class Wipe(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Wipe, self).__init__(**kwargs)
-        self._screen = screen
+        super(Wipe, self).__init__(screen, **kwargs)
         self._bg = bg
         self._y = None
 
@@ -609,8 +621,7 @@ class Sprite(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Sprite, self).__init__(**kwargs)
-        self._screen = screen
+        super(Sprite, self).__init__(screen, **kwargs)
         self._renderer_dict = renderer_dict
         self._path = path
         self._index = None
@@ -806,8 +817,7 @@ class Snow(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Snow, self).__init__(**kwargs)
-        self._screen = screen
+        super(Snow, self).__init__(screen, **kwargs)
         self._chars = []
 
     def reset(self):
@@ -843,8 +853,7 @@ class Clock(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Clock, self).__init__(**kwargs)
-        self._screen = screen
+        super(Clock, self).__init__(screen, **kwargs)
         self._x = x
         self._y = y
         self._r = r
@@ -914,7 +923,7 @@ class Cog(Effect):
     A rotating cog.
     """
 
-    def __init__(self, screen, x, y, radius, direction=1, **kwargs):
+    def __init__(self, screen, x, y, radius, direction=1, colour=7, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param x: X coordinate of the centre of the cog.
@@ -922,17 +931,18 @@ class Cog(Effect):
         :param radius: The radius of the cog.
         :param direction: The direction of rotation. Positive numbers are
             anti-clockwise, negative numbers clockwise.
+        :param colour: The colour of the cog.
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Cog, self).__init__(**kwargs)
-        self._screen = screen
+        super(Cog, self).__init__(screen, **kwargs)
         self._x = x
         self._y = y
         self._radius = radius
         self._old_frame = 0
         self._rate = 2
         self._direction = direction
+        self._colour = colour
 
     def reset(self):
         pass
@@ -961,7 +971,7 @@ class Cog(Effect):
         self._old_frame += self._direction
         self._screen.move(f(0), g(0))
         for x in range(81):
-            self._screen.draw(f(x), g(x))
+            self._screen.draw(f(x), g(x), colour=self._colour)
 
     @property
     def stop_frame(self):
@@ -982,8 +992,7 @@ class RandomNoise(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(RandomNoise, self).__init__(**kwargs)
-        self._screen = screen
+        super(RandomNoise, self).__init__(screen, **kwargs)
         self._signal = signal
         self._strength = 0.0
         self._step = None
@@ -1053,8 +1062,7 @@ class Julia(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Julia, self).__init__(**kwargs)
-        self._screen = screen
+        super(Julia, self).__init__(screen, **kwargs)
         self._width = screen.width
         self._height = screen.height
         self._centre = [0.0, 0.0]

@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+This module provides `Renderers` to create complex animation effects.  For more details see
+http://asciimatics.readthedocs.io/en/latest/rendering.html
+"""
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
@@ -9,7 +13,7 @@ import copy
 from random import randint, random
 from future.utils import with_metaclass
 from abc import ABCMeta, abstractproperty, abstractmethod
-from math import sin, pi, sqrt
+from math import sin, cos, pi, sqrt, atan2
 from pyfiglet import Figlet, DEFAULT_FONT
 from PIL import Image
 import re
@@ -131,9 +135,10 @@ class StaticRenderer(Renderer):
                                           int(match.group(4)))
                         elif match.group(5) is not None:
                             attributes = (int(match.group(5)),
-                                          ATTRIBUTES[match.group(6)])
+                                          ATTRIBUTES[match.group(6)],
+                                          None)
                         else:
-                            attributes = (int(match.group(7)), 0)
+                            attributes = (int(match.group(7)), 0, None)
                         line = match.group(8)
                 new_image.append(new_line)
                 colour_map.append(colours)
@@ -275,13 +280,14 @@ class FigletText(StaticRenderer):
     See http://www.figlet.org/ for details of available fonts.
     """
 
-    def __init__(self, text, font=DEFAULT_FONT):
+    def __init__(self, text, font=DEFAULT_FONT, width=200):
         """
         :param text: The text string to convert with Figlet.
         :param font: The Figlet font to use (optional).
+        :param width: The maximum width for this text in characters.
         """
         super(FigletText, self).__init__()
-        self._images = [Figlet(font=font, width=200).renderText(text)]
+        self._images = [Figlet(font=font, width=width).renderText(text)]
 
 
 class _ImageSequence(object):
@@ -594,8 +600,6 @@ class BarChart(DynamicRenderer):
         self._keys = keys
 
     def _render_now(self):
-        super(BarChart, self)._render_now()
-
         # Dimensions for the chart.
         int_h = self._height
         int_w = self._width
@@ -798,8 +802,6 @@ class Fire(DynamicRenderer):
         self._y = height - e_height
 
     def _render_now(self):
-        super(Fire, self)._render_now()
-
         # First make the fire rise with convection
         for y in range(len(self._buffer) - 1):
             self._buffer[y] = self._buffer[y + 1]
@@ -893,8 +895,8 @@ class Plasma(DynamicRenderer):
 
     def __init__(self, height, width, colours):
         """
-        :param height: Height of the box to contain the flames.
-        :param width: Width of the box to contain the flames.
+        :param height: Height of the box to contain the plasma.
+        :param width: Width of the box to contain the plasma.
         :param colours: Number of colours the screen supports.
         """
         super(Plasma, self).__init__(height, width)
@@ -902,8 +904,6 @@ class Plasma(DynamicRenderer):
         self._t = 0
 
     def _render_now(self):
-        super(Plasma, self)._render_now()
-
         # Internal function for creating a sine wave radiating out from a point
         def f(x1, y1, xp, yp, n):
             return sin(sqrt((x1 - self._width * xp) ** 2 +
@@ -920,5 +920,117 @@ class Plasma(DynamicRenderer):
                     int(round(value * (len(self._palette) - 1)))]
                 char = self._greyscale[int((len(self._greyscale) - 1) * value)]
                 self._write(char, x, y, fg, attr, 0)
+
+        return self._plain_image, self._colour_map
+
+
+class RotatedDuplicate(StaticRenderer):
+    """
+    Chained renderer to add a rotated version of the original renderer underneath and centre the
+    whole thing within within the specified dimensions.
+    """
+
+    def __init__(self, width, height, renderer):
+        """
+        :param width: The maximum width of the rendered text.
+        :param height: The maximum height of the rendered text.
+        :param renderer: The renderer to wrap.
+        """
+        super(RotatedDuplicate, self).__init__()
+        for image in renderer.images:
+            mx = (width - max([len(x) for x in image])) // 2
+            my = height // 2 - len(image)
+            tab = (" " * mx if mx > 0 else "") + "\n" + (" " * mx if mx > 0 else "")
+            new_image = []
+            new_image.extend(["" for _ in range(max(0, my))])
+            new_image.extend(image)
+            new_image.extend([x[::-1] for x in reversed(image)])
+            new_image.extend(["" for _ in range(max(0, my))])
+            if mx < 0:
+                new_image = [x[-mx:mx] for x in new_image]
+            if my < 0:
+                new_image = new_image[-my:my]
+            self._images.append(tab.join(new_image))
+
+
+class Kaleidoscope(DynamicRenderer):
+    """
+    Renderer to create a 2-mirror kaleidoscope effect.
+
+    This is a chained renderer (i.e. it acts upon the output of another Renderer which is
+    passed to it on construction).  The other Renderer is used as the cell that is rotated over
+    time to create the animation.
+
+    You can specify the desired rotational symmetry of the kaleidoscope (which determines the
+    angle between the mirrors).  If you chose values of less than 2, you are effectively removing
+    one or both mirrors, thus either getting the original cell or a simple mirrored image of the
+    cell.
+
+    Since this renderer rotates the background cell, it needs operate on square pixels, which
+    means each character in the cell is drawn as 2 next to each other on the screen.  In other
+    words the cell needs to be half the width of the desired output (when measured in text
+    characters).
+    """
+
+    def __init__(self, height, width, cell, symmetry):
+        """
+        :param height: Height of the box to contain the kaleidoscope.
+        :param width: Width of the box to contain the kaleidoscope.
+        :param cell: A Renderer to use as the backing cell for the kaleidoscope.
+        :param symmetry: The desired rotational symmetry.  Must be a non-negative integer.
+        """
+        super(Kaleidoscope, self).__init__(height, width)
+        self._symmetry = symmetry
+        self._rotation = 0
+        self._cell = cell
+
+    def _render_now(self):
+        # Rotate a point (x, y) through an angle theta.
+        def _rotate(x, y, theta):
+            return x * cos(theta) - y * sin(theta), x * sin(theta) + y * cos(theta)
+
+        # Reflect a point (x, y) in a line at angle theta
+        def _reflect(x, y, theta):
+            return x * cos(2 * theta) + y * sin(2 * theta), x * sin(2 * theta) - y * cos(2 * theta)
+
+        # Get the base cell now - so we can pick out characters as needed.
+        text, colour_map = self._cell.rendered_text
+
+        # Integer maths will result in gaps between characters if you rotate from the starting
+        # point to desired end-point.  We therefore look for the reverse mapping from the final
+        # character and trace-back instead.
+        for dx in range(self._width // 2):
+            for dy in range(self._height):
+                # Figure out which segment of the circle we're in, so we know what affine
+                # transformations to apply.
+                ox = (dx - self._width / 4)
+                oy = dy - self._height / 2
+                segment = round(atan2(oy, ox) * self._symmetry / pi)
+                if segment % 2 == 0:
+                    # Just a rotation required for even segments.
+                    x1, y1 = _rotate(
+                        ox, oy, 0 if self._symmetry == 0 else -segment * pi / self._symmetry)
+                else:
+                    # Odd segments require a rotation and then a reflection.
+                    x1, y1 = _rotate(ox, oy, (1 - segment) * pi / self._symmetry)
+                    x1, y1 = _reflect(x1, y1, pi / self._symmetry / 2)
+
+                # Now rotate once more to simulate the rotation of the background cell too.
+                x1, y1 = _rotate(x1, y1, self._rotation)
+
+                # Re-normalize back to the box coordinates and draw the character that we found
+                # from the reverse mapping.
+                x2 = int(x1 + self._cell.max_width / 2)
+                y2 = int(y1 + self._cell.max_height / 2)
+                if (0 <= y2 < len(text)) and (0 <= x2 < len(text[y2])):
+                    self._write(text[y2][x2] + text[y2][x2],
+                                dx * 2,
+                                dy,
+                                colour_map[y2][x2][0],
+                                colour_map[y2][x2][1],
+                                colour_map[y2][x2][2])
+
+        # Now rotate the background cell for the next frame.
+        self._rotation += pi / 180
 
         return self._plain_image, self._colour_map
