@@ -14,6 +14,10 @@ from builtins import chr
 from builtins import bytes
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import StopApplication, NextScene
+try:
+    from asciimatics.screen import _SignalState
+except ImportError:
+    pass
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen, Canvas
 from tests.mock_objects import MockEffect
@@ -45,6 +49,22 @@ class TestScreen(unittest.TestCase):
             curses.initscr()
             if curses.tigetstr("ri") is None:
                 self.skipTest("No valid terminal definition")
+
+    def assert_canvas_equals(self, canvas, expected, height=10, width=75):
+        """
+        Assert output to canvas/screen is as expected.
+        """
+        # TODO: Merge with widget test function of the same name.
+        output = ""
+        for y in range(height):
+            for x in range(width):
+                try:
+                    char, _, _, _ = canvas.get_from(x, y)
+                except Exception:
+                    raise RuntimeError("{} {}".format(x, y))
+                output += chr(char)
+            output += "\n"
+        self.assertEqual(output, expected)
 
     def test_wrapper(self):
         """
@@ -280,6 +300,36 @@ class TestScreen(unittest.TestCase):
         Screen.wrapper(
             check_screen_and_canvas,
             height=15,
+            unicode_aware=False,
+            arguments=[internal_checks])
+
+    def test_polygons(self):
+        """
+        Check that filled polygons work as expected.
+        """
+        def internal_checks(screen):
+            screen.fill_polygon([[(0, 0), (10, 0), (0, 10), (10, 10)]])
+            screen.fill_polygon([[(20, 0), (30, 0), (30, 10), (25, 5), (20, 10)]])
+            screen.fill_polygon([[(40, 0), (45, 5), (50, 0), (50, 10), (40, 10)]])
+            screen.fill_polygon([[(60, 0), (70, 0), (70, 10), (60, 10)],
+                                 [(63, 2), (67, 2), (67, 8), (63, 8)]])
+            self.maxDiff = None
+            self.assert_canvas_equals(
+                screen,
+                "Y########7          ##########          .        .          ##########     \n" +
+                " Y######7           ##########          #.      .#          ##########     \n" +
+                "  Y####7            ##########          ##.    .##          ###    ###     \n" +
+                "   Y##7             ##########          ###.  .###          ###    ###     \n" +
+                "    Y7              ##########          ####..####          ###    ###     \n" +
+                "    ..              ####7Y####          ##########          ###    ###     \n" +
+                "   .##.             ###7  Y###          ##########          ###    ###     \n" +
+                "  .####.            ##7    Y##          ##########          ###    ###     \n" +
+                " .######.           #7      Y#          ##########          ##########     \n" +
+                ".########.          7        Y          ##########          ##########     \n")
+
+        Screen.wrapper(
+            check_screen_and_canvas,
+            height=10,
             unicode_aware=False,
             arguments=[internal_checks])
 
@@ -816,6 +866,47 @@ class TestScreen(unittest.TestCase):
         canvas.print_at("你確", -1, 0)
         canvas.print_at("你確", canvas.width - 1, 0)
         self.assert_line_equals(canvas, u" 確確                                     ")
+
+    def test_save_signal_state(self):
+        """Tests that the signal state class works properly.
+
+        The _SignalState class must set, save, and restore signals
+        when needed.
+        """
+        if sys.platform == "win32":
+            self.skipTest("Windows does not have signals.")
+        def dummy_handler():
+            """Assign dummy handler to an arbitrary signal."""
+            pass
+        self.assertNotEqual(signal.getsignal(signal.SIGWINCH), dummy_handler)
+        signal_state = _SignalState()
+        signal_state.set(signal.SIGWINCH, dummy_handler)
+        self.assertEqual(signal.getsignal(signal.SIGWINCH), dummy_handler)
+        signal_state.restore()
+        self.assertNotEqual(signal.getsignal(signal.SIGWINCH), dummy_handler)
+
+    def test_signal(self):
+        """
+        Check that signals are restored after using _CursesScreen
+        """
+        if sys.platform == "win32":
+            self.skipTest("Windows does not have signals.")
+        def dummy_signal_handler():
+            """Dummy previous signal handler."""
+            pass
+        outer_state = _SignalState()
+        self.assertNotEqual(signal.getsignal(signal.SIGWINCH), dummy_signal_handler)
+        outer_state.set(signal.SIGWINCH, dummy_signal_handler)
+        self.assertEqual(signal.getsignal(signal.SIGWINCH), dummy_signal_handler)
+        Screen.wrapper(self.signal_check)
+        self.assertEqual(signal.getsignal(signal.SIGWINCH), dummy_signal_handler)
+        outer_state.restore()
+        self.assertNotEqual(signal.getsignal(signal.SIGWINCH), dummy_signal_handler)
+
+    def signal_check(self, screen):
+        """Dummy callback for screen wrapper."""
+        self.assertEqual(signal.getsignal(signal.SIGWINCH), screen._resize_handler)
+
 
 if __name__ == '__main__':
     unittest.main()

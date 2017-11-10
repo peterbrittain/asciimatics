@@ -21,9 +21,9 @@ here = path.abspath(path.dirname(__file__))
 # Get the long description from the relevant file and strip any pre-amble (i.e. badges) from it.
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read().split("\n")
-while long_description[0] != "ASCIIMATICS":
+while long_description[0] not in ("ASCIIMATICS", "ASCIIMATICS\r"):
     long_description = long_description[1:]
-"\n".join(long_description)
+long_description = "\n".join(long_description)
 
 setup(
     name='asciimatics',

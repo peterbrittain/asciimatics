@@ -1,6 +1,29 @@
 CHANGE HISTORY
 ==============
 
+LATEST
+------
+- Added FileBrowser, DatePicker and TimePicker widgets.
+
+  - Made `screen` a mandatory positional parameter to all Effects in the process.
+  - NOTE: Any custom Effects you have created will now need to pass the screen down to the parent
+    class.
+
+- Added `fill_polygon()` to Screen and Canvas.
+- Added the Kaleidoscope and RotatedDuplicate renderers.
+- Created Maps demo - which renders vector tiles and satellite images from Mapbox.
+- Added optional `is_modal` parameter to Frame constructor.
+- Added `on_blur` and `on_focus` parameters to all interactive Widgets.
+- Added `colour` property to Cogs Effect.
+- Added `title` property to Frame.
+- Added `text` property to Label.
+- Added `hide_char` parameter to Text constructor to hide any entered text - e.g. for passwords.
+- Added optional `height` parameter to Label constructor.
+- Allowed programs to set "default" values for Widgets - which means you need to reset each field
+  in a Frame explicitly rather than relying on reset to blank out uninitialized fields.
+- Fixed up signal handling to re-instate old handlers on Screen.close().
+- Fixed missing on_select handler for ListBox.
+
 1.8.0
 -----
 - Added MultiColumnListBox for displaying tabular data in widgets.

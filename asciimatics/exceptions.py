@@ -104,6 +104,6 @@ class Highlander(Exception):
     to fill the rest of the screen).  If you hit this exception you have
     a bug in your application.
 
-    If you don't get the name, take a look at this link:
-    https://en.wikipedia.org/wiki/Highlander_(film)
+    If you don't get the name, take a look at `this link 
+    <https://en.wikipedia.org/wiki/Highlander_(film)>`__.
     """

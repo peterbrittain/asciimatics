@@ -40,7 +40,7 @@ Left arrow           Move to the last Widget in the column to the left of the co
                      current input focus.
 Right arrow          Move to the first Widget in the column to the right of the column with the
                      current input focus.
-Space or Return      Select the current Widget - e.g. click a Button.
+Space or Return      Select the current Widget - e.g. click a Button, or pop-up a list of options.
 ===================  ==============================================================================
 
 Note that the cursor keys will not traverse between Layouts.  In addition, asciimatics will not
@@ -130,7 +130,7 @@ basic classes:
 
             def get_current_contact(self):
                 if self.current_id is None:
-                    return {}
+                    return {"name": "", "address": "", "phone": "", "email": "", "notes": ""}
                 else:
                     return self.get_contact(self.current_id)
 
@@ -283,7 +283,9 @@ Widget type                   Description
 ============================= =====================================================================
 :py:obj:`.Button`             Action buttons - e.g. ok/cancel/etc.
 :py:obj:`.CheckBox`           Simple yes/no tick boxes.
+:py:obj:`.DatePicker`         A single-line widget for selecting a date (using a pop-up list).
 :py:obj:`.Divider`            A spacer between widgets (for aesthetics).
+:py:obj:`.FileBrowser`        A multi-line widget for listing the local file system.
 :py:obj:`.Label`              A label for a group of related widgets.
 :py:obj:`.ListBox`            A list of possible options from which users can select one value.
 :py:obj:`.MultiColumnListBox` Like a ListBox, but for displaying tabular data.
@@ -291,7 +293,11 @@ Widget type                   Description
                               a list of options.
 :py:obj:`.Text`               A single line of editable text.
 :py:obj:`.TextBox`            A multi-line box of editable text.
+:py:obj:`.TimePicker`         A single-line widget for selecting a time (using a pop-up list).
 ============================= =====================================================================
+
+.. note:: You can use the `hide_char` option on Text widgets to hide sensitive data - e.g. for
+          passwords.
 
 Asciimatics will automatically arrange these for you with just a little extra help.  All you need
 to do is decide how many columns you want for your fields and which fields should be in which
@@ -436,30 +442,37 @@ The colours for any Widget are determined by the `palette` property of the Frame
 Widget.  If desired, it is possible to have a different palette for every Frame, however your
 users may prefer a more consistent approach.
 
-The palette is just a simple dictionary to map Widget components to a
-colour tuple.  The following table shows the required keys.
+The palette is just a simple dictionary to map Widget components to a colour tuple.  A colour tuple
+is simply the foreground colour, attribute and background colour.  For example:
+
+.. code-block:: python
+
+    (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLUE)
+
+The following table shows the required keys for the `palette`.
 
 ========================  =========================================================================
 Key                       Usage
 ========================  =========================================================================
 "background"              Frame background
-"disabled"                Any disabled Widget
-"label"                   Widget labels
 "borders"                 Frame border and Divider Widget
-"scroll"                  Frame scroll bar 
-"title"                   Frame title
-"edit_text"               Text and TextBox
-"focus_edit_text"         Text and TextBox with input focus     
 "button"                  Buttons
-"focus_button"            Buttons with input focus
 "control"                 Checkboxes and RadioButtons
-"selected_control"        Checkboxes and RadioButtons when selected
-"focus_control"           Checkboxes and RadioButtons with input focus
-"selected_focus_control"  Checkboxes and RadioButtons with both
+"disabled"                Any disabled Widget
+"edit_text"               Text and TextBox
 "field"                   Value of an option for a Checkbox, RadioButton or Listbox
-"selected_field"          As above when selected
+"focus_button"            Buttons with input focus
+"focus_control"           Checkboxes and RadioButtons with input focus
+"focus_edit_text"         Text and TextBox with input focus
 "focus_field"             As above with input focus
+"invalid"                 The widget contains invalid data
+"label"                   Widget labels
+"scroll"                  Frame scroll bar
+"selected_control"        Checkboxes and RadioButtons when selected
+"selected_field"          As above when selected
+"selected_focus_control"  Checkboxes and RadioButtons with both
 "selected_focus_field"    As above with both
+"title"                   Frame title
 ========================  =========================================================================
 
 .. _custom-colours-ref:
@@ -481,6 +494,8 @@ find out what they entered?  There are 2 basic ways to do this:
    `None` for those `Widgets` where there is no value - e.g. buttons.
 2. You can query the `Frame`by looking at the `data` property.  This will return the value for
    every Widget in the former as a dictionary, using the Widget `name` properties for the keys.
+   Note that `data` is just a cache, which only gets updated when you call :py:meth:`~Frame.save`,
+   so you need to call this method to refresh the cache before accessing it.
 
 For example:
 
@@ -528,6 +543,15 @@ your terminal/console and the settings of your Frame.  At a minimum, clicking on
 always work.  If you specify `hover_focus=True` and your terminal supports reporting mouse move
 events, just hovering over the Widget with the mouse pointer will move the focus.
 
+Modal Frames
+~~~~~~~~~~~~
+When constructing a Frame, you can specify whether it is modal or not using the `is_modal`
+parameter.  Modal Frames will not allow any input to filter through to other Effects in the Scene,
+so when one is on top of all other Effects, this means that only it will see the user input.
+
+This is commonly used for, but not limited to, notifications to the user that must be acknowledged
+(as implemented by :py:obj:`.PopUpDialog`).
+
 Global key handling
 ~~~~~~~~~~~~~~~~~~~
 In addition to mouse control to switch focus, you can also set up a global event handler to
@@ -553,7 +577,7 @@ To set up this handler, you need to pass it into your screen on the `play()` Met
     Note that the global handler is only called if the focus does not process the event.  Some
     widgets - e.g. TextBox - take any printable text and so the only keys that always get to this
     handler are the control codes.  Others will sometimes get here depending on the type of Widget
-    in focus.
+    in focus and whether the Frame is modal or not..
 
 By default, the global handler will do nothing if you are playing any Scenes containing a Frame.
 Otherwise it contains the top-level logic for skipping to the next Scene (on space or enter), or
@@ -596,7 +620,7 @@ associated event occurs.  In asciimatics, they can usually be identified by the 
 start with `on` and correspond to a significant input action from the user, e.g. `on_click`.
 
 When writing your application, you simply need to decide which events you want to use to trigger
-some processing and create apropriate callbacks.  The most common pattern is to use a `Button` and
+some processing and create appropriate callbacks.  The most common pattern is to use a `Button` and
 define an `on_click` callback.
 
 In addition, there are other events that can be triggered when widget values change.  These can

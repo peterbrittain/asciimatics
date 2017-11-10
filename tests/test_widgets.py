@@ -3,19 +3,24 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
+from datetime import date, time
+from time import sleep
+from mock import patch
 from builtins import chr
 import unittest
+import sys
 from mock.mock import MagicMock
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import NextScene, StopApplication, InvalidFields
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen, Canvas
 from asciimatics.widgets import Frame, Layout, Button, Label, TextBox, Text, \
-    Divider, RadioButtons, CheckBox, PopUpDialog, ListBox, Widget, MultiColumnListBox
+    Divider, RadioButtons, CheckBox, PopUpDialog, ListBox, Widget, MultiColumnListBox, FileBrowser, \
+    DatePicker, TimePicker, Background
 
 
 class TestFrame(Frame):
-    def __init__(self, screen, has_border=True, reduce_cpu=False):
+    def __init__(self, screen, has_border=True, reduce_cpu=False, label_height=1):
         super(TestFrame, self).__init__(screen,
                                         screen.height,
                                         screen.width,
@@ -26,7 +31,8 @@ class TestFrame(Frame):
         layout = Layout([1, 18, 1])
         self.add_layout(layout)
         self._reset_button = Button("Reset", self._reset)
-        layout.add_widget(Label("Group 1:"), 1)
+        self.label = Label("Group 1:", height=label_height)
+        layout.add_widget(self.label, 1)
         layout.add_widget(TextBox(5,
                                   label="My First Box:",
                                   name="TA",
@@ -105,13 +111,15 @@ class TestFrame2(Frame):
         super(TestFrame2, self).__init__(screen,
                                          screen.height,
                                          screen.width,
+                                         data={"selected": "None"},
                                          title="Test Frame 2")
         # Create the form for displaying the list of contacts.
         self._list_view = ListBox(
             Widget.FILL_FRAME,
             init_values,
             name="contacts",
-            on_change=self._on_pick)
+            on_change=self._on_pick,
+            on_select=self._on_select)
         self._edit_button = Button("Edit", self._edit)
         self._delete_button = Button("Delete", self._delete)
         layout = Layout([100], fill_frame=True)
@@ -124,8 +132,17 @@ class TestFrame2(Frame):
         layout2.add_widget(self._edit_button, 1)
         layout2.add_widget(self._delete_button, 2)
         layout2.add_widget(Button("Quit", self._quit), 3)
+        layout3 = Layout([100])
+        self.add_layout(layout3)
+        self._info_text = Text(label="Selected:", name="selected")
+        self._info_text.disabled = True
+        layout3.add_widget(self._info_text)
         self.fix()
         self._on_pick()
+
+    def _on_select(self):
+        self._info_text.value = str(self._list_view.value)
+        self.save()
 
     def _on_pick(self):
         self._edit_button.disabled = self._list_view.value is None
@@ -156,8 +173,59 @@ class TestFrame3(Frame):
         self.fix()
 
 
-class TestWidgets(unittest.TestCase):
+class TestFrame4(Frame):
+    def __init__(self, screen):
+        super(TestFrame4, self).__init__(
+            screen, screen.height, screen.width, has_border=False, name="My Form")
 
+        # State tracking for callbacks
+        self.selected = None
+        self.highlighted = None
+
+        # Simple full-page Widget
+        layout = Layout([1], fill_frame=True)
+        self.add_layout(layout)
+        self.file_list = FileBrowser(Widget.FILL_FRAME,
+                                     "/",
+                                     name="file_list",
+                                     on_select=self.select,
+                                     on_change=self.change)
+        layout.add_widget(self.file_list)
+        self.fix()
+
+    def select(self):
+        self.selected = self.file_list.value
+
+    def change(self):
+        self.highlighted = self.file_list.value
+
+
+class TestFrame5(Frame):
+    def __init__(self, screen):
+        super(TestFrame5, self).__init__(
+            screen, screen.height, screen.width, has_border=True, name="My Form")
+
+        # Simple full-page Widget
+        layout = Layout([1], fill_frame=True)
+        self.add_layout(layout)
+        self.date_widget = DatePicker(
+            label="Date:", name="date", year_range=range(1999, 2020), on_change=self._changed)
+        self.date_widget.value = date(2017, 1, 2)
+        layout.add_widget(self.date_widget)
+        self.time_widget = TimePicker(
+            label="Time:", name="time", seconds=True, on_change=self._changed)
+        self.time_widget.value = time(12, 0, 59)
+        layout.add_widget(self.time_widget)
+        self.fix()
+
+        # State tracking for widgets
+        self.changed = False
+
+    def _changed(self):
+        self.changed = True
+
+
+class TestWidgets(unittest.TestCase):
     def assert_canvas_equals(self, canvas, expected):
         """
         Assert output to canvas is as expected.
@@ -703,15 +771,15 @@ class TestWidgets(unittest.TestCase):
 
         # Check we have a default value for our list.
         form.save()
-        self.assertEqual(form.data, {"contacts": 1})
+        self.assertEqual(form.data, {"selected": "None", "contacts": 1})
 
         # Check that UP/DOWN change selection.
         self.process_keys(form, [Screen.KEY_DOWN])
         form.save()
-        self.assertEqual(form.data, {"contacts": 2})
+        self.assertEqual(form.data, {"selected": "None", "contacts": 2})
         self.process_keys(form, [Screen.KEY_UP])
         form.save()
-        self.assertEqual(form.data, {"contacts": 1})
+        self.assertEqual(form.data, {"selected": "None", "contacts": 1})
 
         # Check that the listbox is rendered correctly.
         form.update(0)
@@ -723,22 +791,142 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
-            "|                                      |\n" +
             "|--------------------------------------|\n" +
             "| < Add > < Edit > < Delete < Quit >   |\n" +
+            "|Selected: None                        |\n" +
             "+--------------------------------------+\n")
 
         # Check that mouse input changes selection.
         self.process_mouse(form, [(2, 2, MouseEvent.LEFT_CLICK)])
         form.save()
-        self.assertEqual(form.data, {"contacts": 2})
+        self.assertEqual(form.data, {"selected": "None", "contacts": 2})
         self.process_mouse(form, [(2, 1, MouseEvent.LEFT_CLICK)])
         form.save()
-        self.assertEqual(form.data, {"contacts": 1})
+        self.assertEqual(form.data, {"selected": "None", "contacts": 1})
+
+        # Check that enter key handles correctly.
+        self.process_keys(form, [Screen.ctrl("m")])
+        form.save()
+        self.assertEqual(form.data, {"selected": "1", "contacts": 1})
+
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+------------ Test Frame 2 ------------+\n" +
+            "|One                                   |\n" +
+            "|Two                                   O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|--------------------------------------|\n" +
+            "| < Add > < Edit > < Delete < Quit >   |\n" +
+            "|Selected: 1                           |\n" +
+            "+--------------------------------------+\n")
+
+        # Check that mouse double click handles correctly.
+        self.process_mouse(form, [(2, 2, MouseEvent.DOUBLE_CLICK)])
+        form.save()
+        self.assertEqual(form.data, {"selected": "2", "contacts": 2})
+
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+------------ Test Frame 2 ------------+\n" +
+            "|One                                   |\n" +
+            "|Two                                   O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|--------------------------------------|\n" +
+            "| < Add > < Edit > < Delete < Quit >   |\n" +
+            "|Selected: 2                           |\n" +
+            "+--------------------------------------+\n")
 
         # Check that the current focus ignores unknown events.
         event = object()
         self.assertEqual(event, form.process_event(event))
+
+    def test_title(self):
+        """
+        Check Frame titles work as expected.
+        """
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame2(canvas, [("One", 1), ("Two", 2)])
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that the title is rendered correctly.
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+------------ Test Frame 2 ------------+\n" +
+            "|One                                   |\n" +
+            "|Two                                   O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|--------------------------------------|\n" +
+            "| < Add > < Edit > < Delete < Quit >   |\n" +
+            "|Selected: None                        |\n" +
+            "+--------------------------------------+\n")
+
+        # Check that a new title is rendered correctly.
+        form.title = "A New Title!"
+        form.update(1)
+        self.assert_canvas_equals(
+            canvas,
+            "+------------ A New Title! ------------+\n" +
+            "|One                                   |\n" +
+            "|Two                                   O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|--------------------------------------|\n" +
+            "| < Add > < Edit > < Delete < Quit >   |\n" +
+            "|Selected: None                        |\n" +
+            "+--------------------------------------+\n")
+
+    def test_focus_callback(self):
+        """
+        Check that the _on_focus & _on_blur callbacks work as expected.
+        """
+        def _on_focus():
+            self._did_focus = True
+
+        def _on_blur():
+            self._did_blur = True
+
+        # Create a dummy screen
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 2, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        layout.add_widget(Text("Test"))
+        layout.add_widget(Text("Test2", on_blur=_on_blur, on_focus=_on_focus))
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        # Reset state for test
+        self._did_blur = False
+        self._did_focus = False
+
+        # Tab round to move the focus - check it has called the right function.
+        self.process_keys(form, [Screen.KEY_TAB])
+        self.assertEqual(self._did_blur, False)
+        self.assertEqual(self._did_focus, True)
+
+        # Reset the state and Now move the focus away with the mouse.
+        self._did_focus = False
+        self.process_mouse(form, [(0, 0, MouseEvent.LEFT_CLICK)])
+        self.assertEqual(self._did_blur, True)
+        self.assertEqual(self._did_focus, False)
 
     def test_multi_column_list_box(self):
         """
@@ -980,7 +1168,6 @@ class TestWidgets(unittest.TestCase):
         text_box.value = [u"你確定嗎", u"？"]
 
         # Check that the CJK characters render correctly - no really this is correctly aligned!
-        self.maxDiff = None
         form.update(0)
         self.assert_canvas_equals(
             canvas,
@@ -1150,6 +1337,391 @@ class TestWidgets(unittest.TestCase):
         # Check form data is empty.
         form.save()
         self.assertEqual(form.data, {})
+
+    def test_label_change(self):
+        """
+        Check Labels can be dynamically updated.
+        """
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame(canvas)
+        form.reset()
+
+        # Check initial rendering
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "| Group 1:                             |\n" +
+            "| My First                             O\n" +
+            "| Box:                                 |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "| Text1:                               |\n" +
+            "| Text2:                               |\n" +
+            "+--------------------------------------+\n")
+
+        # Check dynamic updates change the rendering.
+        form.label.text = "New text here:"
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "| New text here:                       |\n" +
+            "| My First                             O\n" +
+            "| Box:                                 |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "| Text1:                               |\n" +
+            "| Text2:                               |\n" +
+            "+--------------------------------------+\n")
+
+    def test_label_height(self):
+        """
+        Check Labels can be dynamically updated.
+        """
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame(canvas, label_height=2)
+        form.reset()
+
+        # Check Label obeys required height
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "| Group 1:                             |\n" +
+            "|                                      O\n" +
+            "| My First                             |\n" +
+            "| Box:                                 |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "| Text1:                               |\n" +
+            "+--------------------------------------+\n")
+
+        # Now check wrapping works too...
+        form.label.text = "A longer piece of text that should wrap across multiple lines:"
+        form.update(1)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "| A longer piece of text that should   |\n" +
+            "| wrap across multiple lines:          O\n" +
+            "| My First                             |\n" +
+            "| Box:                                 |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "| Text1:                               |\n" +
+            "+--------------------------------------+\n")
+
+    @patch("os.path.isdir")
+    @patch("os.stat")
+    @patch("os.listdir")
+    def test_file_browser(self, mock_list, mock_stat, mock_path):
+        """
+        Check FileBrowser widget works as expected.
+        """
+        # First we need to mock out the file system calls to have a regressible test
+        if sys.platform == "win32":
+            self.skipTest("File names wrong for windows")
+
+        mock_list.return_value = ["A Directory", "A File"]
+        mock_result = MagicMock()
+        mock_result.st_mtime = 0
+        mock_result.st_size = 10000
+        mock_stat.return_value = mock_result
+        mock_path.side_effect = lambda x: "File" not in x
+
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame4(canvas)
+        form.register_scene(scene)
+        form.reset()
+
+        # Check we have a default value for our list.
+        form.save()
+        self.assertIsNone(form.selected)
+        self.assertIsNone(form.highlighted)
+        self.assertEqual(form.data, {"file_list": None})
+
+        # Check that the listbox is rendered correctly.
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "/                     Size Last modified\n" +
+            "|-+ A Directory               1970-01-01\n" +
+            "|-- A File              9K    1970-01-01\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        # Check that mouse inpput changes selection.
+        self.process_mouse(form, [(2, 2, MouseEvent.LEFT_CLICK)])
+        form.save()
+        self.assertEqual(form.data, {"file_list": "/A File"})
+        self.assertEqual(form.highlighted, "/A File")
+        self.assertIsNone(form.selected)
+
+        # Check that UP/DOWN change selection.
+        self.process_keys(form, [Screen.KEY_UP])
+        form.save()
+        self.assertEqual(form.data, {"file_list": "/A Directory"})
+        self.assertEqual(form.highlighted, "/A Directory")
+        self.assertIsNone(form.selected)
+
+        # Check that enter key handles correctly on directories.
+        self.process_keys(form, [Screen.ctrl("m")])
+        self.assertEqual(form.highlighted, "/A Directory/..")
+        self.assertIsNone(form.selected)
+        form.update(1)
+        self.assert_canvas_equals(
+            canvas,
+            "/A Directory          Size Last modified\n" +
+            "|-+ ..                                  \n" +
+            "|-+ A Directory               1970-01-01\n" +
+            "|-- A File              9K    1970-01-01\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        # Check that enter key handles correctly on files.
+        self.process_keys(form, [Screen.KEY_DOWN, Screen.KEY_DOWN, Screen.ctrl("m")])
+        self.assertEqual(form.highlighted, "/A Directory/A File")
+        self.assertEqual(form.selected, "/A Directory/A File")
+
+    def test_date_picker(self):
+        """
+        Check DatePicker widget works as expected.
+        """
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame5(canvas)
+        scene.add_effect(form)
+        scene.reset()
+
+        # Check that the listbox is rendered correctly.
+        for effect in scene.effects:
+            effect.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|Date: 02/Jan/2017                     |\n" +
+            "|Time: 12:00:59                        O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check that enter key brings up edit pop-up
+        self.process_keys(scene, [Screen.ctrl("m")])
+        self.assertFalse(form.changed)
+        for effect in scene.effects:
+            effect.update(1)
+        self.assert_canvas_equals(
+            canvas,
+            "+-----|01     2016|--------------------+\n" +
+            "|Date:|02/Jan/2017|                    |\n" +
+            "|Time:|03 Feb 2018|                    O\n" +
+            "|     +-----------+                    |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check that you can't select an invalid date.
+        self.process_keys(scene, ["31", "Feb", Screen.ctrl("m")], separator=Screen.KEY_TAB)
+        self.assertFalse(form.changed)
+        for effect in scene.effects:
+            effect.update(2)
+        self.assert_canvas_equals(
+            canvas,
+            "+-----|30 Jan 2016|--------------------+\n" +
+            "|Date:|31/Feb/2017|                    |\n" +
+            "|Time:|   Mar 2018|                    O\n" +
+            "|     +-----------+                    |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check that a valid date updates the value - wait one second to allow search to reset.
+        sleep(1)
+        self.process_keys(scene, ["15", "Jun", Screen.ctrl("m")], separator=Screen.KEY_TAB)
+        self.assertTrue(form.changed)
+        for effect in scene.effects:
+            effect.update(2)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|Date: 15/Jun/2017                     |\n" +
+            "|Time: 12:00:59                        O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+        self.assertEquals(form.date_widget.value, date(2017, 6, 15))
+
+    def test_time_picker(self):
+        """
+        Check TimePicker widget works as expected.
+        """
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame5(canvas)
+        scene.add_effect(form)
+        scene.reset()
+
+        # Check that the listbox is rendered correctly.
+        for effect in scene.effects:
+            effect.update(0)
+        self.assertFalse(form.changed)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|Date: 02/Jan/2017                     |\n" +
+            "|Time: 12:00:59                        O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check that enter key brings up edit pop-up
+        self.process_keys(scene, [Screen.KEY_DOWN, Screen.ctrl("m")])
+        for effect in scene.effects:
+            effect.update(1)
+        self.assertFalse(form.changed)
+        self.assert_canvas_equals(
+            canvas,
+            "+-----+--------+-----------------------+\n" +
+            "|Date:|11    58|17                     |\n" +
+            "|Time:|12:00:59|                       O\n" +
+            "|     |13 01   |                       |\n" +
+            "|     +--------+                       |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check that we can change the time with cursors keys and mouse selection - and click out
+        # to exit.
+        self.process_mouse(scene, [(7, 1, MouseEvent.LEFT_CLICK)])
+        self.process_keys(scene, [Screen.KEY_TAB, Screen.KEY_DOWN, Screen.KEY_TAB, Screen.KEY_UP])
+        self.process_mouse(scene, [(10, 10, MouseEvent.LEFT_CLICK)])
+        self.assertTrue(form.changed)
+        for effect in scene.effects:
+            effect.update(2)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|Date: 02/Jan/2017                     |\n" +
+            "|Time: 11:01:58                        O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+        self.assertEquals(form.time_widget.value, time(11, 1, 58))
+
+    def test_background(self):
+        """
+        Check Background widget works as expected.
+        """
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = Background(canvas, bg=7)
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that the widget is rendered correctly.
+        form.update(0)
+        for y in range(canvas.height):
+            for x in range(canvas.width):
+                char, _, _, bg = canvas.get_from(x, y)
+                self.assertEquals(char, ord(" "))
+                self.assertEquals(bg, 7)
+
+    def test_find_widget(self):
+        """
+        Check find_widget works as expected.
+        """
+        # Set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame5(canvas)
+        scene.add_effect(form)
+        scene.reset()
+
+        # Can't find a non-existent widget
+        self.assertIsNone(form.find_widget("ABLAH"))
+
+        # Can find a defined widget
+        self.assertEquals(form.find_widget("date"), form.date_widget)
+
+    def test_password(self):
+        """
+        Check that we can do password input on Text widgets.
+        """
+        # Create a dummy screen.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 2, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        text = Text("Password", hide_char="*")
+        layout.add_widget(text)
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that input still saves off values as expected
+        self.process_keys(form, ["1234"])
+        form.save()
+        self.assertEqual(text.value, "1234")
+
+        # Check that it is drawn with the obscuring charav=cter, though.
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "Password ****                           \n" +
+            "                                        \n")
 
 if __name__ == '__main__':
     unittest.main()
