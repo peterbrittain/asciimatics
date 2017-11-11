@@ -2253,7 +2253,7 @@ else:
             # Print the text at the required location and update the current
             # position.
             try:
-                self._safe_write(cursor + text)
+                self._safe_write((cursor + text).encode('utf-8'))
             except UnicodeEncodeError:
                 # This is probably a sign that the user has the wrong locale.
                 # Try to soldier on anyway.
