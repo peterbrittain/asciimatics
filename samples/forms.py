@@ -35,9 +35,9 @@ class DemoFrame(Frame):
                                         has_shadow=True,
                                         name="My Form")
         layout = Layout([1, 18, 1])
-        self.add_layout(layout)
         self._reset_button = Button("Reset", self._reset)
         layout.add_widget(Label("Group 1:"), 1)
+        self.add_layout(layout)
         layout.add_widget(TextBox(5,
                                   label="My First Box:",
                                   name="TA",

@@ -834,6 +834,11 @@ class Layout(object):
         :param column: The column within the widget for this widget.  Defaults
                        to zero.
         """
+        # Make sure that the Layout is fully initialised before we try to add any widgets.
+        if self._frame is None:
+            raise RuntimeError("You must add the Layout to the Frame before you can add a Widget.")
+
+        # Now process the widget.
         self._columns[column].append(widget)
         widget.register_frame(self._frame)
 
