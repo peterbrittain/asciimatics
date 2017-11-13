@@ -167,7 +167,8 @@ class Frame(Effect):
     within your Frame.
     """
 
-    # Colour palette for the widgets within the Frame.
+    #: Colour palette for the widgets within the Frame.  Each entry should be
+    #: a 3-tuple of (foreground colour, attribute, background colour).
     palette = {
         "background":
             (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
