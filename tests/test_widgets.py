@@ -1437,5 +1437,36 @@ class TestWidgets(unittest.TestCase):
         self.assertEqual(form.highlighted, "/A Directory/A File")
         self.assertEqual(form.selected, "/A Directory/A File")
 
+    def test_change_values(self):
+        """
+        Check changing Text values resets cursor position.
+        """
+        # Create a dummy screen.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        text = Text()
+        layout.add_widget(text)
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that input is put at the end of the new text
+        text.value = "A test"
+        self.process_keys(form, ["A"])
+        form.save()
+        self.assertEqual(text.value, "A testA")
+
+        # Check that growing longer still puts it at the end.
+        text.value = "A longer test"
+        self.process_keys(form, ["A"])
+        form.save()
+        self.assertEqual(text.value, "A longer testA")
+
 if __name__ == '__main__':
     unittest.main()
