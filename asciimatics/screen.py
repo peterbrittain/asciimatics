@@ -2302,3 +2302,4 @@ else:
             for signalnum, handler in self._old_signal_states:
                 signal.signal(signalnum, handler)
             self._old_signal_states = []
+

@@ -1620,17 +1620,14 @@ class Text(Widget):
         if isinstance(event, KeyboardEvent):
             if event.key_code == Screen.KEY_BACK:
                 if self._column > 0:
-                    # Delete character in front of cursor - use value to trigger
-                    # events.
-                    self.value = "".join([
-                        self._value[:self._column - 1],
-                        self._value[self._column:]])
+                    # Delete character in front of cursor.
+                    self._set_and_check_value("".join([self._value[:self._column - 1],
+                                                       self._value[self._column:]]))
                     self._column -= 1
             if event.key_code == Screen.KEY_DELETE:
                 if self._column < len(self._value):
-                    self.value = "".join([
-                        self._value[:self._column],
-                        self._value[self._column + 1:]])
+                    self._set_and_check_value("".join([self._value[:self._column],
+                                                       self._value[self._column + 1:]]))
             elif event.key_code == Screen.KEY_LEFT:
                 self._column -= 1
                 self._column = max(self._column, 0)
@@ -1643,9 +1640,8 @@ class Text(Widget):
                 self._column = len(self._value)
             elif event.key_code >= 32:
                 # Insert any visible text at the current cursor position.
-                self.value = chr(event.key_code).join([
-                    self._value[:self._column],
-                    self._value[self._column:]])
+                self._set_and_check_value(chr(event.key_code).join([self._value[:self._column],
+                                                                    self._value[self._column:]]))
                 self._column += 1
             else:
                 # Ignore any other key press.
@@ -1671,19 +1667,24 @@ class Text(Widget):
         return 1
 
     @property
-    def value(self):
-        return self._value
-
-    @property
     def frame_update_count(self):
         # Force refresh for cursor if needed.
         return 5 if self._has_focus and not self._frame.reduce_cpu else 0
 
+    @property
+    def value(self):
+        return self._value
+
     @value.setter
     def value(self, new_value):
+        self._set_and_check_value(new_value, reset=True)
+
+    def _set_and_check_value(self, new_value, reset=False):
         # Only trigger the notification after we've changed the value.
         old_value = self._value
         self._value = new_value if new_value else ""
+        if reset:
+            self.reset()
         if old_value != self._value and self._on_change:
             self._on_change()
         if self._validator:
@@ -2074,6 +2075,7 @@ class TextBox(Widget):
             self._value = new_value.split("\n")
         else:
             self._value = new_value
+        self.reset()
         if old_value != self._value and self._on_change:
             self._on_change()
 
