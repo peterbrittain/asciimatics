@@ -92,7 +92,8 @@ Backspace or delete are not working
 -----------------------------------
 Some users have reported this on curses systems.  So far this has been tracked down to issues with
 the terminal configuration.  For an in-depth explanation of the problem and several possible
-solutions see `here <http://www.ibb.net/~anne/keyboard.html>`__.
+solutions see `here <http://www.ibb.net/~anne/keyboard.html>`__ and
+`here <http://invisible-island.net/xterm/xterm.faq.html#xterm_erase>`__.
 
 This seems to be particularly problematic for Mac OS X users, where the default terminal app as
 shipped with the OS doesn't match the terminfo definitions.  Genius!  If you're on OSX, running
@@ -103,6 +104,10 @@ the following inside your terminal *should* fix up the mismatch.
     infocmp "$TERM" | sed -Ee 's/(kbs)=[^,]*/\1=\\177/' -e 's/(kdch1)=[^,]*/\1=\\E[3~/' > "$TERM"
     tic "$TERM"
     rm -f "$TERM"
+
+In an attempt to minimize the number of affected platforms, asciimatics v1.9.0 and later will also
+check the OS terminal definitions for ERASE and use that for backspace if it differs from the curses
+terminal definition.
 
 I can't run it inside PyCharm or other IDEs
 -------------------------------------------
