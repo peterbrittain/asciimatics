@@ -1,8 +1,8 @@
 CHANGE HISTORY
 ==============
 
-LATEST
-------
+1.9.0
+-----
 - Added FileBrowser, DatePicker and TimePicker widgets.
 
   - Made `screen` a mandatory positional parameter to all Effects in the process.
