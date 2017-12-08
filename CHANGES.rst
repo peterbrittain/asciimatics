@@ -1,6 +1,10 @@
 CHANGE HISTORY
 ==============
 
+LATEST
+------
+- Fixed `Screen.wrapper()` to return result from wrapped function.
+
 1.9.0
 -----
 - Added FileBrowser, DatePicker and TimePicker widgets.
