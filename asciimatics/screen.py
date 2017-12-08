@@ -1164,9 +1164,9 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         try:
             try:
                 if arguments:
-                    func(screen, *arguments)
+                    return func(screen, *arguments)
                 else:
-                    func(screen)
+                    return func(screen)
             except ResizeScreenError:
                 restore = False
                 raise

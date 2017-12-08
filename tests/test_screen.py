@@ -88,6 +88,15 @@ class TestScreen(unittest.TestCase):
 
         Screen.wrapper(internal_checks)
 
+    def test_wrapper_return(self):
+        """
+        Check that you get the result back from the wrapped function.
+        """
+        def internal_checks(_):
+            return True
+
+        self.assertTrue(Screen.wrapper(internal_checks))
+
     def test_print_and_get(self):
         """
         Check that basic print_at and get_from work as expected.
