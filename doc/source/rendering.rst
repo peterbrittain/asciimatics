@@ -47,6 +47,41 @@ more details.
 
 For more examples of Renderers, see the asciimatics samples folder.
 
+Static colour codes
+-------------------
+When creating static rendered output, it can be helpful to define your colours
+inline with the rest of your text.  The :py:obj:`.StaticRenderer` class
+supports this through the ${n1,n2,n3} escape sequence, where `n*` are digits.
+
+Formally this sequence is defined an escape sequence ${c,a,b} which changes
+the current colour tuple to be foreground colour 'c', attribute 'a' and
+background colour 'b' (using the values of the Screen COLOUR and ATTR
+constants).  The attribute and background fields are optional.
+
+These tuples create a colour map (for input into :py:meth:`~Screen.paint`) and
+so the colours will reset to the defaults passed into `paint()` at the start
+of each line.  For example, this code will produce a simple Xmas tree with
+coloured baubles when rendered (using green as the default colour).
+
+.. code-block:: python
+
+    StaticRenderer(images=[r"""
+           ${3,1}*
+          / \
+         /${1}o${2}  \
+        /_   _\
+         /   \${4}b
+        /     \
+       /   ${1}o${2}   \
+      /__     __\
+      ${1}d${2} / ${4}o${2}   \
+       /       \
+      / ${4}o     ${1}o${2}.\
+     /___________\
+          ${3}|||
+          ${3}|||
+    """])
+
 Experimental
 ------------
 A Renderer can also return a plain text string representation of the next
