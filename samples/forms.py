@@ -1,5 +1,5 @@
 from asciimatics.widgets import Frame, TextBox, Layout, Label, Divider, Text, \
-    CheckBox, RadioButtons, Button, PopUpDialog, TimePicker, DatePicker, Background
+    CheckBox, RadioButtons, Button, PopUpDialog, TimePicker, DatePicker, Background, DropdownList
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, NextScene, StopApplication, \
@@ -80,6 +80,9 @@ class DemoFrame(Frame):
         layout.add_widget(
             TimePicker("Time", name="TIME", on_change=self._on_change, seconds=True), 1)
         layout.add_widget(Text("Password", name="PWD", on_change=self._on_change, hide_char="*"), 1)
+        layout.add_widget(DropdownList(
+            [("Item 1", 1), ("Item 2", 2), ("Item 3", 3), ("Item 4", 4), ("Item 5", 5), ],
+            label="Dropdown", name="DD", on_change=self._on_change), 1)
         layout.add_widget(Divider(height=3), 1)
         layout2 = Layout([1, 1, 1])
         self.add_layout(layout2)
