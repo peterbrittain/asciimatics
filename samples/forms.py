@@ -20,7 +20,9 @@ form_data = {
     "CB": True,
     "CC": False,
     "DATE": datetime.datetime.now().date(),
-    "TIME": datetime.datetime.now().time()
+    "TIME": datetime.datetime.now().time(),
+    "PWD": "",
+    "DD": 1
 }
 
 logging.basicConfig(filename="forms.log", level=logging.DEBUG)

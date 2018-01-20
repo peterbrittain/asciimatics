@@ -4,6 +4,8 @@ CHANGE HISTORY
 LATEST
 ------
 - Fixed `Screen.wrapper()` to return result from wrapped function.
+- Added `DropdownList` widget.
+- Added `width` property to widgets.
 
 1.9.0
 -----
