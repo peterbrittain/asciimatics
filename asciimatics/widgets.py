@@ -687,7 +687,6 @@ class Frame(Effect):
         #
         # Also don't bother trying to process widgets if there is no defined
         # focus.  This means there is no enabled widget in the Frame.
-        # TODO: Is concept of Frame focus well defined?
         if (self._focus < 0 or self._focus >= len(self._layouts) or
                 not self._layouts):
             if event is not None and isinstance(event, KeyboardEvent):
@@ -1273,6 +1272,14 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         return 0
 
+    @property
+    def width(self):
+        """
+        The width of this Widget (excluding any labels).
+        Only valid after the Frame has been fixed in place.
+        """
+        return self._w - self._offset
+
     def register_frame(self, frame):
         """
         Register the Frame that owns this Widget.
@@ -1584,18 +1591,17 @@ class Text(Widget):
         self._draw_label()
 
         # Calculate new visible limits if needed.
-        width = self._w - self._offset
         self._start_column = min(self._start_column, self._column)
         self._start_column += _find_min_start(self._value[self._start_column:self._column + 1],
-                                              width)
+                                              self.width)
 
         # Render visible portion of the text.
         (colour, attr, bg) = self._pick_colours("edit_text")
         text = self._value[self._start_column:]
-        text = _enforce_width(text, width)
+        text = _enforce_width(text, self.width)
         if self._hide_char:
             text = self._hide_char[0] * len(text)
-        text += " " * (width - wcswidth(text))
+        text += " " * (self.width - wcswidth(text))
         self._frame.canvas.print_at(
             text,
             self._x + self._offset,
@@ -1908,20 +1914,19 @@ class TextBox(Widget):
         self._draw_label()
 
         # Calculate new visible limits if needed.
-        width = self._w - self._offset
         height = self._h
         dx = dy = 0
         self._start_line = max(0, max(self._line - height + 1,
                                       min(self._start_line, self._line)))
         self._start_column = min(self._start_column, self._column)
         self._start_column += _find_min_start(
-            self._value[self._line][self._start_column:self._column + 1], width)
+            self._value[self._line][self._start_column:self._column + 1], self.width)
 
         # Clear out the existing box content
         (colour, attr, bg) = self._pick_colours("edit_text")
         for i in range(height):
             self._frame.canvas.print_at(
-                " " * width,
+                " " * self.width,
                 self._x + self._offset + dx,
                 self._y + i + dy,
                 colour, attr, bg)
@@ -1930,7 +1935,7 @@ class TextBox(Widget):
         for i, text in enumerate(self._value):
             if self._start_line <= i < self._start_line + height:
                 self._frame.canvas.print_at(
-                    _enforce_width(text[self._start_column:], width),
+                    _enforce_width(text[self._start_column:], self.width),
                     self._x + self._offset + dx,
                     self._y + i + dy - self._start_line,
                     colour, attr, bg)
@@ -2280,7 +2285,6 @@ class ListBox(_BaseListBox):
         self._draw_label()
 
         # Calculate new visible limits if needed.
-        width = self._w - self._offset
         height = self._h
         dx = dy = 0
 
@@ -2288,7 +2292,7 @@ class ListBox(_BaseListBox):
         (colour, attr, bg) = self._frame.palette["field"]
         for i in range(height):
             self._frame.canvas.print_at(
-                " " * width,
+                " " * self.width,
                 self._x + self._offset + dx,
                 self._y + i + dy,
                 colour, attr, bg)
@@ -2312,7 +2316,7 @@ class ListBox(_BaseListBox):
             if start_line <= i < start_line + height - y_offset:
                 colour, attr, bg = self._pick_colours("field", i == self._line)
                 self._frame.canvas.print_at(
-                    "{:{}}".format(_enforce_width(text, width), width),
+                    "{:{}}".format(_enforce_width(text, self.width), self.width),
                     self._x + self._offset + dx,
                     self._y + y_offset + i + dy - start_line,
                     colour, attr, bg)
@@ -2401,7 +2405,7 @@ class MultiColumnListBox(_BaseListBox):
         if isinstance(width, float):
             return int(self._w * width)
         if width == 0:
-            width = (self._w - self._offset - sum(self._spacing) -
+            width = (self.width - sum(self._spacing) -
                      sum([self._get_width(x) for x in self._columns if x != 0]))
         return width
 
@@ -2409,7 +2413,6 @@ class MultiColumnListBox(_BaseListBox):
         self._draw_label()
 
         # Calculate new visible limits if needed.
-        width = self._w - self._offset
         height = self._h
         dx = dy = 0
 
@@ -2417,7 +2420,7 @@ class MultiColumnListBox(_BaseListBox):
         (colour, attr, bg) = self._frame.palette["field"]
         for i in range(height):
             self._frame.canvas.print_at(
-                " " * width,
+                " " * self.width,
                 self._x + self._offset + dx,
                 self._y + i + dy,
                 colour, attr, bg)
@@ -2606,7 +2609,7 @@ class Button(Widget):
         # Do the usual layout work. then recalculate exact x/w values for the
         # rendered button.
         super(Button, self).set_layout(x, y, offset, w, h)
-        self._x += max(0, (self._w - self._offset - wcswidth(self._text)) // 2)
+        self._x += max(0, (self.width - wcswidth(self._text)) // 2)
         self._w = min(self._w, wcswidth(self._text))
 
     def update(self, frame_no):
@@ -2777,10 +2780,14 @@ class _TempPopup(Frame):
 
     def process_event(self, event):
         # Look for events that will close the pop-up - e.g. clicking outside the Frame or Enter key.
+        cancelled = False
         if event is not None:
             if isinstance(event, KeyboardEvent):
                 if event.key_code in [Screen.ctrl("M"), Screen.ctrl("J"), ord(" ")]:
                     event = None
+                elif event.key_code == Screen.KEY_ESCAPE:
+                    event = None
+                    cancelled = True
             elif isinstance(event, MouseEvent):
                 origin = self._canvas.origin
                 if event.y < origin[1] or event.y >= origin[1] + self._canvas.height:
@@ -2791,23 +2798,27 @@ class _TempPopup(Frame):
         # Remove this pop-up if we're done; otherwise bubble up the event.
         if event is None:
             try:
-                self.close()
+                self.close(cancelled)
             except InvalidFields:
                 # Nothing to do as we've already prevented the Effect from being removed.
                 pass
         return super(_TempPopup, self).process_event(event)
 
-    def close(self):
+    def close(self, cancelled):
         """
         Close this temporary pop-up.
+
+        :param cancelled: Whether the pop-up was cancelled (e.g. by pressing Esc).
         """
-        self._on_close()
+        self._on_close(cancelled)
         self._scene.remove_effect(self)
 
     @abstractmethod
-    def _on_close(self):
+    def _on_close(self, cancelled):
         """
         Method to handle any communication back to the parent widget on closure of this pop-up.
+
+        :param cancelled: Whether the pop-up was cancelled (e.g. by pressing Esc).
 
         This method can raise an InvalidFields exception to indicate that the current selection is
         invalid and so the pop-up cannot be dismissed.
@@ -2853,10 +2864,11 @@ class _TimePickerPopup(_TempPopup):
         self._minutes.value = parent.value.minute
         self._seconds.value = parent.value.second
 
-    def _on_close(self):
-        self._parent.value = self._parent.value.replace(hour=self._hours.value,
-                                                        minute=self._minutes.value,
-                                                        second=self._seconds.value)
+    def _on_close(self, cancelled):
+        if not cancelled:
+            self._parent.value = self._parent.value.replace(hour=self._hours.value,
+                                                            minute=self._minutes.value,
+                                                            second=self._seconds.value)
 
 
 class TimePicker(Widget):
@@ -2990,11 +3002,12 @@ class _DatePickerPopup(_TempPopup):
     def _refresh_day(self):
         self._days.value = self._days.value
 
-    def _on_close(self):
+    def _on_close(self, cancelled):
         try:
-            self._parent.value = self._parent.value.replace(day=self._days.value,
-                                                            month=self._months.value,
-                                                            year=self._years.value)
+            if not cancelled:
+                self._parent.value = self._parent.value.replace(day=self._days.value,
+                                                                month=self._months.value,
+                                                                year=self._years.value)
         except ValueError:
             raise InvalidFields([self._days])
 
@@ -3075,30 +3088,43 @@ class _DropdownPopup(_TempPopup):
         """
         :param parent: The widget that spawned this pop-up.
         """
-        # TODO: Figure out required height and location - including at bottom of screen.
+        # Decide which way to present the list - up or down from the parent widget.
         location = parent.get_location()
-        height = min(len(parent._options) + 2, parent.frame.screen.height - location[1] - 1)
-        width = parent._w - parent._offset
+        if parent.frame.screen.height - location[1] < 3:
+            height = min(len(parent.options) + 4, location[1])
+            start_line = location[1] - height + 2
+            reverse = True
+        else:
+            start_line = location[1] - 1
+            height = min(len(parent.options) + 4, parent.frame.screen.height - location[1] + 1)
+            reverse = False
 
         # Construct the Frame
         super(_DropdownPopup, self).__init__(parent.frame.screen,
                                              parent,
-                                             location[0], location[1]+1,
-                                             width, height)
+                                             location[0], start_line,
+                                             parent.width, height)
 
         # Build the widget to display the time selection.
         layout = Layout([1], fill_frame=True)
         self.add_layout(layout)
-        # TODO: address data model and re-use between these widget classes and List.
-        self._list = ListBox(Widget.FILL_FRAME, parent._options, on_select=self.close, on_change=self._on_close)
-        layout.add_widget(self._list, 0)
+        self._field = Text()
+        self._field.disabled = True
+        self._list = ListBox(Widget.FILL_FRAME, parent.options, on_select=self.close, on_change=self._link)
+        layout.add_widget(self._list if reverse else self._field, 0)
+        layout.add_widget(Divider(), 0)
+        layout.add_widget(self._field if reverse else self._list, 0)
         self.fix()
 
         # Set up the correct time.
         self._list.value = parent.value
 
-    def _on_close(self):
-        self._parent.value = self._list.value
+    def _link(self):
+        self._field.value = self._list.options[self._list._line][0]
+
+    def _on_close(self, cancelled):
+        if not cancelled:
+            self._parent.value = self._list.value
 
 
 class DropdownList(Widget):
@@ -3129,16 +3155,22 @@ class DropdownList(Widget):
         self._line = 0 if len(options) > 0 else None
         self._value = options[self._line][1] if self._line is not None else None
 
+    @property
+    def options(self):
+        """
+        The set of allowed options for the drop-down list.
+        """
+        return self._options
+
     def update(self, frame_no):
         self._draw_label()
 
         # This widget only ever needs display the current selection - the separate Frame does all
         # the clever stuff when it has the focus.
-        width = self._w - self._offset - 2
         text = "" if self._line is None else self._options[self._line][0]
         (colour, attr, bg) = self._pick_colours("field", selected=self._has_focus)
         self._frame.canvas.print_at(
-            "[{:{}}]".format(_enforce_width(text, width), width),
+            "[{:{}}]".format(_enforce_width(text, self.width - 2), self.width - 2),
             self._x + self._offset,
             self._y,
             colour, attr, bg)
@@ -3147,6 +3179,7 @@ class DropdownList(Widget):
         pass
 
     def process_event(self, event):
+        # TODO: Consider abstract class for common code across all pop-up widgets.
         if event is not None:
             if isinstance(event, KeyboardEvent):
                 if event.key_code in [Screen.ctrl("M"), Screen.ctrl("J"), ord(" ")]:

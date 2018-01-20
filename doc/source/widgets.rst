@@ -285,6 +285,8 @@ Widget type                   Description
 :py:obj:`.CheckBox`           Simple yes/no tick boxes.
 :py:obj:`.DatePicker`         A single-line widget for selecting a date (using a pop-up list).
 :py:obj:`.Divider`            A spacer between widgets (for aesthetics).
+:py:obj:`.DropdownList`       A single-line widget that pops up a list from which the user can
+                              select a single value.
 :py:obj:`.FileBrowser`        A multi-line widget for listing the local file system.
 :py:obj:`.Label`              A label for a group of related widgets.
 :py:obj:`.ListBox`            A list of possible options from which users can select one value.
