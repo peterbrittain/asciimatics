@@ -16,7 +16,7 @@ from asciimatics.scene import Scene
 from asciimatics.screen import Screen, Canvas
 from asciimatics.widgets import Frame, Layout, Button, Label, TextBox, Text, \
     Divider, RadioButtons, CheckBox, PopUpDialog, ListBox, Widget, MultiColumnListBox, FileBrowser, \
-    DatePicker, TimePicker, Background
+    DatePicker, TimePicker, Background, DropdownList
 
 
 class TestFrame(Frame):
@@ -1673,6 +1673,109 @@ class TestWidgets(unittest.TestCase):
                 char, _, _, bg = canvas.get_from(x, y)
                 self.assertEquals(char, ord(" "))
                 self.assertEquals(bg, 7)
+
+    def test_dropdown_list(self):
+        """
+        Check DropdownList widget works as expected.
+        """
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = Frame(canvas, canvas.height, canvas.width)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        layout.add_widget(DropdownList([("Item 1", 1), ("Item 2", 3), ("Item 3", 5)]))
+        form.fix()
+        form.register_scene(scene)
+        scene.add_effect(form)
+        scene.reset()
+
+        self.maxDiff = None
+
+        # Check that the listbox is rendered correctly.
+        for effect in scene.effects:
+            effect.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|[Item 1                              ]|\n" +
+            "|                                      O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check it opens as expected
+        self.process_mouse(scene, [(7, 1, MouseEvent.LEFT_CLICK)])
+        for effect in scene.effects:
+            effect.update(1)
+        self.assert_canvas_equals(
+            canvas,
+            "++------------------------------------++\n" +
+            "||Item 1                              ||\n" +
+            "||------------------------------------OO\n" +
+            "||Item 1                              ||\n" +
+            "||Item 2                              ||\n" +
+            "||Item 3                              ||\n" +
+            "|+------------------------------------+|\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check ESC works as expected
+        self.process_keys(scene, [Screen.KEY_DOWN, Screen.KEY_ESCAPE])
+        for effect in scene.effects:
+            effect.update(2)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|[Item 1                              ]|\n" +
+            "|                                      O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check key selection works as expected
+        self.process_keys(scene, [" ", Screen.KEY_DOWN])
+        for effect in scene.effects:
+            effect.update(3)
+        self.assert_canvas_equals(
+            canvas,
+            "++------------------------------------++\n" +
+            "||Item 2                              ||\n" +
+            "||------------------------------------OO\n" +
+            "||Item 1                              ||\n" +
+            "||Item 2                              ||\n" +
+            "||Item 3                              ||\n" +
+            "|+------------------------------------+|\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check Enter works as expected
+        self.process_keys(scene, [Screen.ctrl("m")])
+        for effect in scene.effects:
+            effect.update(4)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|[Item 2                              ]|\n" +
+            "|                                      O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
 
     def test_find_widget(self):
         """
