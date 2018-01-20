@@ -668,6 +668,7 @@ class Frame(Effect):
             origin = self._canvas.origin
             new_event.x -= origin[0]
             new_event.y -= origin[1] - self._canvas.start_line
+        logger.debug("New event: %s", new_event)
         return new_event
 
     def process_event(self, event):
