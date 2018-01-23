@@ -246,6 +246,9 @@ class Frame(Effect):
         self._data = None
         self._on_load = on_load
         self._has_border = has_border
+        self._scroll_bar = _ScrollBar(
+            self._canvas, self.palette, self._canvas.width - 1, 2, self._canvas.height - 4,
+            self._get_pos, self._set_pos)
         self._hover_focus = hover_focus
         self._initial_data = data if data else {}
         self._title = None
@@ -264,6 +267,24 @@ class Frame(Effect):
         # Now set up any passed data - use the public property to trigger any
         # necessary updates.
         self.data = deepcopy(self._initial_data)
+
+    def _get_pos(self):
+        """
+        Get current position for scroll bar.
+        """
+        if self._canvas.height >= self._max_height:
+            return 0
+        else:
+            return self._canvas.start_line / (self._max_height - self._canvas.height + 1)
+
+    def _set_pos(self, pos):
+        """
+        Set current position for scroll bar.
+        """
+        if self._canvas.height < self._max_height:
+            pos *= self._max_height - self._canvas.height + 1
+            pos = int(round(max(0, pos), 0))
+            self._canvas.scroll_to(pos)
 
     def add_layout(self, layout):
         """
@@ -399,25 +420,7 @@ class Frame(Effect):
 
             # And now the scroll bar
             if self._canvas.height > 5:
-                # Sort out chars
-                cursor = u"█" if self._canvas.unicode_aware else "O"
-                back = u"░" if self._canvas.unicode_aware else "|"
-
-                # Now draw...
-                sb_height = self._canvas.height - 4
-                try:
-                    sb_pos = (self._canvas.start_line /
-                              (self._max_height - self._canvas.height))
-                    sb_pos = min(1, max(0, sb_pos))
-                    sb_pos = max(int(sb_height * sb_pos) - 1, 0)
-                except ZeroDivisionError:
-                    sb_pos = 0
-                (colour, attr, bg) = self.palette["scroll"]
-                for dy in range(sb_height):
-                    y = self._canvas.start_line + dy + 2
-                    self._canvas.print_at(cursor if dy == sb_pos else back,
-                                          self._canvas.width - 1, y,
-                                          colour, attr, bg)
+                self._scroll_bar.update()
 
         # Now push it all to screen.
         self._canvas.refresh()
@@ -645,7 +648,7 @@ class Frame(Effect):
             height = self.canvas.height
 
         if ((x >= start_x) and (x < start_x + width) and
-                (y >= start_y) and (y < start_y + height)):
+                (y >= start_y) and (y + h < start_y + height)):
             # Already OK - quit now.
             return
 
@@ -672,12 +675,15 @@ class Frame(Effect):
         return new_event
 
     def process_event(self, event):
+        # Rebase any mouse events into Frame coordinates now.
+        old_event = event
+        event = self.rebase_event(event)
+
         # Claim the input focus if a mouse clicked on this Frame.
         claimed_focus = False
         if isinstance(event, MouseEvent):
-            new_event = self.rebase_event(event)
-            if (0 <= new_event.x < self._canvas.width and
-                0 <= new_event.y < self._canvas.height and
+            if (0 <= event.x < self._canvas.width and
+                0 <= event.y < self._canvas.height and
                     event.buttons > 0):
                 self._scene.remove_effect(self)
                 self._scene.add_effect(self)
@@ -695,7 +701,7 @@ class Frame(Effect):
             else:
                 # Don't allow events to bubble down if this window owns the Screen - as already
                 # calculated when taking te focus - or is modal.
-                return None if claimed_focus or self._is_modal else event
+                return None if claimed_focus or self._is_modal else old_event
 
         # Give the current widget in focus first chance to process the event.
         event = self._layouts[self._focus].process_event(event, self._hover_focus)
@@ -740,24 +746,15 @@ class Frame(Effect):
                     if layout.process_event(event, self._hover_focus) is None:
                         return
 
-                # If no joy, check whether the scroll bar was clicked.
+                # If no joy, check whether the scroll bar was clicked.  Note that this must not
+                # be rebased to the scrolled coordinates of thr Canvas.
                 if self._has_border:
-                    # Don't use rebase as this converts to scrolled coordinates.
-                    x = event.x - self._canvas.origin[0]
-                    y = event.y - self._canvas.origin[1]
-                    if (x == self.canvas.width - 1 and
-                            1 < y < self.canvas.height - 2):
-                        sb_height = self._canvas.height - 5
-                        sb_pos = (y - 2) / sb_height
-                        sb_pos *= self._max_height - self._canvas.height + 1
-                        sb_pos = int(max(0, sb_pos))
-                        self._canvas.print_at(str(sb_pos), 1, 1)
-                        self._canvas.scroll_to(sb_pos)
+                    if self._scroll_bar.process_event(old_event):
                         return
 
         # Don't allow events to bubble down if this window owns the Screen (as already
         # calculated when taking te focus) or if the Frame is modal.
-        return None if claimed_focus or self._is_modal else event
+        return None if claimed_focus or self._is_modal else old_event
 
 
 class Layout(object):
@@ -1082,15 +1079,13 @@ class Layout(object):
                     self._columns[self._live_col][self._live_widget].focus()
                     event = None
             elif isinstance(event, MouseEvent):
-                # Mouse event - rebase coordinates to Frame context.
-                new_event = self._frame.rebase_event(event)
-                logger.debug("Check layout: %d, %d", new_event.x, new_event.y)
+                logger.debug("Check layout: %d, %d", event.x, event.y)
                 if ((hover_focus and event.buttons >= 0) or
                         event.buttons > 0):
                     # Mouse click - look to move focus.
                     for i, column in enumerate(self._columns):
                         for j, widget in enumerate(column):
-                            if widget.is_mouse_over(new_event):
+                            if widget.is_mouse_over(event):
                                 self._frame.switch_focus(self, i, j)
                                 widget.process_event(event)
                                 return
@@ -1655,12 +1650,11 @@ class Text(Widget):
                 return event
         elif isinstance(event, MouseEvent):
             # Mouse event - rebase coordinates to Frame context.
-            new_event = self._frame.rebase_event(event)
             if event.buttons != 0:
-                if self.is_mouse_over(new_event, include_label=False):
+                if self.is_mouse_over(event, include_label=False):
                     self._column = (self._start_column +
                                     _get_offset(self._value[self._start_column:],
-                                                new_event.x - self._x - self._offset))
+                                                event.x - self._x - self._offset))
                     self._column = min(len(self._value), self._column)
                     self._column = max(0, self._column)
                     return
@@ -1754,9 +1748,8 @@ class CheckBox(Widget):
                 return event
         elif isinstance(event, MouseEvent):
             # Mouse event - rebase coordinates to Frame context.
-            new_event = self._frame.rebase_event(event)
             if event.buttons != 0:
-                if self.is_mouse_over(new_event, include_label=False):
+                if self.is_mouse_over(event, include_label=False):
                     # Use property to trigger events.
                     self.value = not self._value
                     return
@@ -1846,11 +1839,10 @@ class RadioButtons(Widget):
                 return event
         elif isinstance(event, MouseEvent):
             # Mouse event - rebase coordinates to Frame context.
-            new_event = self._frame.rebase_event(event)
             if event.buttons != 0:
-                if self.is_mouse_over(new_event, include_label=False):
+                if self.is_mouse_over(event, include_label=False):
                     # Use property to trigger events.
-                    self._selection = new_event.y - self._y
+                    self._selection = event.y - self._y
                     self.value = self._options[self._selection][1]
                     return
             # Ignore other mouse events.
@@ -2041,18 +2033,17 @@ class TextBox(Widget):
 
         elif isinstance(event, MouseEvent):
             # Mouse event - rebase coordinates to Frame context.
-            new_event = self._frame.rebase_event(event)
             if event.buttons != 0:
-                if self.is_mouse_over(new_event, include_label=False):
+                if self.is_mouse_over(event, include_label=False):
                     # Fine the line first.
                     self._line = max(0,
-                                     new_event.y - self._y + self._start_line)
+                                     event.y - self._y + self._start_line)
                     self._line = min(len(self._value) - 1, self._line)
 
                     # Now figure out location in text based on width of each glyph.
                     self._column = (self._start_column +
                                     _get_offset(self._value[self._line][self._start_column:],
-                                                new_event.x - self._x - self._offset))
+                                                event.x - self._x - self._offset))
                     self._column = min(len(self._value[self._line]), self._column)
                     self._column = max(0, self._column)
                     return
@@ -2169,12 +2160,11 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
                 return event
         elif isinstance(event, MouseEvent):
             # Mouse event - rebase coordinates to Frame context.
-            new_event = self._frame.rebase_event(event)
             if event.buttons != 0:
                 if (len(self._options) > 0 and
-                        self.is_mouse_over(new_event, include_label=False)):
+                        self.is_mouse_over(event, include_label=False)):
                     # Figure out selected line
-                    new_line = new_event.y - self._y + self._start_line
+                    new_line = event.y - self._y + self._start_line
                     if self._titles:
                         new_line -= 1
                     new_line = min(new_line, len(self._options) - 1)
@@ -2635,10 +2625,9 @@ class Button(Widget):
                 # Ignore any other key press.
                 return event
         elif isinstance(event, MouseEvent):
-            new_event = self._frame.rebase_event(event)
             if event.buttons != 0:
-                if (self._x <= new_event.x < self._x + self._w and
-                        self._y <= new_event.y < self._y + self._h):
+                if (self._x <= event.x < self._x + self._w and
+                        self._y <= event.y < self._y + self._h):
                     self._on_click()
                     return
         # Ignore other events
@@ -2805,7 +2794,7 @@ class _TempPopup(Frame):
                 pass
         return super(_TempPopup, self).process_event(event)
 
-    def close(self, cancelled):
+    def close(self, cancelled=False):
         """
         Close this temporary pop-up.
 
@@ -2915,9 +2904,8 @@ class TimePicker(Widget):
                 if event.key_code in [Screen.ctrl("M"), Screen.ctrl("J"), ord(" ")]:
                     event = None
             elif isinstance(event, MouseEvent):
-                new_event = self._frame.rebase_event(event)
                 if event.buttons != 0:
-                    if self.is_mouse_over(new_event, include_label=False):
+                    if self.is_mouse_over(event, include_label=False):
                         event = None
 
             # Create the pop-up if needed
@@ -3054,9 +3042,8 @@ class DatePicker(Widget):
                 if event.key_code in [Screen.ctrl("M"), Screen.ctrl("J"), ord(" ")]:
                     event = None
             elif isinstance(event, MouseEvent):
-                new_event = self._frame.rebase_event(event)
                 if event.buttons != 0:
-                    if self.is_mouse_over(new_event, include_label=False):
+                    if self.is_mouse_over(event, include_label=False):
                         event = None
             if event is None:
                 self._child = _DatePickerPopup(self, year_range=self._year_range)
@@ -3186,9 +3173,8 @@ class DropdownList(Widget):
                 if event.key_code in [Screen.ctrl("M"), Screen.ctrl("J"), ord(" ")]:
                     event = None
             elif isinstance(event, MouseEvent):
-                new_event = self._frame.rebase_event(event)
                 if event.buttons != 0:
-                    if self.is_mouse_over(new_event, include_label=False):
+                    if self.is_mouse_over(event, include_label=False):
                         event = None
             if event is None:
                 self._child = _DropdownPopup(self)
@@ -3216,3 +3202,59 @@ class DropdownList(Widget):
             self._value = self._line = None
         if old_value != self._value and self._on_change:
             self._on_change()
+
+
+class _ScrollBar(object):
+    """
+    Internal object to provide vertical scroll bars for widgets.
+    """
+    def __init__(self, canvas, palette, x, y, height, get_pos, set_pos):
+        """
+        :param canvas: The canvas on which to draw the scroll bar.
+        """
+        self._canvas = canvas
+        self._palette = palette
+        self.max_height = 0
+        self._x = x
+        self._y = y
+        self._height = height
+        self._get_pos = get_pos
+        self._set_pos = set_pos
+
+    def update(self):
+        """
+        Draw the scroll bar.
+        """
+        # Sort out chars
+        cursor = u"█" if self._canvas.unicode_aware else "O"
+        back = u"░" if self._canvas.unicode_aware else "|"
+
+        # Now draw...
+        try:
+            # TODO: Fix up this initial calculation
+            sb_pos = self._get_pos()
+            sb_pos = min(1, max(0, sb_pos))
+            sb_pos = max(int(self._height * sb_pos) - 1, 0)
+        except ZeroDivisionError:
+            sb_pos = 0
+        (colour, attr, bg) = self._palette["scroll"]
+        for dy in range(self._height):
+            self._canvas.print_at(cursor if dy == sb_pos else back,
+                                  self._x, self._canvas.start_line + self._y + dy,
+                                  colour, attr, bg)
+
+    def process_event(self, event):
+        """
+        Handle input on the scroll bar.
+
+        :param event: the event to br processed.
+
+        :returns: True if the scroll bar handled the event.
+        """
+        # Don't use rebase as this converts to scrolled coordinates.
+        x = event.x - self._canvas.origin[0]
+        y = event.y - self._canvas.origin[1]
+        if x == self._x and self._y <= y < self._y + self._height:
+            self._set_pos((y - self._y) / (self._height - 1))
+            return True
+        return False
