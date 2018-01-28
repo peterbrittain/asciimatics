@@ -214,7 +214,8 @@ class Frame(Effect):
 
     def __init__(self, screen, height, width, data=None, on_load=None,
                  has_border=True, hover_focus=False, name=None, title=None,
-                 x=None, y=None, has_shadow=False, reduce_cpu=False, is_modal=False):
+                 x=None, y=None, has_shadow=False, reduce_cpu=False, is_modal=False,
+                 can_scroll=True):
         """
         :param screen: The Screen that owns this Frame.
         :param width: The desired width of the Frame.
@@ -236,6 +237,8 @@ class Frame(Effect):
             systems).
         :param is_modal: Whether this Frame is "modal" - i.e. will stop all other Effects
             from receiving input events.
+        :param can_scroll: Whether a scrollbar should be available on the border, or not.
+            (Only valid if `has_border=True`).
         """
         super(Frame, self).__init__(screen)
         self._focus = 0
@@ -246,9 +249,10 @@ class Frame(Effect):
         self._data = None
         self._on_load = on_load
         self._has_border = has_border
+        self._can_scroll = can_scroll
         self._scroll_bar = _ScrollBar(
             self._canvas, self.palette, self._canvas.width - 1, 2, self._canvas.height - 4,
-            self._get_pos, self._set_pos)
+            self._get_pos, self._set_pos, absolute=True) if can_scroll else None
         self._hover_focus = hover_focus
         self._initial_data = data if data else {}
         self._title = None
@@ -419,7 +423,7 @@ class Frame(Effect):
                 colour, attr, bg)
 
             # And now the scroll bar
-            if self._canvas.height > 5:
+            if self._can_scroll and self._canvas.height > 5:
                 self._scroll_bar.update()
 
         # Now push it all to screen.
@@ -724,7 +728,7 @@ class Frame(Effect):
                             if self._focus >= len(self._layouts):
                                 self._focus = 0
                     self._layouts[self._focus].focus(force_first=True)
-                    event = None
+                    old_event = None
                 elif event.key_code in [Screen.KEY_BACK_TAB, Screen.KEY_UP]:
                     # Move on to previous widget.
                     self._layouts[self._focus].blur()
@@ -739,17 +743,16 @@ class Frame(Effect):
                         except IndexError:
                             self._focus -= 1
                     self._layouts[self._focus].focus(force_last=True)
-                    event = None
+                    old_event = None
             elif isinstance(event, MouseEvent):
                 # Give layouts/widgets first dibs on the mouse message.
                 for layout in self._layouts:
                     if layout.process_event(event, self._hover_focus) is None:
                         return
 
-                # If no joy, check whether the scroll bar was clicked.  Note that this must not
-                # be rebased to the scrolled coordinates of thr Canvas.
-                if self._has_border:
-                    if self._scroll_bar.process_event(old_event):
+                # If no joy, check whether the scroll bar was clicked.
+                if self._has_border and self._can_scroll:
+                    if self._scroll_bar.process_event(event):
                         return
 
         # Don't allow events to bubble down if this window owns the Screen (as already
@@ -1322,13 +1325,14 @@ class Widget(with_metaclass(ABCMeta, object)):
         if self._on_focus is not None:
             self._on_focus()
 
-    def is_mouse_over(self, event, include_label=True):
+    def is_mouse_over(self, event, include_label=True, width_modifier=0):
         """
         Check if the specified mouse event is over this widget.
 
         :param event: The MouseEvent to check.
         :param include_label: Include space reserved for the label when
             checking for .
+        :param width_modifier: Adjustement to width (e.g. for scroll bars).
         :returns: True if the mouse is over the active parts of the widget.
         """
         # Disabled widgets should not react to the mouse.
@@ -1338,8 +1342,8 @@ class Widget(with_metaclass(ABCMeta, object)):
 
         # Check for any overlap
         if self._y <= event.y < self._y + self._h:
-            if ((include_label and self._x <= event.x < self._x + self._w) or
-                    (self._x + self._offset <= event.x < self._x + self._w)):
+            if ((include_label and self._x <= event.x < self._x + self._w - width_modifier) or
+                    (self._x + self._offset <= event.x < self._x + self._w - width_modifier)):
                 return True
 
         return False
@@ -2111,6 +2115,7 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         self._validator = validator
         self._search = ""
         self._last_search = datetime.now()
+        self._scroll_bar = None
 
     def reset(self):
         # Reset selection - use value to trigger on_select
@@ -2152,17 +2157,19 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
                 self._search += chr(event.key_code)
                 self._last_search = now
 
-                # If we find a new match for the serach string, update the list selection
+                # If we find a new match for the search string, update the list selection
                 new_value = self._find_option(self._search)
                 if new_value is not None:
                     self.value = new_value
             else:
                 return event
         elif isinstance(event, MouseEvent):
-            # Mouse event - rebase coordinates to Frame context.
+            # Mouse event - adjust for scroll bar as needed.
             if event.buttons != 0:
+                # Check for normal widget.
                 if (len(self._options) > 0 and
-                        self.is_mouse_over(event, include_label=False)):
+                        self.is_mouse_over(event, include_label=False,
+                                           width_modifier=1 if self._scroll_bar else 0)):
                     # Figure out selected line
                     new_line = event.y - self._y + self._start_line
                     if self._titles:
@@ -2176,6 +2183,10 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
                         if event.buttons & MouseEvent.DOUBLE_CLICK != 0 and self._on_select:
                             self._on_select()
                     return
+
+                # Check for scroll bar interactions:
+                if self._scroll_bar:
+                    event = self._scroll_bar.process_event(event)
 
             # Ignore other mouse events.
             return event
@@ -2229,6 +2240,11 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         if old_value != self._value and self._on_change:
             self._on_change()
 
+        # Fix up the start line now that we've explicitly set a new value.
+        self._start_line = max(
+            0, max(self._line - self._h + 1, min(self._start_line, self._line)))
+
+
     @property
     def options(self):
         """
@@ -2249,8 +2265,8 @@ class ListBox(_BaseListBox):
     the user can select one option.
     """
 
-    def __init__(self, height, options, centre=False, label=None, name=None, on_change=None,
-                 on_select=None, validator=None):
+    def __init__(self, height, options, centre=False, label=None, name=None, add_scroll_bar=False,
+                 on_change=None, on_select=None, validator=None):
         """
         :param height: The required number of input lines for this ListBox.
         :param options: The options for each row in the widget.
@@ -2271,12 +2287,14 @@ class ListBox(_BaseListBox):
             height, options, label=label, name=name, on_change=on_change, on_select=on_select,
             validator=validator)
         self._centre = centre
+        self._add_scroll_bar = add_scroll_bar
 
     def update(self, frame_no):
         self._draw_label()
 
-        # Calculate new visible limits if needed.
+        # Prepare to calculate new visible limits if needed.
         height = self._h
+        width = self._w
         dx = dy = 0
 
         # Clear out the existing box content
@@ -2292,13 +2310,21 @@ class ListBox(_BaseListBox):
         if len(self._options) <= 0:
             return
 
+        # Decide whether we need to show or hide the scroll bar.
+        # TODO: decide whether this is right or trigger off of fixing widgets in place.
+        if self._add_scroll_bar and self._scroll_bar is None:
+            self._scroll_bar = _ScrollBar(
+                self._frame.canvas, self._frame.palette, self._x + width - 1, self._y,
+                height, self._get_pos, self._set_pos)
+        if self._scroll_bar:
+            width -= 1
+
         # Render visible portion of the text.
         y_offset = 0
         if self._centre:
+            # Always make selected text the centre - not very compatible with scroll bars, but
+            # there's not much else I can do here.
             self._start_line = self._line - (height // 2)
-        else:
-            self._start_line = max(
-                0, max(self._line - height + 1, min(self._start_line, self._line)))
         start_line = self._start_line
         if self._start_line < 0:
             y_offset = -self._start_line
@@ -2307,16 +2333,38 @@ class ListBox(_BaseListBox):
             if start_line <= i < start_line + height - y_offset:
                 colour, attr, bg = self._pick_colours("field", i == self._line)
                 self._frame.canvas.print_at(
-                    "{:{}}".format(_enforce_width(text, self.width), self.width),
+                    "{:{}}".format(_enforce_width(text, width), width),
                     self._x + self._offset + dx,
                     self._y + y_offset + i + dy - start_line,
                     colour, attr, bg)
+
+        # And finally draw any scroll bar.
+        if self._scroll_bar:
+            self._scroll_bar.update()
 
     def _find_option(self, search_value):
         for text, value in self._options:
             if text.startswith(search_value):
                 return value
         return None
+
+    def _get_pos(self):
+        """
+        Get current position for scroll bar.
+        """
+        if self._h >= len(self._options):
+            return 0
+        else:
+            return self._start_line / (len(self._options) - self._h)
+
+    def _set_pos(self, pos):
+        """
+        Set current position for scroll bar.
+        """
+        if self._h < len(self._options):
+            pos *= len(self._options) - self._h
+            pos = int(round(max(0, pos), 0))
+            self._start_line = pos
 
 
 class MultiColumnListBox(_BaseListBox):
@@ -2763,7 +2811,8 @@ class _TempPopup(Frame):
         self.palette["invalid"] = parent.frame.palette["invalid"]
 
         # Construct the Frame
-        super(_TempPopup, self).__init__(screen, h, w, x=x, y=y, has_border=True, is_modal=True)
+        super(_TempPopup, self).__init__(
+            screen, h, w, x=x, y=y, has_border=True, can_scroll=False, is_modal=True)
 
         # Internal state for the pop-up
         self._parent = parent
@@ -3079,7 +3128,7 @@ class _DropdownPopup(_TempPopup):
         # Decide which way to present the list - up or down from the parent widget.
         location = parent.get_location()
         if parent.frame.screen.height - location[1] < 3:
-            height = min(len(parent.options) + 4, location[1])
+            height = min(len(parent.options) + 4, location[1] + 2)
             start_line = location[1] - height + 2
             reverse = True
         else:
@@ -3098,9 +3147,14 @@ class _DropdownPopup(_TempPopup):
         self.add_layout(layout)
         self._field = Text()
         self._field.disabled = True
-        self._list = ListBox(Widget.FILL_FRAME, parent.options, on_select=self.close, on_change=self._link)
+        divider = Divider()
+        divider.disabled = True
+        self._list = ListBox(Widget.FILL_FRAME,
+                             parent.options,
+                             add_scroll_bar=len(parent.options) > height - 4,
+                             on_select=self.close, on_change=self._link)
         layout.add_widget(self._list if reverse else self._field, 0)
-        layout.add_widget(Divider(), 0)
+        layout.add_widget(divider, 0)
         layout.add_widget(self._field if reverse else self._list, 0)
         self.fix()
 
@@ -3117,7 +3171,7 @@ class _DropdownPopup(_TempPopup):
 
 class DropdownList(Widget):
     """
-    A Dropdown list widget allows you to pick an item from a temporary pop-up list.
+    This widget allows you to pick an item from a temporary pop-up list.
     """
 
     def __init__(self, options, label=None, name=None, on_change=None, **kwargs):
@@ -3208,7 +3262,7 @@ class _ScrollBar(object):
     """
     Internal object to provide vertical scroll bars for widgets.
     """
-    def __init__(self, canvas, palette, x, y, height, get_pos, set_pos):
+    def __init__(self, canvas, palette, x, y, height, get_pos, set_pos, absolute=False):
         """
         :param canvas: The canvas on which to draw the scroll bar.
         """
@@ -3218,6 +3272,7 @@ class _ScrollBar(object):
         self._x = x
         self._y = y
         self._height = height
+        self._absolute = absolute
         self._get_pos = get_pos
         self._set_pos = set_pos
 
@@ -3238,23 +3293,37 @@ class _ScrollBar(object):
         except ZeroDivisionError:
             sb_pos = 0
         (colour, attr, bg) = self._palette["scroll"]
+        y = self._canvas.start_line if self._absolute else 0
         for dy in range(self._height):
             self._canvas.print_at(cursor if dy == sb_pos else back,
-                                  self._x, self._canvas.start_line + self._y + dy,
+                                  self._x, y + self._y + dy,
                                   colour, attr, bg)
+
+    def is_mouse_over(self, event):
+        """
+        Check whether a MouseEvent is over thus scroll bar.
+
+        :param event: The MouseEvent to check.
+
+        :returns: True if the mouse event is over the scroll bar.
+        """
+        return event.x == self._x and self._y <= event.y < self._y + self._height
 
     def process_event(self, event):
         """
         Handle input on the scroll bar.
 
-        :param event: the event to br processed.
+        :param event: the event to be processed.
 
         :returns: True if the scroll bar handled the event.
         """
-        # Don't use rebase as this converts to scrolled coordinates.
-        x = event.x - self._canvas.origin[0]
-        y = event.y - self._canvas.origin[1]
-        if x == self._x and self._y <= y < self._y + self._height:
-            self._set_pos((y - self._y) / (self._height - 1))
+        # Convert into absolute coordinates if needed.
+        new_event = event
+        if self._absolute:
+            new_event.y -= self._canvas.start_line
+
+        # Process event if needed.
+        if self.is_mouse_over(new_event):
+            self._set_pos((new_event.y - self._y) / (self._height - 1))
             return True
         return False
