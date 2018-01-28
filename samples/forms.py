@@ -31,7 +31,7 @@ logging.basicConfig(filename="forms.log", level=logging.DEBUG)
 class DemoFrame(Frame):
     def __init__(self, screen):
         super(DemoFrame, self).__init__(screen,
-                                        int(screen.height * 2 // 3),
+                                        int(screen.height * 3 // 3),
                                         int(screen.width * 2 // 3),
                                         data=form_data,
                                         has_shadow=True,
@@ -83,7 +83,24 @@ class DemoFrame(Frame):
             TimePicker("Time", name="TIME", on_change=self._on_change, seconds=True), 1)
         layout.add_widget(Text("Password", name="PWD", on_change=self._on_change, hide_char="*"), 1)
         layout.add_widget(DropdownList(
-            [("Item 1", 1), ("Item 2", 2), ("Item 3", 3), ("Item 4", 4), ("Item 5", 5), ],
+            [("Item 1", 1),
+             ("Item 2", 2),
+             ("Item 3", 3),
+             ("Item 3", 4),
+             ("Item 3", 5),
+             ("Item 3", 6),
+             ("Item 3", 7),
+             ("Item 3", 8),
+             ("Item 3", 9),
+             ("Item 3", 10),
+             ("Item 3", 11),
+             ("Item 3", 12),
+             ("Item 3", 13),
+             ("Item 3", 14),
+             ("Item 3", 15),
+             ("Item 3", 16),
+             ("Item 4", 17),
+             ("Item 5", 18), ],
             label="Dropdown", name="DD", on_change=self._on_change), 1)
         layout.add_widget(Divider(height=3), 1)
         layout2 = Layout([1, 1, 1])

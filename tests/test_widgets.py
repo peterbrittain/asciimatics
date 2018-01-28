@@ -226,6 +226,9 @@ class TestFrame5(Frame):
 
 
 class TestWidgets(unittest.TestCase):
+    def setUp(self):
+        self.maxDiff = None
+
     def assert_canvas_equals(self, canvas, expected):
         """
         Assert output to canvas is as expected.
@@ -1691,8 +1694,6 @@ class TestWidgets(unittest.TestCase):
         scene.add_effect(form)
         scene.reset()
 
-        self.maxDiff = None
-
         # Check that the listbox is rendered correctly.
         for effect in scene.effects:
             effect.update(0)
@@ -1717,7 +1718,7 @@ class TestWidgets(unittest.TestCase):
             canvas,
             "++------------------------------------++\n" +
             "||Item 1                              ||\n" +
-            "||------------------------------------OO\n" +
+            "||------------------------------------|O\n" +
             "||Item 1                              ||\n" +
             "||Item 2                              ||\n" +
             "||Item 3                              ||\n" +
@@ -1751,7 +1752,7 @@ class TestWidgets(unittest.TestCase):
             canvas,
             "++------------------------------------++\n" +
             "||Item 2                              ||\n" +
-            "||------------------------------------OO\n" +
+            "||------------------------------------|O\n" +
             "||Item 1                              ||\n" +
             "||Item 2                              ||\n" +
             "||Item 3                              ||\n" +
@@ -1776,6 +1777,57 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "|                                      |\n" +
             "+--------------------------------------+\n")
+
+    def test_dropdown_list_options(self):
+        """
+        Check DropdownList widget extra features work.
+        """
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = Frame(canvas, canvas.height, canvas.width)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        layout.add_widget(Divider(draw_line=False, height=7))
+        layout.add_widget(DropdownList([("Item {}".format(i), i) for i in range(10)]))
+        form.fix()
+        form.register_scene(scene)
+        scene.add_effect(form)
+        scene.reset()
+
+        # Check that the listbox is rendered correctly.
+        for effect in scene.effects:
+            effect.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|                                      |\n" +
+            "|                                      O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|[Item 0                              ]|\n" +
+            "+--------------------------------------+\n")
+
+        # Check it opens as expected
+        self.process_mouse(scene, [(7, 8, MouseEvent.LEFT_CLICK)])
+        for effect in scene.effects:
+            effect.update(1)
+        self.assert_canvas_equals(
+            canvas,
+            "++------------------------------------++\n" +
+            "||Item 0                             O||\n" +
+            "||Item 1                             ||O\n" +
+            "||Item 2                             |||\n" +
+            "||Item 3                             |||\n" +
+            "||Item 4                             |||\n" +
+            "||Item 5                             |||\n" +
+            "||------------------------------------||\n" +
+            "||Item 0                              ||\n" +
+            "++------------------------------------++\n")
 
     def test_find_widget(self):
         """

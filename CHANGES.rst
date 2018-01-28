@@ -5,6 +5,7 @@ LATEST
 ------
 - Fixed `Screen.wrapper()` to return result from wrapped function.
 - Added `DropdownList` widget.
+- Added optional scroll bar to Listboxes.
 - Added `width` property to widgets.
 
 1.9.0
