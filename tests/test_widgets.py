@@ -1589,6 +1589,39 @@ class TestWidgets(unittest.TestCase):
             "+--------------------------------------+\n")
         self.assertEquals(form.date_widget.value, date(2017, 6, 15))
 
+        # Check the mouse works too - pass mouse events to top-level effect
+        self.process_mouse(scene.effects[-1], [(10, 1, MouseEvent.LEFT_CLICK)])
+        for effect in scene.effects:
+            effect.update(3)
+        self.assert_canvas_equals(
+            canvas,
+            "+-----|14 May 2016|--------------------+\n" +
+            "|Date:|15/Jun/2017|                    |\n" +
+            "|Time:|16 Jul 2018|                    O\n" +
+            "|     +-----------+                    |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        self.process_mouse(scene.effects[-1], [(11, 2, MouseEvent.LEFT_CLICK)])
+        for effect in scene.effects:
+            effect.update(4)
+        self.assert_canvas_equals(
+            canvas,
+            "+-----|14 Jun 2016|--------------------+\n" +
+            "|Date:|15/Jul/2017|                    |\n" +
+            "|Time:|16 Aug 2018|                    O\n" +
+            "|     +-----------+                    |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
     def test_time_picker(self):
         """
         Check TimePicker widget works as expected.
@@ -1657,6 +1690,39 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "+--------------------------------------+\n")
         self.assertEquals(form.time_widget.value, time(11, 1, 58))
+
+        # Check the mouse works too - pass mouse events to top-level effect
+        self.process_mouse(scene.effects[-1], [(7, 2, MouseEvent.LEFT_CLICK)])
+        for effect in scene.effects:
+            effect.update(3)
+        self.assert_canvas_equals(
+            canvas,
+            "+-----+--------+-----------------------+\n" +
+            "|Date:|10 00 57|17                     |\n" +
+            "|Time:|11:01:58|                       O\n" +
+            "|     |12 02 59|                       |\n" +
+            "|     +--------+                       |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        self.process_mouse(scene.effects[-1], [(7, 1, MouseEvent.LEFT_CLICK)])
+        for effect in scene.effects:
+            effect.update(4)
+        self.assert_canvas_equals(
+            canvas,
+            "+-----+--------+-----------------------+\n" +
+            "|Date:|09 00 57|17                     |\n" +
+            "|Time:|10:01:58|                       O\n" +
+            "|     |11 02 59|                       |\n" +
+            "|     +--------+                       |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
 
     def test_background(self):
         """
