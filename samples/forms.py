@@ -1,5 +1,7 @@
 from asciimatics.widgets import Frame, TextBox, Layout, Label, Divider, Text, \
-    CheckBox, RadioButtons, Button, PopUpDialog, TimePicker, DatePicker, Background, DropdownList
+    CheckBox, RadioButtons, Button, PopUpDialog, TimePicker, DatePicker, Background, DropdownList, \
+    PopupMenu
+from asciimatics.event import MouseEvent
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, NextScene, StopApplication, \
@@ -109,6 +111,21 @@ class DemoFrame(Frame):
         layout2.add_widget(Button("View Data", self._view), 1)
         layout2.add_widget(Button("Quit", self._quit), 2)
         self.fix()
+
+    def process_event(self, event):
+        if (event is not None and isinstance(event, MouseEvent) and
+                event.buttons == MouseEvent.DOUBLE_CLICK):
+            # TODO: fix up for absolute locations?
+            self._scene.add_effect(
+                PopupMenu(self._screen,
+                          [("Item 1", self._on_click), ("Item 2", self._on_click)],
+                          event.x, event.y))
+            event = None
+        return super(DemoFrame, self).process_event(event)
+
+    def _on_click(self):
+        self._scene.add_effect(
+            PopUpDialog(self._screen, "You selected the menu!", ["OK"]))
 
     def _on_change(self):
         changed = False

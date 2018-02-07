@@ -1810,8 +1810,8 @@ class RadioButtons(Widget):
 
         # Render the list of radio buttons.
         for i, (text, _) in enumerate(self._options):
-            fg, attr, bg = self._pick_colours("control", i == self._selection)
-            fg2, attr2, bg2 = self._pick_colours("field", i == self._selection)
+            fg, attr, bg = self._pick_colours("control", self._has_focus and i == self._selection)
+            fg2, attr2, bg2 = self._pick_colours("field", self._has_focus and i == self._selection)
             check = check_char if i == self._selection else " "
             self._frame.canvas.print_at(
                 "({}) ".format(check),
@@ -3327,3 +3327,59 @@ class _ScrollBar(object):
             self._set_pos((new_event.y - self._y) / (self._height - 1))
             return True
         return False
+
+
+class PopupMenu(Frame):
+    """
+    A widget for displaying a menu.
+    """
+
+    def __init__(self, screen, menu_items, x, y):
+        """
+        :param screen: The Screen being used for this pop-up.
+        :param menu_items: The items to be displayed in the menu.
+        :param x: The X coordinate for the desired pop-up.
+        :param y: The Y coordinate for the desired pop-up.
+        """
+        # TODO: document menu options
+        # Sort out location based on width of menu text.
+        w = max(len(i[0]) + 6 for i in menu_items)
+        h = len(menu_items) + 2
+        if x + w >= screen.width:
+            x -= w - 1
+        if y + h >= screen.height:
+            y -= h - 1
+
+        # Construct the Frame
+        super(PopupMenu, self).__init__(
+            screen, h, w, x=x, y=y, has_border=True, can_scroll=False, is_modal=True)
+
+        # Build the widget to display the time selection.
+        layout = Layout([1], fill_frame=True)
+        self.add_layout(layout)
+        for item in menu_items:
+            func = partial(self._destroy, item[1])
+            layout.add_widget(Button(item[0], func), 0)
+        self.fix()
+
+    def _destroy(self, callback=None):
+        self._scene.remove_effect(self)
+        if callback is not None:
+            callback()
+
+    def process_event(self, event):
+        # Look for events that will close the pop-up - e.g. clicking outside the Frame or ESC key.
+        if event is not None:
+            if isinstance(event, KeyboardEvent):
+                if event.key_code == Screen.KEY_ESCAPE:
+                    event = None
+            elif isinstance(event, MouseEvent):
+                # TODO: common code?
+                origin = self._canvas.origin
+                if event.y < origin[1] or event.y >= origin[1] + self._canvas.height:
+                    event = None
+                elif event.x < origin[0] or event.x >= origin[0] + self._canvas.width:
+                    event = None
+        if event is None:
+            self._destroy()
+        return super(PopupMenu, self).process_event(event)
