@@ -15,7 +15,7 @@ After installing termux, start up the app and run the following commands:
 .. code-block:: bash
 
     apt update
-    apt-get install clang python-dev libjpeg-dev
+    apt-get install clang python-dev libjpeg-turbo-dev
     LDFLAGS=-L/system/lib pip install Pillow
     pip install asciimatics
 
