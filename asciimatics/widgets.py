@@ -260,6 +260,7 @@ class Frame(Effect):
         self._has_shadow = has_shadow
         self._reduce_cpu = reduce_cpu
         self._is_modal = is_modal
+        self._has_focus = False
 
         # A unique name is needed for cloning.  Try our best to get one!
         self._name = title if name is None else name
@@ -691,7 +692,19 @@ class Frame(Effect):
                     event.buttons > 0):
                 self._scene.remove_effect(self)
                 self._scene.add_effect(self)
-                claimed_focus = True
+                if not self._has_focus and self._focus < len(self._layouts):
+                    self._layouts[self._focus].focus()
+                self._has_focus = claimed_focus = True
+            else:
+                if self._has_focus and self._focus < len(self._layouts):
+                    self._layouts[self._focus].blur()
+                self._has_focus = False
+        elif isinstance(event, KeyboardEvent):
+            # TODO: Should there be something else co-ordinating Frame focus?
+            # By this stage, if we're processing keys, we have the focus.
+            if not self._has_focus and self._focus < len(self._layouts):
+                self._layouts[self._focus].focus()
+            self._has_focus = True
 
         # No need to do anything if this Frame has no Layouts - and hence no
         # widgets.  Swallow all Keyboard events while we have focus.
@@ -2311,7 +2324,7 @@ class ListBox(_BaseListBox):
             return
 
         # Decide whether we need to show or hide the scroll bar.
-        # TODO: decide whether this is right or trigger off of fixing widgets in place.
+        # TODO: Move this to base package when supported in multicolumnlistbox too.
         if self._add_scroll_bar and self._scroll_bar is None:
             self._scroll_bar = _ScrollBar(
                 self._frame.canvas, self._frame.palette, self._x + width - 1, self._y,
@@ -2630,7 +2643,7 @@ class Button(Widget):
     a form).
     """
 
-    def __init__(self, text, on_click, label=None, **kwargs):
+    def __init__(self, text, on_click, label=None, add_box=True, **kwargs):
         """
         :param text: The text for the button.
         :param on_click: The function to invoke when the button is clicked.
@@ -2640,7 +2653,8 @@ class Button(Widget):
         """
         super(Button, self).__init__(None, **kwargs)
         # We nly ever draw the button with borders, so calculate that once now.
-        self._text = "< {} >".format(text)
+        self._text = "< {} >".format(text) if add_box else text
+        self._add_box = add_box
         self._on_click = on_click
         self._label = label
 
@@ -2648,8 +2662,13 @@ class Button(Widget):
         # Do the usual layout work. then recalculate exact x/w values for the
         # rendered button.
         super(Button, self).set_layout(x, y, offset, w, h)
-        self._x += max(0, (self.width - wcswidth(self._text)) // 2)
-        self._w = min(self._w, wcswidth(self._text))
+        if self._add_box:
+            # Minimize widget to make a nice little button.
+            self._x += max(0, (self.width - wcswidth(self._text)) // 2)
+            self._w = min(self._w, wcswidth(self._text))
+        else:
+            # Maximize text to make for a consistent colouring when used in menus.
+            self._text += " " * (self._w - wcswidth(self._text))
 
     def update(self, frame_no):
         self._draw_label()
@@ -3221,7 +3240,6 @@ class DropdownList(Widget):
         pass
 
     def process_event(self, event):
-        # TODO: Consider abstract class for common code across all pop-up widgets.
         if event is not None:
             if isinstance(event, KeyboardEvent):
                 if event.key_code in [Screen.ctrl("M"), Screen.ctrl("J"), ord(" ")]:
@@ -3333,6 +3351,8 @@ class PopupMenu(Frame):
     """
     A widget for displaying a menu.
     """
+    palette = defaultdict(lambda: (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_CYAN))
+    palette["focus_button"] = (Screen.COLOUR_CYAN, Screen.A_NORMAL, Screen.COLOUR_WHITE)
 
     def __init__(self, screen, menu_items, x, y):
         """
@@ -3343,8 +3363,8 @@ class PopupMenu(Frame):
         """
         # TODO: document menu options
         # Sort out location based on width of menu text.
-        w = max(len(i[0]) + 6 for i in menu_items)
-        h = len(menu_items) + 2
+        w = max(len(i[0]) + 4 for i in menu_items)
+        h = len(menu_items)
         if x + w >= screen.width:
             x -= w - 1
         if y + h >= screen.height:
@@ -3352,14 +3372,14 @@ class PopupMenu(Frame):
 
         # Construct the Frame
         super(PopupMenu, self).__init__(
-            screen, h, w, x=x, y=y, has_border=True, can_scroll=False, is_modal=True)
+            screen, h, w, x=x, y=y, has_border=False, is_modal=True)
 
         # Build the widget to display the time selection.
         layout = Layout([1], fill_frame=True)
         self.add_layout(layout)
         for item in menu_items:
             func = partial(self._destroy, item[1])
-            layout.add_widget(Button(item[0], func), 0)
+            layout.add_widget(Button(item[0], func, add_box=False), 0)
         self.fix()
 
     def _destroy(self, callback=None):
@@ -3374,7 +3394,6 @@ class PopupMenu(Frame):
                 if event.key_code == Screen.KEY_ESCAPE:
                     event = None
             elif isinstance(event, MouseEvent):
-                # TODO: common code?
                 origin = self._canvas.origin
                 if event.y < origin[1] or event.y >= origin[1] + self._canvas.height:
                     event = None

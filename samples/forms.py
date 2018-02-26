@@ -33,7 +33,7 @@ logging.basicConfig(filename="forms.log", level=logging.DEBUG)
 class DemoFrame(Frame):
     def __init__(self, screen):
         super(DemoFrame, self).__init__(screen,
-                                        int(screen.height * 3 // 3),
+                                        int(screen.height * 2 // 3),
                                         int(screen.width * 2 // 3),
                                         data=form_data,
                                         has_shadow=True,
@@ -113,14 +113,23 @@ class DemoFrame(Frame):
         self.fix()
 
     def process_event(self, event):
+        # Handle dynamic pop-ups now.
         if (event is not None and isinstance(event, MouseEvent) and
                 event.buttons == MouseEvent.DOUBLE_CLICK):
-            # TODO: fix up for absolute locations?
+            # TODO: automatically remove focus when not top-most Frame?
+            self._layouts[self._focus].blur()
+
+            # By processing the double-click before Frame handling, we have absolute coordinates.
             self._scene.add_effect(
                 PopupMenu(self._screen,
-                          [("Item 1", self._on_click), ("Item 2", self._on_click)],
-                          event.x, event.y))
+                          [("Item 1", self._on_click),
+                           ("Item 2", self._on_click),
+                           ("Item 3", self._on_click),
+                           ("Item 4", self._on_click)],
+                event.x, event.y))
             event = None
+
+        # Pass any other event on to the Frame and contained widgets.
         return super(DemoFrame, self).process_event(event)
 
     def _on_click(self):
