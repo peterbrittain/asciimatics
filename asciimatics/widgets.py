@@ -26,7 +26,7 @@ from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import Highlander, InvalidFields
 from asciimatics.screen import Screen, Canvas
 from wcwidth import wcswidth, wcwidth
-from asciimatics.utilities import readable_timestamp, readable_mem
+from .utilities import readable_timestamp, readable_mem
 
 # Logging
 from logging import getLogger
@@ -1538,14 +1538,15 @@ class Divider(Widget):
     A simple divider to break up a group of widgets.
     """
 
-    def __init__(self, draw_line=True, height=1):
+    def __init__(self, characters='-', height=1):
         """
-        :param draw_line: Whether to draw a line in the centre of the gap.
+        :param characters: A string to use for the border. It will be repeated and
+        at the right end will be shortened down to fit. No unicode characters allowed.
         :param height: The required vertical gap.
         """
         # Dividers have no value and so should have no name for look-ups either.
         super(Divider, self).__init__(None, tab_stop=False)
-        self._draw_line = draw_line
+        self._characters = characters
         self._required_height = height
 
     def process_event(self, event):
@@ -1554,9 +1555,23 @@ class Divider(Widget):
 
     def update(self, frame_no):
         (colour, attr, bg) = self._frame.palette["borders"]
-        if self._draw_line:
-            horiz = u"─" if self._frame.canvas.unicode_aware else "-"
-            self._frame.canvas.print_at(horiz * self._w,
+        if self._characters:
+
+            unicode=False
+            try:
+                self._characters.encode('ascii')
+            except UnicodeEncodeError:
+                unicode=True 
+
+            if not unicode:
+                repeats = self._w // len(self._characters)
+                remainder = self._w % len(self._characters)
+                line = repeats * self._characters + self._characters[:remainder]
+                # These 3 lines create the 'line' variable by finding the amount of times 
+                # the sequences fits in the width and the remainder which allows filling 
+                # in the rest of the line. 
+
+                self._frame.canvas.print_at(line,
                                         self._x,
                                         self._y + (self._h // 2),
                                         colour, attr, bg)
