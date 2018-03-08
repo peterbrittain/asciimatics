@@ -3341,7 +3341,7 @@ class _ScrollBar(object):
             new_event.y -= self._canvas.start_line
 
         # Process event if needed.
-        if self.is_mouse_over(new_event):
+        if self.is_mouse_over(new_event) and event.buttons != 0:
             self._set_pos((new_event.y - self._y) / (self._height - 1))
             return True
         return False
@@ -3372,7 +3372,7 @@ class PopupMenu(Frame):
 
         # Construct the Frame
         super(PopupMenu, self).__init__(
-            screen, h, w, x=x, y=y, has_border=False, is_modal=True)
+            screen, h, w, x=x, y=y, has_border=False, is_modal=True, hover_focus=True)
 
         # Build the widget to display the time selection.
         layout = Layout([1], fill_frame=True)
@@ -3393,7 +3393,7 @@ class PopupMenu(Frame):
             if isinstance(event, KeyboardEvent):
                 if event.key_code == Screen.KEY_ESCAPE:
                     event = None
-            elif isinstance(event, MouseEvent):
+            elif isinstance(event, MouseEvent) and event.buttons != 0:
                 origin = self._canvas.origin
                 if event.y < origin[1] or event.y >= origin[1] + self._canvas.height:
                     event = None
