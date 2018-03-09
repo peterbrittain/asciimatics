@@ -378,7 +378,7 @@ class Frame(Effect):
 
     def _update(self, frame_no):
         # TODO: Should we really have Frames deciding this rather than a desktop manager?
-        if self.scene.effects[-1] != self:
+        if self.scene and self.scene.effects[-1] != self:
             self._layouts[self._focus].blur()
             self._has_focus = False
 
