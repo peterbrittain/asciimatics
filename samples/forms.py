@@ -116,9 +116,6 @@ class DemoFrame(Frame):
         # Handle dynamic pop-ups now.
         if (event is not None and isinstance(event, MouseEvent) and
                 event.buttons == MouseEvent.DOUBLE_CLICK):
-            # TODO: automatically remove focus when not top-most Frame?
-            self._layouts[self._focus].blur()
-
             # By processing the double-click before Frame handling, we have absolute coordinates.
             self._scene.add_effect(
                 PopupMenu(self._screen,
