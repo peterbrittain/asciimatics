@@ -377,6 +377,11 @@ class Frame(Effect):
                 " " * self._canvas.width, 0, y, colour, attr, bg)
 
     def _update(self, frame_no):
+        # TODO: Should we really have Frames deciding this rather than a desktop manager?
+        if self.scene.effects[-1] != self:
+            self._layouts[self._focus].blur()
+            self._has_focus = False
+
         # Reset the canvas to prepare for next round of updates.
         self._clear()
 
@@ -686,10 +691,9 @@ class Frame(Effect):
 
         # Claim the input focus if a mouse clicked on this Frame.
         claimed_focus = False
-        if isinstance(event, MouseEvent):
+        if isinstance(event, MouseEvent) and event.buttons > 0:
             if (0 <= event.x < self._canvas.width and
-                0 <= event.y < self._canvas.height and
-                    event.buttons > 0):
+                    0 <= event.y < self._canvas.height):
                 self._scene.remove_effect(self)
                 self._scene.add_effect(self)
                 if not self._has_focus and self._focus < len(self._layouts):
