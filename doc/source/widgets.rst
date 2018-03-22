@@ -692,7 +692,7 @@ details on the restrictions, see the section on restoring state.
 
 Pop-up menus
 ~~~~~~~~~~~~
-You can also add a :py:obj:`.PopupMenu`to your Scenes in the same way.  These allow you to create a
+You can also add a :py:obj:`.PopupMenu` to your Scenes in the same way.  These allow you to create a
 simple temporary list of options from which the user has to select just one entry (by clicking on it
 or moving the focus and pressing Enter) or dismiss the whole list (by pressing Escape or clicking
 outside of the menu).
