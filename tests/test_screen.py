@@ -884,6 +884,7 @@ class TestScreen(unittest.TestCase):
         """
         if sys.platform == "win32":
             self.skipTest("Windows does not have signals.")
+
         def dummy_handler():
             """Assign dummy handler to an arbitrary signal."""
             pass
@@ -900,6 +901,7 @@ class TestScreen(unittest.TestCase):
         """
         if sys.platform == "win32":
             self.skipTest("Windows does not have signals.")
+
         def dummy_signal_handler():
             """Dummy previous signal handler."""
             pass

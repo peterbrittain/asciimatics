@@ -888,7 +888,7 @@ class Canvas(_AbstractCanvas):
         to centring within the current Screen for that location.
         """
         # Save off the screen details.
-        # TODO: Fix up buffer logic once and for all!
+        # TODO: Fix up buffer logic once and for all - wait for v2.0
         super(Canvas, self).__init__(
             height, width, 200, screen.colours, screen.unicode_aware)
         self._screen = screen

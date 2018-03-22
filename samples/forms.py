@@ -123,7 +123,7 @@ class DemoFrame(Frame):
                            ("Item 2", self._on_click),
                            ("Item 3", self._on_click),
                            ("Item 4", self._on_click)],
-                event.x, event.y))
+                          event.x, event.y))
             event = None
 
         # Pass any other event on to the Frame and contained widgets.
