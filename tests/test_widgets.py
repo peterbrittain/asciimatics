@@ -16,7 +16,7 @@ from asciimatics.scene import Scene
 from asciimatics.screen import Screen, Canvas
 from asciimatics.widgets import Frame, Layout, Button, Label, TextBox, Text, \
     Divider, RadioButtons, CheckBox, PopUpDialog, ListBox, Widget, MultiColumnListBox, FileBrowser, \
-    DatePicker, TimePicker, Background, DropdownList
+    DatePicker, TimePicker, Background, DropdownList, PopupMenu
 
 
 class TestFrame(Frame):
@@ -1974,6 +1974,121 @@ class TestWidgets(unittest.TestCase):
         self.process_keys(form, ["A"])
         form.save()
         self.assertEqual(text.value, "A longer testA")
+
+    def test_popup_meu(self):
+        """
+        Check PopupMenu widget works as expected.
+        """
+        # Simple function to test which item is selected.
+        def click(x):
+            self.clicked = self.clicked or x
+
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Reset menu for test
+        self.clicked = 0
+        popup = PopupMenu(canvas,
+                          [
+                              ("First", lambda: click(1)),
+                              ("Second", lambda: click(2)),
+                              ("Third", lambda: click(4))
+                          ],
+                          0, 0)
+        popup.register_scene(scene)
+        scene.add_effect(popup)
+        scene.reset()
+
+        # Check that the menu is rendered correctly.
+        for effect in scene.effects:
+            effect.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "First                                   \n" +
+            "Second                                  \n" +
+            "Third                                   \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        # Check it handles a selection as expected
+        self.process_mouse(scene, [(0, 1, MouseEvent.LEFT_CLICK)])
+        self.assertEquals(len(scene.effects), 0)
+        self.assertEquals(self.clicked, 2)
+
+        # Check choice of location at bottom right
+        self.clicked = 0
+        canvas.reset()
+        popup = PopupMenu(canvas,
+                          [
+                              ("First", lambda: click(1)),
+                              ("Second", lambda: click(2)),
+                              ("Third", lambda: click(4))
+                          ],
+                          39, 9)
+        popup.register_scene(scene)
+        scene.add_effect(popup)
+        scene.reset()
+
+        # Check that the menu is rendered correctly.
+        for effect in scene.effects:
+            effect.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                  First \n" +
+            "                                  Second\n" +
+            "                                  Third \n")
+
+        # Check it handles a selection as expected
+        self.process_mouse(scene, [(39, 7, MouseEvent.LEFT_CLICK)])
+        self.assertEquals(len(scene.effects), 0)
+        self.assertEquals(self.clicked, 1)
+
+        # Check clicking outside menu dismisses it - wrong X location.
+        self.clicked = 0
+        canvas.reset()
+        popup = PopupMenu(canvas, [("A", lambda: click(1)), ("B", lambda: click(2))], 39, 9)
+        popup.register_scene(scene)
+        scene.add_effect(popup)
+        scene.reset()
+        self.process_mouse(scene, [(10, 9, MouseEvent.LEFT_CLICK)])
+        self.assertEquals(len(scene.effects), 0)
+        self.assertEquals(self.clicked, 0)
+
+        # Check clicking outside menu dismisses it - wrong Y location.
+        self.clicked = 0
+        canvas.reset()
+        popup = PopupMenu(canvas, [("A", lambda: click(1)), ("B", lambda: click(2))], 39, 9)
+        popup.register_scene(scene)
+        scene.add_effect(popup)
+        scene.reset()
+        self.process_mouse(scene, [(39, 1, MouseEvent.LEFT_CLICK)])
+        self.assertEquals(len(scene.effects), 0)
+        self.assertEquals(self.clicked, 0)
+
+        # Check clicking outside menu dismisses it.
+        self.clicked = 0
+        canvas.reset()
+        popup = PopupMenu(canvas, [("A", lambda: click(1)), ("B", lambda: click(2))], 39, 9)
+        popup.register_scene(scene)
+        scene.add_effect(popup)
+        scene.reset()
+        self.process_keys(popup, [Screen.KEY_ESCAPE])
+        self.assertEquals(len(scene.effects), 0)
+        self.assertEquals(self.clicked, 0)
 
 if __name__ == '__main__':
     unittest.main()

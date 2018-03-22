@@ -26,21 +26,21 @@ def demo(screen):
         cell2 += "\n"
     for i in range(8):
         scenes.append(
-                Scene([Print(screen,
-                             Kaleidoscope(screen.height, screen.width, cell1, i),
-                             0,
-                             speed=1,
-                             transparent=False),
-                       Print(screen,
-                             FigletText(str(i)), screen.height - 6, x=screen.width - 8, speed=1)],
-                      duration=360))
+            Scene([Print(screen,
+                         Kaleidoscope(screen.height, screen.width, cell1, i),
+                         0,
+                         speed=1,
+                         transparent=False),
+                   Print(screen,
+                         FigletText(str(i)), screen.height - 6, x=screen.width - 8, speed=1)],
+                  duration=360))
         scenes.append(
-                Scene([Print(screen,
-                             Kaleidoscope(screen.height, screen.width, StaticRenderer([cell2]), i),
-                             0,
-                             speed=1,
-                             transparent=False)],
-                      duration=360))
+            Scene([Print(screen,
+                         Kaleidoscope(screen.height, screen.width, StaticRenderer([cell2]), i),
+                         0,
+                         speed=1,
+                         transparent=False)],
+                  duration=360))
     screen.play(scenes, stop_on_resize=True)
 
 if __name__ == "__main__":

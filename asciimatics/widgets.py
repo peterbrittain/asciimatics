@@ -371,13 +371,13 @@ class Frame(Effect):
         # It's orders of magnitude faster to reset with a print like this
         # instead of recreating the screen buffers.
         (colour, attr, bg) = self.palette["background"]
-        # TODO: Fix internal use of buffer height - wait until this is retired.
+        # TODO: Fix internal use of buffer height - wait for v2.0
         for y in range(self._canvas._buffer_height):
             self._canvas.print_at(
                 " " * self._canvas.width, 0, y, colour, attr, bg)
 
     def _update(self, frame_no):
-        # TODO: Should we really have Frames deciding this rather than a desktop manager?
+        # TODO: Should really be in a separate Desktop Manager class - wait for v2.0
         if self.scene and self.scene.effects[-1] != self:
             self._layouts[self._focus].blur()
             self._has_focus = False
@@ -704,7 +704,7 @@ class Frame(Effect):
                     self._layouts[self._focus].blur()
                 self._has_focus = False
         elif isinstance(event, KeyboardEvent):
-            # TODO: Should there be something else co-ordinating Frame focus?
+            # TODO: Should have Desktop Manager handling this - wait for v2.0
             # By this stage, if we're processing keys, we have the focus.
             if not self._has_focus and self._focus < len(self._layouts):
                 self._layouts[self._focus].focus()
@@ -2261,7 +2261,6 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         self._start_line = max(
             0, max(self._line - self._h + 1, min(self._start_line, self._line)))
 
-
     @property
     def options(self):
         """
@@ -3287,6 +3286,22 @@ class _ScrollBar(object):
     def __init__(self, canvas, palette, x, y, height, get_pos, set_pos, absolute=False):
         """
         :param canvas: The canvas on which to draw the scroll bar.
+        :param palette: The palette of the parent Frame.
+        :param x: The x location of the top of the scroll bar.
+        :param y: The y location of the top of the scroll bar.
+        :param height: The height of the scroll bar.
+        :param get_pos: A function to return the current position of the scroll bar.
+        :param set_pos: A function to set the current position of the scroll bar.
+        :param absolute: Whether the scroll bar should use absolute co-ordinates when handling mouse
+            events.
+
+        The current position for the scroll bar is defined to be 0.0 at the top and 1.0 at the
+        bottom.  The scroll bar will call `get_pos` to find the current position when drawing and
+        uses `set_pos` to update this position on a mouse click.
+
+        The widget using the scroll bar is responsible for maintaining its own state of where the
+        current view is scrolled (e.g. which is the top line in a text box) and for providing
+        these two functions to translate that internal state into a form the scroll bar can use.
         """
         self._canvas = canvas
         self._palette = palette
@@ -3308,7 +3323,6 @@ class _ScrollBar(object):
 
         # Now draw...
         try:
-            # TODO: Fix up this initial calculation
             sb_pos = self._get_pos()
             sb_pos = min(1, max(0, sb_pos))
             sb_pos = max(int(self._height * sb_pos) - 1, 0)
@@ -3359,15 +3373,19 @@ class PopupMenu(Frame):
     palette["focus_button"] = (Screen.COLOUR_CYAN, Screen.A_NORMAL, Screen.COLOUR_WHITE)
 
     def __init__(self, screen, menu_items, x, y):
-        """
+        self.a_ = """
         :param screen: The Screen being used for this pop-up.
-        :param menu_items: The items to be displayed in the menu.
+        :param menu_items: a list of items to be displayed in the menu.
         :param x: The X coordinate for the desired pop-up.
         :param y: The Y coordinate for the desired pop-up.
+
+        The menu_items parameter is a list of 2-tuples, which define the text to be displayed in
+        the menu and the function to call when that menu item is clicked.  For example:
+
+            menu_items = [("Open", file_open), ("Save", file_save), ("Close", file_close)]
         """
-        # TODO: document menu options
         # Sort out location based on width of menu text.
-        w = max(len(i[0]) + 4 for i in menu_items)
+        w = max(len(i[0]) for i in menu_items)
         h = len(menu_items)
         if x + w >= screen.width:
             x -= w - 1

@@ -55,7 +55,7 @@ class DemoFrame(Frame):
         layout.add_widget(self._header)
         layout.add_widget(self._list)
         layout.add_widget(
-                Label("Press `<`/`>` to change sort, `r` to toggle order, or `q` to quit."))
+            Label("Press `<`/`>` to change sort, `r` to toggle order, or `q` to quit."))
         self.fix()
 
         # Add my own colour palette
