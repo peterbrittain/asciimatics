@@ -3373,7 +3373,7 @@ class PopupMenu(Frame):
     palette["focus_button"] = (Screen.COLOUR_CYAN, Screen.A_NORMAL, Screen.COLOUR_WHITE)
 
     def __init__(self, screen, menu_items, x, y):
-        self.a_ = """
+        """
         :param screen: The Screen being used for this pop-up.
         :param menu_items: a list of items to be displayed in the menu.
         :param x: The X coordinate for the desired pop-up.
