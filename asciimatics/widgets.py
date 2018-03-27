@@ -2348,6 +2348,8 @@ class ListBox(_BaseListBox):
         for i, (text, _) in enumerate(self._options):
             if start_line <= i < start_line + height - y_offset:
                 colour, attr, bg = self._pick_colours("field", i == self._line)
+                if len(text) > width:
+                    text = text[:width - 3] + "..."
                 self._frame.canvas.print_at(
                     "{:{}}".format(_enforce_width(text, width), width),
                     self._x + self._offset + dx,
@@ -2514,7 +2516,7 @@ class MultiColumnListBox(_BaseListBox):
                     if width == "":
                         break
                     width = self._get_width(width)
-                    if len(text) >= width:
+                    if len(text) > width:
                         text = text[:width - 3] + "..."
                     self._frame.canvas.print_at(
                         "{}{:{}{}}".format(" " * space, _enforce_width(text, width), align, width),

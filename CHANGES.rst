@@ -3,11 +3,12 @@ CHANGE HISTORY
 
 LATEST
 ------
-- Fixed `Screen.wrapper()` to return result from wrapped function.
 - Added `PopupMenu` for dynamic contextual menus.
 - Added `DropdownList` widget.
 - Added optional scroll bar to Listboxes.
 - Added `width` property to widgets.
+- Fixed `Screen.wrapper()` to return result from wrapped function.
+- Fixed list box truncation when lines are too long.
 
 1.9.0
 -----
