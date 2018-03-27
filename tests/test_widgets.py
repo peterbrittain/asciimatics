@@ -768,7 +768,8 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         scene = MagicMock(spec=Scene)
         canvas = Canvas(screen, 10, 40, 0, 0)
-        form = TestFrame2(canvas, [("One", 1), ("Two", 2)])
+        form = TestFrame2(
+            canvas, [("One", 1), ("Two is now quite a bit longer than before", 2)])
         form.register_scene(scene)
         form.reset()
 
@@ -790,7 +791,7 @@ class TestWidgets(unittest.TestCase):
             canvas,
             "+------------ Test Frame 2 ------------+\n" +
             "|One                                   |\n" +
-            "|Two                                   O\n" +
+            "|Two is now quite a bit longer than ...O\n" +
             "|                                      |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
@@ -817,7 +818,7 @@ class TestWidgets(unittest.TestCase):
             canvas,
             "+------------ Test Frame 2 ------------+\n" +
             "|One                                   |\n" +
-            "|Two                                   O\n" +
+            "|Two is now quite a bit longer than ...O\n" +
             "|                                      |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
@@ -836,7 +837,7 @@ class TestWidgets(unittest.TestCase):
             canvas,
             "+------------ Test Frame 2 ------------+\n" +
             "|One                                   |\n" +
-            "|Two                                   O\n" +
+            "|Two is now quite a bit longer than ...O\n" +
             "|                                      |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
@@ -988,7 +989,7 @@ class TestWidgets(unittest.TestCase):
             "A  B      C D      E F                  \n" +
             "1  2      3 4      5 6                  \n" +
             "11 222  333 444  555 6                  \n" +
-            "...2      3 4      5 6                  \n" +
+            "1112      3 4      5 6                  \n" +
             "1  2   3... 4      5 6                  \n" +
             "1  2      3 4      5 6666666666666666666\n" +
             "                                        \n" +
