@@ -1489,6 +1489,14 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             if scene.clear:
                 self.clear()
 
+    @property
+    def current_scene(self):
+        """
+        :return: The scene currently being rendered. To be used in conjunction
+        with :py:meth:`.draw_next_frame`.
+        """
+        return self._scenes[self._scene_index]
+
     def force_update(self):
         """
         Force the Screen to redraw the current Scene on the next call to
