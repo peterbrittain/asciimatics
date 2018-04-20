@@ -2034,6 +2034,7 @@ else:
             self._down_line = curses.tigetstr("ind").decode("utf-8")
             self._fg_color = curses.tigetstr("setaf")
             self._bg_color = curses.tigetstr("setab")
+            self._clear_line = curses.tigetstr("el").decode("utf-8")
             if curses.tigetflag("hs"):
                 self._start_title = curses.tigetstr("tsl").decode("utf-8")
                 self._end_title = curses.tigetstr("fsl").decode("utf-8")
@@ -2114,11 +2115,11 @@ else:
             if lines < 0:
                 self._safe_write("{}{}".format(
                     curses.tparm(self._move_y_x, 0, 0).decode("utf-8"),
-                    self._up_line * -lines))
+                    (self._up_line + self._clear_line) * -lines))
             else:
                 self._safe_write("{}{}".format(curses.tparm(
                     self._move_y_x, self.height, 0).decode("utf-8"),
-                    self._down_line * lines))
+                    (self._down_line + self._clear_line) * lines))
 
         def _clear(self):
             """

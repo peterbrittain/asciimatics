@@ -9,6 +9,7 @@ LATEST
 - Added `width` property to widgets.
 - Fixed `Screen.wrapper()` to return result from wrapped function.
 - Fixed list box truncation when lines are too long.
+- Fixed issue with background colour when scrolling GNOME terminal.
 
 1.9.0
 -----
