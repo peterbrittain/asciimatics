@@ -63,6 +63,11 @@ provided by a :py:obj:`.Renderer`.  For example:
 
 .. code-block:: python
 
+    from asciimatics.screen import Screen
+    from asciimatics.scene import Scene
+    from asciimatics.effects import Cycle, Stars
+    from asciimatics.renderers import FigletText
+
     def demo(screen):
         effects = [
             Cycle(
