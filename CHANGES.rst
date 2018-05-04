@@ -10,6 +10,7 @@ LATEST
 - Fixed `Screen.wrapper()` to return result from wrapped function.
 - Fixed list box truncation when lines are too long.
 - Fixed issue with background colour when scrolling GNOME terminal.
+- Fixed Text validator to support instance methods.
 
 1.9.0
 -----

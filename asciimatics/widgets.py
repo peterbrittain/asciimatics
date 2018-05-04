@@ -1710,7 +1710,7 @@ class Text(Widget):
         if old_value != self._value and self._on_change:
             self._on_change()
         if self._validator:
-            if isinstance(self._validator, FunctionType):
+            if callable(self._validator):
                 self._is_valid = self._validator(self._value)
             else:
                 self._is_valid = re.match(self._validator,
