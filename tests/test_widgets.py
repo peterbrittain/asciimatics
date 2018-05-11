@@ -1115,7 +1115,7 @@ class TestWidgets(unittest.TestCase):
         """
         # Apologies to anyone who actually speaks this language!  I just need some double-width
         # glyphs so have re-used the ones from the original bug report.
-        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=True)
         scene = MagicMock(spec=Scene)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = PopUpDialog(canvas, u"你確定嗎？ 你確定嗎？ 你確定嗎？", [u"是", u"否"])
@@ -1128,12 +1128,12 @@ class TestWidgets(unittest.TestCase):
             canvas,
             "                                        \n" +
             "                                        \n" +
-            "       +------------------------+       \n" +
-            "       |你你確確定定嗎嗎？？ 你你確確定定嗎嗎？？   |       \n" +
-            "       |你你確確定定嗎嗎？？              O       \n" +
-            "       |                        |       \n" +
-            "       |   < 是是 >      < 否否 >   |       \n" +
-            "       +------------------------+       \n" +
+            "       ┌────────────────────────┐       \n" +
+            "       │你你確確定定嗎嗎？？ 你你確確定定嗎嗎？？   │       \n" +
+            "       │你你確確定定嗎嗎？？              █       \n" +
+            "       │                        ░       \n" +
+            "       │   < 是是 >      < 否否 >   │       \n" +
+            "       └────────────────────────┘       \n" +
             "                                        \n" +
             "                                        \n")
 
@@ -1142,7 +1142,7 @@ class TestWidgets(unittest.TestCase):
         Check form widgets work with CJK characters.
         """
         # Create a dummy screen.
-        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=True)
         scene = MagicMock(spec=Scene)
         canvas = Canvas(screen, 10, 40, 0, 0)
 

@@ -860,7 +860,7 @@ class TestScreen(unittest.TestCase):
         """
         Check that CJK languages track double-width glyphs as expected.
         """
-        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=True)
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Check underflow and overflow work as expected for CJK languages.
