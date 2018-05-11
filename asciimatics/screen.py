@@ -430,7 +430,10 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
             j = 0
             for i, c in enumerate(text):
                 # Handle under-run and overrun of double-width glyphs now.
-                width = wcwidth(c)
+                #
+                # Note that wcwidth uses significant resources, so only call when we have a
+                # unicode aware application.  The rest of the time assume ASCII.
+                width = wcwidth(c) if self._unicode_aware else 1
                 if x + i + j < 0:
                     x += (width - 1)
                     continue
