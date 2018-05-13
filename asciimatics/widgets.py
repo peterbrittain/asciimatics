@@ -33,7 +33,7 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 
-def _enforce_width(text, width):
+def _enforce_width(text, width, unicode_aware=True):
     """
     Enforce a displayed piece of text to be a certain number of cells wide.  This takes into
     account double-width characters used in CJK languages.
@@ -42,14 +42,17 @@ def _enforce_width(text, width):
     :return: The resulting truncated text
     """
     size = 0
-    for i, c in enumerate(text):
-        if size + wcwidth(c) > width:
-            return text[0:i]
-        size += wcwidth(c)
+    if unicode_aware:
+        for i, c in enumerate(text):
+            if size + wcwidth(c) > width:
+                return text[0:i]
+            size += wcwidth(c)
+    elif len(text) + 1 > width:
+            return text[0:width]
     return text
 
 
-def _find_min_start(text, max_width):
+def _find_min_start(text, max_width, unicode_aware=True):
     """
     Find the starting point in the string that will reduce it to be less than or equal to the
     specified width when displayed on screen.
@@ -60,15 +63,22 @@ def _find_min_start(text, max_width):
     :return: The offset within `text` to start at to reduce it to the required length.
     """
     result = 0
-    display_end = wcswidth(text)
-    while display_end > max_width:
-        result += 1
-        display_end -= wcwidth(text[0])
-        text = text[1:]
+    if unicode_aware:
+        display_end = wcswidth(text)
+        while display_end > max_width:
+            result += 1
+            display_end -= wcwidth(text[0])
+            text = text[1:]
+    else:
+        display_end = len(text)
+        while display_end > max_width:
+            result += 1
+            display_end -= 1
+            text = text[1:]
     return result
 
 
-def _get_offset(text, visible_width):
+def _get_offset(text, visible_width, unicode_aware=True):
     """
     Find the character offset within some text for a given visible offset (taking into account the
     fact that some character glyphs are double width).
@@ -79,17 +89,24 @@ def _get_offset(text, visible_width):
     """
     result = 0
     width = 0
-    for c in text:
+    if unicode_aware:
+        for c in text:
+            if visible_width - width <= 0:
+                break
+            result += 1
+            width += wcwidth(c)
+    else:
+        width = len(text)
         if visible_width - width <= 0:
-            break
-        result += 1
-        width += wcwidth(c)
+            result = width
+        else:
+            result = visible_width
     if visible_width - width < 0:
         result -= 1
     return result
 
 
-def _split_text(text, width, height):
+def _split_text(text, width, height, unicode_aware=True):
     """
     Split text to required dimensions.  This will first try to split the
     text into multiple lines, then put a "..." on the last 3 characters of
@@ -104,12 +121,20 @@ def _split_text(text, width, height):
     result = []
     current_line = ""
     for token in tokens:
-        for i, line_token in enumerate(token.split("\n")):
-            if wcswidth(current_line + line_token) > width or i > 0:
-                result.append(current_line.rstrip())
-                current_line = line_token + " "
-            else:
-                current_line += line_token + " "
+        if unicode_aware:
+            for i, line_token in enumerate(token.split("\n")):
+                if wcswidth(current_line + line_token) > width or i > 0:
+                    result.append(current_line.rstrip())
+                    current_line = line_token + " "
+                else:
+                    current_line += line_token + " "
+        else:
+            for i, line_token in enumerate(token.split("\n")):
+                if len(current_line + line_token) > width or i > 0:
+                    result.append(current_line.rstrip())
+                    current_line = line_token + " "
+                else:
+                    current_line += line_token + " "
 
     # Add any remaining text to the result.
     result.append(current_line.rstrip())
@@ -422,9 +447,13 @@ class Frame(Effect):
 
             # Now the title
             (colour, attr, bg) = self.palette["title"]
+            if self._canvas.unicode_aware:
+                title_width = wcswidth(self._title)
+            else:
+                title_width = len(self._title)
             self._canvas.print_at(
                 self._title,
-                (self._canvas.width - wcswidth(self._title)) // 2,
+                (self._canvas.width - title_width) // 2,
                 self._canvas.start_line,
                 colour, attr, bg)
 
@@ -921,7 +950,10 @@ class Layout(object):
             # For each column determine if we need a tab offset for labels.
             # Only allow labels to take up 1/3 of the column.
             if len(column) > 0:
-                offset = max([0 if w.label is None else wcswidth(w.label) + 1 for w in column])
+                if self._frame.canvas.unicode_aware:
+                    offset = max([0 if w.label is None else wcswidth(w.label) + 1 for w in column])
+                else:
+                    offset = max([0 if w.label is None else len(w.label) + 1 for w in column])
             else:
                 offset = 0
             offset = int(min(offset,
@@ -1382,7 +1414,7 @@ class Widget(with_metaclass(ABCMeta, object)):
             if self._display_label is None:
                 # noinspection PyTypeChecker
                 self._display_label = _split_text(
-                    self._label, self._offset, self._h)
+                    self._label, self._offset, self._h, self._frame.canvas.unicode_aware)
 
             # Draw the  display label.
             (colour, attr, bg) = self._frame.palette["label"]
@@ -1510,7 +1542,7 @@ class Label(Widget):
 
     def update(self, frame_no):
         (colour, attr, bg) = self._frame.palette["label"]
-        for i, text in enumerate(_split_text(self._text, self._w, self._h)):
+        for i, text in enumerate(_split_text(self._text, self._w, self._h, self._frame.canvas.unicode_aware)):
             self._frame.canvas.paint(
                 text, self._x, self._y + i, colour, attr, bg)
 
@@ -1610,15 +1642,18 @@ class Text(Widget):
         # Calculate new visible limits if needed.
         self._start_column = min(self._start_column, self._column)
         self._start_column += _find_min_start(self._value[self._start_column:self._column + 1],
-                                              self.width)
+                                              self.width, self._frame.canvas.unicode_aware)
 
         # Render visible portion of the text.
         (colour, attr, bg) = self._pick_colours("edit_text")
         text = self._value[self._start_column:]
-        text = _enforce_width(text, self.width)
+        text = _enforce_width(text, self.width, self._frame.canvas.unicode_aware)
         if self._hide_char:
             text = self._hide_char[0] * len(text)
-        text += " " * (self.width - wcswidth(text))
+        if self._frame.canvas.unicode_aware:
+            text += " " * (self.width - wcswidth(text))
+        else:
+            text += " " * (self.width - len(text))
         self._frame.canvas.print_at(
             text,
             self._x + self._offset,
@@ -1628,11 +1663,15 @@ class Text(Widget):
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
         if self._has_focus:
+            if self._frame.canvas.unicode_aware:
+                text_width = wcswidth(text[:self._column - self._start_column])
+            else:
+                text_width = len(text[:self._column - self._start_column])
             self._draw_cursor(
                 " " if self._column >= len(self._value) else self._hide_char[0] if self._hide_char
                 else self._value[self._column],
                 frame_no,
-                self._x + self._offset + wcswidth(text[:self._column - self._start_column]),
+                self._x + self._offset + text_width,
                 self._y)
 
     def reset(self):
@@ -1675,7 +1714,7 @@ class Text(Widget):
                 if self.is_mouse_over(event, include_label=False):
                     self._column = (self._start_column +
                                     _get_offset(self._value[self._start_column:],
-                                                event.x - self._x - self._offset))
+                                                event.x - self._x - self._offset, self._frame.canvas.unicode_aware))
                     self._column = min(len(self._value), self._column)
                     self._column = max(0, self._column)
                     return
@@ -1934,7 +1973,7 @@ class TextBox(Widget):
                                       min(self._start_line, self._line)))
         self._start_column = min(self._start_column, self._column)
         self._start_column += _find_min_start(
-            self._value[self._line][self._start_column:self._column + 1], self.width)
+            self._value[self._line][self._start_column:self._column + 1], self.width, self._frame.canvas.unicode_aware)
 
         # Clear out the existing box content
         (colour, attr, bg) = self._pick_colours("edit_text")
@@ -1949,7 +1988,7 @@ class TextBox(Widget):
         for i, text in enumerate(self._value):
             if self._start_line <= i < self._start_line + height:
                 self._frame.canvas.print_at(
-                    _enforce_width(text[self._start_column:], self.width),
+                    _enforce_width(text[self._start_column:], self.width, self._frame.canvas.unicode_aware),
                     self._x + self._offset + dx,
                     self._y + i + dy - self._start_line,
                     colour, attr, bg)
@@ -1957,13 +1996,15 @@ class TextBox(Widget):
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
         if self._has_focus:
+            if self._frame.canvas.unicode_aware:
+                text_width = wcswidth(self._value[self._line][self._start_column:self._column])
+            else:
+                text_width = len(self._value[self._line][self._start_column:self._column])
             self._draw_cursor(
                 " " if self._column >= len(self._value[self._line]) else
                 self._value[self._line][self._column],
                 frame_no,
-                self._x + self._offset + dx + wcswidth(
-                    self._value[self._line][self._start_column:self._column]),
-                self._y + self._line + dy - self._start_line)
+                self._x + self._offset + dx + text_width, self._y + self._line + dy - self._start_line)
 
     def reset(self):
         # Reset to original data and move to end of the text.
@@ -2064,7 +2105,7 @@ class TextBox(Widget):
                     # Now figure out location in text based on width of each glyph.
                     self._column = (self._start_column +
                                     _get_offset(self._value[self._line][self._start_column:],
-                                                event.x - self._x - self._offset))
+                                                event.x - self._x - self._offset, self._frame.canvas.unicode_aware))
                     self._column = min(len(self._value[self._line]), self._column)
                     self._column = max(0, self._column)
                     return
@@ -2351,7 +2392,7 @@ class ListBox(_BaseListBox):
                 if len(text) > width:
                     text = text[:width - 3] + "..."
                 self._frame.canvas.print_at(
-                    "{:{}}".format(_enforce_width(text, width), width),
+                    "{:{}}".format(_enforce_width(text, width, self._frame.canvas.unicode_aware), width),
                     self._x + self._offset + dx,
                     self._y + y_offset + i + dy - start_line,
                     colour, attr, bg)
@@ -2492,7 +2533,8 @@ class MultiColumnListBox(_BaseListBox):
                     zip(self._titles, self._align, self._spacing)):
                 width = self._get_width(self._columns[i])
                 self._frame.canvas.print_at(
-                    "{}{:{}{}}".format(" " * space, _enforce_width(title, width), align, width),
+                    "{}{:{}{}}".format(" " * space, _enforce_width(title, width, self._frame.canvas.unicode_aware),
+                                       align, width),
                     self._x + self._offset + row_dx,
                     self._y,
                     colour, attr, bg)
@@ -2519,7 +2561,8 @@ class MultiColumnListBox(_BaseListBox):
                     if len(text) > width:
                         text = text[:width - 3] + "..."
                     self._frame.canvas.print_at(
-                        "{}{:{}{}}".format(" " * space, _enforce_width(text, width), align, width),
+                        "{}{:{}{}}".format(" " * space, _enforce_width(text, width, self._frame.canvas.unicode_aware),
+                                           align, width),
                         self._x + self._offset + dx + row_dx,
                         self._y + i + dy - self._start_line,
                         colour, attr, bg)
@@ -2667,13 +2710,17 @@ class Button(Widget):
         # Do the usual layout work. then recalculate exact x/w values for the
         # rendered button.
         super(Button, self).set_layout(x, y, offset, w, h)
+        if self._frame.canvas.unicode_aware:
+            text_width = wcswidth(self._text)
+        else:
+            text_width = len(self._text)
         if self._add_box:
             # Minimize widget to make a nice little button.
-            self._x += max(0, (self.width - wcswidth(self._text)) // 2)
-            self._w = min(self._w, wcswidth(self._text))
+            self._x += max(0, (self.width - text_width) // 2)
+            self._w = min(self._w, text_width)
         else:
             # Maximize text to make for a consistent colouring when used in menus.
-            self._text += " " * (self._w - wcswidth(self._text))
+            self._text += " " * (self._w - text_width)
 
     def update(self, frame_no):
         self._draw_label()
@@ -2769,14 +2816,19 @@ class PopUpDialog(Frame):
         self._on_close = on_close
 
         # Decide on optimum width of the dialog.  Limit to 2/3 the screen width.
-        width = max([wcswidth(x) for x in text.split("\n")])
-        width = max(width + 4,
-                    sum([wcswidth(x) + 4 for x in buttons]) + len(buttons) + 5)
+        if self._canvas.unicode_aware:
+            width = max([wcswidth(x) for x in text.split("\n")])
+            width = max(width + 4,
+                        sum([wcswidth(x) + 4 for x in buttons]) + len(buttons) + 5)
+        else:
+            width = max([len(x) for x in text.split("\n")])
+            width = max(width + 4,
+                        sum([len(x) + 4 for x in buttons]) + len(buttons) + 5)
         width = min(width, screen.width * 2 // 3)
 
         # Figure out the necessary message and allow for buttons and borders
         # when deciding on height.
-        self._message = _split_text(text, width - 4, screen.height - 4)
+        self._message = _split_text(text, width - 4, screen.height - 4, self._canvas.unicode_aware)
         height = len(self._message) + 4
 
         # Construct the Frame
@@ -3236,7 +3288,7 @@ class DropdownList(Widget):
         text = "" if self._line is None else self._options[self._line][0]
         (colour, attr, bg) = self._pick_colours("field", selected=self._has_focus)
         self._frame.canvas.print_at(
-            "[{:{}}]".format(_enforce_width(text, self.width - 2), self.width - 2),
+            "[{:{}}]".format(_enforce_width(text, self.width - 2, self._frame.canvas.unicode_aware), self.width - 2),
             self._x + self._offset,
             self._y,
             colour, attr, bg)
