@@ -2816,7 +2816,7 @@ class PopUpDialog(Frame):
         self._on_close = on_close
 
         # Decide on optimum width of the dialog.  Limit to 2/3 the screen width.
-        if self._canvas.unicode_aware:
+        if screen.unicode_aware:
             width = max([wcswidth(x) for x in text.split("\n")])
             width = max(width + 4,
                         sum([wcswidth(x) + 4 for x in buttons]) + len(buttons) + 5)
@@ -2828,7 +2828,7 @@ class PopUpDialog(Frame):
 
         # Figure out the necessary message and allow for buttons and borders
         # when deciding on height.
-        self._message = _split_text(text, width - 4, screen.height - 4, self._canvas.unicode_aware)
+        self._message = _split_text(text, width - 4, screen.height - 4, screen.unicode_aware)
         height = len(self._message) + 4
 
         # Construct the Frame
