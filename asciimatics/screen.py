@@ -1611,8 +1611,7 @@ if sys.platform == "win32":
             win32con.VK_NEXT: Screen.KEY_PAGE_DOWN,
             win32con.VK_BACK: Screen.KEY_BACK,
             win32con.VK_TAB: Screen.KEY_TAB,
-            win32con.VK_RETURN: Screen.KEY_RETURN,
-            win32con.VK_SPACE: Screen.KEY_SPACE
+            win32con.VK_RETURN: Screen.KEY_RETURN
         }
 
         _EXTRA_KEY_MAP = {
@@ -1982,6 +1981,7 @@ else:
             curses.KEY_BACKSPACE: Screen.KEY_BACK,
             9: Screen.KEY_TAB,
             curses.KEY_BTAB: Screen.KEY_BACK_TAB,
+            curses.KEY_ENTER: Screen.KEY_RETURN
             # Terminals translate keypad keys, so no need for a special
             # mapping here.
 
