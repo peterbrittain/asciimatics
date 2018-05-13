@@ -1018,6 +1018,8 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
     KEY_SHIFT = -600
     KEY_CONTROL = -601
     KEY_MENU = -602
+    KEY_RETURN = -603
+    KEY_SPACE = -604
 
     def __init__(self, height, width, buffer_height, unicode_aware):
         """
@@ -1609,6 +1611,8 @@ if sys.platform == "win32":
             win32con.VK_NEXT: Screen.KEY_PAGE_DOWN,
             win32con.VK_BACK: Screen.KEY_BACK,
             win32con.VK_TAB: Screen.KEY_TAB,
+            win32con.VK_RETURN: Screen.KEY_RETURN,
+            win32con.VK_SPACE: Screen.KEY_SPACE
         }
 
         _EXTRA_KEY_MAP = {
