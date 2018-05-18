@@ -48,7 +48,7 @@ def _enforce_width(text, width, unicode_aware=True):
                 return text[0:i]
             size += wcwidth(c)
     elif len(text) + 1 > width:
-            return text[0:width]
+        return text[0:width]
     return text
 
 
@@ -63,18 +63,13 @@ def _find_min_start(text, max_width, unicode_aware=True):
     :return: The offset within `text` to start at to reduce it to the required length.
     """
     result = 0
-    if unicode_aware:
-        display_end = wcswidth(text)
-        while display_end > max_width:
-            result += 1
-            display_end -= wcwidth(text[0])
-            text = text[1:]
-    else:
-        display_end = len(text)
-        while display_end > max_width:
-            result += 1
-            display_end -= 1
-            text = text[1:]
+    string_len = wcswidth if unicode_aware else len
+    char_len = wcwidth if unicode_aware else lambda x: 1
+    display_end = string_len(text)
+    while display_end >= max_width:
+        result += 1
+        display_end -= char_len(text[0])
+        text = text[1:]
     return result
 
 
@@ -95,14 +90,10 @@ def _get_offset(text, visible_width, unicode_aware=True):
                 break
             result += 1
             width += wcwidth(c)
+        if visible_width - width < 0:
+            result -= 1
     else:
-        width = len(text)
-        if visible_width - width <= 0:
-            result = width
-        else:
-            result = visible_width
-    if visible_width - width < 0:
-        result -= 1
+        result = min(len(text), visible_width)
     return result
 
 
@@ -120,21 +111,14 @@ def _split_text(text, width, height, unicode_aware=True):
     tokens = text.split(" ")
     result = []
     current_line = ""
+    string_len = wcswidth if unicode_aware else len
     for token in tokens:
-        if unicode_aware:
-            for i, line_token in enumerate(token.split("\n")):
-                if wcswidth(current_line + line_token) > width or i > 0:
-                    result.append(current_line.rstrip())
-                    current_line = line_token + " "
-                else:
-                    current_line += line_token + " "
-        else:
-            for i, line_token in enumerate(token.split("\n")):
-                if len(current_line + line_token) > width or i > 0:
-                    result.append(current_line.rstrip())
-                    current_line = line_token + " "
-                else:
-                    current_line += line_token + " "
+        for i, line_token in enumerate(token.split("\n")):
+            if string_len(current_line + line_token) > width or i > 0:
+                result.append(current_line.rstrip())
+                current_line = line_token + " "
+            else:
+                current_line += line_token + " "
 
     # Add any remaining text to the result.
     result.append(current_line.rstrip())
@@ -298,6 +282,9 @@ class Frame(Effect):
         # necessary updates.
         self.data = deepcopy(self._initial_data)
 
+        # Optimization for non-unicode displays to avoid slow unicode calls.
+        self.string_len = wcswidth if self._canvas.unicode_aware else len
+
     def _get_pos(self):
         """
         Get current position for scroll bar.
@@ -447,10 +434,7 @@ class Frame(Effect):
 
             # Now the title
             (colour, attr, bg) = self.palette["title"]
-            if self._canvas.unicode_aware:
-                title_width = wcswidth(self._title)
-            else:
-                title_width = len(self._title)
+            title_width = self.string_len(self._title)
             self._canvas.print_at(
                 self._title,
                 (self._canvas.width - title_width) // 2,
@@ -832,6 +816,7 @@ class Layout(object):
 
         The Layout will automatically normalize the units used for the columns,
         e.g. converting [2, 6, 2] to [20%, 60%, 20%] of the available canvas.
+        e.g. converting [2, 6, 2] to [20%, 60%, 20%] of the available canvas.
         """
         total_size = sum(columns)
         self._column_sizes = [x / total_size for x in columns]
@@ -946,14 +931,12 @@ class Layout(object):
         width = max_width
         y = w = 0
         max_y = start_y
+        string_len = wcswidth if self._frame.canvas.unicode_aware else len
         for i, column in enumerate(self._columns):
             # For each column determine if we need a tab offset for labels.
             # Only allow labels to take up 1/3 of the column.
             if len(column) > 0:
-                if self._frame.canvas.unicode_aware:
-                    offset = max([0 if w.label is None else wcswidth(w.label) + 1 for w in column])
-                else:
-                    offset = max([0 if w.label is None else len(w.label) + 1 for w in column])
+                offset = max([0 if w.label is None else string_len(w.label) + 1 for w in column])
             else:
                 offset = 0
             offset = int(min(offset,
@@ -1269,6 +1252,10 @@ class Widget(with_metaclass(ABCMeta, object)):
         self._on_focus = on_focus
         self._on_blur = on_blur
 
+        # Helper function to optimise string length calculations - default for now and pick
+        # the optimal version when we know whether we need unicode support or not.
+        self.string_len = wcswidth
+
     @property
     def frame(self):
         """
@@ -1335,6 +1322,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         :param frame: The owning Frame.
         """
         self._frame = frame
+        self.string_len = wcswidth if self._frame.canvas.unicode_aware else len
 
     def set_layout(self, x, y, offset, w, h):
         """
@@ -1650,10 +1638,7 @@ class Text(Widget):
         text = _enforce_width(text, self.width, self._frame.canvas.unicode_aware)
         if self._hide_char:
             text = self._hide_char[0] * len(text)
-        if self._frame.canvas.unicode_aware:
-            text += " " * (self.width - wcswidth(text))
-        else:
-            text += " " * (self.width - len(text))
+        text += " " * (self.width - self.string_len(text))
         self._frame.canvas.print_at(
             text,
             self._x + self._offset,
@@ -1663,10 +1648,7 @@ class Text(Widget):
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
         if self._has_focus:
-            if self._frame.canvas.unicode_aware:
-                text_width = wcswidth(text[:self._column - self._start_column])
-            else:
-                text_width = len(text[:self._column - self._start_column])
+            text_width = self.string_len(text[:self._column - self._start_column])
             self._draw_cursor(
                 " " if self._column >= len(self._value) else self._hide_char[0] if self._hide_char
                 else self._value[self._column],
@@ -1996,10 +1978,7 @@ class TextBox(Widget):
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
         if self._has_focus:
-            if self._frame.canvas.unicode_aware:
-                text_width = wcswidth(self._value[self._line][self._start_column:self._column])
-            else:
-                text_width = len(self._value[self._line][self._start_column:self._column])
+            text_width = self.string_len(self._value[self._line][self._start_column:self._column])
             self._draw_cursor(
                 " " if self._column >= len(self._value[self._line]) else
                 self._value[self._line][self._column],
@@ -2710,10 +2689,7 @@ class Button(Widget):
         # Do the usual layout work. then recalculate exact x/w values for the
         # rendered button.
         super(Button, self).set_layout(x, y, offset, w, h)
-        if self._frame.canvas.unicode_aware:
-            text_width = wcswidth(self._text)
-        else:
-            text_width = len(self._text)
+        text_width = self.string_len(self._text)
         if self._add_box:
             # Minimize widget to make a nice little button.
             self._x += max(0, (self.width - text_width) // 2)
@@ -2816,14 +2792,10 @@ class PopUpDialog(Frame):
         self._on_close = on_close
 
         # Decide on optimum width of the dialog.  Limit to 2/3 the screen width.
-        if screen.unicode_aware:
-            width = max([wcswidth(x) for x in text.split("\n")])
-            width = max(width + 4,
-                        sum([wcswidth(x) + 4 for x in buttons]) + len(buttons) + 5)
-        else:
-            width = max([len(x) for x in text.split("\n")])
-            width = max(width + 4,
-                        sum([len(x) + 4 for x in buttons]) + len(buttons) + 5)
+        string_len = wcswidth if screen.unicode_aware else len
+        width = max([string_len(x) for x in text.split("\n")])
+        width = max(width + 4,
+                    sum([string_len(x) + 4 for x in buttons]) + len(buttons) + 5)
         width = min(width, screen.width * 2 // 3)
 
         # Figure out the necessary message and allow for buttons and borders
