@@ -122,9 +122,14 @@ def _credits(screen):
             FigletText("ianadeem"),
             screen.height + 48,
             Screen.COLOUR_GREEN),
+        Mirage(
+            screen,
+            FigletText("Scott Mudge"),
+            screen.height + 56,
+            Screen.COLOUR_GREEN),
         Scroll(screen, 3)
     ]
-    scenes.append(Scene(effects, (screen.height + 56) * 3))
+    scenes.append(Scene(effects, (screen.height + 64) * 3))
 
     effects = [
         Cycle(
