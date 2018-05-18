@@ -497,7 +497,10 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         The colours and attributes are the COLOUR_xxx and A_yyy constants
         defined in the Screen class.
         """
-        x = (self.width - wcswidth(text)) // 2
+        if self._unicode_aware:
+            x = (self.width - wcswidth(text)) // 2
+        else:
+            x = (self.width - len(text)) // 2
         self.paint(text, x, y, colour, attr, colour_map=colour_map)
 
     def paint(self, text, x, y, colour=7, attr=0, bg=0, transparent=False,
@@ -1605,7 +1608,7 @@ if sys.platform == "win32":
             win32con.VK_PRIOR: Screen.KEY_PAGE_UP,
             win32con.VK_NEXT: Screen.KEY_PAGE_DOWN,
             win32con.VK_BACK: Screen.KEY_BACK,
-            win32con.VK_TAB: Screen.KEY_TAB,
+            win32con.VK_TAB: Screen.KEY_TAB
         }
 
         _EXTRA_KEY_MAP = {
@@ -1974,7 +1977,7 @@ else:
             curses.KEY_NPAGE: Screen.KEY_PAGE_DOWN,
             curses.KEY_BACKSPACE: Screen.KEY_BACK,
             9: Screen.KEY_TAB,
-            curses.KEY_BTAB: Screen.KEY_BACK_TAB,
+            curses.KEY_BTAB: Screen.KEY_BACK_TAB
             # Terminals translate keypad keys, so no need for a special
             # mapping here.
 
