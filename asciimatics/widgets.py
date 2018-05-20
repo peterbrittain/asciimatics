@@ -1924,13 +1924,15 @@ class TextBox(Widget):
     framed box with option label.  It can take multi-line input.
     """
 
-    def __init__(self, height, label=None, name=None, as_string=False, on_change=None, **kwargs):
+    def __init__(self, height, label=None, name=None, as_string=False, line_wrap=False,
+                 on_change=None, **kwargs):
         """
         :param height: The required number of input lines for this TextBox.
         :param label: An optional label for the widget.
         :param name: The name for the TextBox.
         :param as_string: Use string with newline separator instead of a list
             for the value of this widget.
+        :param line_wrap: Whether to wrap at the end of the line.
         :param on_change: Optional function to call when text changes.
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
@@ -1943,6 +1945,7 @@ class TextBox(Widget):
         self._start_column = 0
         self._required_height = height
         self._as_string = as_string
+        self._line_wrap = line_wrap
         self._on_change = on_change
 
     def update(self, frame_no):
@@ -1966,24 +1969,55 @@ class TextBox(Widget):
                 self._y + i + dy,
                 colour, attr, bg)
 
+        # Reflow as required for line wrapping
+        display_value = self._value
+        display_start_line = self._start_line
+        display_start_column = self._start_column
+        display_column = self._column
+        display_line = self._line
+        if self._line_wrap:
+            display_start_column = 0
+            display_value = []
+            limit = self._w - self._offset
+            for i, line in enumerate(self._value):
+                column = 0
+                while len(line) >= limit:
+                    display_value.append(line[:limit])
+                    line = line[limit:]
+                    column += limit
+                    if i < self._line:
+                        display_line += 1
+                    if i == self._line and column <= self._column:
+                        display_line += 1
+                        display_column -= limit
+                display_value.append(line)
+
+                display_start_line = max(0, max(display_line - height + 1,
+                                      min(display_start_line, display_line)))
+
+
         # Render visible portion of the text.
-        for i, text in enumerate(self._value):
-            if self._start_line <= i < self._start_line + height:
+        for i, text in enumerate(display_value):
+            if display_start_line <= i < display_start_line + height:
                 self._frame.canvas.print_at(
-                    _enforce_width(text[self._start_column:], self.width, self._frame.canvas.unicode_aware),
+                    _enforce_width(text[display_start_column:], self.width,
+                                   self._frame.canvas.unicode_aware),
                     self._x + self._offset + dx,
-                    self._y + i + dy - self._start_line,
+                    self._y + i + dy - display_start_line,
                     colour, attr, bg)
 
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
         if self._has_focus:
-            text_width = self.string_len(self._value[self._line][self._start_column:self._column])
+            text_width = self.string_len(
+                display_value[display_line][display_start_column:display_column])
             self._draw_cursor(
-                " " if self._column >= len(self._value[self._line]) else
-                self._value[self._line][self._column],
+                " " if display_column >= len(display_value[display_line]) else
+                display_value[display_line][display_column],
                 frame_no,
-                self._x + self._offset + dx + text_width, self._y + self._line + dy - self._start_line)
+                self._x + self._offset + dx + self.string_len(
+                    display_value[display_line][display_start_column:display_column]),
+                self._y + display_line + dy - display_start_line)
 
     def reset(self):
         # Reset to original data and move to end of the text.
