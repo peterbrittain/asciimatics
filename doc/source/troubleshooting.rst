@@ -30,6 +30,37 @@ For a list of possible solutions, see the `answer on Stackoverflow
 <http://stackoverflow.com/q/24646305/4994021>`__.  In short, either install the native libraries
 you need, or force an installation of an older version (2.9.0) of Pillow.
 
+My application only runs on Windows
+-----------------------------------
+Given that your application runs on Windows, but not any curses-based solution (i.e. Mac or
+Linux), the fundamental logic in your code is right.  It might be a bug in asciimatics, but it
+could also be a bug in your system installation.
+
+Curses-based systems date back to an era when people connected to a computer via dumb terminals.
+Each terminal needed different control character sequences to tell it what to do.  These
+differences are handled by curses, which picks the right definition based on your `TERM`
+environment variable.  If you have the wrong terminal definition, you may find that curses
+believes some fundamental services are unavailable to your application.  In particular, if
+you use ``xterm-color``, you are using a definition of xterm that dates back to 1996 and will
+see errors like this, where the critical point is thet a curses function returned an unexpected
+error (the "ERR" result).
+
+.. code-block:: bash
+
+    Traceback (most recent call last):
+        File "demo.py", line 18, in <module>
+           Screen.wrapper(demo)
+        File "./lib/python3.6/site-packages/asciimatics/screen.py", line 1162, in wrapper
+           unicode_aware=unicode_aware)
+        File "./lib/python3.6/site-packages/asciimatics/screen.py", line 1131, in open
+            unicode_aware=unicode_aware)
+        File "./lib/python3.6/site-packages/asciimatics/screen.py", line 2001, in __init__
+            curses.curs_set(0)
+    _curses.error: curs_set() returned ERR
+
+The fix is to use a more modern terminal definition like ``xterm`` or ``xterm-256color``.
+
+
 256 colours not working
 -----------------------
 By default a lot of terminals will only support 8/16 colours.  Windows users are limited to just
