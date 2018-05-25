@@ -149,6 +149,7 @@ class DemoFrame(Frame):
 def demo(screen):
     screen.play([Scene([DemoFrame(screen)], -1)], stop_on_resize=True)
 
+
 while True:
     try:
         Screen.wrapper(demo, catch_interrupt=True)

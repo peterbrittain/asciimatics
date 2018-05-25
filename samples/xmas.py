@@ -60,6 +60,7 @@ def demo(screen):
     ]
     screen.play([Scene(effects, -1)], stop_on_resize=True)
 
+
 while True:
     try:
         Screen.wrapper(demo)

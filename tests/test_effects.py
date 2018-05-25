@@ -25,7 +25,8 @@ class TestEffects(unittest.TestCase):
             for y in range(canvas.height):
                 self.assertEqual(canvas.get_from(x, y), (32, 7, 0, 0))
 
-    def check_canvas(self, canvas, my_buffer, assert_fn):
+    @staticmethod
+    def check_canvas(canvas, my_buffer, assert_fn):
         changed = False
         for x in range(canvas.width):
             for y in range(canvas.height):
@@ -489,6 +490,7 @@ class TestEffects(unittest.TestCase):
         # This effect should ignore events.
         event = object()
         self.assertEqual(event, effect.process_event(event))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -2091,5 +2091,6 @@ class TestWidgets(unittest.TestCase):
         self.assertEquals(len(scene.effects), 0)
         self.assertEquals(self.clicked, 0)
 
+
 if __name__ == '__main__':
     unittest.main()

@@ -561,6 +561,7 @@ class Frame(Effect):
         """
         Create a clone of this Frame into a new Screen.
 
+        :param _: ignored.
         :param scene: The new Scene object to clone into.
         """
         # Assume that the application creates a new set of Frames and so we need to match up the

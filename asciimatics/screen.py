@@ -1555,6 +1555,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         :param title: The title to be set.
         """
 
+
 if sys.platform == "win32":
     import win32console
     import win32con

@@ -61,6 +61,7 @@ class PlasmaScene(Scene):
 def demo(screen):
     screen.play([PlasmaScene(screen)], stop_on_resize=True)
 
+
 if __name__ == "__main__":
     while True:
         try:
