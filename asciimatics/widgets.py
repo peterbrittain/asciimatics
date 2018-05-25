@@ -3310,6 +3310,7 @@ class _ScrollBar(object):
     """
     Internal object to provide vertical scroll bars for widgets.
     """
+
     def __init__(self, canvas, palette, x, y, height, get_pos, set_pos, absolute=False):
         """
         :param canvas: The canvas on which to draw the scroll bar.
@@ -3396,6 +3397,7 @@ class PopupMenu(Frame):
     """
     A widget for displaying a menu.
     """
+
     palette = defaultdict(lambda: (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_CYAN))
     palette["focus_button"] = (Screen.COLOUR_CYAN, Screen.A_NORMAL, Screen.COLOUR_WHITE)
 

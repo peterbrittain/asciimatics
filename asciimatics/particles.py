@@ -250,6 +250,7 @@ class Rocket(ParticleEmitter):
     """
     A rocket being launched from the ground.
     """
+
     def __init__(self, screen, x, y, life_time, on_destroy=None):
         """
         :param screen: The Screen being used for this particle system.
