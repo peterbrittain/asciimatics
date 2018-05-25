@@ -43,6 +43,7 @@ def demo(screen):
                   duration=360))
     screen.play(scenes, stop_on_resize=True)
 
+
 if __name__ == "__main__":
     while True:
         try:

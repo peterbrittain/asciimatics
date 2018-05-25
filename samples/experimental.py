@@ -113,7 +113,7 @@ class DemoFrame(Frame):
 
     @staticmethod
     def _check_email(value):
-        m = re.match(r"^[a-zA-Z0-9_\-\.]+@[a-zA-Z0-9_\-\.]+\.[a-zA-Z0-9_\-\.]+$",
+        m = re.match(r"^[a-zA-Z0-9_\-.]+@[a-zA-Z0-9_\-.]+\.[a-zA-Z0-9_\-.]+$",
                      value)
         return len(value) == 0 or m is not None
 
@@ -147,6 +147,7 @@ def demo(screen, scene):
     scenes.append(Scene(effects, -1))
 
     screen.play(scenes, stop_on_resize=True, start_scene=scene)
+
 
 last_scene = None
 while True:

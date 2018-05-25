@@ -85,5 +85,6 @@ class TestPaths(unittest.TestCase):
         path.reset()
         self.assertEqual(path.next_pos(), (0, 0))
 
+
 if __name__ == '__main__':
     unittest.main()

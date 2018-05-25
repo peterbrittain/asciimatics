@@ -173,6 +173,7 @@ def demo(screen, scene):
 
     screen.play(scenes, stop_on_resize=True, start_scene=scene)
 
+
 contacts = ContactModel()
 last_scene = None
 while True:

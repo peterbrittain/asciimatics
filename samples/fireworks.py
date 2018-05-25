@@ -51,6 +51,7 @@ def demo(screen):
 
     screen.play(scenes, stop_on_resize=True)
 
+
 while True:
     try:
         Screen.wrapper(demo)

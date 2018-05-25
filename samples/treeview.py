@@ -71,6 +71,7 @@ class DemoFrame(Frame):
 def demo(screen, old_scene):
     screen.play([Scene([DemoFrame(screen)], -1)], stop_on_resize=True, start_scene=old_scene)
 
+
 last_scene = None
 while True:
     try:

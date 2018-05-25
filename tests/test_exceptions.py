@@ -23,5 +23,6 @@ class TestExceptions(unittest.TestCase):
         error = StopApplication(message)
         self.assertEqual(str(error), message)
 
+
 if __name__ == '__main__':
     unittest.main()

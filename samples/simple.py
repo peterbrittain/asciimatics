@@ -19,4 +19,5 @@ def demo(screen):
     ]
     screen.play([Scene(effects, 500)])
 
+
 Screen.wrapper(demo)
