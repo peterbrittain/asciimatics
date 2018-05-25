@@ -6,18 +6,21 @@ http://asciimatics.readthedocs.io/en/latest/io.html
 
 class Event(object):
     """
-    A class to hold information about an input event.  The exact contents
-    varies from event to event.  See specific classes for more information.
+    A class to hold information about an input event.
+
+    The exact contents varies from event to event.  See specific classes for more information.
     """
 
 
 class KeyboardEvent(Event):
     """
-    This event represents a key press.  Its key field is the `key_code`.  This
-    is the ordinal representation of the key (taking into account keyboard
-    state - e.g. caps lock) if possible, or an extended key code (the `KEY_xxx`
+    An event that represents a key press.
+
+    Its key field is the `key_code`.  This is the ordinal representation of the key (taking into
+    account keyboard state - e.g. caps lock) if possible, or an extended key code (the `KEY_xxx`
     constants in the :py:obj:`.Screen` class) where not.
     """
+
     def __init__(self, key_code):
         self.key_code = key_code
 
@@ -27,9 +30,10 @@ class KeyboardEvent(Event):
 
 class MouseEvent(Event):
     """
-    The event represents a mouse move or click.  Allowed values for the buttons
-    are any bitwise combination of `LEFT_CLICK`, `RIGHT_CLICK` and
-    `DOUBLE_CLICK`.
+    An event that represents a mouse move or click.
+
+    Allowed values for the buttons are any bitwise combination of
+    `LEFT_CLICK`, `RIGHT_CLICK` and `DOUBLE_CLICK`.
     """
 
     # Mouse button states - bitwise flags

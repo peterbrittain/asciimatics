@@ -378,15 +378,13 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
     @abstractmethod
     def _reset(self):
         """
-        Internal implementation required to reset underlying drawing
-        interface.
+        Internal implementation required to reset underlying drawing interface.
         """
 
     @abstractmethod
     def refresh(self):
         """
-        Refresh this object - this will draw to the underlying display
-        interface.
+        Refresh this object - this will draw to the underlying display interface.
         """
 
     def get_from(self, x, y):
@@ -406,8 +404,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
 
     def print_at(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
         """
-        Print the text at the specified location using the
-        specified colour and attributes.
+        Print the text at the specified location using the specified colour and attributes.
 
         :param text: The (single line) text to be printed.
         :param x: The column (x coord) for the start of the text.
@@ -485,8 +482,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
 
     def centre(self, text, y, colour=7, attr=0, colour_map=None):
         """
-        Centre the text on the specified line (y) using the optional
-        colour and attributes.
+        Centre the text on the specified line (y) using the optional colour and attributes.
 
         :param text: The (single line) text to be printed.
         :param y: The line (y coord) for the start of the text.
@@ -637,8 +633,9 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
 
     def draw(self, x, y, char=None, colour=7, bg=0, thin=False):
         """
-        Draw a line from drawing cursor to the specified position.  This uses a
-        modified Bressenham algorithm, interpolating twice as many points to
+        Draw a line from drawing cursor to the specified position.
+
+        This uses a modified Bressenham algorithm, interpolating twice as many points to
         render down to anti-aliased characters when no character is specified,
         or uses standard algorithm plotting with the specified character.
 
@@ -765,6 +762,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         """
         class _DotDict(dict):
             """See https://stackoverflow.com/q/2352181/4994021"""
+
             __getattr__ = dict.get
             __setattr__ = dict.__setitem__
             __delattr__ = dict.__delitem__
@@ -2297,6 +2295,7 @@ else:
         Used for signal restoration when asciimatics no longer has control
         of the user program.
         """
+
         def __init__(self):
             self._old_signal_states = []
 
