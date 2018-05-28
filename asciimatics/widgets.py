@@ -1958,8 +1958,6 @@ class TextBox(Widget):
         # Calculate new visible limits if needed.
         height = self._h
         dx = dy = 0
-        self._start_line = max(0, max(self._line - height + 1,
-                                      min(self._start_line, self._line)))
         self._start_column = min(self._start_column, self._column)
         self._start_column += _find_min_start(
             self._value[self._line][self._start_column:self._column + 1],
@@ -1978,7 +1976,6 @@ class TextBox(Widget):
 
         # Reflow as required for line wrapping
         display_value = self._value
-        display_start_line = self._start_line
         display_start_column = self._start_column
         display_column = self._column
         display_line = self._line
@@ -1999,18 +1996,18 @@ class TextBox(Widget):
                         display_column -= limit
                 display_value.append(line)
 
-                display_start_line = max(0, max(display_line - height + 1,
-                                      min(display_start_line, display_line)))
-
+        # Now calculate the start line based on reflowed text.
+        self._start_line = max(0, max(display_line - height + 1,
+                              min(self._start_line, display_line)))
 
         # Render visible portion of the text.
         for i, text in enumerate(display_value):
-            if display_start_line <= i < display_start_line + height:
+            if self._start_line <= i < self._start_line + height:
                 self._frame.canvas.print_at(
                     _enforce_width(text[display_start_column:], self.width,
                                    self._frame.canvas.unicode_aware),
                     self._x + self._offset + dx,
-                    self._y + i + dy - display_start_line,
+                    self._y + i + dy - self._start_line,
                     colour, attr, bg)
 
         # Since we switch off the standard cursor, we need to emulate our own
@@ -2023,7 +2020,7 @@ class TextBox(Widget):
                 display_value[display_line][display_column],
                 frame_no,
                 self._x + self._offset + dx + text_width,
-                self._y + display_line + dy - display_start_line)
+                self._y + display_line + dy - self._start_line)
 
     def reset(self):
         # Reset to original data and move to end of the text.
@@ -2253,6 +2250,8 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
                         new_line -= 1
                     new_line = min(new_line, len(self._options) - 1)
 
+                    # TODO: Fix up for widgets with line-wrap
+                    
                     # Update selection and fire select callback if needed.
                     if new_line >= 0:
                         self._line = new_line
