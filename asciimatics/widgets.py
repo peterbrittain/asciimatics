@@ -52,13 +52,14 @@ def _enforce_width(text, width, unicode_aware=True):
     return text
 
 
-def _find_min_start(text, max_width, unicode_aware=True):
+def _find_min_start(text, max_width, unicode_aware=True, at_end=False):
     """
     Find the starting point in the string that will reduce it to be less than or equal to the
     specified width when displayed on screen.
 
     :param text: The text to analyze.
     :param max_width: The required maximum width
+    :param at_end: At the end of the editable line, so allow spaced for cursor.
 
     :return: The offset within `text` to start at to reduce it to the required length.
     """
@@ -66,10 +67,12 @@ def _find_min_start(text, max_width, unicode_aware=True):
     string_len = wcswidth if unicode_aware else len
     char_len = wcwidth if unicode_aware else lambda x: 1
     display_end = string_len(text)
-    while display_end >= max_width:
+    while display_end > max_width:
         result += 1
         display_end -= char_len(text[0])
         text = text[1:]
+    if at_end and display_end == max_width:
+        result += 1
     return result
 
 
@@ -1630,7 +1633,8 @@ class Text(Widget):
         # Calculate new visible limits if needed.
         self._start_column = min(self._start_column, self._column)
         self._start_column += _find_min_start(self._value[self._start_column:self._column + 1],
-                                              self.width, self._frame.canvas.unicode_aware)
+                                              self.width, self._frame.canvas.unicode_aware,
+                                              self._column >= self.string_len(self._value))
 
         # Render visible portion of the text.
         (colour, attr, bg) = self._pick_colours("edit_text")
@@ -1958,7 +1962,10 @@ class TextBox(Widget):
                                       min(self._start_line, self._line)))
         self._start_column = min(self._start_column, self._column)
         self._start_column += _find_min_start(
-            self._value[self._line][self._start_column:self._column + 1], self.width, self._frame.canvas.unicode_aware)
+            self._value[self._line][self._start_column:self._column + 1],
+            self.width,
+            self._frame.canvas.unicode_aware,
+            self._column >= self.string_len(self._value[self._line]))
 
         # Clear out the existing box content
         (colour, attr, bg) = self._pick_colours("edit_text")
@@ -2015,8 +2022,7 @@ class TextBox(Widget):
                 " " if display_column >= len(display_value[display_line]) else
                 display_value[display_line][display_column],
                 frame_no,
-                self._x + self._offset + dx + self.string_len(
-                    display_value[display_line][display_start_column:display_column]),
+                self._x + self._offset + dx + text_width,
                 self._y + display_line + dy - display_start_line)
 
     def reset(self):
