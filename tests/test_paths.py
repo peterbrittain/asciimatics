@@ -4,7 +4,7 @@ from asciimatics.paths import Path, DynamicPath
 
 
 class TestPaths(unittest.TestCase):
-    def assertPathEquals(self, path, oracle):
+    def assert_path_equals(self, path, oracle):
         path.reset()
         positions = []
         while not path.is_finished():
@@ -18,7 +18,7 @@ class TestPaths(unittest.TestCase):
         path = Path()
         path.jump_to(10, 10)
         path.wait(3)
-        self.assertPathEquals(path, [(10, 10), (10, 10), (10, 10), (10, 10)])
+        self.assert_path_equals(path, [(10, 10), (10, 10), (10, 10), (10, 10)])
 
     def test_straight_lines(self):
         """
@@ -28,7 +28,7 @@ class TestPaths(unittest.TestCase):
         path = Path()
         path.jump_to(10, 10)
         path.move_straight_to(15, 10, 5)
-        self.assertPathEquals(
+        self.assert_path_equals(
             path,
             [(10, 10), (11, 10), (12, 10), (13, 10), (14, 10), (15, 10)])
 
@@ -36,7 +36,7 @@ class TestPaths(unittest.TestCase):
         path = Path()
         path.jump_to(5, 5)
         path.move_straight_to(5, 10, 5)
-        self.assertPathEquals(
+        self.assert_path_equals(
             path,
             [(5, 5), (5, 6), (5, 7), (5, 8), (5, 9), (5, 10)])
 
@@ -44,7 +44,7 @@ class TestPaths(unittest.TestCase):
         path = Path()
         path.jump_to(5, 5)
         path.move_straight_to(15, 15, 5)
-        self.assertPathEquals(
+        self.assert_path_equals(
             path,
             [(5, 5), (7, 7), (9, 9), (11, 11), (13, 13), (15, 15)])
 
@@ -55,7 +55,7 @@ class TestPaths(unittest.TestCase):
         path = Path()
         path.jump_to(0, 10)
         path.move_round_to([(0, 10), (20, 0), (40, 10), (20, 20), (0, 10)], 20)
-        self.assertPathEquals(
+        self.assert_path_equals(
             path,
             [(0, 10), (0, 10), (0, 10), (0, 10), (0, 10), (5, 7),
              (10, 4), (15, 1), (20, 0), (25, 1), (30, 3), (35, 7),

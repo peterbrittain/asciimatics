@@ -1,4 +1,4 @@
-doc-warnings: no
+doc-warnings: yes
 test-warnings: no
 strictness: high
 max-line-length: 100
@@ -11,10 +11,30 @@ python-targets:
     - 3
 pylint:
   disable:
+    # Py2/3 compatibility
     - redefined-builtin
+    # Need many attributes on widgets
     - too-many-arguments
+    - too-many-locals
     - too-many-instance-attributes
     - invalid-name
+    # Need conditional imports for Windows/Linux
     - wrong-import-order
+    - import-error
+    # Use pep257 to handle docstring issues
+    - missing-docstring
+    # Don't agree with these styles
+    - no-else-return
+    - len-as-condition
 mccabe:
   run: false
+pep257:
+  disable:
+    - D102
+    - D200
+    - D203
+    - D205
+    - D212
+    - D400
+    - D401
+    - D404
