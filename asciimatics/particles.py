@@ -716,12 +716,6 @@ class StarFirework(ParticleEffect):
     Classic rocket with star explosion.
     """
 
-    def __init__(self, screen, x, y, life_time, **kwargs):
-        """
-        See :py:obj:`.ParticleEffect` for details of the parameters.
-        """
-        super(StarFirework, self).__init__(screen, x, y, life_time, **kwargs)
-
     def reset(self):
         self._active_systems = []
         self._active_systems.append(
@@ -748,12 +742,6 @@ class RingFirework(ParticleEffect):
     Classic rocket with ring explosion.
     """
 
-    def __init__(self, screen, x, y, life_time, **kwargs):
-        """
-        See :py:obj:`.ParticleEffect` for details of the parameters.
-        """
-        super(RingFirework, self).__init__(screen, x, y, life_time, **kwargs)
-
     def reset(self):
         self._active_systems = []
         self._active_systems.append(
@@ -769,12 +757,6 @@ class SerpentFirework(ParticleEffect):
     A firework where each trail changes direction.
     """
 
-    def __init__(self, screen, x, y, life_time, **kwargs):
-        """
-        See :py:obj:`.ParticleEffect` for details of the parameters.
-        """
-        super(SerpentFirework, self).__init__(screen, x, y, life_time, **kwargs)
-
     def reset(self):
         self._active_systems = []
         self._active_systems.append(
@@ -789,12 +771,6 @@ class PalmFirework(ParticleEffect):
     """
     Classic palm shaped firework.
     """
-
-    def __init__(self, screen, x, y, life_time, **kwargs):
-        """
-        See :py:obj:`.ParticleEffect` for details of the parameters.
-        """
-        super(PalmFirework, self).__init__(screen, x, y, life_time, **kwargs)
 
     def reset(self):
         self._active_systems = []
@@ -820,12 +796,6 @@ class Explosion(ParticleEffect):
     """
     An explosion effect.
     """
-
-    def __init__(self, screen, x, y, life_time, **kwargs):
-        """
-        See :py:obj:`.ParticleEffect` for details of the parameters.
-        """
-        super(Explosion, self).__init__(screen, x, y, life_time, **kwargs)
 
     def reset(self):
         self._active_systems = []
@@ -855,13 +825,6 @@ class ShootScreen(ParticleEffect):
     """
     Shoot the screen out like a massive gunshot.
     """
-
-    def __init__(self, screen, x, y, life_time, **kwargs):
-        """
-        See :py:obj:`.ParticleEffect` for details of the parameters.
-        """
-        # No need for an origin as this uses the whole screen.
-        super(ShootScreen, self).__init__(screen, x, y, life_time, **kwargs)
 
     def reset(self):
         self._active_systems = []

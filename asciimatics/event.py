@@ -1,6 +1,6 @@
 """
 This module defines basic input events.  For more details, see
-http://asciimatics.readthedocs.io/en/latest/io.html
+http://asciimatics.readthedocs.io/en/latest/.html
 """
 
 
@@ -22,9 +22,15 @@ class KeyboardEvent(Event):
     """
 
     def __init__(self, key_code):
+        """
+        :param key_code: the ordinal value of the key that was pressed.
+        """
         self.key_code = key_code
 
     def __repr__(self):
+        """
+        :returns: a string representation of the keyboard event.
+        """
         return "KeyboardEvent: {}".format(self.key_code)
 
 
@@ -42,9 +48,17 @@ class MouseEvent(Event):
     DOUBLE_CLICK = 4
 
     def __init__(self, x, y, buttons):
+        """
+        :param x: The X coordinate of the mouse event.
+        :param y: The Y coordinate of the mouse event.
+        :param buttons: A bitwise flag for any mouse buttons that were pressed (if any).
+        """
         self.x = x
         self.y = y
         self.buttons = buttons
 
     def __repr__(self):
+        """
+        :returns: a string representation of the mouse event.
+        """
         return "MouseEvent ({}, {}) {}".format(self.x, self.y, self.buttons)

@@ -22,7 +22,7 @@ import json
 import sys
 import signal
 from asciimatics.event import KeyboardEvent, MouseEvent
-from .exceptions import ResizeScreenError, StopApplication, NextScene
+from asciimatics.exceptions import ResizeScreenError, StopApplication, NextScene
 from wcwidth import wcwidth, wcswidth
 
 # Logging
@@ -2317,4 +2317,3 @@ else:
             for signalnum, handler in self._old_signal_states:
                 signal.signal(signalnum, handler)
             self._old_signal_states = []
-

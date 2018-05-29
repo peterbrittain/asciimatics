@@ -1,3 +1,6 @@
+"""
+This module defines the exceptions used by asciimatics.
+"""
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
@@ -104,6 +107,6 @@ class Highlander(Exception):
     to fill the rest of the screen).  If you hit this exception you have
     a bug in your application.
 
-    If you don't get the name, take a look at `this link 
+    If you don't get the name, take a look at `this link
     <https://en.wikipedia.org/wiki/Highlander_(film)>`__.
     """

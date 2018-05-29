@@ -17,7 +17,7 @@ from math import sin, cos, pi, sqrt, atan2
 from pyfiglet import Figlet, DEFAULT_FONT
 from PIL import Image
 import re
-from .screen import Screen
+from asciimatics.screen import Screen
 
 
 #: Attribute conversion table for the ${c,a} form of attributes for
@@ -507,7 +507,7 @@ class Box(StaticRenderer):
 class Rainbow(StaticRenderer):
     """
     Chained renderer to add rainbow colours to output of another renderer.
-    The embedded rendered must not use multi-colour mode (i.e. ${c,a} 
+    The embedded rendered must not use multi-colour mode (i.e. ${c,a}
     mark-ups) as these will be converted to explicit text by this renderer.
     """
 

@@ -25,8 +25,8 @@ from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import Highlander, InvalidFields
 from asciimatics.screen import Screen, Canvas
-from wcwidth import wcswidth, wcwidth
 from asciimatics.utilities import readable_timestamp, readable_mem
+from wcwidth import wcswidth, wcwidth
 
 # Logging
 from logging import getLogger
@@ -732,7 +732,7 @@ class Frame(Effect):
         if (self._focus < 0 or self._focus >= len(self._layouts) or
                 not self._layouts):
             if event is not None and isinstance(event, KeyboardEvent):
-                return
+                return None
             else:
                 # Don't allow events to bubble down if this window owns the Screen - as already
                 # calculated when taking te focus - or is modal.
@@ -779,12 +779,12 @@ class Frame(Effect):
                 # Give layouts/widgets first dibs on the mouse message.
                 for layout in self._layouts:
                     if layout.process_event(event, self._hover_focus) is None:
-                        return
+                        return None
 
                 # If no joy, check whether the scroll bar was clicked.
                 if self._has_border and self._can_scroll:
                     if self._scroll_bar.process_event(event):
-                        return
+                        return None
 
         # Don't allow events to bubble down if this window owns the Screen (as already
         # calculated when taking te focus) or if the Frame is modal.
@@ -937,7 +937,7 @@ class Layout(object):
             # For each column determine if we need a tab offset for labels.
             # Only allow labels to take up 1/3 of the column.
             if len(column) > 0:
-                offset = max([0 if w.label is None else string_len(w.label) + 1 for w in column])
+                offset = max([0 if c.label is None else string_len(c.label) + 1 for c in column])
             else:
                 offset = 0
             offset = int(min(offset,
@@ -1124,7 +1124,7 @@ class Layout(object):
                             if widget.is_mouse_over(event):
                                 self._frame.switch_focus(self, i, j)
                                 widget.process_event(event)
-                                return
+                                return None
         return event
 
     def update(self, frame_no):
@@ -1531,7 +1531,8 @@ class Label(Widget):
 
     def update(self, frame_no):
         (colour, attr, bg) = self._frame.palette["label"]
-        for i, text in enumerate(_split_text(self._text, self._w, self._h, self._frame.canvas.unicode_aware)):
+        for i, text in enumerate(
+                _split_text(self._text, self._w, self._h, self._frame.canvas.unicode_aware)):
             self._frame.canvas.paint(
                 text, self._x, self._y + i, colour, attr, bg)
 
@@ -1697,15 +1698,19 @@ class Text(Widget):
                 if self.is_mouse_over(event, include_label=False):
                     self._column = (self._start_column +
                                     _get_offset(self._value[self._start_column:],
-                                                event.x - self._x - self._offset, self._frame.canvas.unicode_aware))
+                                                event.x - self._x - self._offset,
+                                                self._frame.canvas.unicode_aware))
                     self._column = min(len(self._value), self._column)
                     self._column = max(0, self._column)
-                    return
+                    return None
             # Ignore other mouse events.
             return event
         else:
             # Ignore other events
             return event
+
+        # If we got here, we processed the event - swallow it.
+        return None
 
     def required_height(self, offset, width):
         return 1
@@ -1795,12 +1800,15 @@ class CheckBox(Widget):
                 if self.is_mouse_over(event, include_label=False):
                     # Use property to trigger events.
                     self.value = not self._value
-                    return
+                    return None
             # Ignore other mouse events.
             return event
         else:
             # Ignore other events
             return event
+
+        # If we got here, we processed the event - swallow it.
+        return None
 
     def required_height(self, offset, width):
         return 1
@@ -1887,12 +1895,15 @@ class RadioButtons(Widget):
                     # Use property to trigger events.
                     self._selection = event.y - self._y
                     self.value = self._options[self._selection][1]
-                    return
+                    return None
             # Ignore other mouse events.
             return event
         else:
             # Ignore non-keyboard events
             return event
+
+        # If we got here, we processed the event - swallow it.
+        return None
 
     def required_height(self, offset, width):
         return len(self._options)
@@ -1956,7 +1967,8 @@ class TextBox(Widget):
                                       min(self._start_line, self._line)))
         self._start_column = min(self._start_column, self._column)
         self._start_column += _find_min_start(
-            self._value[self._line][self._start_column:self._column + 1], self.width, self._frame.canvas.unicode_aware)
+            self._value[self._line][self._start_column:self._column + 1],
+            self.width, self._frame.canvas.unicode_aware)
 
         # Clear out the existing box content
         (colour, attr, bg) = self._pick_colours("edit_text")
@@ -1971,7 +1983,8 @@ class TextBox(Widget):
         for i, text in enumerate(self._value):
             if self._start_line <= i < self._start_line + height:
                 self._frame.canvas.print_at(
-                    _enforce_width(text[self._start_column:], self.width, self._frame.canvas.unicode_aware),
+                    _enforce_width(text[self._start_column:],
+                                   self.width, self._frame.canvas.unicode_aware),
                     self._x + self._offset + dx,
                     self._y + i + dy - self._start_line,
                     colour, attr, bg)
@@ -1984,7 +1997,8 @@ class TextBox(Widget):
                 " " if self._column >= len(self._value[self._line]) else
                 self._value[self._line][self._column],
                 frame_no,
-                self._x + self._offset + dx + text_width, self._y + self._line + dy - self._start_line)
+                self._x + self._offset + dx + text_width,
+                self._y + self._line + dy - self._start_line)
 
     def reset(self):
         # Reset to original data and move to end of the text.
@@ -2085,15 +2099,19 @@ class TextBox(Widget):
                     # Now figure out location in text based on width of each glyph.
                     self._column = (self._start_column +
                                     _get_offset(self._value[self._line][self._start_column:],
-                                                event.x - self._x - self._offset, self._frame.canvas.unicode_aware))
+                                                event.x - self._x - self._offset,
+                                                self._frame.canvas.unicode_aware))
                     self._column = min(len(self._value[self._line]), self._column)
                     self._column = max(0, self._column)
-                    return
+                    return None
             # Ignore other mouse events.
             return event
         else:
             # Ignore other events
             return event
+
+        # If we got here, we processed the event - swallow it.
+        return None
 
     def required_height(self, offset, width):
         return self._required_height
@@ -2220,7 +2238,7 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
                         self.value = self._options[self._line][1]
                         if event.buttons & MouseEvent.DOUBLE_CLICK != 0 and self._on_select:
                             self._on_select()
-                    return
+                    return None
 
                 # Check for scroll bar interactions:
                 if self._scroll_bar:
@@ -2231,6 +2249,9 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         else:
             # Ignore other events
             return event
+
+        # If we got here, we processed the event - swallow it.
+        return None
 
     @abstractmethod
     def _find_option(self, search_value):
@@ -2372,7 +2393,8 @@ class ListBox(_BaseListBox):
                 if len(text) > width:
                     text = text[:width - 3] + "..."
                 self._frame.canvas.print_at(
-                    "{:{}}".format(_enforce_width(text, width, self._frame.canvas.unicode_aware), width),
+                    "{:{}}".format(
+                        _enforce_width(text, width, self._frame.canvas.unicode_aware), width),
                     self._x + self._offset + dx,
                     self._y + y_offset + i + dy - start_line,
                     colour, attr, bg)
@@ -2513,7 +2535,9 @@ class MultiColumnListBox(_BaseListBox):
                     zip(self._titles, self._align, self._spacing)):
                 width = self._get_width(self._columns[i])
                 self._frame.canvas.print_at(
-                    "{}{:{}{}}".format(" " * space, _enforce_width(title, width, self._frame.canvas.unicode_aware),
+                    "{}{:{}{}}".format(" " * space,
+                                       _enforce_width(
+                                           title, width, self._frame.canvas.unicode_aware),
                                        align, width),
                     self._x + self._offset + row_dx,
                     self._y,
@@ -2541,7 +2565,9 @@ class MultiColumnListBox(_BaseListBox):
                     if len(text) > width:
                         text = text[:width - 3] + "..."
                     self._frame.canvas.print_at(
-                        "{}{:{}{}}".format(" " * space, _enforce_width(text, width, self._frame.canvas.unicode_aware),
+                        "{}{:{}{}}".format(" " * space,
+                                           _enforce_width(
+                                               text, width, self._frame.canvas.unicode_aware),
                                            align, width),
                         self._x + self._offset + dx + row_dx,
                         self._y + i + dy - self._start_line,
@@ -2716,7 +2742,7 @@ class Button(Widget):
         if isinstance(event, KeyboardEvent):
             if event.key_code in [ord(" "), 10, 13]:
                 self._on_click()
-                return
+                return None
             else:
                 # Ignore any other key press.
                 return event
@@ -2725,7 +2751,7 @@ class Button(Widget):
                 if (self._x <= event.x < self._x + self._w and
                         self._y <= event.y < self._y + self._h):
                     self._on_click()
-                    return
+                    return None
         # Ignore other events
         return event
 
@@ -3261,7 +3287,9 @@ class DropdownList(Widget):
         text = "" if self._line is None else self._options[self._line][0]
         (colour, attr, bg) = self._pick_colours("field", selected=self._has_focus)
         self._frame.canvas.print_at(
-            "[{:{}}]".format(_enforce_width(text, self.width - 2, self._frame.canvas.unicode_aware), self.width - 2),
+            "[{:{}}]".format(
+                _enforce_width(text, self.width - 2, self._frame.canvas.unicode_aware),
+                self.width - 2),
             self._x + self._offset,
             self._y,
             colour, attr, bg)

@@ -15,7 +15,7 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from random import randint, random, choice
 from math import sin, cos, pi
 from asciimatics.paths import DynamicPath
-from .screen import Screen
+from asciimatics.screen import Screen
 import datetime
 
 

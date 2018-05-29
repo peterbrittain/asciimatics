@@ -15,8 +15,8 @@ from asciimatics.exceptions import NextScene, StopApplication, InvalidFields
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen, Canvas
 from asciimatics.widgets import Frame, Layout, Button, Label, TextBox, Text, \
-    Divider, RadioButtons, CheckBox, PopUpDialog, ListBox, Widget, MultiColumnListBox, FileBrowser, \
-    DatePicker, TimePicker, Background, DropdownList, PopupMenu
+    Divider, RadioButtons, CheckBox, PopUpDialog, ListBox, Widget, MultiColumnListBox, \
+    FileBrowser, DatePicker, TimePicker, Background, DropdownList, PopupMenu
 
 
 class TestFrame(Frame):
