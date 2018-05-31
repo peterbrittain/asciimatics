@@ -7,7 +7,6 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
-from locale import getlocale, getdefaultlocale
 import struct
 from builtins import object
 from builtins import range
@@ -20,6 +19,7 @@ import time
 from abc import ABCMeta, abstractmethod
 import json
 import sys
+import os
 import signal
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import ResizeScreenError, StopApplication, NextScene
@@ -1995,9 +1995,7 @@ else:
             """
             # Determine unicode support if needed.
             if unicode_aware is None:
-                encoding = getlocale()[1]
-                if not encoding:
-                    encoding = getdefaultlocale()[1]
+                encoding = os.environ.get('LC_CTYPE')
                 unicode_aware = (encoding is not None and
                                  encoding.lower() == "utf-8")
 
