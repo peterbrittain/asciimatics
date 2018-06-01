@@ -1997,12 +1997,12 @@ else:
             """
             # Determine unicode support if needed.
             if unicode_aware is None:
-                encoding = getlocale()[1]
-                if not encoding:
-                    try:
+                try:
+                    encoding = getlocale()[1]
+                    if not encoding:
                         encoding = getdefaultlocale()[1]
-                    except ValueError:
-                        encoding = os.environ.get("LC_CTYPE")
+                except ValueError:
+                    encoding = os.environ.get("LC_CTYPE")
                 unicode_aware = (encoding is not None and
                                  encoding.lower() == "utf-8")
 
