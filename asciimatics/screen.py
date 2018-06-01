@@ -7,6 +7,8 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
+
+import os
 from locale import getlocale, getdefaultlocale
 import struct
 from builtins import object
@@ -1997,7 +1999,10 @@ else:
             if unicode_aware is None:
                 encoding = getlocale()[1]
                 if not encoding:
-                    encoding = getdefaultlocale()[1]
+                    try:
+                        encoding = getdefaultlocale()[1]
+                    except ValueError:
+                        encoding = os.environ.get("LC_CTYPE")
                 unicode_aware = (encoding is not None and
                                  encoding.lower() == "utf-8")
 
