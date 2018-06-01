@@ -11,6 +11,7 @@ LATEST
 - Fixed list box truncation when lines are too long.
 - Fixed issue with background colour when scrolling GNOME terminal.
 - Fixed Text validator to support instance methods.
+- Fixed exception raised by getdefaultlocale on some curses systems.
 - Performance tweaks for non-unicode widgets.
 
 1.9.0
