@@ -1958,12 +1958,13 @@ class TextBox(Widget):
         # Calculate new visible limits if needed.
         height = self._h
         dx = dy = 0
-        self._start_column = min(self._start_column, self._column)
-        self._start_column += _find_min_start(
-            self._value[self._line][self._start_column:self._column + 1],
-            self.width,
-            self._frame.canvas.unicode_aware,
-            self._column >= self.string_len(self._value[self._line]))
+        if not self._line_wrap:
+            self._start_column = min(self._start_column, self._column)
+            self._start_column += _find_min_start(
+                self._value[self._line][self._start_column:self._column + 1],
+                self.width,
+                self._frame.canvas.unicode_aware,
+                self._column >= self.string_len(self._value[self._line]))
 
         # Clear out the existing box content
         (colour, attr, bg) = self._pick_colours("edit_text")
@@ -2113,15 +2114,28 @@ class TextBox(Widget):
             # Mouse event - rebase coordinates to Frame context.
             if event.buttons != 0:
                 if self.is_mouse_over(event, include_label=False):
-                    # Fine the line first.
-                    self._line = max(0,
-                                     event.y - self._y + self._start_line)
-                    self._line = min(len(self._value) - 1, self._line)
+                    # Find the line first.
+                    text_line = 0
+                    text_col = 0
+                    start = event.y - self._y + self._start_line
+                    limit = self._w - self._offset
+                    while start > 0:
+                        length = self.string_len(self._value[text_line])
+                        while length > 0 and length - text_col > 0 and start > 0:
+                            #TODO: fix for unicode and no flow
+                            text_col += limit
+                            start -= 1
+                        if length - text_col <= 0:
+                            text_col = 0
+                            text_line += 1
+                    self._line = min(len(self._value) - 1, text_line)
 
                     # Now figure out location in text based on width of each glyph.
                     self._column = (self._start_column +
-                                    _get_offset(self._value[self._line][self._start_column:],
-                                                event.x - self._x - self._offset, self._frame.canvas.unicode_aware))
+                                    _get_offset(
+                                        self._value[self._line][self._start_column:],
+                                        event.x + text_col - self._x - self._offset,
+                                        self._frame.canvas.unicode_aware))
                     self._column = min(len(self._value[self._line]), self._column)
                     self._column = max(0, self._column)
                     return
@@ -2250,8 +2264,6 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
                         new_line -= 1
                     new_line = min(new_line, len(self._options) - 1)
 
-                    # TODO: Fix up for widgets with line-wrap
-                    
                     # Update selection and fire select callback if needed.
                     if new_line >= 0:
                         self._line = new_line
