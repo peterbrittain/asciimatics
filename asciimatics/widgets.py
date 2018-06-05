@@ -37,6 +37,7 @@ def _enforce_width(text, width, unicode_aware=True):
     """
     Enforce a displayed piece of text to be a certain number of cells wide.  This takes into
     account double-width characters used in CJK languages.
+
     :param text: The text to be truncated
     :param width: The screen cell width to enforce
     :return: The resulting truncated text
@@ -1951,6 +1952,7 @@ class TextBox(Widget):
         self._as_string = as_string
         self._line_wrap = line_wrap
         self._on_change = on_change
+        self._reflowed_text_cache = None
 
     def update(self, frame_no):
         self._draw_label()
@@ -1975,50 +1977,37 @@ class TextBox(Widget):
                 self._y + i + dy,
                 colour, attr, bg)
 
-        # Reflow as required for line wrapping
-        display_value = self._value
+        # Convert value offset to display offsets
+        # NOTE: _start_column is always in display coordinates.
+        display_text = self._reflowed_text
         display_start_column = self._start_column
-        display_column = self._column
-        display_line = self._line
-        if self._line_wrap:
-            display_start_column = 0
-            display_value = []
-            limit = self._w - self._offset
-            for i, line in enumerate(self._value):
-                column = 0
-                while len(line) >= limit:
-                    display_value.append(line[:limit])
-                    line = line[limit:]
-                    column += limit
-                    if i < self._line:
-                        display_line += 1
-                    if i == self._line and column <= self._column:
-                        display_line += 1
-                        display_column -= limit
-                display_value.append(line)
+        display_line, display_column = 0, 0
+        for i, (_, line, col) in enumerate(display_text):
+            if line <= self._line and col <= self._column:
+                display_line = i
+                display_column = self._column - col
 
-        # Now calculate the start line based on reflowed text.
+        # Restrict to visible/valid content.
         self._start_line = max(0, max(display_line - height + 1,
                               min(self._start_line, display_line)))
 
         # Render visible portion of the text.
-        for i, text in enumerate(display_value):
-            if self._start_line <= i < self._start_line + height:
+        for line, (text, _, _) in enumerate(display_text):
+            if self._start_line <= line < self._start_line + height:
                 self._frame.canvas.print_at(
                     _enforce_width(text[display_start_column:], self.width,
                                    self._frame.canvas.unicode_aware),
                     self._x + self._offset + dx,
-                    self._y + i + dy - self._start_line,
+                    self._y + line + dy - self._start_line,
                     colour, attr, bg)
 
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
         if self._has_focus:
-            text_width = self.string_len(
-                display_value[display_line][display_start_column:display_column])
+            line = display_text[display_line][0]
+            text_width = self.string_len(line[display_start_column:display_column])
             self._draw_cursor(
-                " " if display_column >= len(display_value[display_line]) else
-                display_value[display_line][display_column],
+                " " if display_column >= len(line) else line[display_column],
                 frame_no,
                 self._x + self._offset + dx + text_width,
                 self._y + display_line + dy - self._start_line)
@@ -2027,6 +2016,7 @@ class TextBox(Widget):
         # Reset to original data and move to end of the text.
         self._line = len(self._value) - 1
         self._column = len(self._value[self._line])
+        self._reflowed_text_cache = None
 
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
@@ -2107,6 +2097,7 @@ class TextBox(Widget):
                 return event
 
             # If we got here we might have changed the value...
+            self._reflowed_text_cache = None
             if old_value != self._value and self._on_change:
                 self._on_change()
 
@@ -2115,26 +2106,23 @@ class TextBox(Widget):
             if event.buttons != 0:
                 if self.is_mouse_over(event, include_label=False):
                     # Find the line first.
-                    text_line = 0
-                    text_col = 0
-                    start = event.y - self._y + self._start_line
-                    limit = self._w - self._offset
-                    while start > 0:
-                        length = self.string_len(self._value[text_line])
-                        while length > 0 and length - text_col > 0 and start > 0:
-                            #TODO: fix for unicode and no flow
-                            text_col += limit
-                            start -= 1
-                        if length - text_col <= 0:
-                            text_col = 0
-                            text_line += 1
+                    clicked_line = event.y - self._y + self._start_line
+                    if self._line_wrap:
+                        # Line-wrapped text needs to be mapped to visible lines
+                        display_text = self._reflowed_text
+                        text_line = display_text[clicked_line][1]
+                        text_col = display_text[clicked_line][2]
+                    else:
+                        # non-wrapped just needs a little end protection
+                        text_line = max(0, clicked_line)
+                        text_col = 0
                     self._line = min(len(self._value) - 1, text_line)
 
                     # Now figure out location in text based on width of each glyph.
-                    self._column = (self._start_column +
+                    self._column = (self._start_column + text_col +
                                     _get_offset(
-                                        self._value[self._line][self._start_column:],
-                                        event.x + text_col - self._x - self._offset,
+                                        self._value[self._line][self._start_column + text_col:],
+                                        event.x - self._x - self._offset,
                                         self._frame.canvas.unicode_aware))
                     self._column = min(len(self._value[self._line]), self._column)
                     self._column = max(0, self._column)
@@ -2147,6 +2135,32 @@ class TextBox(Widget):
 
     def required_height(self, offset, width):
         return self._required_height
+
+    @property
+    def _reflowed_text(self):
+        """
+        The text as should be formatted on the screen.
+
+        This is an array of tuples of the form (text, value line, value column offset) where
+        the line and column offsets are indeces into the value (not displayed glyph coordinates).
+        """
+        if self._reflowed_text_cache is None:
+            if self._line_wrap:
+                self._reflowed_text_cache = []
+                limit = self._w - self._offset
+                for i, line in enumerate(self._value):
+                    column = 0
+                    while self.string_len(line) >= limit:
+                        sub_string = _enforce_width(
+                            line, limit, self._frame.canvas.unicode_aware)
+                        self._reflowed_text_cache.append((sub_string, i, column))
+                        line = line[len(sub_string):]
+                        column += len(sub_string)
+                    self._reflowed_text_cache.append((line, i, column))
+            else:
+                self._reflowed_text_cache = [(x, i, 0) for i, x in enumerate(self._value)]
+
+        return self._reflowed_text_cache
 
     @property
     def value(self):
