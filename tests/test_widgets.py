@@ -1072,6 +1072,71 @@ class TestWidgets(unittest.TestCase):
             text_box._pick_colours("blah")
         self.assertIn("custom", str(cm.exception))
 
+    def test_line_flow(self):
+        """
+        Check TextBox line-flow editing works as expected.
+        """
+        # Create a dummy screen.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        text_box = TextBox(5, as_string=True, line_wrap=True)
+        layout.add_widget(text_box)
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        # start with some text that will wrap and check display works.
+        text_box.value = "A\nSome very long text that will wrap across multiple lines\nB\n"
+
+        # Check that the pop-up is rendered correctly.
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "A                                       \n" +
+            "Some very long text that will wrap acros\n" +
+            "s multiple lines                        \n" +
+            "B                                       \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        # Check keyboard logic still works and display reflows on demand.
+        self.process_mouse(form, [(0, 0, MouseEvent.LEFT_CLICK)])
+        self.process_keys(form, [Screen.KEY_DOWN, "A", Screen.KEY_END, "B"])
+        form.update(1)
+        self.assert_canvas_equals(
+            canvas,
+            "A                                       \n" +
+            "ASome very long text that will wrap acro\n" +
+            "ss multiple linesB                      \n" +
+            "B                                       \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+        self.assertEqual(text_box.value,
+                         "A\nASome very long text that will wrap across multiple linesB\nB\n")
+
+        # Check mouse logic still works.
+        self.process_mouse(form, [(0, 2, MouseEvent.LEFT_CLICK)])
+        self.process_keys(form, ["Z"])
+        self.process_mouse(form, [(3, 3, MouseEvent.LEFT_CLICK)])
+        self.process_keys(form, ["Y"])
+        form.update(1)
+        self.assertEqual(text_box.value,
+                         "A\nASome very long text that will wrap acroZss multiple linesB\nBY\n")
+
     def test_pop_up_widget(self):
         """
         Check widget tab stops work as expected.

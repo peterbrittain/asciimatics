@@ -143,7 +143,7 @@ class ContactView(Frame):
         layout.add_widget(Text("Phone number:", "phone"))
         layout.add_widget(Text("Email address:", "email"))
         layout.add_widget(TextBox(
-            Widget.FILL_FRAME, "Notes:", "notes", as_string=True))
+            Widget.FILL_FRAME, "Notes:", "notes", as_string=True, line_wrap=True))
         layout2 = Layout([1, 1, 1, 1])
         self.add_layout(layout2)
         layout2.add_widget(Button("OK", self._ok), 0)
