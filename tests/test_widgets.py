@@ -16,7 +16,7 @@ from asciimatics.scene import Scene
 from asciimatics.screen import Screen, Canvas
 from asciimatics.widgets import Frame, Layout, Button, Label, TextBox, Text, \
     Divider, RadioButtons, CheckBox, PopUpDialog, ListBox, Widget, MultiColumnListBox, \
-    FileBrowser, DatePicker, TimePicker, Background, DropdownList, PopupMenu
+    FileBrowser, DatePicker, TimePicker, Background, DropdownList, PopupMenu, _find_min_start
 
 
 class TestFrame(Frame):
@@ -404,7 +404,7 @@ class TestWidgets(unittest.TestCase):
 
     def test_no_border(self):
         """
-        Check that a Frame with nor border works
+        Check that a Frame with no border works
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
@@ -892,6 +892,9 @@ class TestWidgets(unittest.TestCase):
             "|Selected: None                        |\n" +
             "+--------------------------------------+\n")
 
+        # Note that the actual stored title includes spaces for margins
+        self.assertEqual(form.title, " A New Title! ")
+
     def test_focus_callback(self):
         """
         Check that the _on_focus & _on_blur callbacks work as expected.
@@ -1071,6 +1074,9 @@ class TestWidgets(unittest.TestCase):
             text_box.custom_colour = "custom"
             text_box._pick_colours("blah")
         self.assertIn("custom", str(cm.exception))
+
+        # Also check the value is returned as set
+        self.assertEqual(text_box.custom_colour, "custom")
 
     def test_line_flow(self):
         """
@@ -1446,6 +1452,10 @@ class TestWidgets(unittest.TestCase):
             "| Text1:                               |\n" +
             "| Text2:                               |\n" +
             "+--------------------------------------+\n")
+        self.assertEqual(form.label.text, "New text here:")
+
+        # And check that values are unaffected (and still not set).
+        self.assertEqual(form.label.value, None)
 
     def test_label_height(self):
         """
@@ -2155,6 +2165,16 @@ class TestWidgets(unittest.TestCase):
         self.process_keys(popup, [Screen.KEY_ESCAPE])
         self.assertEquals(len(scene.effects), 0)
         self.assertEquals(self.clicked, 0)
+
+    def test_find_min_start(self):
+        """
+        Check _find_min_start works as expected.
+        """
+        # Normal operation will find last <limit> characters.
+        self.assertEqual(_find_min_start("ABCDEF", 3), 3)
+
+        # Allow extra space for cursor loses another
+        self.assertEqual(_find_min_start("ABCDEF", 3, at_end=True), 4)
 
 
 if __name__ == '__main__':
