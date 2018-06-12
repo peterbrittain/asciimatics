@@ -103,9 +103,10 @@ def _get_offset(text, visible_width, unicode_aware=True):
 
 def _split_text(text, width, height, unicode_aware=True):
     """
-    Split text to required dimensions.  This will first try to split the
-    text into multiple lines, then put a "..." on the last 3 characters of
-    the last line if this still doesn't fit.
+    Split text to required dimensions.
+
+    This will first try to split the text into multiple lines, then put a "..." on the last
+    3 characters of the last line if this still doesn't fit.
 
     :param text: The text to split.
     :param width: The maximum width for any line.
@@ -142,7 +143,7 @@ def _split_text(text, width, height, unicode_aware=True):
 
 class Background(Effect):
     """
-    Effect to be used as a Desktop background.  This simply sets the background to the specified
+    Effect to be used as a Desktop background.  This sets the background to the specified
     colour.
     """
 
@@ -174,10 +175,10 @@ class Background(Effect):
 
 class Frame(Effect):
     """
-    A Frame is a special Effect for controlling and displaying Widgets and
-    is similar to a window as used in native GUI applications.  Widgets
-    are text UI elements that can be used to create an interactive application
-    within your Frame.
+    A Frame is a special Effect for controlling and displaying Widgets.
+
+    It is similar to a window as used in native GUI applications.  Widgets are text UI elements
+    that can be used to create an interactive application within your Frame.
     """
 
     #: Colour palette for the widgets within the Frame.  Each entry should be
@@ -235,21 +236,19 @@ class Frame(Effect):
         :param height: The desired height of the Frame.
         :param data: optional data dict to initialize any widgets in the frame.
         :param on_load: optional function to call whenever the Frame reloads.
-        :param has_border: Whether the frame has a border box (and scroll bar).
-            Defaults to True.
-        :param hover_focus: Whether hovering a mouse over a widget (i.e. mouse
-            move events) should change the input focus.  Defaults to false.
-        :param name: Optional name to identify this Frame.  This is used to
-            reset data as needed from on old copy after the screen resizes.
+        :param has_border: Whether the frame has a border box (and scroll bar). Defaults to True.
+        :param hover_focus: Whether hovering a mouse over a widget (i.e. mouse move events)
+            should change the input focus.  Defaults to false.
+        :param name: Optional name to identify this Frame.  This is used to reset data as needed
+            from on old copy after the screen resizes.
         :param title: Optional title to display if has_border is True.
         :param x: Optional x position for the top left corner of the Frame.
         :param y: Optional y position for the top left corner of the Frame.
-        :param has_shadow: Optional flag to indicate if this Frame should have
-            a shadow when drawn.
-        :param reduce_cpu: Whether to minimize CPU usage (for use on low spec
-            systems).
-        :param is_modal: Whether this Frame is "modal" - i.e. will stop all other Effects
-            from receiving input events.
+        :param has_shadow: Optional flag to indicate if this Frame should have a shadow when
+            drawn.
+        :param reduce_cpu: Whether to minimize CPU usage (for use on low spec systems).
+        :param is_modal: Whether this Frame is "modal" - i.e. will stop all other Effects from
+            receiving input events.
         :param can_scroll: Whether a scrollbar should be available on the border, or not.
             (Only valid if `has_border=True`).
         """
@@ -327,8 +326,9 @@ class Frame(Effect):
 
     def fix(self):
         """
-        Fix the layouts and calculate the locations of all the widgets.  This
-        should be called once all Layouts have been added to the Frame and all
+        Fix the layouts and calculate the locations of all the widgets.
+
+        This function should be called once all Layouts have been added to the Frame and all
         widgets added to the Layouts.
         """
         # Do up to 2 passes in case we have a variable height Layout.
@@ -607,13 +607,12 @@ class Frame(Effect):
 
     def save(self, validate=False):
         """
-        Save the current values in all the widgets back to the persistent data
-        storage.
+        Save the current values in all the widgets back to the persistent data storage.
 
         :param validate: Whether to validate the data before saving.
 
-        Calling this while setting the `data` field (e.g. in a widget callback)
-        will have no effect.
+        Calling this while setting the `data` field (e.g. in a widget callback) will have no
+        effect.
 
         When validating data, it can throw an Exception for any
         """
@@ -657,8 +656,8 @@ class Frame(Effect):
 
     def move_to(self, x, y, h):
         """
-        Make the specified location visible.  This is typically used by a widget
-        to scroll the canvas such that it is visible.
+        Make the specified location visible.  This is typically used by a widget to scroll the
+        canvas such that it is visible.
 
         :param x: The x location to make visible.
         :param y: The y location to make visible.
@@ -688,8 +687,7 @@ class Frame(Effect):
 
     def rebase_event(self, event):
         """
-        Rebase the coordinates of the passed event to frame-relative
-        coordinates.
+        Rebase the coordinates of the passed event to frame-relative coordinates.
 
         :param event: The event to be rebased.
         :returns: A new event object appropriately re-based.
@@ -797,16 +795,16 @@ class Frame(Effect):
 
 class Layout(object):
     """
-    Widget layout handler.  All Widgets must be contained within a Layout within
-    a Frame.  The Layout class is responsible for deciding the exact size and
-    location of the widgets.  The logic uses similar ideas as used in modern
-    web frameworks and is as follows.
+    Widget layout handler.
 
-    1.  The Frame owns one or more Layouts.  The Layouts stack one above each
-        other when displayed - i.e. the first Layout in the Frame is above the
-        second, etc.
-    2.  Each Layout defines the horizontal constraints by defining columns
-        as a percentage of the full canvas width.
+    All Widgets must be contained within a Layout within a Frame.The Layout class is responsible
+    for deciding the exact size and location of the widgets.  The logic uses similar ideas as
+    used in modern web frameworks and is as follows.
+
+    1.  The Frame owns one or more Layouts.  The Layouts stack one above each other when
+        displayed - i.e. the first Layout in the Frame is above the second, etc.
+    2.  Each Layout defines the horizontal constraints by defining columns as a percentage of the
+        full canvas width.
     3.  The Widgets are assigned a column within the Layout that owns them.
     4.  The Layout then decides the exact size and location to make the
         Widget best fit the canvas as constrained by the above.
@@ -814,14 +812,12 @@ class Layout(object):
 
     def __init__(self, columns, fill_frame=False):
         """
-        :param columns: A list of numbers specifying the width of each column
-            in this layout.
-        :param fill_frame: Whether this Layout should attempt to fill the rest
-            of the Frame.  Defaults to False.
+        :param columns: A list of numbers specifying the width of each column in this layout.
+        :param fill_frame: Whether this Layout should attempt to fill the rest of the Frame.
+            Defaults to False.
 
-        The Layout will automatically normalize the units used for the columns,
-        e.g. converting [2, 6, 2] to [20%, 60%, 20%] of the available canvas.
-        e.g. converting [2, 6, 2] to [20%, 60%, 20%] of the available canvas.
+        The Layout will automatically normalize the units used for the columns, e.g. converting
+        [2, 6, 2] to [20%, 60%, 20%] of the available canvas.
         """
         total_size = sum(columns)
         self._column_sizes = [x / total_size for x in columns]
@@ -867,8 +863,7 @@ class Layout(object):
         Add a widget to this Layout.
 
         :param widget: The widget to be added.
-        :param column: The column within the widget for this widget.  Defaults
-                       to zero.
+        :param column: The column within the widget for this widget.  Defaults to zero.
         """
         # Make sure that the Layout is fully initialised before we try to add any widgets.
         if self._frame is None:
@@ -891,11 +886,11 @@ class Layout(object):
         :param force_column: Optional parameter to mandate the new column index.
         :param force_widget: Optional parameter to mandate the new widget index.
 
-        The force_column and force_widget parameters must both be set
-        together or they will otherwise be ignored.
+        The force_column and force_widget parameters must both be set together or they will
+        otherwise be ignored.
 
-        :raises IndexError: if a force option specifies a bad column or widget,
-            or if the whole Layout is readonly.
+        :raises IndexError: if a force option specifies a bad column or widget, or if the whole
+            Layout is readonly.
         """
         self._has_focus = True
         if force_widget is not None and force_column is not None:
@@ -990,8 +985,7 @@ class Layout(object):
     def _find_next_widget(self, direction, stay_in_col=False, start_at=None,
                           wrap=False):
         """
-        Find the next widget to get the focus, stopping at the start/end of the
-        list if hit.
+        Find the next widget to get the focus, stopping at the start/end of the list if hit.
 
         :param direction: The direction to move through the widgets.
         :param stay_in_col: Whether to limit search to current column.
@@ -1041,8 +1035,7 @@ class Layout(object):
 
         :param event: The event that was triggered.
         :param hover_focus: Whether to trigger focus change on mouse moves.
-        :returns: None if the Effect processed the event, else the original
-                  event.
+        :returns: None if the Effect processed the event, else the original event.
         """
         # Check whether this Layout is read-only - i.e. has no active focus.
         if self._live_col < 0 or self._live_widget < 0:
@@ -1143,8 +1136,7 @@ class Layout(object):
 
     def save(self, validate):
         """
-        Save the current values in all the widgets back to the persistent data
-        storage.
+        Save the current values in all the widgets back to the persistent data storage.
 
         :param validate: whether to validate the saved data or not.
         :raises: InvalidFields if any invalid data is found.
@@ -1234,8 +1226,8 @@ class Widget(with_metaclass(ABCMeta, object)):
     def __init__(self, name, tab_stop=True, on_focus=None, on_blur=None):
         """
         :param name: The name of this Widget.
-        :param tab_stop: Whether this widget should take focus or not when
-                         tabbing around the Frame.
+        :param tab_stop: Whether this widget should take focus or not when tabbing around the
+            Frame.
         :param on_focus: Optional callback whenever this widget gets the focus.
         :param on_blur: Optional callback whenever this widget loses the focus.
         """
@@ -1296,8 +1288,9 @@ class Widget(with_metaclass(ABCMeta, object)):
     @property
     def custom_colour(self):
         """
-        A custom colour to use instead of the normal calculated one when drawing this widget.  This
-        must be a key name from the palette dictionary.
+        A custom colour to use instead of the normal calculated one when drawing this widget.
+
+        This must be a key name from the palette dictionary.
         """
         return self._custom_colour
 
@@ -1316,6 +1309,7 @@ class Widget(with_metaclass(ABCMeta, object)):
     def width(self):
         """
         The width of this Widget (excluding any labels).
+
         Only valid after the Frame has been fixed in place.
         """
         return self._w - self._offset
@@ -1331,9 +1325,10 @@ class Widget(with_metaclass(ABCMeta, object)):
 
     def set_layout(self, x, y, offset, w, h):
         """
-        Set the size and position of the Widget.  This should not be called
-        directly.  It is used by the :py:obj:`.Layout` class to arrange all
-        widgets within the Frame.
+        Set the size and position of the Widget.
+
+        This should not be called directly.  It is used by the :py:obj:`.Layout` class to arrange
+        all widgets within the Frame.
 
         :param x: The x position of the widget.
         :param y: The y position of the widget.
@@ -1372,8 +1367,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         Check if the specified mouse event is over this widget.
 
         :param event: The MouseEvent to check.
-        :param include_label: Include space reserved for the label when
-            checking for .
+        :param include_label: Include space reserved for the label when checking.
         :param width_modifier: Adjustement to width (e.g. for scroll bars).
         :returns: True if the mouse is over the active parts of the widget.
         """
@@ -1473,8 +1467,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         Process any input event.
 
         :param event: The event that was triggered.
-        :returns: None if the Effect processed the event, else the original
-                  event.
+        :returns: None if the Effect processed the event, else the original event.
         """
 
     @property
@@ -1514,7 +1507,7 @@ class Widget(with_metaclass(ABCMeta, object)):
 
 class Label(Widget):
     """
-    A simple text label.
+    A text label.
     """
 
     def __init__(self, label, height=1):
@@ -1565,7 +1558,7 @@ class Label(Widget):
 
 class Divider(Widget):
     """
-    A simple divider to break up a group of widgets.
+    A divider to break up a group of widgets.
     """
 
     def __init__(self, draw_line=True, height=1):
@@ -1604,8 +1597,9 @@ class Divider(Widget):
 
 class Text(Widget):
     """
-    A Text widget is a single line input field.  It consists of an optional
-    label and an entry box.
+    A Text widget is a single line input field.
+
+    It consists of an optional label and an entry box.
     """
 
     def __init__(self, label=None, name=None, on_change=None, validator=None, hide_char=None,
@@ -1615,9 +1609,8 @@ class Text(Widget):
         :param name: The name for the widget.
         :param on_change: Optional function to call when text changes.
         :param validator: Optional definition of valid data for this widget.
-            This can be a function (which takes the current value and returns
-            True for valid content) or a regex string, which must match the
-            entire allowed value.
+            This can be a function (which takes the current value and returns True for valid
+            content) or a regex string (which must match the entire allowed value).
         :param hide_char: Character to use instead of what the user types - e.g. to hide passwords.
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
@@ -1751,9 +1744,10 @@ class Text(Widget):
 
 class CheckBox(Widget):
     """
-    A CheckBox widget is used to ask for simple Boolean (i.e. yes/no) input.  It
-    consists of an optional label (typically used for the first in a group of
-    CheckBoxes), the box and a field name.
+    A CheckBox widget is used to ask for Boolean (i.e. yes/no) input.
+
+    It consists of an optional label (typically used for the first in a group of CheckBoxes),
+    the box and a field name.
     """
 
     def __init__(self, text, label=None, name=None, on_change=None, **kwargs):
@@ -1833,9 +1827,9 @@ class CheckBox(Widget):
 
 class RadioButtons(Widget):
     """
-    A RadioButtons widget is used to ask for one of a list of values to be
-    selected by the user. It consists of an optional label and then a list of
-    selection bullets with field names.
+    A RadioButtons widget is used to ask for one of a list of values to be selected by the user.
+
+    It consists of an optional label and then a list of selection bullets with field names.
     """
 
     def __init__(self, options, label=None, name=None, on_change=None, **kwargs):
@@ -1936,9 +1930,9 @@ class RadioButtons(Widget):
 
 class TextBox(Widget):
     """
-    A TextBox is a simple widget for recording and displaying the text that has
-    been typed into it (when it has the focus).  It consists of a simple
-    framed box with option label.  It can take multi-line input.
+    A TextBox is a widget for multi-line text editing.
+
+    It consists of a framed box with option label.
     """
 
     def __init__(self, height, label=None, name=None, as_string=False, line_wrap=False,
@@ -2329,8 +2323,7 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
     @property
     def start_line(self):
         """
-        The line that will be drawn at the top of the visible section of this
-        list.
+        The line that will be drawn at the top of the visible section of this list.
         """
         return self._start_line
 
@@ -2367,8 +2360,9 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
     @property
     def options(self):
         """
-        The list of options available for user selection - this is a list of
-        tuples (<human readable string>, <internal value>).
+        The list of options available for user selection
+
+        This is a list of tuples (<human readable string>, <internal value>).
         """
         return self._options
 
@@ -2380,8 +2374,7 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
 
 class ListBox(_BaseListBox):
     """
-    A ListBox is a simple widget for displaying a list of options from which
-    the user can select one option.
+    A ListBox is a widget that displays a list from which the user can select one option.
     """
 
     def __init__(self, height, options, centre=False, label=None, name=None, add_scroll_bar=False,
@@ -2396,9 +2389,9 @@ class ListBox(_BaseListBox):
         :param on_select: Optional function to call when the user actually selects an entry from
         :param validator: Optional function to validate selection for this widget.
 
-        The `options` are a list of tuples, where the first value is the string
-        to be displayed to the user and the second is an interval value to
-        identify the entry to the program.  For example:
+        The `options` are a list of tuples, where the first value is the string to be displayed
+        to the user and the second is an interval value to identify the entry to the program.
+        For example:
 
             options=[("First option", 1), ("Second option", 2)]
         """
@@ -2491,8 +2484,9 @@ class ListBox(_BaseListBox):
 
 class MultiColumnListBox(_BaseListBox):
     """
-    A MultiColumnListBox is a widget for displaying a set of related data in
-    columns, from which the user can select a line.
+    A MultiColumnListBox is a widget for displaying tabular data.
+
+    It displays a list of related data in columns, from which the user can select a line.
     """
 
     def __init__(self, height, columns, options, titles=None, label=None,
@@ -2501,42 +2495,39 @@ class MultiColumnListBox(_BaseListBox):
         :param height: The required number of input lines for this ListBox.
         :param columns: A list of widths and alignments for each column.
         :param options: The options for each row in the widget.
-        :param titles: Optional list of titles for each column.  Must match
-            the length of `columns`.
+        :param titles: Optional list of titles for each column.  Must match the length of
+            `columns`.
         :param label: An optional label for the widget.
         :param name: The name for the ListBox.
         :param on_change: Optional function to call when selection changes.
         :param on_select: Optional function to call when the user actually selects an entry from
 
-        The `columns` parameter is a list of integers or strings.  If it is an
-        integer, this is the absolute width of the column in characters.  If it
-        is a string, it must be of the format "[<align>]<width>[%]" where:
+        The `columns` parameter is a list of integers or strings.  If it is an integer, this is
+        the absolute width of the column in characters.  If it is a string, it must be of the
+        format "[<align>]<width>[%]" where:
 
-        * <align> is the alignment string ("<" = left, ">" = right,
-          "^" = centre)
+        * <align> is the alignment string ("<" = left, ">" = right, "^" = centre)
         * <width> is the width in characters
-        * % is an optional qualifier that says the number is a percentage of
-          the width of the widget.
+        * % is an optional qualifier that says the number is a percentage of the width of the
+          widget.
 
-        Column widths need to encompass any space required between columns, so
-        for example, if your column is 5 characters, allow 6 for an extra space
-        at the end.  It is not possible to do this when you have a
-        right-justified column next to a left-justified column, so this widget
-        will automatically space them for you.
+        Column widths need to encompass any space required between columns, so for example, if
+        your column is 5 characters, allow 6 for an extra space at the end.  It is not possible
+        to do this when you have a right-justified column next to a left-justified column, so
+        this widget will automatically space them for you.
 
-        An integer value of 0 is interpreted to be use whatever space is left
-        available after the rest of the columns have been calculated.  There
-        must be only one of these columns.
+        An integer value of 0 is interpreted to be use whatever space is left available after the
+        rest of the columns have been calculated.  There must be only one of these columns.
 
-        The number of columns is for this widget is determined from the number
-        of entries in the `columns` parameter.  The `options` list is then a
-        list of tuples of the form ([val1, val2, ... , valn], index).  For
-        example, this data provides 2 rows for a 3 column widget:
+        The number of columns is for this widget is determined from the number of entries in the
+        `columns` parameter.  The `options` list is then a list of tuples of the form
+        ([val1, val2, ... , valn], index).  For example, this data provides 2 rows for a 3 column
+        widget:
 
             options=[(["One", "row", "here"], 1), (["Second", "row", "here"], 2)]
 
-        The options list may be None and then can be set later using the
-        `options` property on this widget.
+        The options list may be None and then can be set later using the `options` property on
+        this widget.
         """
         super(MultiColumnListBox, self).__init__(
             height, options, titles=titles, label=label, name=name, on_change=on_change,
@@ -2753,9 +2744,10 @@ class FileBrowser(MultiColumnListBox):
 
 class Button(Widget):
     """
-    A Button widget to be  displayed in a Frame.  It is typically used to
-    represent a desired action for te user to invoke (e.g. a submit button on
-    a form).
+    A Button widget to be  displayed in a Frame.
+
+    It is typically used to represent a desired action for te user to invoke (e.g. a submit button
+    on a form).
     """
 
     def __init__(self, text, on_click, label=None, add_box=True, **kwargs):
@@ -2830,8 +2822,7 @@ class Button(Widget):
 
 class PopUpDialog(Frame):
     """
-    A fixed implementation Frame that simply provides a standard message box
-    dialog.
+    A fixed implementation Frame that provides a standard message box dialog.
     """
 
     # Override standard palette for pop-ups
@@ -2861,19 +2852,16 @@ class PopUpDialog(Frame):
         :param screen: The Screen that owns this dialog.
         :param text: The message text to display.
         :param buttons: A list of button names to display.
-        :param on_close: Optional function to invoke on exit.  This MUST be a
-            static method to work across screen resizing.
-        :param has_shadow: optional flag to specify if dialog should have a
-            shadow when drawn.
+        :param on_close: Optional function to invoke on exit.
+        :param has_shadow: optional flag to specify if dialog should have a shadow when drawn.
 
-        The `on_close` method (if specified) will be called with one integer
-        parameter that corresponds to the index of the button passed in the
-        array of available `buttons`.
+        The `on_close` method (if specified) will be called with one integer parameter that
+        corresponds to the index of the button passed in the array of available `buttons`.
+
+        Note that `on_close` must be a static method to work across screen resizing.  Either it
+        is static (and so the dialog will be cloned) or it is not (and the dialog will disappear
+        when the screen is resized).
         """
-        # Enforce API requirements
-        assert on_close is None or type(on_close) == FunctionType, \
-            "on_close must be a static fn"
-
         # Remember parameters for cloning.
         self._text = text
         self._buttons = buttons
@@ -2921,9 +2909,9 @@ class PopUpDialog(Frame):
         :param screen: The new Screen object to clone into.
         :param scene: The new Scene object to clone into.
         """
-        # Just create the same dialog in the new Screen/Scene objects.
-        scene.add_effect(
-            PopUpDialog(screen, self._text, self._buttons, self._on_close))
+        # Only clone the object if the function is safe to do so.
+        if self._on_close is None or type(self._on_close) == FunctionType:
+            scene.add_effect(PopUpDialog(screen, self._text, self._buttons, self._on_close))
 
 
 class _TempPopup(Frame):
@@ -3317,9 +3305,9 @@ class DropdownList(Widget):
         :param name: The name for the widget.
         :param on_change: Optional function to call when the selected time changes.
 
-        The `options` are a list of tuples, where the first value is the string
-        to be displayed to the user and the second is an interval value to
-        identify the entry to the program.  For example:
+        The `options` are a list of tuples, where the first value is the string to be displayed
+        to the user and the second is an interval value to identify the entry to the program.
+        For example:
 
             options=[("First option", 1), ("Second option", 2)]
 
