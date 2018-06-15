@@ -5,6 +5,7 @@ LATEST
 ------
 - Added `PopupMenu` for dynamic contextual menus.
 - Added `DropdownList` widget.
+- Added `VerticalDivider` widget.
 - Added optional scroll bar to Listboxes.
 - Added `line_wrap` option to TextBoxes.
 - Added `width` property to widgets.

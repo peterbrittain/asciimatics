@@ -30,3 +30,15 @@ def readable_timestamp(stamp):
         return str(datetime.fromtimestamp(stamp).strftime("%I:%M:%S%p"))
     else:
         return str(date.fromtimestamp(stamp))
+
+
+class _DotDict(dict):
+    """
+    Modified dictionary to allow dot notation access.
+
+    This can be used for quick and easy structures.  See https://stackoverflow.com/q/2352181/4994021
+    """
+
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__

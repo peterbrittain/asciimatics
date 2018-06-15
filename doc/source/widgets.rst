@@ -296,6 +296,8 @@ Widget type                   Description
 :py:obj:`.Text`               A single line of editable text.
 :py:obj:`.TextBox`            A multi-line box of editable text.
 :py:obj:`.TimePicker`         A single-line widget for selecting a time (using a pop-up list).
+:py:obj:`.VerticalDivider`    A vertical line divider - useful for providing a visual marker
+                              between columns in a Layout.
 ============================= =====================================================================
 
 .. note:: You can use the `hide_char` option on Text widgets to hide sensitive data - e.g. for
