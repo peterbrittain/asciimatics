@@ -9,6 +9,7 @@ LATEST
 - Added optional scroll bar to Listboxes.
 - Added `line_wrap` option to TextBoxes.
 - Added `line_char` option to Dividers.
+- Added `align` option to Labels.
 - Added `width` property to widgets.
 - Fixed `Screen.wrapper()` to return result from wrapped function.
 - Fixed list box truncation when lines are too long.

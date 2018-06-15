@@ -1529,10 +1529,13 @@ class Label(Widget):
     A text label.
     """
 
-    def __init__(self, label, height=1):
+    def __init__(self, label, height=1, align="<"):
         """
         :param label: The text to be displayed for the Label.
         :param height: Optional height for the label.  Defaults to 1 line.
+        :param align: Optional alignment for the Label.  Defaults to left aligned.
+            Options are "<" = left, ">" = right and "^" = centre
+
         """
         # Labels have no value and so should have no name for look-ups either.
         super(Label, self).__init__(None, tab_stop=False)
@@ -1540,6 +1543,7 @@ class Label(Widget):
         # tab calculations, so leave internal `_label` value as None.
         self._text = label
         self._required_height = height
+        self._align = align
 
     def process_event(self, event):
         # Labels have no user interactions
@@ -1550,7 +1554,7 @@ class Label(Widget):
         for i, text in enumerate(
                 _split_text(self._text, self._w, self._h, self._frame.canvas.unicode_aware)):
             self._frame.canvas.paint(
-                text, self._x, self._y + i, colour, attr, bg)
+                "{:{}{}}".format(text, self._align, self._w), self._x, self._y + i, colour, attr, bg)
 
     def reset(self):
         pass
