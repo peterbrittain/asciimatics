@@ -1498,6 +1498,43 @@ class TestWidgets(unittest.TestCase):
             "| Text1:                               |\n" +
             "+--------------------------------------+\n")
 
+    def test_label_alignment(self):
+        """
+        Check Label alignment works.
+        """
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = Frame(canvas, canvas.height, canvas.width)
+        layout = Layout([1])
+        form.add_layout(layout)
+        layout.add_widget(Label("Left", align="<"))
+        layout.add_widget(Label("Middle", align="^"))
+        layout.add_widget(Label("Right", align=">"))
+        form.fix()
+        form.register_scene(scene)
+        scene.add_effect(form)
+        scene.reset()
+
+        # Check that the listbox is rendered correctly.
+        for effect in scene.effects:
+            effect.update(0)
+
+        # Check Label obeys required height
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|Left                                  |\n" +
+            "|                Middle                O\n" +
+            "|                                 Right|\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
     @patch("os.path.isdir")
     @patch("os.stat")
     @patch("os.listdir")
