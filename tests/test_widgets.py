@@ -126,7 +126,7 @@ class TestFrame2(Frame):
         layout = Layout([100], fill_frame=True)
         self.add_layout(layout)
         layout.add_widget(self._list_view)
-        layout.add_widget(Divider())
+        layout.add_widget(Divider(line_char="#"))
         layout2 = Layout([1, 1, 1, 1])
         self.add_layout(layout2)
         layout2.add_widget(Button("Add", self._add), 0)
@@ -796,7 +796,7 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
-            "|--------------------------------------|\n" +
+            "|######################################|\n" +
             "| < Add > < Edit > < Delete < Quit >   |\n" +
             "|Selected: None                        |\n" +
             "+--------------------------------------+\n")
@@ -823,7 +823,7 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
-            "|--------------------------------------|\n" +
+            "|######################################|\n" +
             "| < Add > < Edit > < Delete < Quit >   |\n" +
             "|Selected: 1                           |\n" +
             "+--------------------------------------+\n")
@@ -842,7 +842,7 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
-            "|--------------------------------------|\n" +
+            "|######################################|\n" +
             "| < Add > < Edit > < Delete < Quit >   |\n" +
             "|Selected: 2                           |\n" +
             "+--------------------------------------+\n")
@@ -872,7 +872,7 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
-            "|--------------------------------------|\n" +
+            "|######################################|\n" +
             "| < Add > < Edit > < Delete < Quit >   |\n" +
             "|Selected: None                        |\n" +
             "+--------------------------------------+\n")
@@ -888,7 +888,7 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
-            "|--------------------------------------|\n" +
+            "|######################################|\n" +
             "| < Add > < Edit > < Delete < Quit >   |\n" +
             "|Selected: None                        |\n" +
             "+--------------------------------------+\n")
