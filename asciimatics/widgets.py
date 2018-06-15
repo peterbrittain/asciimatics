@@ -25,7 +25,7 @@ from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import Highlander, InvalidFields
 from asciimatics.screen import Screen, Canvas
-from asciimatics.utilities import readable_timestamp, readable_mem
+from asciimatics.utilities import readable_timestamp, readable_mem, _DotDict
 from wcwidth import wcswidth, wcwidth
 
 # Logging
@@ -932,6 +932,7 @@ class Layout(object):
         y = w = 0
         max_y = start_y
         string_len = wcswidth if self._frame.canvas.unicode_aware else len
+        dimensions = []
         for i, column in enumerate(self._columns):
             # For each column determine if we need a tab offset for labels.
             # Only allow labels to take up 1/3 of the column.
@@ -942,44 +943,58 @@ class Layout(object):
             offset = int(min(offset,
                          width * self._column_sizes[i] // 3))
 
-            # Possibly do 2 passes to allow one widget to fill remaining space
-            # on the screen.
-            fill_widget = None
-            fill_height = 0
-            for _ in range(2):
-                # Now go through each widget getting them to resize to the
-                # required width and label offset.
-                y = start_y
-                w = int(width * self._column_sizes[i])
-                for widget in column:
-                    h = widget.required_height(offset, w)
-                    if h == Widget.FILL_FRAME:
-                        if fill_widget is None:
-                            # First pass - note down required filler.
-                            fill_widget = widget
-                        elif fill_widget == widget:
-                            # Second pass - resize to calculated size
-                            widget.set_layout(x, y, offset, w, fill_height)
-                            h = fill_height
-                            y += h
-                        else:
-                            # First pass, but a second widget - this is a bug.
-                            raise Highlander("Too many Widgets filling Layout")
+            # Start tracking new column
+            dimensions.append(_DotDict())
+            dimensions[i].parameters = []
+            dimensions[i].offset = offset
+
+            # Do first pass to figure out the gaps for widgets that want to fill remaining space.
+            fill_layout = None
+            fill_column = None
+            y = start_y
+            w = int(width * self._column_sizes[i])
+            for widget in column:
+                h = widget.required_height(offset, w)
+                if h == Widget.FILL_FRAME:
+                    if fill_layout is None and fill_column is None:
+                        dimensions[i].parameters.append([widget, x, w, h])
+                        fill_layout = widget
                     else:
-                        widget.set_layout(x, y, offset, w, h)
-                        y += h
-                if fill_widget is None:
-                    # No variable height widget - stop iterating.
-                    break
+                        # Two filling widgets in one column - this is a bug.
+                        raise Highlander("Too many Widgets filling Layout")
+                elif h == Widget.FILL_COLUMN:
+                    if fill_layout is None and fill_column is None:
+                        dimensions[i].parameters.append([widget, x, w, h])
+                        fill_column = widget
+                    else:
+                        # Two filling widgets in one column - this is a bug.
+                        raise Highlander("Too many Widgets filling Layout")
                 else:
-                    # We need to figure out space left.  The Screen might be so
-                    # small that there is no space, so make sure we always have
-                    # at least one line.
-                    fill_height = max(1, start_y + max_height - y)
+                    dimensions[i].parameters.append([widget, x, w, h])
+                    y += h
+
+            # Note space used by this column.
+            dimensions[i].height = y
+
+            # Update tracking variables fpr the next column.
             max_y = max(max_y, y)
             x += w
+
+        # Finally check whether the Layout is allowed to expand.
         if self.fill_frame:
             max_y = max(max_y, start_y + max_height)
+
+        # Now apply calculated sizes, updating any widgets that need to fill space.
+        for column in dimensions:
+            y = start_y
+            for widget, x, w, h in column.parameters:
+                if h == Widget.FILL_FRAME:
+                    h = max(1, start_y + max_height - column.height)
+                elif h == Widget.FILL_COLUMN:
+                    h = max_y - column.height
+                widget.set_layout(x, y, column.offset, w, h)
+                y += h
+
         return max_y
 
     def _find_next_widget(self, direction, stay_in_col=False, start_at=None,
@@ -1222,6 +1237,10 @@ class Widget(with_metaclass(ABCMeta, object)):
     #: Widgets with this constant for the required height will be re-sized to
     #: fit the available vertical space in the Layout.
     FILL_FRAME = -135792468
+
+    #: Widgets with this constant for the required height will be re-sized to
+    #: fit the maximum space used by any other column in the Layout.
+    FILL_COLUMN = -135792467
 
     def __init__(self, name, tab_stop=True, on_focus=None, on_blur=None):
         """
@@ -3530,3 +3549,37 @@ class PopupMenu(Frame):
         if event is None:
             self._destroy()
         return super(PopupMenu, self).process_event(event)
+
+
+class VerticalDivider(Widget):
+    """
+    A vertical divider for separating columns.
+
+    This widget should be put into a column of its own in the Layout.
+    """
+
+    def __init__(self, height=Widget.FILL_COLUMN):
+        """
+        :param height: The required height for this divider.
+        """
+        super(VerticalDivider, self).__init__(None, tab_stop=False)
+        self._required_height = height
+
+    def process_event(self, event):
+        return event
+
+    def update(self, frame_no):
+        (color, attr, bg) = self._frame.palette["borders"]
+        vert = u"│" if self._frame.canvas.unicode_aware else "|"
+        for i in range(self._h):
+            self._frame.canvas.print_at(vert, self._x, self._y + i, color, attr, bg)
+
+    def reset(self):
+        pass
+
+    def required_height(self, offset, width):
+        return self._required_height
+
+    @property
+    def value(self):
+        return self._value

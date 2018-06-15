@@ -16,7 +16,8 @@ from asciimatics.scene import Scene
 from asciimatics.screen import Screen, Canvas
 from asciimatics.widgets import Frame, Layout, Button, Label, TextBox, Text, \
     Divider, RadioButtons, CheckBox, PopUpDialog, ListBox, Widget, MultiColumnListBox, \
-    FileBrowser, DatePicker, TimePicker, Background, DropdownList, PopupMenu, _find_min_start
+    FileBrowser, DatePicker, TimePicker, Background, DropdownList, PopupMenu, \
+    _find_min_start, VerticalDivider
 
 
 class TestFrame(Frame):
@@ -2175,6 +2176,46 @@ class TestWidgets(unittest.TestCase):
 
         # Allow extra space for cursor loses another
         self.assertEqual(_find_min_start("ABCDEF", 3, at_end=True), 4)
+
+
+    def test_vertical_divider(self):
+        """
+        Check VerticalDivider widget works as expected.
+        """
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = Frame(canvas, canvas.height, canvas.width)
+        layout = Layout([5, 1, 26, 1, 5])
+        form.add_layout(layout)
+        layout.add_widget(Label("A"), 1)
+        layout.add_widget(VerticalDivider(), 1)
+        layout.add_widget(Label("B"), 1)
+        layout.add_widget(TextBox(5), 2)
+        layout.add_widget(VerticalDivider(), 3)
+        layout.add_widget(Label("END"), 4)
+        form.fix()
+        form.register_scene(scene)
+        scene.add_effect(form)
+        scene.reset()
+
+        # Check that the listbox is rendered correctly.
+        for effect in scene.effects:
+            effect.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|     A                          |END  |\n" +
+            "|     |                          |     O\n" +
+            "|     |                          |     |\n" +
+            "|     |                          |     |\n" +
+            "|     B                          |     |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
 
 
 if __name__ == '__main__':

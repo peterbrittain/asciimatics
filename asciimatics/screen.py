@@ -29,6 +29,9 @@ from wcwidth import wcwidth, wcswidth
 
 # Logging
 from logging import getLogger
+
+from asciimatics.utilities import _DotDict
+
 logger = getLogger(__name__)
 
 # Looks like pywin32 is missing some Windows constants
@@ -762,13 +765,6 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         :param colour: The foreground colour to use for the polygon
         :param bg: The background colour to use for the polygon
         """
-        class _DotDict(dict):
-            """See https://stackoverflow.com/q/2352181/4994021"""
-
-            __getattr__ = dict.get
-            __setattr__ = dict.__setitem__
-            __delattr__ = dict.__delitem__
-
         def _add_edge(a, b):
             # Ignore horizontal lines - they are redundant
             if a[1] == b[1]:
