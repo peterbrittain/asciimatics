@@ -525,6 +525,20 @@ class Frame(Effect):
         """
         return self._canvas
 
+
+    @property
+    def focussed_widget(self):
+        """
+        The widget that currently has the focus within this Frame.
+        """
+        layout = self._layouts[self._focus]
+        has_layout_focus = any((layout._has_focus for layout in self._layouts))
+
+        if self._has_focus or has_layout_focus:
+            return None
+
+        return layout._columns[layout._live_col][layout._live_widget]
+
     @property
     def frame_update_count(self):
         """
