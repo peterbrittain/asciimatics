@@ -1,0 +1,6 @@
+-r base.txt
+coveralls
+appveyor-artifacts
+mock
+nose
+sphinx
