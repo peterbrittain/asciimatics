@@ -160,3 +160,8 @@ Contributing to the project
 
 If you'd like to take part in this project (and see your name in the credits!), check out the
 guidance at http://asciimatics.readthedocs.org/en/latest/intro.html#contributing-to-this-project.
+
+
+.. image:: https://badges.gitter.im/asciimatics/Lobby.svg
+   :alt: Join the chat at https://gitter.im/asciimatics/Lobby
+   :target: https://gitter.im/asciimatics/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
