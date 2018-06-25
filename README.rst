@@ -12,7 +12,7 @@
 .. image:: https://coveralls.io/repos/github/peterbrittain/asciimatics/badge.svg?branch=master
     :target: https://coveralls.io/github/peterbrittain/asciimatics?branch=master
 
-.. image:: https://img.shields.io/pypi/v/asciimatics.svg?maxAge=2592000?style=flat-square
+.. image:: https://img.shields.io/pypi/v/asciimatics.svg
     :target: https://pypi.python.org/pypi/asciimatics
 
 .. image:: https://badges.gitter.im/asciimatics/Lobby.svg
@@ -159,7 +159,7 @@ http://asciimatics.readthedocs.io/en/latest/troubleshooting.html.  If this doesn
 problem, you can report bugs (or submit enhancement requests) at
 https://github.com/peterbrittain/asciimatics/issues.
 
-Alternatively, if you just have some questions, feel free to drop in at.
+Alternatively, if you just have some questions, feel free to drop in at
 https://gitter.im/asciimatics/Lobby.
 
 Contributing to the project
