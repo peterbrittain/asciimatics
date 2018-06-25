@@ -3,6 +3,7 @@ CHANGE HISTORY
 
 LATEST
 ------
+- Added 'Frame.focussed_widget' to access current focussed widget of the frame.
 - Added `PopupMenu` for dynamic contextual menus.
 - Added `DropdownList` widget.
 - Added `VerticalDivider` widget.
