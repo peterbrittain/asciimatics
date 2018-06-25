@@ -727,17 +727,9 @@ class TestWidgets(unittest.TestCase):
         form = TestFrame(canvas)
         form.reset()
 
-        layout = form._layouts[form._focus]
-        layout._has_focus = False
-
-        expected_widget = layout._columns[layout._live_col][layout._live_widget]
-
-        self.assertFalse(form._has_focus)
-        self.assertFalse(layout._has_focus)
-
-        self.assertEqual(expected_widget, form.focussed_widget)
-        self.assertTrue(isinstance(expected_widget, TextBox))
-
+        # If the Frame loses the focus it must not return a focussed widget.
+        form._has_focus = False
+        self.assertIsNone(form.focussed_widget)
 
     def test_frame_focus_widget_property_when_frame_focussed(self):
         """
@@ -748,25 +740,12 @@ class TestWidgets(unittest.TestCase):
         form = TestFrame(canvas)
         form.reset()
 
-        form._has_focus = True
-
-        self.assertEqual(None, form.focussed_widget)
-
-
-    def test_frame_focus_widget_property_when_layout_focussed(self):
-        """
-        check the frame exposes nothing when frame layout has focus
-        """
-        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        canvas = Canvas(screen, 10, 40, 0, 0)
-        form = TestFrame(canvas)
-        form.reset()
-
+        # A Frame with a valid focus should return the widget in focus.
         layout = form._layouts[form._focus]
         layout._has_focus = True
-
-        self.assertFalse(form._has_focus)
-        self.assertEqual(None, form.focussed_widget)
+        form._has_focus = True
+        self.assertEqual(layout._columns[layout._live_col][layout._live_widget],
+                         form.focussed_widget)
 
     def test_widget_navigation(self):
         """
