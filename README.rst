@@ -15,6 +15,10 @@
 .. image:: https://img.shields.io/pypi/v/asciimatics.svg?maxAge=2592000?style=flat-square
     :target: https://pypi.python.org/pypi/asciimatics
 
+.. image:: https://badges.gitter.im/asciimatics/Lobby.svg
+   :alt: Join the chat at https://gitter.im/asciimatics/Lobby
+   :target: https://gitter.im/asciimatics/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
 ASCIIMATICS
 ===========
 
@@ -101,7 +105,7 @@ Screen to play it.  For example, this code:
     from asciimatics.renderers import FigletText
     from asciimatics.scene import Scene
     from asciimatics.screen import Screen
-    
+
     def demo(screen):
         effects = [
             Cycle(
@@ -115,7 +119,7 @@ Screen to play it.  For example, this code:
             Stars(screen, 200)
         ]
         screen.play([Scene(effects, 500)])
-    
+
     Screen.wrapper(demo)
 
 should produce something like this:
@@ -155,13 +159,12 @@ http://asciimatics.readthedocs.io/en/latest/troubleshooting.html.  If this doesn
 problem, you can report bugs (or submit enhancement requests) at
 https://github.com/peterbrittain/asciimatics/issues.
 
+Alternatively, if you just have some questions, feel free to drop in at.
+https://gitter.im/asciimatics/Lobby.
+
 Contributing to the project
 ---------------------------
 
 If you'd like to take part in this project (and see your name in the credits!), check out the
 guidance at http://asciimatics.readthedocs.org/en/latest/intro.html#contributing-to-this-project.
 
-
-.. image:: https://badges.gitter.im/asciimatics/Lobby.svg
-   :alt: Join the chat at https://gitter.im/asciimatics/Lobby
-   :target: https://gitter.im/asciimatics/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
