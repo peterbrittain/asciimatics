@@ -134,7 +134,7 @@ def _credits(screen):
             Screen.COLOUR_GREEN),
         Scroll(screen, 3)
     ]
-    scenes.append(Scene(effects, (screen.height + 64) * 3))
+    scenes.append(Scene(effects, (screen.height + 72) * 3))
 
     effects = [
         Cycle(
