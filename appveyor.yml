@@ -16,7 +16,7 @@ install:
   - "python.exe -m pip install wheel mock nose coverage"
 
   # Project requirements
-  - "python.exe -m pip install -r requirements.txt"
+  - "python.exe -m pip install -r requirements/dev.txt"
   - "python.exe -m pip install pypiwin32==219"
 
 build: off

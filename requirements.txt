@@ -1,6 +1,2 @@
-wcwidth
-mock
-pyfiglet >= 0.7.2
-Pillow == 3.3.1
-future
-setuptools_scm
+-r requirements/base.txt
+Pillow

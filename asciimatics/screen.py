@@ -1495,7 +1495,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
     def current_scene(self):
         """
         :return: The scene currently being rendered. To be used in conjunction
-        with :py:meth:`.draw_next_frame`.
+                 with :py:meth:`.draw_next_frame`.
         """
         return self._scenes[self._scene_index]
 
