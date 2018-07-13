@@ -17,6 +17,7 @@ Contents:
    animation
    widgets
    troubleshooting
+   contributing
    modules
 
 Indices and tables
