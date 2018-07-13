@@ -84,28 +84,3 @@ provided by a :py:obj:`.Renderer`.  For example:
 
     Screen.wrapper(demo)
 
-Contributing to this project
-----------------------------
-
-So you want to join in?  Great!  There's a few ground rules...
-
-#. Before you do anything else, read up on the design.  You should find all you
-   need in the 4 base classes - i.e. Screen, Scene, Effect and Renderer.
-#. If writing a new Effect, consider why it can't be handled by a
-   combination of a new Renderer and the :py:obj:`.Print` Effect.  For example,
-   dynamic Effects such as :py:obj:`.Snow` depend on the current Screen state
-   to render each new image.
-#. Go the extra yard.  This project started on a whim to share the joy of
-   someone starting out programming back in the 1980s.  How do you sustain
-   that joy?  Not just by writing code that works, but by writing code that
-   other programmers will admire.
-#. Make sure that your code is
-   `PEP-8 <https://www.python.org/dev/peps/pep-0008/>`_ compliant.  Tools
-   such as flake8 and pylint or editors like pycharm really help here.
-#. Please run the existing unit tests against your new code to make sure that
-   it still works as expected.  I normally use nosetests to do this.  In
-   addition, if you are adding significant extra function, please write some
-   new tests for your code.
-
-When you've got something you're happy with, please feel free to submit a pull
-request at https://github.com/peterbrittain/asciimatics/issues.
