@@ -1,1 +1,2 @@
 -r requirements/base.txt
+Pillow
