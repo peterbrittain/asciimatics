@@ -1,21 +1,54 @@
+---
+
+sudo: false
+
 language: python
-python:
-  - "2.7"
-  - "3.3"
-  - "3.4"
-  - "3.5"
-  - "3.6"
-  - "pypy"
-# command to install dependencies
+
+matrix:
+  fast_finish: true
+  include:
+    - env: BUILD=test
+      python: '2.7'
+    - env: BUILD=test
+      python: '3.3'
+    - env: BUILD=test
+      python: '3.4'
+    - env: BUILD=test
+      python: '3.5'
+    - env: BUILD=test
+      python: '3.6'
+    - env: BUILD=test
+      python: 'pypy'
+
+    - env: BUILD=docs
+      python: '3.6'
+
 install:
-  - pip install -r requirements.txt
-  - pip install -U coveralls appveyor-artifacts mock
-# command to run tests
+  - pip install -r requirements/dev.txt
+
 script:
-  nosetests --with-coverage --cover-package=asciimatics
+  - |
+    set -ex
+    case "$BUILD" in
+      test)
+        nosetests --with-coverage --cover-package=asciimatics
+        ;;
+      docs)
+        cd doc && cp source/conf_orig.py source/conf.py && ./build.sh
+        ;;
+    esac
+    set +ex
+
 after_success:
-  - mv .coverage .coverage.travis
-  - appveyor-artifacts download
-  - python coverage_fix.py */.coverage
-  - coverage combine .coverage.travis */.coverage
-  - coveralls
+  - |
+    set -ex
+    case "$BUILD" in
+      test)
+        mv .coverage .coverage.travis
+        appveyor-artifacts download
+        python coverage_fix.py */.coverage
+        coverage combine .coverage.travis */.coverage
+        coveralls
+        ;;
+    esac
+    set +ex
