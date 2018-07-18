@@ -1546,7 +1546,7 @@ class TestWidgets(unittest.TestCase):
         scene.add_effect(form)
         scene.reset()
 
-        # Check that the listbox is rendered correctly.
+        # Check that the frame is rendered correctly.
         for effect in scene.effects:
             effect.update(0)
 
@@ -1597,7 +1597,7 @@ class TestWidgets(unittest.TestCase):
         self.assertIsNone(form.highlighted)
         self.assertEqual(form.data, {"file_list": None})
 
-        # Check that the listbox is rendered correctly.
+        # Check that the Frame is rendered correctly.
         form.update(0)
         self.assert_canvas_equals(
             canvas,
@@ -1661,7 +1661,7 @@ class TestWidgets(unittest.TestCase):
         scene.add_effect(form)
         scene.reset()
 
-        # Check that the listbox is rendered correctly.
+        # Check that the Frame is rendered correctly.
         for effect in scene.effects:
             effect.update(0)
         self.assert_canvas_equals(
@@ -1778,7 +1778,7 @@ class TestWidgets(unittest.TestCase):
         scene.add_effect(form)
         scene.reset()
 
-        # Check that the listbox is rendered correctly.
+        # Check that the Frame is rendered correctly.
         for effect in scene.effects:
             effect.update(0)
         self.assertFalse(form.changed)
@@ -1904,7 +1904,7 @@ class TestWidgets(unittest.TestCase):
         scene.add_effect(form)
         scene.reset()
 
-        # Check that the listbox is rendered correctly.
+        # Check that the Frame is rendered correctly.
         for effect in scene.effects:
             effect.update(0)
         self.assert_canvas_equals(
@@ -2006,7 +2006,7 @@ class TestWidgets(unittest.TestCase):
         scene.add_effect(form)
         scene.reset()
 
-        # Check that the listbox is rendered correctly.
+        # Check that the Frame is rendered correctly.
         for effect in scene.effects:
             effect.update(0)
         self.assert_canvas_equals(
@@ -2267,7 +2267,7 @@ class TestWidgets(unittest.TestCase):
         scene.add_effect(form)
         scene.reset()
 
-        # Check that the listbox is rendered correctly.
+        # Check that the frame is rendered correctly.
         for effect in scene.effects:
             effect.update(0)
         self.assert_canvas_equals(
@@ -2283,6 +2283,48 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "+--------------------------------------+\n")
 
+    def test_value_defaults(self):
+        """
+        Check Widgets can set default values from code.
+        """
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = Frame(canvas, canvas.height, canvas.width)
+        layout = Layout([100])
+        form.add_layout(layout)
+
+        textbox = TextBox(2, label="TB")
+        textbox.value = ["Hello"]
+        text = Text(label="B")
+        text.value = "World"
+        listbox = ListBox(2, [("A", 1), ("B", 2), ("C", 3), ("D", 4)], label="LB")
+        listbox.value = 3
+
+        layout.add_widget(textbox)
+        layout.add_widget(text)
+        layout.add_widget(listbox)
+        form.fix()
+        form.register_scene(scene)
+        scene.add_effect(form)
+        scene.reset()
+
+        # Check that the frame is rendered correctly.
+        for effect in scene.effects:
+            effect.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|TB Hello                              |\n" +
+            "|                                      O\n" +
+            "|B  World                              |\n" +
+            "|LB C                                  |\n" +
+            "|   D                                  |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
 
 
 if __name__ == '__main__':

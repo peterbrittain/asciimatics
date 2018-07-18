@@ -19,6 +19,7 @@ LATEST
 - Fixed exception raised by getdefaultlocale on some curses systems.
 - Performance tweaks for non-unicode widgets.
 - Relaxed restriction on static function callbacks for pop-up dialogs.
+- Fixed bug where `Listbox.reset()` overrode current selected value.
 
 1.9.0
 -----
