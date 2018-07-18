@@ -2275,13 +2275,7 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         self._scroll_bar = None
 
     def reset(self):
-        # Reset selection - use value to trigger on_select
-        if len(self._options) > 0:
-            self._line = 0
-            self.value = self._options[self._line][1]
-        else:
-            self._line = -1
-            self.value = None
+        pass
 
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
@@ -2392,8 +2386,13 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
                 self._line = i
                 break
         else:
-            self._value = None
-            self._line = -1
+            # No matching value - pick a default.
+            if len(self._options) > 0:
+                self._line = 0
+                self._value = self._options[self._line][1]
+            else:
+                self._line = -1
+                self._value = None
         if self._validator:
             self._is_valid = self._validator(self._value)
         if old_value != self._value and self._on_change:
