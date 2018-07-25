@@ -2327,5 +2327,31 @@ class TestWidgets(unittest.TestCase):
             "+--------------------------------------+\n")
 
 
+    def test_frame_themes(self):
+        """
+        Check we can set a colour theme for a Frame.
+        """
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = Frame(canvas, canvas.height, canvas.width)
+
+        # Check colour changes work...
+        self.assertEqual(
+            form.palette["background"],
+            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE))
+        form.set_theme("monochrome")
+        self.assertEqual(
+            form.palette["background"],
+            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK))
+
+        # Check that a bad theme name has no effect.
+        form.set_theme("blah - this doesn't exist")
+        self.assertEqual(
+            form.palette["background"],
+            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK))
+
+
 if __name__ == '__main__':
     unittest.main()

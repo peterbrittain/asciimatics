@@ -111,6 +111,7 @@ class DemoFrame(Frame):
         layout2.add_widget(Button("View Data", self._view), 1)
         layout2.add_widget(Button("Quit", self._quit), 2)
         self.fix()
+        self.set_theme("tlj256")
 
     def process_event(self, event):
         # Handle dynamic pop-ups now.
