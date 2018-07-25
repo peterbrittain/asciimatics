@@ -33,6 +33,64 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 
+# Standard palettes for use with :py:meth:`~Frame.set_theme`.
+_THEMES = {
+    "monochrome": defaultdict(
+        lambda: (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK),
+        {
+            "invalid": (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_RED),
+            "label": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLACK),
+            "title": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLACK),
+            "selected_focus_field": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLACK),
+            "focus_edit_text": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLACK),
+            "focus_button": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLACK),
+            "selected_focus_control": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLACK),
+            "disabled": (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLACK),
+        }
+    ),
+    "green": defaultdict(
+        lambda: (Screen.COLOUR_GREEN, Screen.A_NORMAL, Screen.COLOUR_BLACK),
+        {
+            "invalid": (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_RED),
+            "label": (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLACK),
+            "title": (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLACK),
+            "selected_focus_field": (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLACK),
+            "focus_edit_text": (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLACK),
+            "focus_button": (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLACK),
+            "selected_focus_control": (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLACK),
+            "disabled": (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLACK),
+        }
+    ),
+    "bright": defaultdict(
+              lambda: (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLACK),
+          {
+              "invalid": (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_RED),
+              "label": (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLACK),
+              "control": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK),
+              "focus_control": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK),
+              "selected_focus_control": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK),
+              "selected_focus_field": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK),
+              "focus_button": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK),
+              "focus_edit_text": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK),
+              "disabled": (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLACK),
+          }
+    ),
+    "tlj256": defaultdict(
+        lambda: (16, 0, 15),
+        {
+            "invalid": (0, 0, 196),
+            "label": (88, 0, 15),
+            "title": (88, 0, 15),
+            "selected_focus_field": (15, 0, 88),
+            "focus_edit_text": (15, 0, 88),
+            "focus_button": (15, 0, 88),
+            "selected_focus_control": (15, 0, 88),
+            "disabled": (8, 0, 15),
+        }
+    ),
+}
+
+
 def _enforce_width(text, width, unicode_aware=True):
     """
     Enforce a displayed piece of text to be a certain number of cells wide.  This takes into
@@ -467,6 +525,18 @@ class Frame(Effect):
                 1,
                 self._canvas.height,
                 fg=colour, bg=bg, blend=50)
+
+    def set_theme(self, theme):
+        """
+        Pick a palette from the list of supported THEMES.
+
+        :param theme: The name of the theme to set.
+        """
+        if theme in THEMES:
+            self.palette = THEMES[theme]
+            if self._scroll_bar:
+                # TODO: fix protected access.
+                self._scroll_bar._palette = self.palette
 
     @property
     def title(self):

@@ -12,6 +12,7 @@ LATEST
 - Added `line_char` option to Dividers.
 - Added `align` option to Labels.
 - Added `width` property to widgets.
+- Added `set_theme` to Frames and provided some new colour schemes.
 - Fixed `Screen.wrapper()` to return result from wrapped function.
 - Fixed list box truncation when lines are too long.
 - Fixed issue with background colour when scrolling GNOME terminal.

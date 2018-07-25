@@ -479,6 +479,19 @@ Key                       Usage
 "title"                   Frame title
 ========================  =========================================================================
 
+In addition to the default colour scheme for all your widgets, asciimatics provides some
+other pre-defined colour schemes (or themes) that you can use for your widgets using
+:py:meth:`~.Frame.set_theme`.  These themes are as follows.
+
+========================  =========================================================================
+Name                      Description
+========================  =========================================================================
+"monochrome"              Simple black and white colour scheme.
+"green"                   A classic green terminal.
+"bright"                  Black background, green and yellow scheme.
+"tlj256"                  Shades of black white and red - 256 colour terminals only.
+========================  =========================================================================
+
 .. _custom-colours-ref:
 
 Custom widget colours
@@ -498,7 +511,7 @@ find out what they entered?  There are 2 basic ways to do this:
    `None` for those `Widgets` where there is no value - e.g. buttons.
 2. You can query the `Frame`by looking at the `data` property.  This will return the value for
    every Widget in the former as a dictionary, using the Widget `name` properties for the keys.
-   Note that `data` is just a cache, which only gets updated when you call :py:meth:`~Frame.save`,
+   Note that `data` is just a cache, which only gets updated when you call :py:meth:`~.Frame.save`,
    so you need to call this method to refresh the cache before accessing it.
 
 For example:
