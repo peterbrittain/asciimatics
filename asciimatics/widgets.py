@@ -532,8 +532,8 @@ class Frame(Effect):
 
         :param theme: The name of the theme to set.
         """
-        if theme in THEMES:
-            self.palette = THEMES[theme]
+        if theme in _THEMES:
+            self.palette = _THEMES[theme]
             if self._scroll_bar:
                 # TODO: fix protected access.
                 self._scroll_bar._palette = self.palette
