@@ -1565,10 +1565,15 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "+--------------------------------------+\n")
 
+    @patch("os.path.exists")
+    @patch("os.path.realpath")
+    @patch("os.path.islink")
     @patch("os.path.isdir")
+    @patch("os.lstat")
     @patch("os.stat")
     @patch("os.listdir")
-    def test_file_browser(self, mock_list, mock_stat, mock_path):
+    def test_file_browser(self, mock_list, mock_stat, mock_lstat, mock_path, mock_link, \
+        mock_real_path, mock_exists):
         """
         Check FileBrowser widget works as expected.
         """
@@ -1576,12 +1581,16 @@ class TestWidgets(unittest.TestCase):
         if sys.platform == "win32":
             self.skipTest("File names wrong for windows")
 
-        mock_list.return_value = ["A Directory", "A File"]
+        mock_list.return_value = ["A Directory", "A File", "A Lnk"]
         mock_result = MagicMock()
         mock_result.st_mtime = 0
         mock_result.st_size = 10000
         mock_stat.return_value = mock_result
-        mock_path.side_effect = lambda x: "File" not in x
+        mock_lstat.return_value = mock_result
+        mock_path.side_effect = lambda x: ("File" not in x and "Lnk" not in x)
+        mock_link.side_effect = lambda x: "Lnk" in x
+        mock_real_path.return_value = "A Tgt"
+        mock_exists.return_value = True
 
         # Now set up the Frame ready for testing
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
@@ -1604,7 +1613,7 @@ class TestWidgets(unittest.TestCase):
             "/                     Size Last modified\n" +
             "|-+ A Directory               1970-01-01\n" +
             "|-- A File              9K    1970-01-01\n" +
-            "                                        \n" +
+            "|-- A Lnk -> A Tgt      9K    1970-01-01\n" +
             "                                        \n" +
             "                                        \n" +
             "                                        \n" +
@@ -1637,7 +1646,7 @@ class TestWidgets(unittest.TestCase):
             "|-+ ..                                  \n" +
             "|-+ A Directory               1970-01-01\n" +
             "|-- A File              9K    1970-01-01\n" +
-            "                                        \n" +
+            "|-- A Lnk -> A Tgt      9K    1970-01-01\n" +
             "                                        \n" +
             "                                        \n" +
             "                                        \n" +
