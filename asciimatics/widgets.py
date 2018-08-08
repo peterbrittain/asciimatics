@@ -2837,11 +2837,33 @@ class FileBrowser(MultiColumnListBox):
         files = os.listdir(self._root)
         for my_file in files:
             full_path = os.path.join(self._root, my_file)
-            details = os.stat(full_path)
+            details = os.lstat(full_path)
             if os.path.isdir(full_path):
-                tree_dirs.append((["|-+ {}".format(my_file),
-                                   "",
-                                   readable_timestamp(details.st_mtime)], full_path))
+                if os.path.islink(full_path):
+                    # Show links separately for directories
+                    real_path = os.path.realpath(full_path)
+                    tree_dirs.append((["|-+ {} -> {}".format(my_file, real_path),
+                                    "",
+                                    readable_timestamp(details.st_mtime)], full_path))
+                else:
+                    tree_dirs.append((["|-+ {}".format(my_file),
+                                    "",
+                                    readable_timestamp(details.st_mtime)], full_path))
+            elif os.path.islink(full_path):
+                # Check if link target exists and if it does, show statistics of the
+                # linked file, otherwise just display the link
+                real_path = os.path.realpath(full_path)
+                if os.path.exists(real_path):
+                    real_details = os.stat(real_path)
+                    tree_files.append((["|-- {} -> {}".format(my_file, real_path),
+                                        readable_mem(real_details.st_size),
+                                        readable_timestamp(real_details.st_mtime)], full_path))
+                else:
+                    # Both broken directory and file links fall to this case. 
+                    # Actually using the files will cause a FileNotFound exception
+                    tree_files.append((["|-- {} -> {}".format(my_file, real_path),
+                                        readable_mem(details.st_size),
+                                        readable_timestamp(details.st_mtime)], full_path))
             else:
                 tree_files.append((["|-- {}".format(my_file),
                                     readable_mem(details.st_size),
