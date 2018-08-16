@@ -2232,6 +2232,7 @@ class TextBox(Widget):
                     if self._line_wrap:
                         # Line-wrapped text needs to be mapped to visible lines
                         display_text = self._reflowed_text
+                        clicked_line = min(clicked_line, len(display_text) - 1)
                         text_line = display_text[clicked_line][1]
                         text_col = display_text[clicked_line][2]
                     else:
@@ -2859,7 +2860,7 @@ class FileBrowser(MultiColumnListBox):
                                         readable_mem(real_details.st_size),
                                         readable_timestamp(real_details.st_mtime)], full_path))
                 else:
-                    # Both broken directory and file links fall to this case. 
+                    # Both broken directory and file links fall to this case.
                     # Actually using the files will cause a FileNotFound exception
                     tree_files.append((["|-- {} -> {}".format(my_file, real_path),
                                         readable_mem(details.st_size),
