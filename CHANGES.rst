@@ -21,6 +21,7 @@ LATEST
 - Performance tweaks for non-unicode widgets.
 - Relaxed restriction on static function callbacks for pop-up dialogs.
 - Fixed bug where `Listbox.reset()` overrode current selected value.
+- Fixed handling of decomposed unicode file names in `FileBrowser` for MacOS
 
 1.9.0
 -----
