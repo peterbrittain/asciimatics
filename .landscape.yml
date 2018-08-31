@@ -6,6 +6,7 @@ autodetect: yes
 ignore-paths:
     - doc
     - tests
+    - samples
 python-targets:
     - 2
     - 3
