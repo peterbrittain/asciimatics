@@ -1,19 +1,23 @@
 
 .. image:: https://travis-ci.org/peterbrittain/asciimatics.svg?branch=master
     :target: https://travis-ci.org/peterbrittain/asciimatics
+    :alt: Linux build status
 
 .. image:: https://ci.appveyor.com/api/projects/status/n68nk47ku35pafru?svg=true&passingText=Windows%20-%20passing
     :target: https://ci.appveyor.com/project/peterbrittain/asciimatics
+    :alt: Windows build status
 
-.. image:: https://landscape.io/github/peterbrittain/asciimatics/master/landscape.svg?style=flat
-   :target: https://landscape.io/github/peterbrittain/asciimatics/master
+.. image:: https://api.codacy.com/project/badge/Grade/b79f9a63d15141f3ae5fe8d4eae78874
+   :target: https://www.codacy.com/app/pab/asciimaticsutm_source=github.com&amp;utm_medium=referral&amp;utm_content=peterbrittain/asciimatics&amp;utm_campaign=Badge_Grade
    :alt: Code Health
 
 .. image:: https://coveralls.io/repos/github/peterbrittain/asciimatics/badge.svg?branch=master
     :target: https://coveralls.io/github/peterbrittain/asciimatics?branch=master
+    :alt: Code Coverage
 
 .. image:: https://img.shields.io/pypi/v/asciimatics.svg
     :target: https://pypi.python.org/pypi/asciimatics
+    :alt: Latest stable version
 
 .. image:: https://badges.gitter.im/asciimatics/Lobby.svg
    :alt: Join the chat at https://gitter.im/asciimatics/Lobby
