@@ -4,7 +4,7 @@ strictness: high
 max-line-length: 100
 autodetect: yes
 ignore-paths:
-    - docs
+    - doc
     - tests
 python-targets:
     - 2
