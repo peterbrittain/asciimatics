@@ -528,6 +528,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         if colour_map is None:
             self.print_at(text, x, y, colour, attr, bg, transparent)
         else:
+            offset = 0
             for i, c in enumerate(text):
                 if len(colour_map[i]) > 0 and colour_map[i][0] is not None:
                     colour = colour_map[i][0]
@@ -535,7 +536,8 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                     attr = colour_map[i][1]
                 if len(colour_map[i]) > 2 and colour_map[i][2] is not None:
                     bg = colour_map[i][2]
-                self.print_at(c, x + i, y, colour, attr, bg, transparent)
+                self.print_at(c, x + offset, y, colour, attr, bg, transparent)
+                offset += wcwidth(c)
 
     def _blend(self, new, old, ratio):
         """

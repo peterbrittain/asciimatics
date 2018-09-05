@@ -22,6 +22,7 @@ LATEST
 - Relaxed restriction on static function callbacks for pop-up dialogs.
 - Fixed bug where `Listbox.reset()` overrode current selected value.
 - Fixed handling of decomposed unicode file names in `FileBrowser` for MacOS
+- Fixed CJK issues with `Screen.paint()` and `SpeechBubble`.
 
 1.9.0
 -----
