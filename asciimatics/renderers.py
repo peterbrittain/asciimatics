@@ -17,6 +17,9 @@ from math import sin, cos, pi, sqrt, atan2
 from pyfiglet import Figlet, DEFAULT_FONT
 from PIL import Image
 import re
+
+from wcwidth.wcwidth import wcswidth
+
 from asciimatics.screen import Screen
 
 
@@ -198,7 +201,7 @@ class StaticRenderer(Renderer):
 
         if self._max_width == 0:
             for image in self._plain_images:
-                new_max = max([len(x) for x in image])
+                new_max = max([wcswidth(x) for x in image])
                 self._max_width = max(new_max, self._max_width)
         return self._max_width
 
@@ -457,7 +460,7 @@ class SpeechBubble(StaticRenderer):
                      "R" for left or right tails.  Can be None for no tail.
         """
         super(SpeechBubble, self).__init__()
-        max_len = max([len(x) for x in text.split("\n")])
+        max_len = max([wcswidth(x) for x in text.split("\n")])
         if uni:
             bubble = "╭─" + "─" * max_len + "─╮\n"
             for line in text.split("\n"):
