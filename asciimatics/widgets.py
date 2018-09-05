@@ -1965,6 +1965,12 @@ class RadioButtons(Widget):
         self._start_column = 0
         self._on_change = on_change
 
+        # Attempt to set the value to the first option
+        try:
+            self._value = self._options[self._selection][1]
+        except:
+            pass
+
     def update(self, frame_no):
         self._draw_label()
 
