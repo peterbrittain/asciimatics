@@ -23,6 +23,7 @@ LATEST
 - Fixed bug where `Listbox.reset()` overrode current selected value.
 - Fixed handling of decomposed unicode file names in `FileBrowser` for MacOS
 - Fixed CJK issues with `Screen.paint()` and `SpeechBubble`.
+- Fixed issue with dynamically added Frames so that they are reset before displayed for the first time.
 
 1.9.0
 -----

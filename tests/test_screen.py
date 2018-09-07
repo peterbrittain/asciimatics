@@ -509,8 +509,8 @@ class TestScreen(unittest.TestCase):
             screen.play([
                 Scene([test_effect1], 5),
                 Scene([test_effect2], 0)])
-            self.assertTrue(test_effect1.reset_called)
-            self.assertTrue(test_effect2.reset_called)
+            self.assertTrue(test_effect1.update_called)
+            self.assertTrue(test_effect2.update_called)
 
             # Now check that we can start at the second scene.
             test_effect1 = MockEffect(stop=False)
@@ -518,8 +518,8 @@ class TestScreen(unittest.TestCase):
             test_effect2 = MockEffect(count=3)
             scene2 = Scene([test_effect2], 0, name="2")
             screen.play([scene1, scene2], start_scene=scene2)
-            self.assertFalse(test_effect1.reset_called)
-            self.assertTrue(test_effect2.reset_called)
+            self.assertFalse(test_effect1.update_called)
+            self.assertTrue(test_effect2.update_called)
 
             # Now check that we can move to named scenes.
             test_effect1 = MockEffect(stop=False, next_scene="B")
@@ -527,8 +527,8 @@ class TestScreen(unittest.TestCase):
             screen.play([
                 Scene([test_effect1], 15, name="A"),
                 Scene([test_effect2], 0, name="B")])
-            self.assertTrue(test_effect1.reset_called)
-            self.assertTrue(test_effect2.reset_called)
+            self.assertTrue(test_effect1.update_called)
+            self.assertTrue(test_effect2.update_called)
 
             # Now check that bad names cause an exception.
             with self.assertRaises(RuntimeError):
@@ -537,14 +537,14 @@ class TestScreen(unittest.TestCase):
                 screen.play([
                     Scene([test_effect1], 15, name="A"),
                     Scene([test_effect2], 0, name="B")])
-            self.assertTrue(test_effect1.reset_called)
-            self.assertFalse(test_effect2.reset_called)
+            self.assertTrue(test_effect1.update_called)
+            self.assertFalse(test_effect2.update_called)
 
             # Now check that play stops at the end when repeat=False
             test_effect1 = MockEffect(stop=False)
             scene1 = Scene([test_effect1], 5, name="1")
             screen.play([scene1], repeat=False)
-            self.assertTrue(test_effect1.reset_called)
+            self.assertTrue(test_effect1.update_called)
 
         Screen.wrapper(internal_checks, height=15)
 

@@ -22,9 +22,8 @@ class Scene(object):
     def __init__(self, effects, duration=0, clear=True, name=None):
         """
         :param effects: The list of effects to apply to this scene.
-        :param duration: The number of frames in this Scene.  A value of 0
-                         means that the Scene should query the Effects to find
-                         the duration.  A value of -1 means don't stop.
+        :param duration: The number of frames in this Scene.  A value of 0 means that the Scene
+            should query the Effects to find the duration.  A value of -1 means don't stop.
         :param clear: Whether to clear the Screen at the start of the Scene.
         :param name: Optional name to identify the scene.
         """
@@ -41,8 +40,8 @@ class Scene(object):
         """
         Reset the scene ready for playing.
 
-        :param old_scene: The previous version of this Scene that was running
-            before the application reset - e.g. due to a screen resize.
+        :param old_scene: The previous version of this Scene that was running before the
+            application reset - e.g. due to a screen resize.
         :param screen: New screen to use if old_scene is not None.
         """
         # Always reset all the effects.
@@ -71,11 +70,14 @@ class Scene(object):
 
     def add_effect(self, effect):
         """
-        Add an effect to the Scene.  This can be done at any time - event
-        when playing the Scene.
+        Add an effect to the Scene.
+
+        This method can be called at any time - even when playing the Scene.
 
         :param effect: The Effect to be added.
         """
+        # Reset the effect in case this is in the middle of a Scene.
+        effect.reset()
         effect.register_scene(self)
         self._effects.append(effect)
 
@@ -89,12 +91,13 @@ class Scene(object):
 
     def process_event(self, event):
         """
-        Process a new input event.  Pass this on to any Effects in reverse Z
-        order so that the top-most Effect has priority.
+        Process a new input event.
+
+        This method will pass the event on to any Effects in reverse Z order so that the
+        top-most Effect has priority.
 
         :param event: The Event that has been triggered.
-        :returns: None if the Scene processed the event, else the original
-                  event.
+        :returns: None if the Scene processed the event, else the original event.
         """
         for effect in reversed(self._effects):
             event = effect.process_event(event)
