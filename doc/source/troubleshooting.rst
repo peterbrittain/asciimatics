@@ -202,3 +202,15 @@ Generally speaking, it is not recommended that you try to do this as it will pre
 from being able to read the terminal input.  However, if you must do this, `this question
 <http://stackoverflow.com/q/3999114/4994021>`__ on StackOverflow should give you some help on how
 to reconnect terminal input on curses based systems.
+
+It's just not working at all
+----------------------------
+Some people have reported truly strange issues where things simply don't start up at all.
+Symptoms vary wildly from blank screens to other applications or tests running instead.
+
+If you are hitting something like this, check that you haven't created a file called ``test.py``
+in your project.  This is because the ``future`` package, which asciimatics uses for
+compatibility with Python 2 and 3, imports the test package.  If you happen to have a file called
+``test.py`` in your project, this import could pick up your file instead of the built-in package.
+
+Shout out to Andrew Penniman for spotting and solving this one!
