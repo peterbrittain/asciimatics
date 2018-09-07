@@ -454,7 +454,8 @@ class Frame(Effect):
     def _update(self, frame_no):
         # TODO: Should really be in a separate Desktop Manager class - wait for v2.0
         if self.scene and self.scene.effects[-1] != self:
-            self._layouts[self._focus].blur()
+            if self._focus < len(self._layouts):
+                self._layouts[self._focus].blur()
             self._has_focus = False
 
         # Reset the canvas to prepare for next round of updates.
