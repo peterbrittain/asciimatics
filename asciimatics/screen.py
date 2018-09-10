@@ -25,12 +25,9 @@ import sys
 import signal
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import ResizeScreenError, StopApplication, NextScene
-from wcwidth import wcwidth, wcswidth
-
-# Logging
-from logging import getLogger
-
 from asciimatics.utilities import _DotDict
+from wcwidth import wcwidth, wcswidth
+from logging import getLogger
 
 logger = getLogger(__name__)
 
@@ -835,7 +832,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         logger.debug("Resulting edges: %s", edges)
 
         # Render each line in the bounding rectangle.
-        for y in [min_y + (x / 2) for x in range(0, int(max_y) * 2)]:
+        for y in [min_y + (i / 2) for i in range(0, int(max_y) * 2)]:
             # Create a list of live edges (for drawing this raster line) and edges for next
             # iteration of the raster.
             live_edges = []
@@ -1067,10 +1064,10 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             # same size as the original in some versions of Windows.
             old_out = win32console.PyConsoleScreenBufferType(
                 win32file.CreateFile("CONOUT$",
-                                     GENERIC_READ | GENERIC_WRITE,
-                                     FILE_SHARE_WRITE,
+                                     win32file.GENERIC_READ | win32file.GENERIC_WRITE,
+                                     win32file.FILE_SHARE_WRITE,
                                      None,
-                                     OPEN_ALWAYS,
+                                     win32file.OPEN_ALWAYS,
                                      0,
                                      None))
             try:
@@ -1081,19 +1078,19 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             if info:
                 win_out.SetConsoleScreenBufferSize(info['Size'])
             else:
-                win_out.SetStdHandle(STD_OUTPUT_HANDLE)
+                win_out.SetStdHandle(win32console.STD_OUTPUT_HANDLE)
             win_out.SetConsoleActiveScreenBuffer()
 
             # Get the standard input buffer.
             win_in = win32console.PyConsoleScreenBufferType(
                 win32file.CreateFile("CONIN$",
-                                     GENERIC_READ | GENERIC_WRITE,
-                                     FILE_SHARE_READ,
+                                     win32file.GENERIC_READ | win32file.GENERIC_WRITE,
+                                     win32file.FILE_SHARE_READ,
                                      None,
-                                     OPEN_ALWAYS,
+                                     win32file.OPEN_ALWAYS,
                                      0,
                                      None))
-            win_in.SetStdHandle(STD_INPUT_HANDLE)
+            win_in.SetStdHandle(win32console.STD_INPUT_HANDLE)
 
             # Hide the cursor.
             win_out.SetConsoleCursorInfo(1, 0)
@@ -1123,13 +1120,13 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             curses.cbreak()
             stdscr.keypad(1)
 
+            # Fed up with linters complaining about original curses code - trying to be a bit better...
             # noinspection PyBroadException
-            # pylint: disable=bare-except
-            # - This code deliberately duplicates the (bad) curses module code.
+            # pylint: disable=broad-except
             try:
                 curses.start_color()
-            except:
-                pass
+            except Exception as e:
+                logger.debug(e)
             screen = _CursesScreen(stdscr, height,
                                    catch_interrupt=catch_interrupt,
                                    unicode_aware=unicode_aware)
@@ -1555,13 +1552,10 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
 
 
 if sys.platform == "win32":
-    import win32console
     import win32con
-    import pywintypes
+    import win32console
     import win32file
-    from win32console import STD_OUTPUT_HANDLE, STD_INPUT_HANDLE
-    from win32file import GENERIC_READ, FILE_SHARE_READ, OPEN_ALWAYS, \
-        GENERIC_WRITE, FILE_SHARE_WRITE
+    import pywintypes
 
     class _WindowsScreen(Screen):
         """

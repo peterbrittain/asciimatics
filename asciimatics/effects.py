@@ -149,6 +149,7 @@ class Effect(with_metaclass(ABCMeta, object)):
         """
         return self._scene
 
+    # pylint: disable=no-self-use
     def process_event(self, event):
         """
         Process any input event.
@@ -995,7 +996,7 @@ class RandomNoise(Effect):
         super(RandomNoise, self).__init__(screen, **kwargs)
         self._signal = signal
         self._strength = 0.0
-        self._step = None
+        self._step = 0.0
 
     def reset(self):
         self._strength = 0.0

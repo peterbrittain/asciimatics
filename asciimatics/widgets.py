@@ -9,6 +9,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from collections import defaultdict
+from inspect import isfunction
 from types import FunctionType
 import re
 import os
@@ -63,18 +64,18 @@ _THEMES = {
         }
     ),
     "bright": defaultdict(
-              lambda: (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLACK),
-          {
-              "invalid": (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_RED),
-              "label": (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLACK),
-              "control": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK),
-              "focus_control": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK),
-              "selected_focus_control": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK),
-              "selected_focus_field": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK),
-              "focus_button": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK),
-              "focus_edit_text": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK),
-              "disabled": (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLACK),
-          }
+        lambda: (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLACK),
+        {
+            "invalid": (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_RED),
+            "label": (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLACK),
+            "control": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK),
+            "focus_control": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK),
+            "selected_focus_control": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK),
+            "selected_focus_field": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK),
+            "focus_button": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK),
+            "focus_edit_text": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK),
+            "disabled": (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLACK),
+        }
     ),
     "tlj256": defaultdict(
         lambda: (16, 0, 15),
@@ -2113,7 +2114,7 @@ class TextBox(Widget):
 
         # Restrict to visible/valid content.
         self._start_line = max(0, max(display_line - height + 1,
-                              min(self._start_line, display_line)))
+                                      min(self._start_line, display_line)))
 
         # Render visible portion of the text.
         for line, (text, _, _) in enumerate(display_text):
@@ -2772,7 +2773,7 @@ class FileBrowser(MultiColumnListBox):
             [],
             titles=["Filename", "Size", "Last modified"],
             name=name,
-            on_select=self._on_select,
+            on_select=self._on_selection,
             on_change=on_change)
 
         # Remember the on_select handler for external notification.  This allows us to wrap the
@@ -2791,7 +2792,7 @@ class FileBrowser(MultiColumnListBox):
             self._initialized = True
         super(FileBrowser, self).update(frame_no)
 
-    def _on_select(self):
+    def _on_selection(self):
         """
         Internal function to handle directory traversal or bubble notifications up to user of the
         Widget as needed.
@@ -3046,7 +3047,7 @@ class PopUpDialog(Frame):
         :param scene: The new Scene object to clone into.
         """
         # Only clone the object if the function is safe to do so.
-        if self._on_close is None or type(self._on_close) == FunctionType:
+        if self._on_close is None or isfunction(self._on_close):
             scene.add_effect(PopUpDialog(screen, self._text, self._buttons, self._on_close))
 
 

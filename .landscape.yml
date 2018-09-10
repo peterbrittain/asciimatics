@@ -1,12 +1,16 @@
 doc-warnings: yes
 test-warnings: no
 strictness: high
-max-line-length: 100
+max-line-length: 110
 autodetect: yes
 ignore-paths:
+    # Ignore code that's not in the delivered
     - doc
     - tests
     - samples
+    # Ignore build files
+    - coverage_fix.py
+    - version.py
 python-targets:
     - 2
     - 3
@@ -24,6 +28,10 @@ pylint:
     - import-error
     # Use pep257 to handle docstring issues
     - missing-docstring
+    # Complexity isn't as bad as the metrics think - but stuff for v2.0
+    - too-many-lines
+    - too-many-branches
+    - too-many-statements
     # Don't agree with these styles
     - no-else-return
     - len-as-condition
