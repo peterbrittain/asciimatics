@@ -68,16 +68,20 @@ class Scene(object):
             if hasattr(effect, "save"):
                 effect.save()
 
-    def add_effect(self, effect):
+    def add_effect(self, effect, reset=True):
         """
         Add an effect to the Scene.
 
-        This method can be called at any time - even when playing the Scene.
+        This method can be called at any time - even when playing the Scene.  The default logic
+        assumes that the Effect needs to be reset before being displayed.  This can be overridden
+        using the `reset` parameter.
 
         :param effect: The Effect to be added.
+        :param reset: Whether to reset the Effect that has just been added.
         """
         # Reset the effect in case this is in the middle of a Scene.
-        effect.reset()
+        if reset:
+            effect.reset()
         effect.register_scene(self)
         self._effects.append(effect)
 
