@@ -10,7 +10,6 @@ from __future__ import unicode_literals
 
 from collections import defaultdict
 from inspect import isfunction
-from types import FunctionType
 import re
 import os
 import unicodedata
