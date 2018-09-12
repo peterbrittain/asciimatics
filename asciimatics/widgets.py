@@ -797,7 +797,6 @@ class Frame(Effect):
         # Claim the input focus if a mouse clicked on this Frame.
         claimed_focus = False
         if isinstance(event, MouseEvent) and event.buttons > 0:
-            layout = self._layouts[self._focus]
             if (0 <= event.x < self._canvas.width and
                     0 <= event.y < self._canvas.height):
                 self._scene.remove_effect(self)
