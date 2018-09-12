@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""
+Quick fix for merging code coverage reports from appveyor with travis CI results.
+"""
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
