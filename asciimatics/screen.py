@@ -1210,7 +1210,9 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                     if (new_cell[4] == 0 or
                             (new_cell[4] == 2 and x < self.width - 1 and
                              self._double_buffer[y + self._start_line][x + 1][4] == 2)):
+                        # Need to fix up double-buffer now.  Screen buffer will be handled later
                         new_cell = ("x", new_cell[1], new_cell[2], new_cell[3], 1)
+                        self._double_buffer[y + self._start_line][x] = new_cell
 
                     # Now check for any required updates.
                     if old_cell != new_cell:
