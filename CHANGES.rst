@@ -1,7 +1,7 @@
 CHANGE HISTORY
 ==============
 
-LATEST
+1.10.0
 ------
 - Added 'Frame.focussed_widget' to access current focussed widget of the frame.
 - Added `PopupMenu` for dynamic contextual menus.
