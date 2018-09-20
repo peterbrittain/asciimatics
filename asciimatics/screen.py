@@ -1228,6 +1228,9 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
     def clear(self):
         """
         Clear the Screen of all content.
+
+        Note that this will instantly clear the Screen and reset all buffers to the default state,
+        without waiting for you to call :py:meth:`~.Screen.refresh`.
         """
         # Clear the actual terminal
         self.reset()
