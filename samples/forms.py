@@ -111,7 +111,6 @@ class DemoFrame(Frame):
         layout2.add_widget(Button("View Data", self._view), 1)
         layout2.add_widget(Button("Quit", self._quit), 2)
         self.fix()
-        self.set_theme("tlj256")
 
     def process_event(self, event):
         # Handle dynamic pop-ups now.
@@ -120,19 +119,27 @@ class DemoFrame(Frame):
             # By processing the double-click before Frame handling, we have absolute coordinates.
             self._scene.add_effect(
                 PopupMenu(self._screen,
-                          [("Item 1", self._on_click),
-                           ("Item 2", self._on_click),
-                           ("Item 3", self._on_click),
-                           ("Item 4", self._on_click)],
+                          [("Green", self._set_green),
+                           ("Monochrome", self._set_mono),
+                           ("Bright", self._set_bright),
+                           ("Red/white", self._set_tlj)],
                           event.x, event.y))
             event = None
 
         # Pass any other event on to the Frame and contained widgets.
         return super(DemoFrame, self).process_event(event)
 
-    def _on_click(self):
-        self._scene.add_effect(
-            PopUpDialog(self._screen, "You selected the menu!", ["OK"]))
+    def _set_green(self):
+        self.set_theme("green")
+
+    def _set_mono(self):
+        self.set_theme("monochrome")
+
+    def _set_bright(self):
+        self.set_theme("bright")
+
+    def _set_tlj(self):
+        self.set_theme("tlj256")
 
     def _on_change(self):
         changed = False
