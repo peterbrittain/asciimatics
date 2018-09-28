@@ -214,3 +214,71 @@ compatibility with Python 2 and 3, imports the test package.  If you happen to h
 ``test.py`` in your project, this import could pick up your file instead of the built-in package.
 
 Shout out to Andrew Penniman for spotting and solving this one!
+
+It's too slow!
+--------------
+When people say this, they either mean that asciimatics is using too much CPU, or that it is
+unresponsive in some scenario.  Either way, the solution is to reduce the work being done
+behind the scenes for your application.  To understand how to do this, you will need a little
+background first...
+
+Asciimatics is designed to run on any platform and so cannot rely on the C runtimes for Linux
+to achieve the same performance as some other packages do.  Instead you will need to rely on
+platform agnostic ways of achieving better performance.  At a high-level you have 3 options.
+
+1. Switch off any animations you don't need.
+2. Move to a more responsive input loop.
+3. Use a faster implementation of the underlying infrastructure.
+
+Right!  you have the background - lets look at these options in more detail...
+
+Switch off animations
+^^^^^^^^^^^^^^^^^^^^^
+This is only really an option for TUI systems.  Simply avoid adding other ``Effects`` into your
+``Scene`` and keep it down the to the ``Frame`` for your user input.
+
+Also consider switching off the cursor animation if you really need to minimize CPU usage.  You
+can do this by setting ``reduce_cpu=True`` when constructing your ``Frame``.
+
+Input responsiveness
+^^^^^^^^^^^^^^^^^^^^
+First things first, you should make sure that you're running at least version 1.11.
+
+
+@@@ Some stuff about a new flag to use select()?
+
+Use faster infrastructure
+^^^^^^^^^^^^^^^^^^^^^^^^^
+Asciimatics needs to do a lot of array manipulation in order to provide equivalent features to
+ncurses.  In v1.11, I benchmarked various options and optimized the buffering to use the fastest
+version.  If you haven't already moved to that version (or later), please do that first.
+
+From here you have the usual options to speed up such calculations further.
+
+1. Use ``numpy`` - which is a native C package to optimize array calculations
+2. Use ``pypy`` - which is an optimized version of the Python language.
+
+Right now, asciimatics doesn't support ``numpy``, because I only got marginal gains when I
+made the prototype for 1.11.  However, I got significant improvements from ``pypy`` and so I'd
+definitely recommend considering this option.
+
+For example, running some samples for 20s on my test machine, I got the following results:
+
+==================== ===========
+julia.py             Average CPU
+==================== ===========
+Python 2.7 (1.10)    54.8%
+Python 2.7 (1.11)    47.8%
+Pypy 6.0             20.0%
+==================== ===========
+
+==================== ===========
+experimental.py      Average CPU
+==================== ===========
+Python 2.7 (1.10)    100.0%
+Python 2.7 (1.11)    71.4%
+Pypy 6.0             34.3%
+==================== ===========
+
+Note that the v1.10 test for experimental.py was actually CPU-bound and so slow it was visibly
+juddering.

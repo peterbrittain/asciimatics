@@ -9,31 +9,110 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import os
-from locale import getlocale, getdefaultlocale
+import signal
 import struct
-from builtins import object
-from builtins import range
-from builtins import str
-from builtins import ord
-from builtins import chr
-from math import sqrt
-from future.utils import with_metaclass
+import sys
 import time
 from abc import ABCMeta, abstractmethod
-import json
-import sys
-import signal
+from locale import getlocale, getdefaultlocale
+from logging import getLogger
+from math import sqrt
+
+from builtins import object
+from builtins import range
+from builtins import ord
+from builtins import chr
+from future.utils import with_metaclass
+from wcwidth import wcwidth, wcswidth
+
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import ResizeScreenError, StopApplication, NextScene
 from asciimatics.utilities import _DotDict
-from wcwidth import wcwidth, wcswidth
-from logging import getLogger
 
 logger = getLogger(__name__)
 
 # Looks like pywin32 is missing some Windows constants
 ENABLE_EXTENDED_FLAGS = 0x0080
 ENABLE_QUICK_EDIT_MODE = 0x0040
+
+
+class _DoubleBuffer(object):
+    """
+    Pure python Screen buffering.
+    """
+    def __init__(self, height, width):
+        """
+        :param height: Height of the buffer to create.
+        :param width: Width of the buffer to create.
+        """
+        super(_DoubleBuffer, self).__init__()
+        self._height = height
+        self._width = width
+        self._double_buffer = None
+        line = [(ord(u" "), Screen.COLOUR_WHITE, 0, 0, 1) for _ in range(self._width)]
+        self._screen_buffer = [line[:] for _ in range(self._height)]
+        self.clear(Screen.COLOUR_WHITE, 0, 0)
+
+    def clear(self, fg, attr, bg):
+        """
+        Clear the double-buffer.
+
+        This does not clear the screen buffer and so the next call to deltas will still show all changes.
+
+        :param fg: The foreground colour to use for the new buffer.
+        :param attr: The attribute value to use for the new buffer.
+        :param bg: The background colour to use for the new buffer.
+        """
+        line = [(ord(u" "), fg, attr, bg, 1) for _ in range(self._width)]
+        self._double_buffer = [line[:] for _ in range(self._height)]
+
+    def get(self, x, y):
+        """
+        Get the cell value from the specified location
+
+        :param x: The column (x coord) of the character.
+        :param y: The row (y coord) of the character.
+
+        :return: A 5-tuple of (unicode, foreground, attributes, background, width).
+        """
+        return self._double_buffer[y][x]
+
+    def set(self, x, y, value):
+        """
+        Set the cell value from the specified location
+
+        :param x: The column (x coord) of the character.
+        :param y: The row (y coord) of the character.
+        :param value: A 5-tuple of (unicode, foreground, attributes, background, width).
+        """
+        self._double_buffer[y][x] = value
+
+    def deltas(self, start, height):
+        """
+        Return a list-like (i.e. iterable) object of (y, x) tuples
+        """
+        for y in range(start, min(start + height, self._height)):
+            for x in range(self._width):
+                    old_cell = self._screen_buffer[y][x]
+                    new_cell = self._double_buffer[y][x]
+                    if old_cell != new_cell:
+                        yield y, x
+
+    def invalidate(self, y1, y2):
+        """
+        Invalidate the required lines for redisplay on the next call to deltas().
+        """
+        line = [(None, None, None, None, 1) for _ in range(self._width)]
+        for y in range(y1, y2):
+            self._screen_buffer[y] = line[:]
+
+    def sync(self):
+        """
+        Synchronize the screen buffer with the double buffer.
+        """
+        # We're copying an array of tuples, so only need to copy the 2-D array (as the tuples are immutable).
+        # This is way faster than a deep copy (which is INCREDIBLY slow).
+        self._screen_buffer = [row[:] for row in self._double_buffer]
 
 
 class _AbstractCanvas(with_metaclass(ABCMeta, object)):
@@ -335,8 +414,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         self.width = width
         self.colours = colours
         self._buffer_height = buffer_height
-        self._screen_buffer = None
-        self._double_buffer = None
+        self._buffer = None
         self._start_line = 0
         self._x = 0
         self._y = 0
@@ -347,6 +425,16 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         # Reset the screen ready to go...
         self.reset()
 
+    def clear_buffer(self, fg, attr, bg):
+        """
+        Clear the current double-buffer used by this object.
+
+        :param fg: The foreground colour to use for the new buffer.
+        :param attr: The attribute value to use for the new buffer.
+        :param bg: The background colour to use for the new buffer.
+        """
+        self._buffer.clear(fg, attr, bg)
+
     def reset(self):
         """
         Reset the internal buffers for the abstract canvas.
@@ -354,13 +442,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         # Reset our screen buffer
         self._start_line = 0
         self._x = self._y = None
-        line = [(u" ", Screen.COLOUR_WHITE, 0, 0, 1) for _ in range(self.width)]
-
-        # Note that we use json to duplicate the data as copy.deepcopy is an
-        # order of magnitude slower.
-        self._screen_buffer = [
-            json.loads(json.dumps(line)) for _ in range(self._buffer_height)]
-        self._double_buffer = json.loads(json.dumps(self._screen_buffer))
+        self._buffer = _DoubleBuffer(self._buffer_height, self.width)
         self._reset()
 
     def scroll(self):
@@ -401,8 +483,8 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         """
         if y < 0 or y >= self._buffer_height or x < 0 or x >= self.width:
             return None
-        cell = self._double_buffer[y][x]
-        return ord(cell[0]), cell[1], cell[2], cell[3]
+        cell = self._buffer.get(x, y)
+        return cell[0], cell[1], cell[2], cell[3]
 
     def print_at(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
         """
@@ -441,14 +523,19 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
 
                 # Now handle the update.
                 if c != " " or not transparent:
-                    # Make sure that we populate the second character correctly for double-width
-                    # glyphs.  This ensures that if the glyph gets overwritten with a normal width
-                    # it will clear both cells in the refresh.
-                    self._double_buffer[y][x + i + j] = (str(c), colour, attr, bg, width)
-                    if self._double_buffer[y][x + i + j][4] == 2:
+                    # Fix up orphaned double-width glyphs that we've just bisected.
+                    if x + i + j - 1 >= 0 and self._buffer.get(x + i + j - 1, y)[4] == 2:
+                        self._buffer.set(x + i + j - 1, y, (ord("x"), 0, 0, 0, 1))
+
+                    self._buffer.set(x + i + j, y, (ord(c), colour, attr, bg, width))
+                    if width == 2:
                         j += 1
                         if x + i + j < self.width:
-                            self._double_buffer[y][x + i + j] = (str(c), colour, attr, bg, 0)
+                            self._buffer.set(x + i + j, y, (ord(c), colour, attr, bg, 0))
+
+                    # Now fix up any glyphs we may have bisected the other way.
+                    if x + i + j + 1 < self.width and self._buffer.get(x + i + j + 1, y)[4] == 0:
+                        self._buffer.set(x + i + j + 1, y, (ord("x"), 0, 0, 0, 1))
 
     @property
     def start_line(self):
@@ -607,11 +694,10 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                 if y + j >= self._buffer_height or y + j < 0:
                     continue
 
-                old = self._double_buffer[y + j][x + i]
+                old = self._buffer.get(x + i, y + j)
                 new_bg = self._blend(bg, old[3], blend)
                 new_fg = self._blend(fg, old[1], blend)
-                self._double_buffer[y + j][x + i] = \
-                    (old[0], new_fg, old[2], new_bg, old[4])
+                self._buffer.set(x + i, y + j, (old[0], new_fg, old[2], new_bg, old[4]))
 
     def is_visible(self, x, y):
         """
@@ -902,9 +988,9 @@ class Canvas(_AbstractCanvas):
         """
         for y in range(self.height):
             for x in range(self.width):
-                c = self._double_buffer[y + self._start_line][x]
+                c = self._buffer.get(x, y + self._start_line)
                 if c[4] != 0:
-                    self._screen.print_at(c[0], x + self._dx, y + self._dy, c[1], c[2], c[3])
+                    self._screen.print_at(chr(c[0]), x + self._dx, y + self._dy, c[1], c[2], c[3])
 
     def _reset(self):
         # Nothing needed for a Canvas
@@ -1192,38 +1278,21 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         # Scroll the screen as required to minimize redrawing.
         if self._last_start_line != self._start_line:
             self._scroll(self._start_line - self._last_start_line)
+            if self._start_line > self._last_start_line:
+                self._buffer.invalidate(self._last_start_line + self.height, self._start_line + self.height)
+            else:
+                self._buffer.invalidate(self._start_line, self._last_start_line)
             self._last_start_line = self._start_line
 
         # Now draw any deltas to the scrolled screen.  Note that CJK character sets sometimes
         # use double-width characters, so don't try to draw the next character if we hit one.
-        for y in range(min(self.height, self._buffer_height)):
-            skip_next = False
-            for x in range(self.width):
-                old_cell = self._screen_buffer[y + self._start_line][x]
-                new_cell = self._double_buffer[y + self._start_line][x]
+        for y, x in self._buffer.deltas(self._last_start_line, self.height):
+            new_cell = self._buffer.get(x, y)
+            self._change_colours(new_cell[1], new_cell[2], new_cell[3])
+            self._print_at(chr(new_cell[0]), x, y - self._last_start_line, new_cell[4])
 
-                if skip_next:
-                    skip_next = False
-                else:
-                    # Check for orphaned half-characters from dual width glyphs (which occurs when
-                    # a new glyph is drawn over the top of part of such a glpyh).
-                    if (new_cell[4] == 0 or
-                            (new_cell[4] == 2 and x < self.width - 1 and
-                             self._double_buffer[y + self._start_line][x + 1][4] == 2)):
-                        # Need to fix up double-buffer now.  Screen buffer will be handled later
-                        new_cell = ("x", new_cell[1], new_cell[2], new_cell[3], 1)
-                        self._double_buffer[y + self._start_line][x] = new_cell
-
-                    # Now check for any required updates.
-                    if old_cell != new_cell:
-                        self._change_colours(new_cell[1], new_cell[2], new_cell[3])
-                        self._print_at(new_cell[0], x, y, new_cell[4])
-
-                    # Skip the next character if the new cell was double-width.
-                    skip_next = new_cell[4] == 2
-
-                # Finally update the screen buffer to reflect reality.
-                self._screen_buffer[y + self._start_line][x] = new_cell
+        # Resynch for next refresh.
+        self._buffer.sync()
 
     def clear(self):
         """
@@ -1320,11 +1389,12 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 raise NextScene()
 
     def play(self, scenes, stop_on_resize=False, unhandled_input=None,
-             start_scene=None, repeat=True):
+             start_scene=None, repeat=True, allow_int=False):
         """
-        Play a set of scenes.  This is effectively a helper function to wrap
-        :py:meth:`.set_scenes` and :py:meth:`.draw_next_frame` to simplify
-        animation for most applications.
+        Play a set of scenes.
+
+        This is effectively a helper function to wrap :py:meth:`.set_scenes` and
+        :py:meth:`.draw_next_frame` to simplify animation for most applications.
 
         :param scenes: a list of :py:obj:`.Scene` objects to play.
         :param stop_on_resize: Whether to stop when the screen is resized.
@@ -1337,6 +1407,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             that matches the name of one of the Scenes passed in.
         :param repeat: Whether to repeat the Scenes once it has reached the end.
             Defaults to True.
+        :param allow_int: Allow input to interrupt frame rate delay.
 
         :raises ResizeScreenError: if the screen is resized (and allowed by
             stop_on_resize).
@@ -1360,7 +1431,10 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                                                 self._scenes[self._scene_index])
                 b = time.time()
                 if b - a < 0.05:
-                    time.sleep(a + 0.05 - b)
+                    if allow_int:
+                        self._wait_for_input(a + 0.05 - b)
+                    else:
+                        time.sleep(a + 0.05 - b)
         except StopApplication:
             # Time to stop  - just exit the function.
             return
@@ -1519,6 +1593,14 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         :param colour: New colour to use.
         :param attr: New attributes to use.
         :param bg: New background colour to use.
+        """
+
+    @abstractmethod
+    def _wait_for_input(self, timeout):
+        """
+        Wait until there is some input or the timeout is hit.
+
+        :param timeout: Time to wait for input in seconds (floating point).
         """
 
     @abstractmethod
@@ -1886,6 +1968,15 @@ if sys.platform == "win32":
             except pywintypes.error:
                 pass
 
+        def _wait_for_input(self, timeout):
+            """
+            Wait until there is some input or the timeout is hit.
+
+            :param timeout: Time to wait for input in seconds (floating point).
+            """
+            # TODO: Fix up for Windows
+            time.sleep(timeout)
+
         def _scroll(self, lines):
             """
             Scroll the window up or down.
@@ -1928,6 +2019,7 @@ if sys.platform == "win32":
 else:
     # UNIX compatible platform - use curses
     import curses
+    import select
     import termios
 
     class _CursesScreen(Screen):
@@ -2278,6 +2370,18 @@ else:
             # Update cursor position for next time...
             self._cur_x = x + width
             self._cur_y = y
+
+        def _wait_for_input(self, timeout):
+            """
+            Wait until there is some input or the timeout is hit.
+
+            :param timeout: Time to wait for input in seconds (floating point).
+            """
+            try:
+                select.select([sys.stdin], [], [], timeout)
+            except select.error:
+                # Any error will almost certainly result in a a Screen.  Ignore.
+                pass
 
         def set_title(self, title):
             """

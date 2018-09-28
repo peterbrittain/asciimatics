@@ -846,13 +846,13 @@ class TestScreen(unittest.TestCase):
         for char in ["?", "`", "\x7f"]:
             self.assertIsNone(Screen.ctrl(char))
 
-    def assert_line_equals(self, canvas, expected, length=None):
+    def assert_line_equals(self, canvas, expected, y=0, length=None):
         """
         Assert first line of output to canvas is as expected.
         """
         output = ""
         for x in range(canvas.width):
-            char, _, _, _ = canvas.get_from(x, 0)
+            char, _, _, _ = canvas.get_from(x, y)
             output += chr(char)
         if length:
             self.assertEqual(output[:length], expected[:length])
@@ -884,14 +884,18 @@ class TestScreen(unittest.TestCase):
         Check that CJK languages delete half-glyphs correctly.
         """
         screen = Screen.open(unicode_aware=True)
-        screen.print_at("你確", 0, 0)
+        screen.print_at("aaaa", 0, 0)
+        screen.print_at("你確", 0, 1)
+        screen.print_at("bbbb", 0, 2)
         screen.refresh()
-        screen.print_at("你確", 1, 0)
+        screen.print_at("cccc", 0, 0)
+        screen.print_at("你確", 1, 1)
+        screen.print_at("dddd", 0, 2)
         screen.refresh()
 
         # Half-glyph appears as an "x" to show error and then double-width glyphs are returned
         # twice, reflecting their extra width.
-        self.assert_line_equals(screen, u"x你你確確 ", 6)
+        self.assert_line_equals(screen, u"x你你確確 ", y=1, length=6)
 
     def test_save_signal_state(self):
         """Tests that the signal state class works properly.

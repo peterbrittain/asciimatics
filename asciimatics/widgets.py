@@ -446,10 +446,7 @@ class Frame(Effect):
         # It's orders of magnitude faster to reset with a print like this
         # instead of recreating the screen buffers.
         (colour, attr, bg) = self.palette["background"]
-        # TODO: Fix internal use of buffer height - wait for v2.0
-        for y in range(self._canvas._buffer_height):
-            self._canvas.print_at(
-                " " * self._canvas.width, 0, y, colour, attr, bg)
+        self._canvas.clear_buffer(colour, attr, bg)
 
     def _update(self, frame_no):
         # TODO: Should really be in a separate Desktop Manager class - wait for v2.0
@@ -2221,9 +2218,10 @@ class TextBox(Widget):
                 return event
 
             # If we got here we might have changed the value...
-            self._reflowed_text_cache = None
-            if old_value != self._value and self._on_change:
-                self._on_change()
+            if old_value != self._value:
+                self._reflowed_text_cache = None
+                if self._on_change:
+                    self._on_change()
 
         elif isinstance(event, MouseEvent):
             # Mouse event - rebase coordinates to Frame context.
