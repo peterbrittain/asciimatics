@@ -1,6 +1,11 @@
 CHANGE HISTORY
 ==============
 
+LATEST
+------
+- Added `allow_int` parameter to `Screen.play()`
+- Improved performance of double-buffering.
+
 1.10.0
 ------
 - Added 'Frame.focussed_widget' to access current focussed widget of the frame.

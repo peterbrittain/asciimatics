@@ -192,7 +192,7 @@ def demo(screen, scene):
     screen.play([Scene([
         Background(screen),
         DemoFrame(screen)
-    ], -1)], stop_on_resize=True, start_scene=scene)
+    ], -1)], stop_on_resize=True, start_scene=scene, allow_int=True)
 
 
 last_scene = None

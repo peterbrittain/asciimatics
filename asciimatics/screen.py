@@ -1641,6 +1641,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
 if sys.platform == "win32":
     import win32con
     import win32console
+    import win32event
     import win32file
     import pywintypes
 
@@ -1974,8 +1975,9 @@ if sys.platform == "win32":
 
             :param timeout: Time to wait for input in seconds (floating point).
             """
-            # TODO: Fix up for Windows
-            time.sleep(timeout)
+            rc = win32event.WaitForSingleObject(self._stdin, timeout * 1000)
+            if rc not in [0, 258]:
+                raise RuntimeError(rc)
 
         def _scroll(self, lines):
             """

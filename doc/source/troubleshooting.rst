@@ -219,18 +219,13 @@ It's too slow!
 --------------
 When people say this, they either mean that asciimatics is using too much CPU, or that it is
 unresponsive in some scenario.  Either way, the solution is to reduce the work being done
-behind the scenes for your application.  To understand how to do this, you will need a little
-background first...
-
-Asciimatics is designed to run on any platform and so cannot rely on the C runtimes for Linux
-to achieve the same performance as some other packages do.  Instead you will need to rely on
-platform agnostic ways of achieving better performance.  At a high-level you have 3 options.
+behind the scenes for your application.  At a high-level you have 3 options.
 
 1. Switch off any animations you don't need.
 2. Move to a more responsive input loop.
 3. Use a faster implementation of the underlying infrastructure.
 
-Right!  you have the background - lets look at these options in more detail...
+Lets look at these options in more detail...
 
 Switch off animations
 ^^^^^^^^^^^^^^^^^^^^^
@@ -242,16 +237,19 @@ can do this by setting ``reduce_cpu=True`` when constructing your ``Frame``.
 
 Input responsiveness
 ^^^^^^^^^^^^^^^^^^^^
-First things first, you should make sure that you're running at least version 1.11.
+First things first, you should make sure that you're running at least version 1.11.  Once you
+have that installed, you can use the ``allow_int`` option in :py:meth:`.play` to permit mouse
+and keyboard input to interrupt the normal frame refresh rate.
 
-
-@@@ Some stuff about a new flag to use select()?
+This should prevent users from seeing any delay in refreshes when they press a key.  However
+there is a downside to this option - it will slightly mess up the timings for any animations,
+so it is only recommended to use it in TUI applications.
 
 Use faster infrastructure
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 Asciimatics needs to do a lot of array manipulation in order to provide equivalent features to
 ncurses.  In v1.11, I benchmarked various options and optimized the buffering to use the fastest
-version.  If you haven't already moved to that version (or later), please do that first.
+version.  If you haven't already moved to that version (or later), please do that now.
 
 From here you have the usual options to speed up such calculations further.
 
