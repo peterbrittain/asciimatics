@@ -117,13 +117,14 @@ class DemoFrame(Frame):
         if (event is not None and isinstance(event, MouseEvent) and
                 event.buttons == MouseEvent.DOUBLE_CLICK):
             # By processing the double-click before Frame handling, we have absolute coordinates.
-            self._scene.add_effect(
-                PopupMenu(self._screen,
-                          [("Green", self._set_green),
-                           ("Monochrome", self._set_mono),
-                           ("Bright", self._set_bright),
-                           ("Red/white", self._set_tlj)],
-                          event.x, event.y))
+            options = [
+                ("Green", self._set_green),
+                ("Monochrome", self._set_mono),
+                ("Bright", self._set_bright),
+            ]
+            if self.screen.colours >= 256:
+                options.append(("Red/white", self._set_tlj))
+            self._scene.add_effect(PopupMenu(self.screen, options, event.x, event.y))
             event = None
 
         # Pass any other event on to the Frame and contained widgets.
