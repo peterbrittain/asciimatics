@@ -8,7 +8,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from inspect import isfunction
 import re
 import os
@@ -2835,10 +2835,20 @@ class FileBrowser(MultiColumnListBox):
 
         tree_dirs = []
         tree_files = []
-        files = os.listdir(self._root)
+        try:
+            files = os.listdir(self._root)
+        except PermissionError:
+            # Can fail on Windows due to access permissions
+            files = []
         for my_file in files:
             full_path = os.path.join(self._root, my_file)
-            details = os.lstat(full_path)
+            try:
+                details = os.lstat(full_path)
+            except PermissionError:
+                # Can happen on Windows due to access permissions
+                details = namedtuple("stat_type", "st_size st_mtime")
+                details.st_size = 0
+                details.st_mtime = 0
             name = "|-- {}".format(my_file)
             tree = tree_files
             if os.path.isdir(full_path):
