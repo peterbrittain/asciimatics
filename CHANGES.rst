@@ -3,8 +3,10 @@ CHANGE HISTORY
 
 LATEST
 ------
-- Added `allow_int` parameter to `Screen.play()`
+- Added `allow_int` parameter to `Screen.play()`.
+- Added support for page up/down in `TextBox`.
 - Improved performance of double-buffering.
+- Improved handling of permission errors in `FileBrowser`.
 
 1.10.0
 ------

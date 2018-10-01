@@ -2139,6 +2139,19 @@ class TextBox(Widget):
         self._column = len(self._value[self._line])
         self._reflowed_text_cache = None
 
+    def _change_line(self, delta):
+        """
+        Move the cursor up/down the specified number of lines.
+
+        :param delta: The number of lines to move (-ve is up, +ve is down).
+        """
+        # Ensure new line is within limits
+        self._line = min(max(0, self._line + delta), len(self._value) - 1)
+
+        # Fix up column if the new line is shorter than before.
+        if self._column >= len(self._value[self._line]):
+            self._column = len(self._value[self._line])
+
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
             old_value = copy(self._value)
@@ -2173,16 +2186,14 @@ class TextBox(Widget):
                         # Join this line with next
                         self._value[self._line] += \
                             self._value.pop(self._line + 1)
+            elif event.key_code == Screen.KEY_PAGE_UP:
+                self._change_line(-self._h)
+            elif event.key_code == Screen.KEY_PAGE_DOWN:
+                self._change_line(self._h)
             elif event.key_code == Screen.KEY_UP:
-                # Move up one line in text
-                self._line = max(0, self._line - 1)
-                if self._column >= len(self._value[self._line]):
-                    self._column = len(self._value[self._line])
+                self._change_line(-1)
             elif event.key_code == Screen.KEY_DOWN:
-                # Move down one line in text
-                self._line = min(len(self._value) - 1, self._line + 1)
-                if self._column >= len(self._value[self._line]):
-                    self._column = len(self._value[self._line])
+                self._change_line(1)
             elif event.key_code == Screen.KEY_LEFT:
                 # Move left one char, wrapping to previous line if needed.
                 self._column -= 1

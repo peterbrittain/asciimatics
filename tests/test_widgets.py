@@ -533,6 +533,14 @@ class TestWidgets(unittest.TestCase):
         form.save()
         self.assertEqual(form.data["TA"], ["ABDICEMNFGHJ"])
 
+        # Check that page up/down work as expected.
+        self.process_keys(form,  [Screen.ctrl("m"), Screen.ctrl("m"), Screen.KEY_PAGE_UP, "O"])
+        form.save()
+        self.assertEqual(form.data["TA"], ["OABDICEMNFGHJ", "", ""])
+        self.process_keys(form,  [Screen.KEY_PAGE_DOWN, "P"])
+        form.save()
+        self.assertEqual(form.data["TA"], ["OABDICEMNFGHJ", "", "P"])
+
         # Check that the current focus ignores unknown events.
         event = object()
         self.assertEqual(event, form.process_event(event))
@@ -1638,7 +1646,7 @@ class TestWidgets(unittest.TestCase):
 
         # Check that enter key handles correctly on directories.
         self.process_keys(form, [Screen.ctrl("m")])
-        self.assertEqual(form.highlighted, "/A Directory/..")
+        self.assertEqual(form.highlighted, "/")
         self.assertIsNone(form.selected)
         form.update(1)
         self.assert_canvas_equals(
