@@ -72,6 +72,7 @@ class ListView(Frame):
                                        screen.width * 2 // 3,
                                        on_load=self._reload_list,
                                        hover_focus=True,
+                                       can_scroll=False,
                                        title="Contact List")
         # Save off the model that accesses the contacts database.
         self._model = model
@@ -81,6 +82,7 @@ class ListView(Frame):
             Widget.FILL_FRAME,
             model.get_summary(),
             name="contacts",
+            add_scroll_bar=True,
             on_change=self._on_pick)
         self._edit_button = Button("Edit", self._edit)
         self._delete_button = Button("Delete", self._delete)
@@ -130,6 +132,7 @@ class ContactView(Frame):
                                           screen.height * 2 // 3,
                                           screen.width * 2 // 3,
                                           hover_focus=True,
+                                          can_scroll=False,
                                           title="Contact Details",
                                           reduce_cpu=True)
         # Save off the model that accesses the contacts database.
