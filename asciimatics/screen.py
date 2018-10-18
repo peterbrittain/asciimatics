@@ -23,7 +23,7 @@ from builtins import range
 from builtins import ord
 from builtins import chr
 from future.utils import with_metaclass
-from itertools import izip_longest
+from future.moves.itertools import zip_longest
 from wcwidth import wcwidth, wcswidth
 
 from asciimatics.event import KeyboardEvent, MouseEvent
@@ -614,7 +614,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
             self.print_at(text, x, y, colour, attr, bg, transparent)
         else:
             offset = 0
-            for i, (c, m) in enumerate(izip_longest(text, colour_map)):
+            for i, (c, m) in enumerate(zip_longest(text, colour_map)):
                 if m:
                     if len(m) > 0 and m[0] is not None:
                         colour = m[0]
