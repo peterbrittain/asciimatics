@@ -101,12 +101,19 @@ def _enforce_width(text, width, unicode_aware=True):
     :param width: The screen cell width to enforce
     :return: The resulting truncated text
     """
-    size = 0
+    # Double-width strings cannot be more than twice the string length, so no need to try
+    # expensive truncation if this upper bound isn't an issue.
+    if 2 * len(text) < width:
+        return text
+
+    # Can still optimize performance if we are not handling unicode characters.
     if unicode_aware:
+        size = 0
         for i, c in enumerate(text):
-            if size + wcwidth(c) > width:
+            w = wcwidth(c) if ord(c) >= 256 else 1
+            if size + w > width:
                 return text[0:i]
-            size += wcwidth(c)
+            size += w
     elif len(text) + 1 > width:
         return text[0:width]
     return text
@@ -123,6 +130,11 @@ def _find_min_start(text, max_width, unicode_aware=True, at_end=False):
 
     :return: The offset within `text` to start at to reduce it to the required length.
     """
+    # Is the solution trivial?  Worth optimizing for text heavy UIs...
+    if 2*len(text) < max_width:
+        return 0
+
+    # OK - do it the hard way...
     result = 0
     string_len = wcswidth if unicode_aware else len
     char_len = wcwidth if unicode_aware else lambda x: 1

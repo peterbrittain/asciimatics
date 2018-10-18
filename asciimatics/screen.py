@@ -23,6 +23,7 @@ from builtins import range
 from builtins import ord
 from builtins import chr
 from future.utils import with_metaclass
+from itertools import izip_longest
 from wcwidth import wcwidth, wcswidth
 
 from asciimatics.event import KeyboardEvent, MouseEvent
@@ -514,7 +515,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                 #
                 # Note that wcwidth uses significant resources, so only call when we have a
                 # unicode aware application.  The rest of the time assume ASCII.
-                width = wcwidth(c) if self._unicode_aware else 1
+                width = wcwidth(c) if self._unicode_aware and ord(c) >= 256 else 1
                 if x + i + j < 0:
                     x += (width - 1)
                     continue
@@ -613,15 +614,17 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
             self.print_at(text, x, y, colour, attr, bg, transparent)
         else:
             offset = 0
-            for i, c in enumerate(text):
-                if len(colour_map[i]) > 0 and colour_map[i][0] is not None:
-                    colour = colour_map[i][0]
-                if len(colour_map[i]) > 1 and colour_map[i][1] is not None:
-                    attr = colour_map[i][1]
-                if len(colour_map[i]) > 2 and colour_map[i][2] is not None:
-                    bg = colour_map[i][2]
-                self.print_at(c, x + offset, y, colour, attr, bg, transparent)
-                offset += wcwidth(c)
+            for i, (c, m) in enumerate(izip_longest(text, colour_map)):
+                if m:
+                    if len(m) > 0 and m[0] is not None:
+                        colour = m[0]
+                    if len(m) > 1 and m[1] is not None:
+                        attr = m[1]
+                    if len(m) > 2 and m[2] is not None:
+                        bg = m[2]
+                if c:
+                    self.print_at(c, x + offset, y, colour, attr, bg, transparent)
+                    offset += wcwidth(c) if ord(c) >= 256 else 1
 
     def _blend(self, new, old, ratio):
         """
