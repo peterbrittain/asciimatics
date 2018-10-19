@@ -7,7 +7,7 @@
     :target: https://ci.appveyor.com/project/peterbrittain/asciimatics
     :alt: Windows build status
 
-.. image:: https://api.codacy.com/project/badge/Grade/b79f9a63d15141f3ae5fe8d4eae78874
+.. image:: https://api.codacy.com/project/badge/Grade/486232c340c644b9a676a66da946970d
    :target: https://app.codacy.com/project/pab/asciimatics/dashboard
    :alt: Code Health
 
