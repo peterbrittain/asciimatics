@@ -2442,6 +2442,39 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         # If we got here, we processed the event - swallow it.
         return None
 
+    def _add_or_remove_scrollbar(self, width, height, dy):
+        """
+        Add or remove a scrollbar from this listbox based on height and available options.
+
+        :param width: Width of the Listbox
+        :param height: Height of the Listbox.
+        :param dy: Vertical offset from top of widget.
+        """
+        if self._scroll_bar is None and len(self._options) > height:
+            self._scroll_bar = _ScrollBar(
+                self._frame.canvas, self._frame.palette, self._x + width - 1, self._y + dy,
+                height, self._get_pos, self._set_pos)
+        elif self._scroll_bar is not None and len(self._options) <= height:
+            self._scroll_bar = None
+
+    def _get_pos(self):
+        """
+        Get current position for scroll bar.
+        """
+        if self._h >= len(self._options):
+            return 0
+        else:
+            return self._start_line / (len(self._options) - self._h)
+
+    def _set_pos(self, pos):
+        """
+        Set current position for scroll bar.
+        """
+        if self._h < len(self._options):
+            pos *= len(self._options) - self._h
+            pos = int(round(max(0, pos), 0))
+            self._start_line = pos
+
     @abstractmethod
     def _find_option(self, search_value):
         """
@@ -2561,12 +2594,9 @@ class ListBox(_BaseListBox):
         if len(self._options) <= 0:
             return
 
-        # Decide whether we need to show or hide the scroll bar.
-        # TODO: Move this to base package when supported in multicolumnlistbox too.
-        if self._add_scroll_bar and self._scroll_bar is None:
-            self._scroll_bar = _ScrollBar(
-                self._frame.canvas, self._frame.palette, self._x + width - 1, self._y,
-                height, self._get_pos, self._set_pos)
+        # Decide whether we need to show or hide the scroll bar and adjust width accordingly.
+        if self._add_scroll_bar:
+            self._add_or_remove_scrollbar(width, height, 0)
         if self._scroll_bar:
             width -= 1
 
@@ -2602,24 +2632,6 @@ class ListBox(_BaseListBox):
                 return value
         return None
 
-    def _get_pos(self):
-        """
-        Get current position for scroll bar.
-        """
-        if self._h >= len(self._options):
-            return 0
-        else:
-            return self._start_line / (len(self._options) - self._h)
-
-    def _set_pos(self, pos):
-        """
-        Set current position for scroll bar.
-        """
-        if self._h < len(self._options):
-            pos *= len(self._options) - self._h
-            pos = int(round(max(0, pos), 0))
-            self._start_line = pos
-
 
 class MultiColumnListBox(_BaseListBox):
     """
@@ -2629,7 +2641,7 @@ class MultiColumnListBox(_BaseListBox):
     """
 
     def __init__(self, height, columns, options, titles=None, label=None,
-                 name=None, on_change=None, on_select=None):
+                 name=None, add_scroll_bar=False, on_change=None, on_select=None):
         """
         :param height: The required number of input lines for this ListBox.
         :param columns: A list of widths and alignments for each column.
@@ -2638,6 +2650,7 @@ class MultiColumnListBox(_BaseListBox):
             `columns`.
         :param label: An optional label for the widget.
         :param name: The name for the ListBox.
+        :param add_scroll_bar: Whether to add optional scrollbar for large lists.
         :param on_change: Optional function to call when selection changes.
         :param on_select: Optional function to call when the user actually selects an entry from
 
@@ -2674,6 +2687,7 @@ class MultiColumnListBox(_BaseListBox):
         self._columns = []
         self._align = []
         self._spacing = []
+        self._add_scroll_bar = add_scroll_bar
         for i, column in enumerate(columns):
             if isinstance(column, int):
                 self._columns.append(column)
@@ -2686,18 +2700,19 @@ class MultiColumnListBox(_BaseListBox):
             self._spacing.append(1 if i > 0 and self._align[i] == "<" and
                                  self._align[i - 1] == ">" else 0)
 
-    def _get_width(self, width):
+    def _get_width(self, width, max_width):
         """
         Helper function to figure out the actual column width from the various options.
 
         :param width: The size of column requested
+        :param max_width: The maximum width allowed for this widget.
         :return: the integer width of the column in characters
         """
         if isinstance(width, float):
-            return int(self._w * width)
+            return int(max_width * width)
         if width == 0:
-            width = (self.width - sum(self._spacing) -
-                     sum([self._get_width(x) for x in self._columns if x != 0]))
+            width = (max_width - sum(self._spacing) -
+                     sum([self._get_width(x, max_width) for x in self._columns if x != 0]))
         return width
 
     def update(self, frame_no):
@@ -2705,13 +2720,14 @@ class MultiColumnListBox(_BaseListBox):
 
         # Calculate new visible limits if needed.
         height = self._h
+        width = self._w
         dx = dy = 0
 
         # Clear out the existing box content
         (colour, attr, bg) = self._frame.palette["field"]
         for i in range(height):
             self._frame.canvas.print_at(
-                " " * self.width,
+                " " * width,
                 self._x + self._offset + dx,
                 self._y + i + dy,
                 colour, attr, bg)
@@ -2720,20 +2736,29 @@ class MultiColumnListBox(_BaseListBox):
         if self._titles:
             dy += 1
             height -= 1
+
+        # Decide whether we need to show or hide the scroll bar and adjust width accordingly.
+        if self._add_scroll_bar:
+            self._add_or_remove_scrollbar(width, height, dy)
+        if self._scroll_bar:
+            width -= 1
+
+        # Now draw the titles if needed.
+        if self._titles:
             row_dx = 0
             colour, attr, bg = self._frame.palette["title"]
             for i, [title, align, space] in enumerate(
                     zip(self._titles, self._align, self._spacing)):
-                width = self._get_width(self._columns[i])
+                cell_width = self._get_width(self._columns[i], width)
                 self._frame.canvas.print_at(
                     "{}{:{}{}}".format(" " * space,
                                        _enforce_width(
-                                           title, width, self._frame.canvas.unicode_aware),
-                                       align, width),
+                                           title, cell_width, self._frame.canvas.unicode_aware),
+                                       align, cell_width),
                     self._x + self._offset + row_dx,
                     self._y,
                     colour, attr, bg)
-                row_dx += width + space
+                row_dx += cell_width + space
 
         # Don't bother with anything else if there are no options to render.
         if len(self._options) <= 0:
@@ -2748,22 +2773,26 @@ class MultiColumnListBox(_BaseListBox):
                 row_dx = 0
                 # Try to handle badly formatted data, where row lists don't
                 # match the expected number of columns.
-                for text, width, align, space in zip_longest(
+                for text, cell_width, align, space in zip_longest(
                         row, self._columns, self._align, self._spacing, fillvalue=""):
-                    if width == "":
+                    if cell_width == "":
                         break
-                    width = self._get_width(width)
-                    if len(text) > width:
-                        text = text[:width - 3] + "..."
+                    cell_width = self._get_width(cell_width, width)
+                    if len(text) > cell_width:
+                        text = text[:cell_width - 3] + "..."
                     self._frame.canvas.print_at(
                         "{}{:{}{}}".format(" " * space,
                                            _enforce_width(
-                                               text, width, self._frame.canvas.unicode_aware),
-                                           align, width),
+                                               text, cell_width, self._frame.canvas.unicode_aware),
+                                           align, cell_width),
                         self._x + self._offset + dx + row_dx,
                         self._y + i + dy - self._start_line,
                         colour, attr, bg)
-                    row_dx += width + space
+                    row_dx += cell_width + space
+
+        # And finally draw any scroll bar.
+        if self._scroll_bar:
+            self._scroll_bar.update()
 
     def _find_option(self, search_value):
         for row, value in self._options:

@@ -5,6 +5,7 @@ LATEST
 ------
 - Added `allow_int` parameter to `Screen.play()`.
 - Added support for page up/down in `TextBox`.
+- Added optional scroll bars to `MultiColumnListBox`.
 - Improved performance of double-buffering.
 - Improved handling of permission errors in `FileBrowser`.
 

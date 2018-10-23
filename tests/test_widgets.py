@@ -1081,6 +1081,50 @@ class TestWidgets(unittest.TestCase):
         event = object()
         self.assertEqual(event, form.process_event(event))
 
+    def test_multi_column_list_box_scrollbar(self):
+        """
+        Check MultiColumnListBox scrollbar works.
+        """
+        # Create a dummy screen.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        mc_list = MultiColumnListBox(
+            3,
+            [3, 0, ">4"],
+            [
+                (["1", "2", "3"], 1),
+                (["11", "222", "333"], 2),
+                (["111", "2", "3"], 3),
+            ],
+            titles=["A", "B", "C"],
+            add_scroll_bar=True,
+            name="mc_list")
+        form.add_layout(layout)
+        layout.add_widget(mc_list)
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that the widget is rendered correctly with the scrollbar
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "A  B                                  C \n" +
+            "1  2                                  3O\n" +
+            "11 222                              333|\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
     def test_disabled_text(self):
         """
         Check disabled TextBox can be used for pre-formatted output.
