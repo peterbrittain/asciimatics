@@ -131,7 +131,7 @@ def _find_min_start(text, max_width, unicode_aware=True, at_end=False):
     :return: The offset within `text` to start at to reduce it to the required length.
     """
     # Is the solution trivial?  Worth optimizing for text heavy UIs...
-    if 2*len(text) < max_width:
+    if 2 * len(text) < max_width:
         return 0
 
     # OK - do it the hard way...
@@ -2092,7 +2092,6 @@ class TextBox(Widget):
 
         # Calculate new visible limits if needed.
         height = self._h
-        dx = dy = 0
         if not self._line_wrap:
             self._start_column = min(self._start_column, self._column)
             self._start_column += _find_min_start(
@@ -2106,8 +2105,8 @@ class TextBox(Widget):
         for i in range(height):
             self._frame.canvas.print_at(
                 " " * self.width,
-                self._x + self._offset + dx,
-                self._y + i + dy,
+                self._x + self._offset,
+                self._y + i,
                 colour, attr, bg)
 
         # Convert value offset to display offsets
@@ -2130,8 +2129,8 @@ class TextBox(Widget):
                 self._frame.canvas.print_at(
                     _enforce_width(text[display_start_column:], self.width,
                                    self._frame.canvas.unicode_aware),
-                    self._x + self._offset + dx,
-                    self._y + line + dy - self._start_line,
+                    self._x + self._offset,
+                    self._y + line - self._start_line,
                     colour, attr, bg)
 
         # Since we switch off the standard cursor, we need to emulate our own
@@ -2142,8 +2141,8 @@ class TextBox(Widget):
             self._draw_cursor(
                 " " if display_column >= len(line) else line[display_column],
                 frame_no,
-                self._x + self._offset + dx + text_width,
-                self._y + display_line + dy - self._start_line)
+                self._x + self._offset + text_width,
+                self._y + display_line - self._start_line)
 
     def reset(self):
         # Reset to original data and move to end of the text.
@@ -2579,15 +2578,14 @@ class ListBox(_BaseListBox):
         # Prepare to calculate new visible limits if needed.
         height = self._h
         width = self._w
-        dx = dy = 0
 
         # Clear out the existing box content
         (colour, attr, bg) = self._frame.palette["field"]
         for i in range(height):
             self._frame.canvas.print_at(
                 " " * self.width,
-                self._x + self._offset + dx,
-                self._y + i + dy,
+                self._x + self._offset,
+                self._y + i,
                 colour, attr, bg)
 
         # Don't bother with anything else if there are no options to render.
@@ -2618,8 +2616,8 @@ class ListBox(_BaseListBox):
                 self._frame.canvas.print_at(
                     "{:{}}".format(
                         _enforce_width(text, width, self._frame.canvas.unicode_aware), width),
-                    self._x + self._offset + dx,
-                    self._y + y_offset + i + dy - start_line,
+                    self._x + self._offset,
+                    self._y + y_offset + i - start_line,
                     colour, attr, bg)
 
         # And finally draw any scroll bar.
@@ -2721,14 +2719,14 @@ class MultiColumnListBox(_BaseListBox):
         # Calculate new visible limits if needed.
         height = self._h
         width = self._w
-        dx = dy = 0
+        dy = 0
 
         # Clear out the existing box content
         (colour, attr, bg) = self._frame.palette["field"]
         for i in range(height):
             self._frame.canvas.print_at(
                 " " * width,
-                self._x + self._offset + dx,
+                self._x + self._offset,
                 self._y + i + dy,
                 colour, attr, bg)
 
@@ -2785,7 +2783,7 @@ class MultiColumnListBox(_BaseListBox):
                                            _enforce_width(
                                                text, cell_width, self._frame.canvas.unicode_aware),
                                            align, cell_width),
-                        self._x + self._offset + dx + row_dx,
+                        self._x + self._offset + row_dx,
                         self._y + i + dy - self._start_line,
                         colour, attr, bg)
                     row_dx += cell_width + space

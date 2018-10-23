@@ -41,6 +41,7 @@ class _DoubleBuffer(object):
     """
     Pure python Screen buffering.
     """
+
     def __init__(self, height, width):
         """
         :param height: Height of the buffer to create.
@@ -614,7 +615,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
             self.print_at(text, x, y, colour, attr, bg, transparent)
         else:
             offset = 0
-            for i, (c, m) in enumerate(zip_longest(text, colour_map)):
+            for c, m in zip_longest(text, colour_map):
                 if m:
                     if len(m) > 0 and m[0] is not None:
                         colour = m[0]
