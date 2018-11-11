@@ -100,13 +100,31 @@ class _DoubleBuffer(object):
                     if old_cell != new_cell:
                         yield y, x
 
-    def invalidate(self, y1, y2):
+    def scroll(self, lines):
         """
-        Invalidate the required lines for redisplay on the next call to deltas().
+        Scroll the window up or down.
+
+        :param lines: Number of lines to scroll.  Negative numbers move the buffer up.
         """
-        line = [(None, None, None, None, 1) for _ in range(self._width)]
-        for y in range(y1, y2):
-            self._screen_buffer[y] = line[:]
+        line = [(ord(u" "), Screen.COLOUR_WHITE, 0, 0, 1) for _ in range(self._width)]
+        if lines > 0:
+            # Limit to buffer size - this will just invalidate all the data
+            lines = min(lines, self._height)
+            for y in range(0, self._height - lines):
+                self._double_buffer[y] = self._double_buffer[y + lines]
+                self._screen_buffer[y] = self._screen_buffer[y + lines]
+            for y in range(self._height - lines, self._height):
+                self._double_buffer[y] = line[:]
+                self._screen_buffer[y] = line[:]
+        else:
+            # Limit to buffer size - this will just invalidate all the data
+            lines = max(lines, -self._height)
+            for y in range(0, -lines):
+                self._double_buffer[self._height + lines + y] = line[:]
+                self._screen_buffer[y] = line[:]
+            for y in range(self._height - 1, -lines, -1):
+                self._double_buffer[y] = self._double_buffer[y + lines]
+                self._screen_buffer[y] = self._screen_buffer[y + lines]
 
     def sync(self):
         """
@@ -415,7 +433,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         self.height = height
         self.width = width
         self.colours = colours
-        self._buffer_height = buffer_height
+        self._buffer_height = height if buffer_height is None else buffer_height
         self._buffer = None
         self._start_line = 0
         self._x = 0
@@ -451,6 +469,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         """
         Scroll the abstract canvas up one line.
         """
+        self._buffer.scroll(1)
         self._start_line += 1
 
     def scroll_to(self, line):
@@ -459,6 +478,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
 
         :param line: The line to scroll to.
         """
+        self._buffer.scroll(line - self._start_line)
         self._start_line = line
 
     @abstractmethod
@@ -483,6 +503,8 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         :return: A 4-tuple of (ascii code, foreground, attributes, background)
                  for the character at the location.
         """
+        # Convert to buffer coordinates
+        y -= self._start_line
         if y < 0 or y >= self._buffer_height or x < 0 or x >= self.width:
             return None
         cell = self._buffer.get(x, y)
@@ -504,6 +526,9 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         The colours and attributes are the COLOUR_xxx and A_yyy constants
         defined in the Screen class.
         """
+        # Convert to the logically visible window that our double-buffer provides
+        y -= self._start_line
+
         # Trim text to the buffer vertically.  Don't trim horizontally as we don't know whether any
         # of these characters are dual-width yet.  Handle it on the fly below...
         if y < 0 or y >= self._buffer_height or x > self.width:
@@ -690,6 +715,8 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         defined in the Screen class.  If fg or bg are None that means don't
         change the foreground/background as appropriate.
         """
+        # Convert to buffer coordinates
+        y -= self._start_line
         for i in range(w):
             if x + i >= self.width or x + i < 0:
                 continue
@@ -979,9 +1006,8 @@ class Canvas(_AbstractCanvas):
         to centring within the current Screen for that location.
         """
         # Save off the screen details.
-        # TODO: Fix up buffer logic once and for all - wait for v2.0
         super(Canvas, self).__init__(
-            height, width, 200, screen.colours, screen.unicode_aware)
+            height, width, None, screen.colours, screen.unicode_aware)
         self._screen = screen
         self._dx = (screen.width - width) // 2 if x is None else x
         self._dy = (screen.height - height) // 2 if y is None else y
@@ -992,7 +1018,7 @@ class Canvas(_AbstractCanvas):
         """
         for y in range(self.height):
             for x in range(self.width):
-                c = self._buffer.get(x, y + self._start_line)
+                c = self._buffer.get(x, y)
                 if c[4] != 0:
                     self._screen.print_at(chr(c[0]), x + self._dx, y + self._dy, c[1], c[2], c[3])
 
@@ -1135,13 +1161,13 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         self._unhandled_input = self._unhandled_event_default
 
     @classmethod
-    def open(cls, height=200, catch_interrupt=False, unicode_aware=None):
+    def open(cls, height=None, catch_interrupt=False, unicode_aware=None):
         """
         Construct a new Screen for any platform.  This will just create the
         correct Screen object for your environment.  See :py:meth:`.wrapper` for
         a function to create and tidy up once you've finished with the Screen.
 
-        :param height: The buffer height for this window (if using scrolling).
+        :param height: The buffer height for this window (for testing only).
         :param catch_interrupt: Whether to catch and prevent keyboard
             interrupts.  Defaults to False to maintain backwards compatibility.
         :param unicode_aware: Whether the application can use unicode or not.
@@ -1232,7 +1258,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         """
 
     @classmethod
-    def wrapper(cls, func, height=200, catch_interrupt=False, arguments=None,
+    def wrapper(cls, func, height=None, catch_interrupt=False, arguments=None,
                 unicode_aware=None):
         """
         Construct a new Screen for any platform.  This will initialize the
@@ -1240,7 +1266,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         required when the function exits.
 
         :param func: The function to call once the Screen has been created.
-        :param height: The buffer height for this Screen (if using scrolling).
+        :param height: The buffer height for this Screen (only for test purposes).
         :param catch_interrupt: Whether to catch and prevent keyboard
             interrupts.  Defaults to False to maintain backwards compatibility.
         :param arguments: Optional arguments list to pass to func (after the
@@ -1279,21 +1305,17 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         """
         Refresh the screen.
         """
-        # Scroll the screen as required to minimize redrawing.
+        # Scroll the screen now - we've already sorted the double-buffer to reflect this change.
         if self._last_start_line != self._start_line:
             self._scroll(self._start_line - self._last_start_line)
-            if self._start_line > self._last_start_line:
-                self._buffer.invalidate(self._last_start_line + self.height, self._start_line + self.height)
-            else:
-                self._buffer.invalidate(self._start_line, self._last_start_line)
             self._last_start_line = self._start_line
 
         # Now draw any deltas to the scrolled screen.  Note that CJK character sets sometimes
         # use double-width characters, so don't try to draw the next character if we hit one.
-        for y, x in self._buffer.deltas(self._last_start_line, self.height):
+        for y, x in self._buffer.deltas(0, self.height):
             new_cell = self._buffer.get(x, y)
             self._change_colours(new_cell[1], new_cell[2], new_cell[3])
-            self._print_at(chr(new_cell[0]), x, y - self._last_start_line, new_cell[4])
+            self._print_at(chr(new_cell[0]), x, y, new_cell[4])
 
         # Resynch for next refresh.
         self._buffer.sync()
@@ -1768,16 +1790,12 @@ if sys.platform == "win32":
         def __init__(self, stdout, stdin, buffer_height, old_out, old_in,
                      unicode_aware=False):
             """
-            :param stdout: The win32console PyConsoleScreenBufferType object for
-                stdout.
-            :param stdin: The win32console PyConsoleScreenBufferType object for
-                stdin.
-            :param buffer_height: The buffer height for this window (if using
-                scrolling).
-            :param old_out: The original win32console PyConsoleScreenBufferType
-                object for stdout that should be restored on exit.
-            :param old_in: The original stdin state that should be restored on
-                exit.
+            :param stdout: The win32console PyConsoleScreenBufferType object for stdout.
+            :param stdin: The win32console PyConsoleScreenBufferType object for stdin.
+            :param buffer_height: The buffer height for this window (for testing only).
+            :param old_out: The original win32console PyConsoleScreenBufferType object for stdout
+                that should be restored on exit.
+            :param old_in: The original stdin state that should be restored on exit.
             :param unicode_aware: Whether this Screen can use unicode or not.
             """
             # Save off the screen details and set up the scrolling pad.
@@ -2081,12 +2099,11 @@ else:
             # there's no translation for them either.
         }
 
-        def __init__(self, win, height=200, catch_interrupt=False,
+        def __init__(self, win, height=None, catch_interrupt=False,
                      unicode_aware=False):
             """
-            :param win: The window object as returned by the curses wrapper
-                method.
-            :param height: The height of the screen buffer to be used.
+            :param win: The window object as returned by the curses wrapper method.
+            :param height: The height of the screen buffer to be used (for teesting only).
             :param catch_interrupt: Whether to catch SIGINT or not.
             :param unicode_aware: Whether this Screen can use unicode or not.
             """

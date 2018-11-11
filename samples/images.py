@@ -34,6 +34,7 @@ def demo(screen):
               ColourImageFile(screen, "grumpy_cat.jpg", screen.height,
                               uni=screen.unicode_aware),
               screen.height,
+              speed=1,
               stop_frame=(40+screen.height)*3),
         Scroll(screen, 3)
     ]

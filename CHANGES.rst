@@ -7,6 +7,10 @@ LATEST
 - Added support for page up/down in `TextBox`.
 - Added optional scroll bars to `MultiColumnListBox`.
 - Improved performance of double-buffering.
+
+  - NOTE: Drawing off-screen with a large scrolling buffer is no longer supported (as it wasn't
+    needed).
+
 - Improved handling of permission errors in `FileBrowser`.
 
 1.10.0
@@ -31,7 +35,8 @@ LATEST
 - Fixed bug where `Listbox.reset()` overrode current selected value.
 - Fixed handling of decomposed unicode file names in `FileBrowser` for MacOS
 - Fixed CJK issues with `Screen.paint()` and `SpeechBubble`.
-- Fixed issue with dynamically added Frames so that they are reset before displayed for the first time.
+- Fixed issue with dynamically added Frames so that they are reset before displayed for the first
+  time.
 
 1.9.0
 -----

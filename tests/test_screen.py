@@ -622,17 +622,14 @@ class TestScreen(unittest.TestCase):
 
             # Scroll and check it has not moved
             screen.print_at("Hello", 0, 1)
+            for i, c in enumerate("Hello"):
+                self.assertEqual(screen.get_from(i, 1)[0], ord(c))
             screen.scroll()
+            for i, c in enumerate("Hello"):
+                self.assertEqual(screen.get_from(i, 1)[0], ord(c))
             screen.refresh()
             for i, c in enumerate("Hello"):
                 self.assertEqual(screen.get_from(i, 1)[0], ord(c))
-
-            # Scroll and check drawing off-screen works.
-            screen.print_at("World", 0, 0)
-            screen.scroll()
-            screen.refresh()
-            for i, c in enumerate("World"):
-                self.assertEqual(screen.get_from(i, 0)[0], ord(c))
 
         Screen.wrapper(internal_checks)
 

@@ -67,6 +67,7 @@ def _credits(screen):
     scenes.append(Scene(effects))
 
     effects = [
+        Scroll(screen, 3),
         Mirage(
             screen,
             FigletText("Conceived and"),
@@ -81,12 +82,12 @@ def _credits(screen):
             screen,
             FigletText("Peter Brittain"),
             screen.height + 16,
-            Screen.COLOUR_GREEN),
-        Scroll(screen, 3)
+            Screen.COLOUR_GREEN)
     ]
     scenes.append(Scene(effects, (screen.height + 24) * 3))
 
     effects = [
+        Scroll(screen, 3),
         Mirage(
             screen,
             FigletText("With help from:"),
@@ -136,8 +137,7 @@ def _credits(screen):
             screen,
             FigletText("mronkain"),
             screen.height + 72,
-            Screen.COLOUR_GREEN),
-        Scroll(screen, 3)
+            Screen.COLOUR_GREEN)
     ]
     scenes.append(Scene(effects, (screen.height + 80) * 3))
 

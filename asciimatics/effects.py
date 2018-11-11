@@ -781,23 +781,25 @@ class _Flake(object):
         :param reseed: Whether we are in the normal reseed cycle or not.
         """
         self._screen.print_at(" ", self._x, self._y)
-        current_char = None
+        cell = None
         for _ in range(self._rate):
             self._y += 1
-            current_char, _, _, _ = self._screen.get_from(self._x, self._y)
-            if current_char != 32:
+            cell = self._screen.get_from(self._x, self._y)
+            if cell is None or cell[0] != 32:
                 break
 
-        if ((current_char in [ord(x) for x in self._snow_chars + " "]) and
+        if ((cell is not None and cell[0] in [ord(x) for x in self._snow_chars + " "]) and
                 (self._y < self._screen.start_line + self._screen.height)):
             self._screen.print_at(self._char,
                                   self._x,
                                   self._y)
         else:
-            if self._y >= self._screen.start_line + self._screen.height:
-                self._y = self._screen.start_line + self._screen.height - 1
+            if self._y > self._screen.start_line + self._screen.height:
+                self._y = self._screen.start_line + self._screen.height
 
-            drift_index = self._drift_chars.find(chr(current_char))
+            drift_index = -1
+            if cell:
+                drift_index = self._drift_chars.find(chr(cell[0]))
             if 0 <= drift_index < len(self._drift_chars) - 1:
                 drift_char = self._drift_chars[drift_index + 1]
                 self._screen.print_at(drift_char, self._x, self._y)

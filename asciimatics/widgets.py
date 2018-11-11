@@ -232,8 +232,7 @@ class Background(Effect):
         pass
 
     def _update(self, frame_no):
-        for y in range(self._screen.height):
-            self._screen.print_at(" " * self._screen.width, 0, y, bg=self._bg)
+        self._screen.clear_buffer(7, 0, self._bg)
 
     @property
     def frame_update_count(self):
