@@ -3,7 +3,7 @@
     :target: https://travis-ci.org/peterbrittain/asciimatics
     :alt: Linux build status
 
-.. image:: https://ci.appveyor.com/api/projects/status/n68nk47ku35pafru?svg=true&passingText=Windows%20-%20passing
+.. image:: https://ci.appveyor.com/api/projects/status/n68nk47ku35pafru/branch/master?svg=true&passingText=Windows%20-%20passing
     :target: https://ci.appveyor.com/project/peterbrittain/asciimatics
     :alt: Windows build status
 
