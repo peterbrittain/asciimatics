@@ -599,17 +599,21 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                 if c != " " or not transparent:
                     # Fix up orphaned double-width glyphs that we've just bisected.
                     if x + i + j - 1 >= 0 and self._buffer.get(x + i + j - 1, y)[4] == 2:
-                        self._buffer.set(x + i + j - 1, y, (ord("x"), 0, 0, 0, 1))
+                        self._buffer.set(x + i + j - 1, y,
+                                         (ord("x"), 0, 0, 0, 1))
 
-                    self._buffer.set(x + i + j, y, (ord(c), colour, attr, bg, width))
+                    self._buffer.set(
+                        x + i + j, y, (ord(c), colour, attr, bg, width))
                     if width == 2:
                         j += 1
                         if x + i + j < self.width:
-                            self._buffer.set(x + i + j, y, (ord(c), colour, attr, bg, 0))
+                            self._buffer.set(
+                                x + i + j, y, (ord(c), colour, attr, bg, 0))
 
                     # Now fix up any glyphs we may have bisected the other way.
                     if x + i + j + 1 < self.width and self._buffer.get(x + i + j + 1, y)[4] == 0:
-                        self._buffer.set(x + i + j + 1, y, (ord("x"), 0, 0, 0, 1))
+                        self._buffer.set(x + i + j + 1, y,
+                                         (ord("x"), 0, 0, 0, 1))
 
     def block_transfer(self, buffer, x, y):
         """
