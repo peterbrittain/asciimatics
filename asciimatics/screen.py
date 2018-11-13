@@ -126,6 +126,39 @@ class _DoubleBuffer(object):
                 self._double_buffer[y] = self._double_buffer[y + lines]
                 self._screen_buffer[y] = self._screen_buffer[y + lines]
 
+    def block_transfer(self, buffer, x, y):
+        """
+        Copy a buffer entirely to this double buffer.
+
+        :param buffer: The double buffer to copy
+        :param x: The X origin for where to place it in this buffer
+        :param y: The Y origin for where to place it in this buffer
+        """
+        # Just copy the double-buffer cells - the real screen will sync on refresh.
+        block_min_x = max(0, x)
+        block_max_x = min(x + buffer.width, self._width)
+
+        # Check for trivial non-overlap
+        if block_min_x > block_max_x:
+            return
+
+        # Copy the available section
+        for by in range(0, self._height):
+            if y <= by < y + buffer.height:
+                self._double_buffer[by][block_min_x:block_max_x] = buffer.slice(
+                    block_min_x - x, by - y, block_max_x - block_min_x)
+
+    def slice(self, x, y, width):
+        """
+        Provide a slice of data from the buffer at the specified location
+
+        :param x: The X origin
+        :param y: The Y origin
+        :param width: The width of slice required
+        :return: The slice of tuples from the current double-buffer
+        """
+        return self._double_buffer[y][x:x + width]
+
     def sync(self):
         """
         Synchronize the screen buffer with the double buffer.
@@ -133,6 +166,20 @@ class _DoubleBuffer(object):
         # We're copying an array of tuples, so only need to copy the 2-D array (as the tuples are immutable).
         # This is way faster than a deep copy (which is INCREDIBLY slow).
         self._screen_buffer = [row[:] for row in self._double_buffer]
+
+    @property
+    def height(self):
+        """
+        The height of this buffer.
+        """
+        return self._height
+
+    @property
+    def width(self):
+        """
+        The width of this buffer.
+        """
+        return self._width
 
 
 class _AbstractCanvas(with_metaclass(ABCMeta, object)):
@@ -552,17 +599,31 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                 if c != " " or not transparent:
                     # Fix up orphaned double-width glyphs that we've just bisected.
                     if x + i + j - 1 >= 0 and self._buffer.get(x + i + j - 1, y)[4] == 2:
-                        self._buffer.set(x + i + j - 1, y, (ord("x"), 0, 0, 0, 1))
+                        self._buffer.set(x + i + j - 1, y,
+                                         (ord("x"), 0, 0, 0, 1))
 
-                    self._buffer.set(x + i + j, y, (ord(c), colour, attr, bg, width))
+                    self._buffer.set(
+                        x + i + j, y, (ord(c), colour, attr, bg, width))
                     if width == 2:
                         j += 1
                         if x + i + j < self.width:
-                            self._buffer.set(x + i + j, y, (ord(c), colour, attr, bg, 0))
+                            self._buffer.set(
+                                x + i + j, y, (ord(c), colour, attr, bg, 0))
 
                     # Now fix up any glyphs we may have bisected the other way.
                     if x + i + j + 1 < self.width and self._buffer.get(x + i + j + 1, y)[4] == 0:
-                        self._buffer.set(x + i + j + 1, y, (ord("x"), 0, 0, 0, 1))
+                        self._buffer.set(x + i + j + 1, y,
+                                         (ord("x"), 0, 0, 0, 1))
+
+    def block_transfer(self, buffer, x, y):
+        """
+        Copy a buffer to the screen double buffer at a specified location.
+
+        :param buffer: The double buffer to copy
+        :param x: The X origin for where to place it in the Screen
+        :param y: The Y origin for where to place it in the Screen
+        """
+        self._buffer.block_transfer(buffer, x, y)
 
     @property
     def start_line(self):
@@ -1016,11 +1077,7 @@ class Canvas(_AbstractCanvas):
         """
         Flush the canvas content to the underlying screen.
         """
-        for y in range(self.height):
-            for x in range(self.width):
-                c = self._buffer.get(x, y)
-                if c[4] != 0:
-                    self._screen.print_at(chr(c[0]), x + self._dx, y + self._dy, c[1], c[2], c[3])
+        self._screen.block_transfer(self._buffer, self._dx, self._dy)
 
     def _reset(self):
         # Nothing needed for a Canvas
