@@ -611,6 +611,16 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                     if x + i + j + 1 < self.width and self._buffer.get(x + i + j + 1, y)[4] == 0:
                         self._buffer.set(x + i + j + 1, y, (ord("x"), 0, 0, 0, 1))
 
+    def block_transfer(self, buffer, x, y):
+        """
+        Copy a buffer to the screen double buffer at a specified location.
+
+        :param buffer: The double buffer to copy
+        :param x: The X origin for where to place it in the Screen
+        :param y: The Y origin for where to place it in the Screen
+        """
+        self._buffer.block_transfer(buffer, x, y)
+
     @property
     def start_line(self):
         """
@@ -1362,16 +1372,6 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
 
         # Resynch for next refresh.
         self._buffer.sync()
-
-    def block_transfer(self, buffer, x, y):
-        """
-        Copy a buffer to the screen double buffer at a specified location.
-
-        :param buffer: The double buffer to copy
-        :param x: The X origin for where to place it in the Screen
-        :param y: The Y origin for where to place it in the Screen
-        """
-        self._buffer.block_transfer(buffer, x, y)
 
     def clear(self):
         """
