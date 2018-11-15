@@ -95,10 +95,10 @@ class _DoubleBuffer(object):
         """
         for y in range(start, min(start + height, self._height)):
             for x in range(self._width):
-                    old_cell = self._screen_buffer[y][x]
-                    new_cell = self._double_buffer[y][x]
-                    if old_cell != new_cell:
-                        yield y, x
+                old_cell = self._screen_buffer[y][x]
+                new_cell = self._double_buffer[y][x]
+                if old_cell != new_cell:
+                    yield y, x
 
     def scroll(self, lines):
         """

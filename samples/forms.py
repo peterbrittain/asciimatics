@@ -55,7 +55,8 @@ class DemoFrame(Frame):
             Text(label="Number:",
                  name="TC",
                  on_change=self._on_change,
-                 validator="^[0-9]*$"), 1)
+                 validator="^[0-9]*$",
+                 max_length=4), 1)
         layout.add_widget(
             Text(label="Email:",
                  name="TD",

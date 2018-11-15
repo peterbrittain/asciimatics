@@ -1728,7 +1728,7 @@ class Text(Widget):
     It consists of an optional label and an entry box.
     """
 
-    def __init__(self, label=None, name=None, on_change=None, validator=None, hide_char=None,
+    def __init__(self, label=None, name=None, on_change=None, validator=None, hide_char=None, max_length=None,
                  **kwargs):
         """
         :param label: An optional label for the widget.
@@ -1738,6 +1738,8 @@ class Text(Widget):
             This can be a function (which takes the current value and returns True for valid
             content) or a regex string (which must match the entire allowed value).
         :param hide_char: Character to use instead of what the user types - e.g. to hide passwords.
+        :param max_length: Optional maximum length of the field.  If set, the widget will limit
+            data entry to this length.
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
         """
@@ -1748,6 +1750,14 @@ class Text(Widget):
         self._on_change = on_change
         self._validator = validator
         self._hide_char = hide_char
+        self._max_length = max_length
+
+    def set_layout(self, x, y, offset, w, h):
+        # Do the usual layout work. then apply max length to resulting dimensions.
+        super(Text, self).set_layout(x, y, offset, w, h)
+        if self._max_length:
+            # Allow extra char for cursor, so contents don't scroll at required length
+            self._w = min(self._w, self._max_length + self._offset + 1)
 
     def update(self, frame_no):
         self._draw_label()
@@ -1809,10 +1819,12 @@ class Text(Widget):
             elif event.key_code == Screen.KEY_END:
                 self._column = len(self._value)
             elif event.key_code >= 32:
-                # Insert any visible text at the current cursor position.
-                self._set_and_check_value(chr(event.key_code).join([self._value[:self._column],
-                                                                    self._value[self._column:]]))
-                self._column += 1
+                # Enforce required max length - swallow event if not allowed
+                if self._max_length is None or len(self._value) < self._max_length:
+                    # Insert any visible text at the current cursor position.
+                    self._set_and_check_value(chr(event.key_code).join([self._value[:self._column],
+                                                                        self._value[self._column:]]))
+                    self._column += 1
             else:
                 # Ignore any other key press.
                 return event

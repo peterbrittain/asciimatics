@@ -2388,7 +2388,6 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "+--------------------------------------+\n")
 
-
     def test_frame_themes(self):
         """
         Check we can set a colour theme for a Frame.
@@ -2413,6 +2412,31 @@ class TestWidgets(unittest.TestCase):
         self.assertEqual(
             form.palette["background"],
             (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK))
+
+    def test_max_len(self):
+        """
+        Check that the max_length setting works as expected.
+        """
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = Frame(canvas, canvas.height, canvas.width)
+        layout = Layout([100])
+        form.add_layout(layout)
+
+        # Simple form with a limited length Text field.
+        text = Text(label="Text", name="max_len_text", max_length=4)
+        layout.add_widget(text)
+        form.fix()
+        form.register_scene(scene)
+        scene.add_effect(form)
+        scene.reset()
+
+        # Check it stops accepting text after hitting limit.
+        self.process_keys(form, "123456")
+        form.save()
+        self.assertEqual(form.data["max_len_text"], "1234")
 
 
 if __name__ == '__main__':
