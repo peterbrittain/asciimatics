@@ -2912,8 +2912,6 @@ class FileBrowser(MultiColumnListBox):
                 details = namedtuple("stat_type", "st_size st_mtime")
                 details.st_size = 0
                 details.st_mtime = 0
-            if not os.path.isdir(full_path) and self._restriction is not None and not self._restriction.fullmatch(my_file):
-                continue
             name = "|-- {}".format(my_file)
             tree = tree_files
             if os.path.isdir(full_path):
@@ -2924,6 +2922,8 @@ class FileBrowser(MultiColumnListBox):
                     name = "|-+ {} -> {}".format(my_file, real_path)
                 else:
                     name = "|-+ {}".format(my_file)
+            elif self._restriction and not self._restriction.fullmatch(my_file):
+                    continue
             elif os.path.islink(full_path):
                 # Check if link target exists and if it does, show statistics of the
                 # linked file, otherwise just display the link
