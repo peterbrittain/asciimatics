@@ -2824,6 +2824,7 @@ class FileBrowser(MultiColumnListBox):
         :param on_select: Optional function that gets called when user selects a file (by pressing
             enter or double-clicking).
         :param on_change: Optional function that gets called on any movement of the selection.
+        :param restriction: Option RegEx that can be passed in if a filter for files is needed.
         """
         super(FileBrowser, self).__init__(
             height,
