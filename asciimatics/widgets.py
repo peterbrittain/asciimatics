@@ -2816,7 +2816,7 @@ class FileBrowser(MultiColumnListBox):
     A FileBrowser is a widget for finding a file on the local disk.
     """
 
-    def __init__(self, height, root, name=None, on_select=None, on_change=None, restriction=None):
+    def __init__(self, height, root, name=None, on_select=None, on_change=None, file_filter=None):
         """
         :param height: The desired height for this widget.
         :param root: The starting root directory to display in the widget.
@@ -2824,7 +2824,7 @@ class FileBrowser(MultiColumnListBox):
         :param on_select: Optional function that gets called when user selects a file (by pressing
             enter or double-clicking).
         :param on_change: Optional function that gets called on any movement of the selection.
-        :param restriction: Option RegEx that can be passed in if a filter for files is needed.
+        :param restriction: Optional RegEx string that can be passed in if a filter for files is needed.
         """
         super(FileBrowser, self).__init__(
             height,
@@ -2842,7 +2842,10 @@ class FileBrowser(MultiColumnListBox):
         self._root = root
         self._in_update = False
         self._initialized = False
-        self._restriction = restriction
+        if file_filter is not None:
+            self._file_filter = re.compile(file_filter)
+        else:
+            self._file_filter = None
 
     def update(self, frame_no):
         # Defer initial population until we first display the widget in order to avoid race
@@ -2922,7 +2925,7 @@ class FileBrowser(MultiColumnListBox):
                     name = "|-+ {} -> {}".format(my_file, real_path)
                 else:
                     name = "|-+ {}".format(my_file)
-            elif self._restriction and not self._restriction.fullmatch(my_file):
+            elif self._file_filter and not self._file_filter.fullmatch(my_file):
                     continue
             elif os.path.islink(full_path):
                 # Check if link target exists and if it does, show statistics of the
