@@ -2925,7 +2925,7 @@ class FileBrowser(MultiColumnListBox):
                     name = "|-+ {} -> {}".format(my_file, real_path)
                 else:
                     name = "|-+ {}".format(my_file)
-            elif self._file_filter and not self._file_filter.fullmatch(my_file):
+            elif self._file_filter and not self._file_filter.match(my_file):
                     continue
             elif os.path.islink(full_path):
                 # Check if link target exists and if it does, show statistics of the

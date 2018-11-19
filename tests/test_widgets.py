@@ -1743,7 +1743,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         scene = MagicMock(spec=Scene)
         canvas = Canvas(screen, 10, 40, 0, 0)
-        form = TestFrame4(canvas, file_filter="((?:\w+)(?:.)?(?:txt))|(\w+)")
+        form = TestFrame4(canvas, file_filter="((?:\w+)(?:.)?(?:txt))|(\w+)$")
         form.register_scene(scene)
         form.reset()
 
