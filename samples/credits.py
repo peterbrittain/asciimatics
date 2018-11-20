@@ -137,9 +137,19 @@ def _credits(screen):
             screen,
             FigletText("mronkain"),
             screen.height + 72,
+            Screen.COLOUR_GREEN),
+        Mirage(
+            screen,
+            FigletText("Dougal Sutherland"),
+            screen.height + 80,
+            Screen.COLOUR_GREEN),
+        Mirage(
+            screen,
+            FigletText("Kirtan Sakariya"),
+            screen.height + 88,
             Screen.COLOUR_GREEN)
     ]
-    scenes.append(Scene(effects, (screen.height + 80) * 3))
+    scenes.append(Scene(effects, (screen.height + 96) * 3))
 
     effects = [
         Cycle(
