@@ -426,7 +426,7 @@ class _Star(object):
         (height, width) = self._screen.dimensions
         while True:
             self._x = randint(0, width - 1)
-            self._y = randint(0, height - 1)
+            self._y = self._screen.start_line + randint(0, height - 1)
             if self._screen.get_from(self._x, self._y)[0] == 32:
                 break
         self._old_char = " "

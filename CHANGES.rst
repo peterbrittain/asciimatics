@@ -7,6 +7,7 @@ LATEST
 - Added `max_length` parameter to `Text`.
 - Added support for page up/down in `TextBox`.
 - Added optional scroll bars to `MultiColumnListBox`.
+- Added `file_filter` parameter to `FileBrowser`
 - Improved performance of double-buffering.
 
   - NOTE: Drawing off-screen with a large scrolling buffer is no longer supported (as it wasn't

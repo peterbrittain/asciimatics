@@ -176,7 +176,7 @@ class TestFrame3(Frame):
 
 
 class TestFrame4(Frame):
-    def __init__(self, screen):
+    def __init__(self, screen, file_filter=None):
         super(TestFrame4, self).__init__(
             screen, screen.height, screen.width, has_border=False, name="My Form")
 
@@ -191,7 +191,8 @@ class TestFrame4(Frame):
                                      "/",
                                      name="file_list",
                                      on_select=self.select,
-                                     on_change=self.change)
+                                     on_change=self.change,
+                                     file_filter=file_filter)
         layout.add_widget(self.file_list)
         self.fix()
 
@@ -1710,6 +1711,67 @@ class TestWidgets(unittest.TestCase):
         self.process_keys(form, [Screen.KEY_DOWN, Screen.KEY_DOWN, Screen.ctrl("m")])
         self.assertEqual(form.highlighted, "/A Directory/A File")
         self.assertEqual(form.selected, "/A Directory/A File")
+
+    @patch("os.path.exists")
+    @patch("os.path.realpath")
+    @patch("os.path.islink")
+    @patch("os.path.isdir")
+    @patch("os.lstat")
+    @patch("os.stat")
+    @patch("os.listdir")
+    def test_file_filter(self, mock_list, mock_stat, mock_lstat, mock_dir, mock_link, \
+                          mock_real_path, mock_exists):
+        """
+        Check FileBrowser widget with a file_filter works as expected.
+        """
+        # First we need to mock out the file system calls to have a regressible test
+        if sys.platform == "win32":
+            self.skipTest("File names wrong for windows")
+
+        mock_list.return_value = ["A Directory", "A File", "A Lnk", str(b"oo\xcc\x88o\xcc\x88O\xcc\x88.txt", 'utf-8'), "hello.bmp"]
+        mock_result = MagicMock()
+        mock_result.st_mtime = 0
+        mock_result.st_size = 10000
+        mock_stat.return_value = mock_result
+        mock_lstat.return_value = mock_result
+        mock_dir.side_effect = lambda x: x.endswith("Directory")
+        mock_link.side_effect = lambda x: "Lnk" in x
+        mock_real_path.return_value = "A Tgt"
+        mock_exists.return_value = True
+
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame4(canvas, file_filter=r".*\.bmp$")
+        form.register_scene(scene)
+        form.reset()
+
+        # Check we have a default value for our list.
+        form.save()
+        self.assertIsNone(form.selected)
+        self.assertIsNone(form.highlighted)
+        self.assertEqual(form.data, {"file_list": None})
+
+        # Check that the Frame is rendered correctly.
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "/                     Size Last modified\n" +
+            "|-+ A Directory         9K    1970-01-01\n" +
+            "|-- hello.bmp           9K    1970-01-01\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        # Check that enter key handles correctly on files.
+        self.process_keys(form, [Screen.KEY_DOWN, Screen.KEY_DOWN, Screen.ctrl("m")])
+        self.assertEqual(form.highlighted, "/hello.bmp")
+        self.assertEqual(form.selected, "/hello.bmp")
 
     def test_date_picker(self):
         """
