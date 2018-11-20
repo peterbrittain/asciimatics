@@ -1728,7 +1728,7 @@ class TestWidgets(unittest.TestCase):
         if sys.platform == "win32":
             self.skipTest("File names wrong for windows")
 
-        mock_list.return_value = ["A Directory", "A File", "A Lnk", str(b"oo\xcc\x88o\xcc\x88O\xcc\x88.txt", 'utf-8'), "hello.txt"]
+        mock_list.return_value = ["A Directory", "A File", "A Lnk", str(b"oo\xcc\x88o\xcc\x88O\xcc\x88.txt", 'utf-8'), "hello.bmp"]
         mock_result = MagicMock()
         mock_result.st_mtime = 0
         mock_result.st_size = 10000
@@ -1743,7 +1743,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         scene = MagicMock(spec=Scene)
         canvas = Canvas(screen, 10, 40, 0, 0)
-        form = TestFrame4(canvas, file_filter="((?:\w+)(?:.)?(?:txt))|(\w+)$")
+        form = TestFrame4(canvas, file_filter=r".*\.bmp$")
         form.register_scene(scene)
         form.reset()
 
@@ -1759,40 +1759,8 @@ class TestWidgets(unittest.TestCase):
             canvas,
             "/                     Size Last modified\n" +
             "|-+ A Directory         9K    1970-01-01\n" +
-            "|-- hello.txt           9K    1970-01-01\n" +
+            "|-- hello.bmp           9K    1970-01-01\n" +
             "                                        \n" +
-            "                                        \n" +
-            "                                        \n" +
-            "                                        \n" +
-            "                                        \n" +
-            "                                        \n" +
-            "                                        \n")
-
-        # Check that mouse inpput changes selection.
-        self.process_mouse(form, [(2, 2, MouseEvent.LEFT_CLICK)])
-        form.save()
-        self.assertEqual(form.data, {"file_list": "/hello.txt"})
-        self.assertEqual(form.highlighted, "/hello.txt")
-        self.assertIsNone(form.selected)
-
-        # Check that UP/DOWN change selection.
-        self.process_keys(form, [Screen.KEY_UP])
-        form.save()
-        self.assertEqual(form.data, {"file_list": "/A Directory"})
-        self.assertEqual(form.highlighted, "/A Directory")
-        self.assertIsNone(form.selected)
-
-        # Check that enter key handles correctly on directories.
-        self.process_keys(form, [Screen.ctrl("m")])
-        self.assertEqual(form.highlighted, "/")
-        self.assertIsNone(form.selected)
-        form.update(1)
-        self.assert_canvas_equals(
-            canvas,
-            "/A Directory          Size Last modified\n" +
-            "|-+ ..                                  \n" +
-            "|-+ A Directory         9K    1970-01-01\n" +
-            "|-- hello.txt           9K    1970-01-01\n" +
             "                                        \n" +
             "                                        \n" +
             "                                        \n" +
@@ -1802,8 +1770,8 @@ class TestWidgets(unittest.TestCase):
 
         # Check that enter key handles correctly on files.
         self.process_keys(form, [Screen.KEY_DOWN, Screen.KEY_DOWN, Screen.ctrl("m")])
-        self.assertEqual(form.highlighted, "/A Directory/hello.txt")
-        self.assertEqual(form.selected, "/A Directory/hello.txt")
+        self.assertEqual(form.highlighted, "/hello.bmp")
+        self.assertEqual(form.selected, "/hello.bmp")
 
     def test_date_picker(self):
         """
