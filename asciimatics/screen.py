@@ -1515,7 +1515,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 b = time.time()
                 if b - a < 0.05:
                     if allow_int:
-                        self._wait_for_input(a + 0.05 - b)
+                        self.wait_for_input(a + 0.05 - b)
                     else:
                         time.sleep(a + 0.05 - b)
         except StopApplication:
@@ -1679,7 +1679,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         """
 
     @abstractmethod
-    def _wait_for_input(self, timeout):
+    def wait_for_input(self, timeout):
         """
         Wait until there is some input or the timeout is hit.
 
@@ -2048,7 +2048,7 @@ if sys.platform == "win32":
             except pywintypes.error:
                 pass
 
-        def _wait_for_input(self, timeout):
+        def wait_for_input(self, timeout):
             """
             Wait until there is some input or the timeout is hit.
 
@@ -2451,7 +2451,7 @@ else:
             self._cur_x = x + width
             self._cur_y = y
 
-        def _wait_for_input(self, timeout):
+        def wait_for_input(self, timeout):
             """
             Wait until there is some input or the timeout is hit.
 
