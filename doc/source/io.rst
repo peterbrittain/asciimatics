@@ -120,6 +120,9 @@ keyboard events).  If there is no event available, it will return `None`.
 The exact class returned depends on the event.  It will be either :py:obj:`.KeyboardEvent` or
 :py:obj:`.MouseEvent`.  Handling of each is covered below.
 
+If you wish to wait until some input is available, you can use the :py:meth:`.wait_for_input` method
+to block execution and then call :py:meth:`.get_event` to retrieve the input.
+
 KeyboardEvent
 ^^^^^^^^^^^^^
 This event is triggered for any key-press, including auto repeat when keys are held down.
