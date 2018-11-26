@@ -119,6 +119,7 @@ class DemoFrame(Frame):
                 event.buttons == MouseEvent.DOUBLE_CLICK):
             # By processing the double-click before Frame handling, we have absolute coordinates.
             options = [
+                ("Default", self._set_default),
                 ("Green", self._set_green),
                 ("Monochrome", self._set_mono),
                 ("Bright", self._set_bright),
@@ -130,6 +131,9 @@ class DemoFrame(Frame):
 
         # Pass any other event on to the Frame and contained widgets.
         return super(DemoFrame, self).process_event(event)
+
+    def _set_default(self):
+        self.set_theme("default")
 
     def _set_green(self):
         self.set_theme("green")

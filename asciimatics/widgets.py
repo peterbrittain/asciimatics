@@ -36,6 +36,48 @@ logger = getLogger(__name__)
 
 # Standard palettes for use with :py:meth:`~Frame.set_theme`.
 _THEMES = {
+    "default": {
+        "background":
+            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "shadow":
+            (Screen.COLOUR_BLACK, None, Screen.COLOUR_BLACK),
+        "disabled":
+            (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLUE),
+        "invalid":
+            (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_RED),
+        "label":
+            (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLUE),
+        "borders":
+            (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLUE),
+        "scroll":
+            (Screen.COLOUR_CYAN, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "title":
+            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLUE),
+        "edit_text":
+            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "focus_edit_text":
+            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
+        "button":
+            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "focus_button":
+            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
+        "control":
+            (Screen.COLOUR_YELLOW, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "selected_control":
+            (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLUE),
+        "focus_control":
+            (Screen.COLOUR_YELLOW, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "selected_focus_control":
+            (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_CYAN),
+        "field":
+            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "selected_field":
+            (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLUE),
+        "focus_field":
+            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "selected_focus_field":
+            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
+    },
     "monochrome": defaultdict(
         lambda: (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK),
         {
@@ -253,48 +295,7 @@ class Frame(Effect):
 
     #: Colour palette for the widgets within the Frame.  Each entry should be
     #: a 3-tuple of (foreground colour, attribute, background colour).
-    palette = {
-        "background":
-            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
-        "shadow":
-            (Screen.COLOUR_BLACK, None, Screen.COLOUR_BLACK),
-        "disabled":
-            (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLUE),
-        "invalid":
-            (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_RED),
-        "label":
-            (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLUE),
-        "borders":
-            (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLUE),
-        "scroll":
-            (Screen.COLOUR_CYAN, Screen.A_NORMAL, Screen.COLOUR_BLUE),
-        "title":
-            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLUE),
-        "edit_text":
-            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
-        "focus_edit_text":
-            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
-        "button":
-            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
-        "focus_button":
-            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
-        "control":
-            (Screen.COLOUR_YELLOW, Screen.A_NORMAL, Screen.COLOUR_BLUE),
-        "selected_control":
-            (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLUE),
-        "focus_control":
-            (Screen.COLOUR_YELLOW, Screen.A_NORMAL, Screen.COLOUR_BLUE),
-        "selected_focus_control":
-            (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_CYAN),
-        "field":
-            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
-        "selected_field":
-            (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLUE),
-        "focus_field":
-            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
-        "selected_focus_field":
-            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
-    }
+    palette = {}
 
     def __init__(self, screen, height, width, data=None, on_load=None,
                  has_border=True, hover_focus=False, name=None, title=None,
@@ -357,6 +358,9 @@ class Frame(Effect):
 
         # Optimization for non-unicode displays to avoid slow unicode calls.
         self.string_len = wcswidth if self._canvas.unicode_aware else len
+
+        # Ensure that we have the default palette in place
+        self.set_theme("default")
 
     def _get_pos(self):
         """
