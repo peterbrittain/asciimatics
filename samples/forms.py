@@ -179,6 +179,7 @@ class DemoFrame(Frame):
             PopUpDialog(self._screen,
                         "Are you sure?",
                         ["Yes", "No"],
+                        has_shadow=True,
                         on_close=self._quit_on_yes))
 
     @staticmethod

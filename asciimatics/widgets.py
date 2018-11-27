@@ -37,46 +37,26 @@ logger = getLogger(__name__)
 # Standard palettes for use with :py:meth:`~Frame.set_theme`.
 _THEMES = {
     "default": {
-        "background":
-            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
-        "shadow":
-            (Screen.COLOUR_BLACK, None, Screen.COLOUR_BLACK),
-        "disabled":
-            (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLUE),
-        "invalid":
-            (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_RED),
-        "label":
-            (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLUE),
-        "borders":
-            (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLUE),
-        "scroll":
-            (Screen.COLOUR_CYAN, Screen.A_NORMAL, Screen.COLOUR_BLUE),
-        "title":
-            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLUE),
-        "edit_text":
-            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
-        "focus_edit_text":
-            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
-        "button":
-            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
-        "focus_button":
-            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
-        "control":
-            (Screen.COLOUR_YELLOW, Screen.A_NORMAL, Screen.COLOUR_BLUE),
-        "selected_control":
-            (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLUE),
-        "focus_control":
-            (Screen.COLOUR_YELLOW, Screen.A_NORMAL, Screen.COLOUR_BLUE),
-        "selected_focus_control":
-            (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_CYAN),
-        "field":
-            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
-        "selected_field":
-            (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLUE),
-        "focus_field":
-            (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
-        "selected_focus_field":
-            (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
+        "background": (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "shadow": (Screen.COLOUR_BLACK, None, Screen.COLOUR_BLACK),
+        "disabled": (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLUE),
+        "invalid": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_RED),
+        "label": (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLUE),
+        "borders": (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLUE),
+        "scroll": (Screen.COLOUR_CYAN, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "title": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLUE),
+        "edit_text": (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "focus_edit_text": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
+        "button": (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "focus_button": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
+        "control": (Screen.COLOUR_YELLOW, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "selected_control": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLUE),
+        "focus_control": (Screen.COLOUR_YELLOW, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "selected_focus_control": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_CYAN),
+        "field": (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "selected_field": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLUE),
+        "focus_field": (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
+        "selected_focus_field": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
     },
     "monochrome": defaultdict(
         lambda: (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK),
@@ -129,6 +109,19 @@ _THEMES = {
             "focus_button": (15, 0, 88),
             "selected_focus_control": (15, 0, 88),
             "disabled": (8, 0, 15),
+        }
+    ),
+    "warning": defaultdict(
+        lambda: (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_RED),
+        {
+            "label": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_RED),
+            "title": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_RED),
+            "focus_edit_text": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_RED),
+            "focus_field": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_RED),
+            "focus_button": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_YELLOW),
+            "focus_control": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_RED),
+            "disabled": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_RED),
+            "shadow": (Screen.COLOUR_BLACK, None, Screen.COLOUR_BLACK),
         }
     ),
 }
@@ -3047,35 +3040,14 @@ class PopUpDialog(Frame):
     A fixed implementation Frame that provides a standard message box dialog.
     """
 
-    # Override standard palette for pop-ups
-    _normal = (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_RED)
-    _bold = (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_RED)
-    _focus = (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_YELLOW)
-    palette = {
-        "background": _normal,
-        "shadow": (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_BLACK),
-        "label": _bold,
-        "borders": _normal,
-        "scroll": _normal,
-        "title": _bold,
-        "edit_text": _normal,
-        "focus_edit_text": _bold,
-        "field": _normal,
-        "focus_field": _bold,
-        "button": _normal,
-        "focus_button": _focus,
-        "control": _normal,
-        "focus_control": _bold,
-        "disabled": _bold,
-    }
-
-    def __init__(self, screen, text, buttons, on_close=None, has_shadow=False):
+    def __init__(self, screen, text, buttons, on_close=None, has_shadow=False, theme="warning"):
         """
         :param screen: The Screen that owns this dialog.
         :param text: The message text to display.
         :param buttons: A list of button names to display.
         :param on_close: Optional function to invoke on exit.
         :param has_shadow: optional flag to specify if dialog should have a shadow when drawn.
+        :param theme: optional colour theme for this pop-up.  Defaults to the warning colours.
 
         The `on_close` method (if specified) will be called with one integer parameter that
         corresponds to the index of the button passed in the array of available `buttons`.
@@ -3118,6 +3090,9 @@ class PopUpDialog(Frame):
             func = partial(self._destroy, i)
             layout2.add_widget(Button(button, func), i)
         self.fix()
+
+        # Ensure that we have the right palette in place
+        self.set_theme(theme)
 
     def _destroy(self, selected):
         self._scene.remove_effect(self)
