@@ -1514,10 +1514,12 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                                                 self._scenes[self._scene_index])
                 b = time.time()
                 if b - a < 0.05:
+                    # Just in case time has jumped (e.g. time change), ensure we only delay for 0.05s
+                    pause = min(0.05, a + 0.05 - b)
                     if allow_int:
-                        self.wait_for_input(a + 0.05 - b)
+                        self.wait_for_input(pause)
                     else:
-                        time.sleep(a + 0.05 - b)
+                        time.sleep(pause)
         except StopApplication:
             # Time to stop  - just exit the function.
             return
