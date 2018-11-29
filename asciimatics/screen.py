@@ -1368,11 +1368,12 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             self._last_start_line = self._start_line
 
         # Now draw any deltas to the scrolled screen.  Note that CJK character sets sometimes
-        # use double-width characters, so don't try to draw the next character if we hit one.
+        # use double-width characters, so don't try to draw the next 2nd char (of 0 width).
         for y, x in self._buffer.deltas(0, self.height):
             new_cell = self._buffer.get(x, y)
-            self._change_colours(new_cell[1], new_cell[2], new_cell[3])
-            self._print_at(chr(new_cell[0]), x, y, new_cell[4])
+            if new_cell[4] > 0:
+                self._change_colours(new_cell[1], new_cell[2], new_cell[3])
+                self._print_at(chr(new_cell[0]), x, y, new_cell[4])
 
         # Resynch for next refresh.
         self._buffer.sync()
