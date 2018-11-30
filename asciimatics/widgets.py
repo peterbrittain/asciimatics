@@ -219,6 +219,7 @@ def _split_text(text, width, height, unicode_aware=True):
     :param height: The maximum height for the resulting text.
     :return: A list of strings of the broken up text.
     """
+    # At a high level, just try to split on whitespace for the best results.
     tokens = text.split(" ")
     result = []
     current_line = ""
@@ -226,13 +227,21 @@ def _split_text(text, width, height, unicode_aware=True):
     for token in tokens:
         for i, line_token in enumerate(token.split("\n")):
             if string_len(current_line + line_token) > width or i > 0:
-                result.append(current_line.rstrip())
+                # Don't bother inserting completely blank lines - which should only happen on the very first
+                # line (as the rest will inject whitespace/newlines)
+                if len(current_line) > 0:
+                    result.append(current_line.rstrip())
                 current_line = line_token + " "
             else:
                 current_line += line_token + " "
 
-    # Add any remaining text to the result.
-    result.append(current_line.rstrip())
+    # At this point we've either split nicely or have a hugely long unbroken string (e.g. because the
+    # language doesn't use whitespace.  Either way, break this last line up as best we can.
+    current_line = current_line.rstrip()
+    while string_len(current_line) > 0:
+        new_line= _enforce_width(current_line, width, unicode_aware)
+        result.append(new_line)
+        current_line = current_line[len(new_line):]
 
     # Check for a height overrun and truncate.
     if len(result) > height:
@@ -3125,15 +3134,15 @@ class _TempPopup(Frame):
         :param w: The width of the desired pop-up.
         :param h: The height of the desired pop-up.
         """
+        # Construct the Frame
+        super(_TempPopup, self).__init__(
+            screen, h, w, x=x, y=y, has_border=True, can_scroll=False, is_modal=True)
+
         # Set up the new palette for this Frame
         self.palette = defaultdict(lambda: parent.frame.palette["focus_field"])
         self.palette["selected_field"] = parent.frame.palette["selected_field"]
         self.palette["selected_focus_field"] = parent.frame.palette["selected_focus_field"]
         self.palette["invalid"] = parent.frame.palette["invalid"]
-
-        # Construct the Frame
-        super(_TempPopup, self).__init__(
-            screen, h, w, x=x, y=y, has_border=True, can_scroll=False, is_modal=True)
 
         # Internal state for the pop-up
         self._parent = parent
@@ -3148,7 +3157,7 @@ class _TempPopup(Frame):
                 elif event.key_code == Screen.KEY_ESCAPE:
                     event = None
                     cancelled = True
-            elif isinstance(event, MouseEvent):
+            elif isinstance(event, MouseEvent) and event.buttons != 0:
                 origin = self._canvas.origin
                 if event.y < origin[1] or event.y >= origin[1] + self._canvas.height:
                     event = None
