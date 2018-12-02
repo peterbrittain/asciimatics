@@ -988,10 +988,11 @@ class RandomNoise(Effect):
     will appear from the noise.
     """
 
-    def __init__(self, screen, signal=None, **kwargs):
+    def __init__(self, screen, signal=None, jitter=6, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param signal: The renderer to use as the 'signal' in the white noise.
+        :param jitter: The amount that the signal will jump when there is noise.
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
@@ -999,6 +1000,7 @@ class RandomNoise(Effect):
         self._signal = signal
         self._strength = 0.0
         self._step = 0.0
+        self._jitter = jitter
 
     def reset(self):
         self._strength = 0.0
@@ -1015,7 +1017,8 @@ class RandomNoise(Effect):
 
         for y in range(self._screen.height):
             if self._strength < 1.0:
-                offset = randint(0, int(6 - 6 * self._strength))
+                jitter = int(self._jitter - self._jitter * self._strength)
+                offset = jitter - 2 * randint(0, jitter)
             else:
                 offset = 0
             for x in range(self._screen.width):
@@ -1023,9 +1026,9 @@ class RandomNoise(Effect):
                 iy = y - start_y
                 if (self._signal and random() <= self._strength and
                         x >= start_x and y >= start_y and
-                        iy < len(text) and ix + offset < len(text[iy])):
-                    self._screen.paint(text[iy][ix + offset],
-                                       x, y,
+                        iy < len(text) and 0 <= ix < len(text[iy])):
+                    self._screen.paint(text[iy][ix],
+                                       x + offset, y,
                                        colour_map=[colours[iy][ix]])
                 else:
                     if random() < 0.2:

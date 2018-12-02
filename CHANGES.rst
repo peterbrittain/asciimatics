@@ -10,6 +10,7 @@ LATEST
 - Added `file_filter` parameter to `FileBrowser`.
 - Added `wait_for-input` method to `Screen`.
 - Added optional `theme` parameter to `PopupDialog`.
+- Added optional `jitter` parameter to `Noise`.
 - Improved performance of double-buffering.
 
   - NOTE: Drawing off-screen with a large scrolling buffer is no longer supported (as it wasn't
