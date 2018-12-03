@@ -239,7 +239,7 @@ def _split_text(text, width, height, unicode_aware=True):
     # language doesn't use whitespace.  Either way, break this last line up as best we can.
     current_line = current_line.rstrip()
     while string_len(current_line) > 0:
-        new_line= _enforce_width(current_line, width, unicode_aware)
+        new_line = _enforce_width(current_line, width, unicode_aware)
         result.append(new_line)
         current_line = current_line[len(new_line):]
 
