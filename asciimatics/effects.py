@@ -307,6 +307,9 @@ class Print(Effect):
         :param clear: Whether to clear the text before stopping.
         :param speed: The refresh rate in frames between refreshes.
 
+        Note that a spped of 1 will force the Screen to redraw the Effect every frame update, while a value
+        of 0 will redraw on demand - i.e. will redraw every time that an update is required by another Effect.
+
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
         super(Print, self).__init__(screen, **kwargs)
@@ -334,7 +337,7 @@ class Print(Effect):
                                       self._x,
                                       self._y + i,
                                       bg=self._bg)
-        elif frame_no % self._speed == 0:
+        elif self._speed == 0 or frame_no % self._speed == 0:
             image, colours = self._renderer.rendered_text
             for (i, line) in enumerate(image):
                 self._screen.paint(line, self._x, self._y + i, self._colour,
@@ -350,7 +353,7 @@ class Print(Effect):
     @property
     def frame_update_count(self):
         # Only demand update for next update frame.
-        return self._speed - (self._frame_no % self._speed)
+        return self._speed - (self._frame_no % self._speed) if self._speed > 0 else 1000000
 
 
 class Mirage(Effect):
