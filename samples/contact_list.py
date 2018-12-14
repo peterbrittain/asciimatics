@@ -83,7 +83,8 @@ class ListView(Frame):
             model.get_summary(),
             name="contacts",
             add_scroll_bar=True,
-            on_change=self._on_pick)
+            on_change=self._on_pick,
+            on_select=self._edit)
         self._edit_button = Button("Edit", self._edit)
         self._delete_button = Button("Delete", self._delete)
         layout = Layout([100], fill_frame=True)
