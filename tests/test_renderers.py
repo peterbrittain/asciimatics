@@ -334,11 +334,11 @@ class TestRenderers(unittest.TestCase):
         Check that the BarChart renderer works.
         """
         # Internal test function for rendering
-        def fn():
-            return 10
+        def fn(x):
+            return lambda: x
 
         # Check default implementation
-        renderer = BarChart(7, 20, [fn, fn])
+        renderer = BarChart(7, 20, [fn(10), fn(10)])
         self.assertEqual(
             str(renderer),
             "+------------------+\n" +
@@ -360,19 +360,19 @@ class TestRenderers(unittest.TestCase):
             "+------------------+")
 
         # Switch on non-defaults
-        renderer = BarChart(5, 30, [fn, fn], scale=10.0, axes=BarChart.BOTH,
+        renderer = BarChart(5, 30, [fn(5), fn(10)], scale=10.0, axes=BarChart.BOTH,
                             intervals=2.5, labels=True, border=False,
                             keys=["A", "B"])
         self.assertEqual(
             str(renderer),
-            "A |########################## \n" +
-            "  |      :      :     :       \n" +
+            "A |#############     :        \n" +
+            "  |     :      :     :        \n" +
             "B |########################## \n" +
-            "  +------+------+-----+------ \n" +
-            "   0    2.5    5.0   7.5 10.0 ")
+            "  +-----+------+-----+------- \n" +
+            "   0   2.5    5.0   7.5  10.0 ")
 
         # Check gradients
-        renderer = BarChart(7, 20, [fn, fn], gradient=[(4, 1), (8, 2), (15, 2)])
+        renderer = BarChart(7, 20, [fn(10), fn(10)], gradient=[(4, 1), (8, 2), (15, 2)])
         self.assertEqual(
             str(renderer),
             "+------------------+\n" +
@@ -406,9 +406,7 @@ class TestRenderers(unittest.TestCase):
              (7, 2, 0)])
 
         # 3 colour gradients
-        renderer = BarChart(7, 20, [fn, fn], gradient=[(4, 1, 2),
-                                                       (8, 2, 3),
-                                                       (15, 3, 4)])
+        renderer = BarChart(7, 20, [fn(10), fn(10)], gradient=[(4, 1, 2), (8, 2, 3), (15, 3, 4)])
         self.assertEqual(
             renderer.rendered_text[1][2],
             [(7, 2, 0),
