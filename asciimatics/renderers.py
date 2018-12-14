@@ -243,6 +243,15 @@ class DynamicRenderer(with_metaclass(ABCMeta, Renderer)):
         :param attr: The attribute of the image.
         :param bg: The background colour of the text to add.
         """
+        # Limit checks to ensure that we don't try to draw off the end of the arrays
+        if y >= self._height or x >= self._width:
+            return
+
+        # Limit text to draw to visible line
+        if len(text) + x > self._width:
+            text = text[:self._width - x]
+
+        # Now draw it!
         self._plain_image[y] = text.join(
             [self._plain_image[y][:x], self._plain_image[y][x + len(text):]])
         for i, _ in enumerate(text):
@@ -657,7 +666,7 @@ class BarChart(DynamicRenderer):
         if self._intervals is not None:
             i = self._intervals
             while i < scale:
-                x = start_x + int(i * int_w / scale)
+                x = start_x + int(i * int_w / scale) - 1
                 for line in range(int_h):
                     self._write(":", x, start_y + line)
                 self._write("+", x, start_y + int_h)
