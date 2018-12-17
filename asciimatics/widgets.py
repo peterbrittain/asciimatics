@@ -3257,7 +3257,7 @@ class TimePicker(Widget):
         super(TimePicker, self).__init__(name, **kwargs)
         self._label = label
         self._on_change = on_change
-        self._value = None
+        self._value = datetime.now().time()
         self._child = None
         self.include_seconds = seconds
 
@@ -3396,7 +3396,7 @@ class DatePicker(Widget):
         super(DatePicker, self).__init__(name, **kwargs)
         self._label = label
         self._on_change = on_change
-        self._value = None
+        self._value = datetime.now().date()
         self._child = None
         self._year_range = year_range
 

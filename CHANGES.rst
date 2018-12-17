@@ -19,6 +19,7 @@ LATEST
 - Improved handling of permission errors in `FileBrowser`.
 - Fixed bug where asciimatics Scenes would hang when the clock is moved back in time.
 - Fixed off-by-one error in BarChart labels.
+- Added default date and time to DatePicker and TimePicker when no value specified.
 
 1.10.0
 ------

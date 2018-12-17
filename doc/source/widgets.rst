@@ -505,6 +505,18 @@ fine-grained approach to the colouring, you can customize the colour for any Wid
 :py:obj:`~.Widget.custom_colour` for that Widget.  The only constraint on this property is that
 it must still be the value of one of the keys within the owning Frame's palette.
 
+Setting values
+--------------
+By this stage, you should have a basic User Interface up and running, but how do you set the values
+in each of the Widgets - e.g. to pre-populate known values in a form?  There are 2 ways to handle this:
+
+1. You can set the value directly on each `Widget` using the :py:obj:`~.Widget.value` property.
+2. You can set the value for all Widgets in a `Frame` by setting at the :py:obj:`~.Frame.data` property.
+   This is a simple key/value dictionary, using the `name` property for each `Widget` as the keys.
+
+The latter is a preferred as a symmetrical solution is provided to access all the data for each
+Widget, thus giving you a simple way to read and then replay the data back into your Frame.
+
 Getting values
 --------------
 Now that you have a `Frame` with some `Widgets` in it and the user is filling them in, how do you
