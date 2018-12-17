@@ -229,11 +229,24 @@ Lets look at these options in more detail...
 
 Switch off animations
 ^^^^^^^^^^^^^^^^^^^^^
-This is only really an option for TUI systems.  Simply avoid adding other ``Effects`` into your
-``Scene`` and keep it down the to the ``Frame`` for your user input.
+The key to this optimization is to understand what you're drawing when.  The biggest cost in
+the mainline loop is the actual re-drawing of all the content to the double-buffers, so asciimatics
+only does this when it knows something has, or may have, changed.  You give hints to asciimatics as
+you construct your application - for example the rate at which a ``Print`` Effect needs to redraw,
+or whether you want to minimize CPU usage inside a ``Frame``.  It then uses these hints and the
+current application state to decide whether to draw a new frame into the double-buffer.
 
-Also consider switching off the cursor animation if you really need to minimize CPU usage.  You
-can do this by setting ``reduce_cpu=True`` when constructing your ``Frame``.
+The first thing to look at is things that are not actually changing.  For example if you use the
+``Print`` Effect to display a static piece of text (like a ``FigletText`` renderer), the output
+never changes and so you only need to draw it once.  in such cases, you should tell the Effect
+that it is pointless to refresh by specifying ``speed=0`` on construction.
+
+Next you should consider removing unnecessary Effects.  This is only really an option for TUI
+systems.  Simply avoid adding other ``Effects`` into your ``Scene`` and keep it down the to the
+``Frame`` for your user input.
+
+Finally, consider switching off the cursor animation if you really need to minimize CPU usage.
+You can do this by setting ``reduce_cpu=True`` when constructing your ``Frame``.
 
 Input responsiveness
 ^^^^^^^^^^^^^^^^^^^^
