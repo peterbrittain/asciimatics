@@ -299,12 +299,14 @@ class Print(Effect):
         :param screen: The Screen being used for the Scene.
         :param renderer: The renderer to be printed.
         :param x: The column (x coordinate) for the start of the text.
-                  If not specified, defaults to centring the text on screen.
+            If not specified, defaults to centring the text on screen.
         :param y: The line (y coordinate) for the start of the text.
         :param colour: The foreground colour to use for the text.
         :param attr: The colour attribute to use for the text.
         :param bg: The background colour to use for the text.
         :param clear: Whether to clear the text before stopping.
+        :param transparent: Whether to print spaces (and so be able to overlay other Effects).
+            If False, this will redraw all characters and so replace any Effect underneath it.
         :param speed: The refresh rate in frames between refreshes.
 
         Note that a spped of 1 will force the Screen to redraw the Effect every frame update, while a value

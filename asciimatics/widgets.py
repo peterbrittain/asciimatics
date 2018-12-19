@@ -1344,11 +1344,11 @@ class Widget(with_metaclass(ABCMeta, object)):
     #: fit the maximum space used by any other column in the Layout.
     FILL_COLUMN = -135792467
 
-    def __init__(self, name, tab_stop=True, on_focus=None, on_blur=None):
+    def __init__(self, name, tab_stop=True, disabled=False, on_focus=None, on_blur=None):
         """
         :param name: The name of this Widget.
-        :param tab_stop: Whether this widget should take focus or not when tabbing around the
-            Frame.
+        :param tab_stop: Whether this widget should take focus or not when tabbing around the Frame.
+        :param disabled: Whether this Widget should be disabled or not.
         :param on_focus: Optional callback whenever this widget gets the focus.
         :param on_blur: Optional callback whenever this widget loses the focus.
         """
@@ -1364,7 +1364,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         self._offset = 0
         self._display_label = None
         self._is_tab_stop = tab_stop
-        self._is_disabled = False
+        self._is_disabled = disabled
         self._is_valid = True
         self._custom_colour = None
         self._on_focus = on_focus
