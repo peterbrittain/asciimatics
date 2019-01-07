@@ -2354,6 +2354,14 @@ class TextBox(Widget):
         elif self._as_string:
             new_value = new_value.split("\n")
         self._value = new_value
+
+        # TODO: Sort out duplication and speed of this code
+        if self._parser:
+            new_value = []
+            for line in self._value:
+                parser = self._parser()
+                new_value.append(ColouredText(line, parser))
+            self._value = new_value
         self.reset()
 
         # Only trigger the notification after we've changed the value.
