@@ -6,6 +6,7 @@ from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, NextScene, StopApplication, \
     InvalidFields
+from asciimatics.utilities import AsciimaticsParser
 import sys
 import re
 import datetime
@@ -45,6 +46,7 @@ class DemoFrame(Frame):
         layout.add_widget(TextBox(5,
                                   label="My First Box:",
                                   name="TA",
+                                  parser=AsciimaticsParser,
                                   on_change=self._on_change), 1)
         layout.add_widget(
             Text(label="Alpha:",

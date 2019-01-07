@@ -26,7 +26,7 @@ from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import Highlander, InvalidFields
 from asciimatics.screen import Screen, Canvas
-from asciimatics.utilities import readable_timestamp, readable_mem, _DotDict
+from asciimatics.utilities import readable_timestamp, readable_mem, _DotDict, ColouredText
 from wcwidth import wcswidth, wcwidth
 
 # Logging
@@ -2079,7 +2079,7 @@ class TextBox(Widget):
     It consists of a framed box with option label.
     """
 
-    def __init__(self, height, label=None, name=None, as_string=False, line_wrap=False,
+    def __init__(self, height, label=None, name=None, as_string=False, line_wrap=False, parser=None,
                  on_change=None, **kwargs):
         """
         :param height: The required number of input lines for this TextBox.
@@ -2088,6 +2088,7 @@ class TextBox(Widget):
         :param as_string: Use string with newline separator instead of a list
             for the value of this widget.
         :param line_wrap: Whether to wrap at the end of the line.
+        :param parser: Optional parser to colour text.
         :param on_change: Optional function to call when text changes.
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
@@ -2101,6 +2102,7 @@ class TextBox(Widget):
         self._required_height = height
         self._as_string = as_string
         self._line_wrap = line_wrap
+        self._parser = parser
         self._on_change = on_change
         self._reflowed_text_cache = None
 
@@ -2143,12 +2145,13 @@ class TextBox(Widget):
         # Render visible portion of the text.
         for line, (text, _, _) in enumerate(display_text):
             if self._start_line <= line < self._start_line + height:
-                self._frame.canvas.print_at(
-                    _enforce_width(text[display_start_column:], self.width,
-                                   self._frame.canvas.unicode_aware),
+                paint_text = _enforce_width(text[display_start_column:], self.width, self._frame.canvas.unicode_aware)
+                self._frame.canvas.paint(
+                    paint_text,
                     self._x + self._offset,
                     self._y + line - self._start_line,
-                    colour, attr, bg)
+                    colour, attr, bg,
+                    colour_map=text.colour_map if isinstance(text, ColouredText) else None)
 
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
@@ -2258,6 +2261,15 @@ class TextBox(Widget):
 
             # If we got here we might have changed the value...
             if old_value != self._value:
+                # Re-parse if needed.
+                # TODO: Needs optimising?
+                if self._parser:
+                    new_value = []
+                    for line in self._value:
+                        parser = self._parser()
+                        new_value.append(ColouredText(line, parser))
+                    self._value = new_value
+
                 self._reflowed_text_cache = None
                 if self._on_change:
                     self._on_change()
@@ -2335,15 +2347,16 @@ class TextBox(Widget):
 
     @value.setter
     def value(self, new_value):
-        # Only trigger the notification after we've changed the value.
+        # Convert to the internal format
         old_value = self._value
         if new_value is None:
-            self._value = [""]
+            new_value = [""]
         elif self._as_string:
-            self._value = new_value.split("\n")
-        else:
-            self._value = new_value
+            new_value = new_value.split("\n")
+        self._value = new_value
         self.reset()
+
+        # Only trigger the notification after we've changed the value.
         if old_value != self._value and self._on_change:
             self._on_change()
 
