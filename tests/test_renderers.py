@@ -185,6 +185,8 @@ class TestRenderers(unittest.TestCase):
         # This typically means we're running inside a non-standard terminal.
         # For example, this happens when embedded in PyCharm.
         if sys.platform != "win32":
+            if not sys.stdout.isatty():
+                self.skipTest("Not a valid TTY")
             curses.initscr()
             if curses.tigetstr("ri") is None:
                 self.skipTest("No valid terminal definition")
@@ -254,6 +256,8 @@ class TestRenderers(unittest.TestCase):
         # This typically means we're running inside a non-standard terminal.
         # For example, this happens when embedded in PyCharm.
         if sys.platform != "win32":
+            if not sys.stdout.isatty():
+                self.skipTest("Not a valid TTY")
             curses.initscr()
             if curses.tigetstr("ri") is None:
                 self.skipTest("No valid terminal definition")
@@ -298,8 +302,12 @@ class TestRenderers(unittest.TestCase):
         # Skip for non-Windows if the terminal definition is incomplete.
         # This typically means we're running inside a non-standard terminal.
         # For example, this happens when embedded in PyCharm.
-        if sys.platform != "win32" and curses.tigetstr("ri") is None:
-            self.skipTest("No valid terminal definition")
+        if sys.platform != "win32":
+            if not sys.stdout.isatty():
+                self.skipTest("Not a valid TTY")
+            curses.initscr()
+            if curses.tigetstr("ri") is None:
+                self.skipTest("No valid terminal definition")
 
         def internal_checks(screen):
             # Create a base renderer
