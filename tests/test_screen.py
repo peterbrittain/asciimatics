@@ -951,22 +951,17 @@ class TestScreen(unittest.TestCase):
 
         demo()
 
-    def test_overflow_decorator_class(self):
+    @Screen.Session
+    def test_overflow_class_decorator(self, screen=None):
         """
         Check underflow and overflow work as expected
         """
-        class MyScreen():
-            @Screen.Session
-            def demo(self, screen=None):
-                canvas = Canvas(screen, 10, 40, 0, 0)
+        canvas = Canvas(screen, 10, 40, 0, 0)
 
-                # Check underflow and overflow work as expected
-                canvas.print_at("ab", -1, 0)
-                canvas.print_at("cd", canvas.width - 1, 0)
-                self.assert_line_equals(canvas, "b                                      c")
-
-        s = MyScreen()
-        s.demo()
+        # Check underflow and overflow work as expected
+        canvas.print_at("ab", -1, 0)
+        canvas.print_at("cd", canvas.width - 1, 0)
+        self.assert_line_equals(canvas, "b                                      c")
 
     def test_overflow_with(self):
         """
