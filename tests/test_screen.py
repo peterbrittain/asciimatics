@@ -940,7 +940,7 @@ class TestScreen(unittest.TestCase):
         """
         Check underflow and overflow work as expected
         """
-        @Screen.session
+        @Screen.Session
         def demo(screen=None):
             canvas = Canvas(screen, 10, 40, 0, 0)
 
@@ -956,7 +956,7 @@ class TestScreen(unittest.TestCase):
         Check underflow and overflow work as expected
         """
         class MyScreen():
-            @Screen.session
+            @Screen.Session
             def demo(screen=None):
                 canvas = Canvas(screen, 10, 40, 0, 0)
 
@@ -972,7 +972,7 @@ class TestScreen(unittest.TestCase):
         """
         Check underflow and overflow work as expected
         """
-        with Screen.session() as screen:
+        with Screen.Session() as screen:
             canvas = Canvas(screen, 10, 40, 0, 0)
 
             # Check underflow and overflow work as expected
