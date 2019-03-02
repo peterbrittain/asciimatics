@@ -965,7 +965,7 @@ class TestScreen(unittest.TestCase):
         """
         class MyScreen():
             @Screen.session
-            def demo(screen):
+            def demo(screen=None):
                 screen = Screen.open(unicode_aware=True)
                 screen.print_at("aaaa", 0, 0)
                 screen.print_at("你確", 0, 1)
