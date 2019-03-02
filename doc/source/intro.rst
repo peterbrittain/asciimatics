@@ -84,3 +84,57 @@ provided by a :py:obj:`.Renderer`.  For example:
 
     Screen.wrapper(demo)
 
+You can also use the :py:obj:`.Scene.session` class in two different ways.
+
+1. Use it as a method decorator. Note that I use `screen=None` in this
+example to prevent linting errors:
+
+.. code-block:: python
+
+    from asciimatics.screen import Screen
+    from asciimatics.scene import Scene
+    from asciimatics.effects import Cycle, Stars
+    from asciimatics.renderers import FigletText
+
+    @Screen.session
+    def demo(screen=None):
+        effects = [
+            Cycle(
+                screen,
+                FigletText("ASCIIMATICS", font='big'),
+                screen.height // 2 - 8),
+            Cycle(
+                screen,
+                FigletText("ROCKS!", font='big'),
+                screen.height // 2 + 3),
+            Stars(screen, (screen.width + screen.height) // 2)
+        ]
+        screen.play([Scene(effects, 500)])
+
+    demo()
+
+2. Use the `with` keyword:
+
+.. code-block:: python
+
+    from asciimatics.screen import Screen
+    from asciimatics.scene import Scene
+    from asciimatics.effects import Cycle, Stars
+    from asciimatics.renderers import FigletText
+
+    def demo():
+        with Screen.session() as screen:
+            effects = [
+                Cycle(
+                    screen,
+                    FigletText("ASCIIMATICS", font='big'),
+                    screen.height // 2 - 8),
+                Cycle(
+                    screen,
+                    FigletText("ROCKS!", font='big'),
+                    screen.height // 2 + 3),
+                Stars(screen, (screen.width + screen.height) // 2)
+            ]
+            screen.play([Scene(effects, 500)])
+
+    demo()
