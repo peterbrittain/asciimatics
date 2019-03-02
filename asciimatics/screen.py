@@ -1348,7 +1348,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         finally:
             screen.close(restore)
 
-    class session():
+    class Session():
         """
         Decorator and class to create a managed Screen. It can be used in
         two ways. If used as a method decorator it will create and open a new Screen,
@@ -1360,11 +1360,15 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         as a decorator or using the with statment. No arguments are required
         to use.
         """
+
         def __init__(self, func=lambda: None):
             update_wrapper(self, func)
             self.func = func
 
         def __get__(self, obj, objtype):
+            """
+            Get the object (for wrapping class methods)
+            """
             return partial(self.__call__, obj)
 
         def __call__(self, *args, **kwargs):
@@ -1375,10 +1379,16 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             return output
 
         def __enter__(self):
+            """
+            Method used for with statement
+            """
             self.screen = Screen.open()
             return self.screen
 
         def __exit__(self, type, value, traceback):
+            """
+            Method used for with statement
+            """
             self.screen.close()
 
     def _reset(self):
