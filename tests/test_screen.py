@@ -936,6 +936,72 @@ class TestScreen(unittest.TestCase):
         """Dummy callback for screen wrapper."""
         self.assertEqual(signal.getsignal(signal.SIGWINCH), screen._resize_handler)
 
+    def test_cjk_glyphs_overwrite_decorator(self):
+        """
+        Check that CJK languages delete half-glyphs correctly.
+        """
+
+        @Screen.session
+        def demo(screen):
+            screen = Screen.open(unicode_aware=True)
+            screen.print_at("aaaa", 0, 0)
+            screen.print_at("你確", 0, 1)
+            screen.print_at("bbbb", 0, 2)
+            screen.refresh()
+            screen.print_at("cccc", 0, 0)
+            screen.print_at("你確", 1, 1)
+            screen.print_at("dddd", 0, 2)
+            screen.refresh()
+
+            # Half-glyph appears as an "x" to show error and then double-width glyphs are returned
+            # twice, reflecting their extra width.
+            self.assert_line_equals(screen, u"x你你確確 ", y=1, length=6)
+
+        demo()
+
+    def test_cjk_glyphs_overwrite_decorator_class(self):
+        """
+        Check that CJK languages delete half-glyphs correctly.
+        """
+        class MyScreen():
+            @Screen.session
+            def demo(screen):
+                screen = Screen.open(unicode_aware=True)
+                screen.print_at("aaaa", 0, 0)
+                screen.print_at("你確", 0, 1)
+                screen.print_at("bbbb", 0, 2)
+                screen.refresh()
+                screen.print_at("cccc", 0, 0)
+                screen.print_at("你確", 1, 1)
+                screen.print_at("dddd", 0, 2)
+                screen.refresh()
+
+                # Half-glyph appears as an "x" to show error and then double-width glyphs are returned
+                # twice, reflecting their extra width.
+                self.assert_line_equals(screen, u"x你你確確 ", y=1, length=6)
+
+        s = MyScreen()
+        s.demo()
+
+    def test_cjk_glyphs_with(self):
+        """
+        Check that CJK languages delete half-glyphs correctly.
+        """
+        with Screen.session() as screen:
+            screen = Screen.open(unicode_aware=True)
+            screen.print_at("aaaa", 0, 0)
+            screen.print_at("你確", 0, 1)
+            screen.print_at("bbbb", 0, 2)
+            screen.refresh()
+            screen.print_at("cccc", 0, 0)
+            screen.print_at("你確", 1, 1)
+            screen.print_at("dddd", 0, 2)
+            screen.refresh()
+
+            # Half-glyph appears as an "x" to show error and then double-width glyphs are returned
+            # twice, reflecting their extra width.
+            self.assert_line_equals(screen, u"x你你確確 ", y=1, length=6)
+
 
 if __name__ == '__main__':
     unittest.main()
