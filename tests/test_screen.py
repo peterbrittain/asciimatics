@@ -936,71 +936,49 @@ class TestScreen(unittest.TestCase):
         """Dummy callback for screen wrapper."""
         self.assertEqual(signal.getsignal(signal.SIGWINCH), screen._resize_handler)
 
-    def test_cjk_glyphs_overwrite_decorator(self):
+    def test_overflow_decorator(self):
         """
-        Check that CJK languages delete half-glyphs correctly.
+        Check underflow and overflow work as expected
         """
-
         @Screen.session
         def demo(screen):
-            screen = Screen.open(unicode_aware=True)
-            screen.print_at("aaaa", 0, 0)
-            screen.print_at("你確", 0, 1)
-            screen.print_at("bbbb", 0, 2)
-            screen.refresh()
-            screen.print_at("cccc", 0, 0)
-            screen.print_at("你確", 1, 1)
-            screen.print_at("dddd", 0, 2)
-            screen.refresh()
+            canvas = Canvas(screen, 10, 40, 0, 0)
 
-            # Half-glyph appears as an "x" to show error and then double-width glyphs are returned
-            # twice, reflecting their extra width.
-            self.assert_line_equals(screen, u"x你你確確 ", y=1, length=6)
+            # Check underflow and overflow work as expected
+            canvas.print_at("ab", -1, 0)
+            canvas.print_at("cd", canvas.width - 1, 0)
+            self.assert_line_equals(canvas, "b                                      c")
 
         demo()
 
-    def test_cjk_glyphs_overwrite_decorator_class(self):
+    def test_overflow_decorator_class(self):
         """
-        Check that CJK languages delete half-glyphs correctly.
+        Check underflow and overflow work as expected
         """
         class MyScreen():
             @Screen.session
             def demo(screen=None):
-                screen = Screen.open(unicode_aware=True)
-                screen.print_at("aaaa", 0, 0)
-                screen.print_at("你確", 0, 1)
-                screen.print_at("bbbb", 0, 2)
-                screen.refresh()
-                screen.print_at("cccc", 0, 0)
-                screen.print_at("你確", 1, 1)
-                screen.print_at("dddd", 0, 2)
-                screen.refresh()
+                canvas = Canvas(screen, 10, 40, 0, 0)
 
-                # Half-glyph appears as an "x" to show error and then double-width glyphs are returned
-                # twice, reflecting their extra width.
-                self.assert_line_equals(screen, u"x你你確確 ", y=1, length=6)
+                # Check underflow and overflow work as expected
+                canvas.print_at("ab", -1, 0)
+                canvas.print_at("cd", canvas.width - 1, 0)
+                self.assert_line_equals(canvas, "b                                      c")
 
         s = MyScreen()
         s.demo()
 
-    def test_cjk_glyphs_with(self):
+    def test_overflow_with(self):
         """
-        Check that CJK languages delete half-glyphs correctly.
+        Check underflow and overflow work as expected
         """
         with Screen.session() as screen:
-            screen = Screen.open(unicode_aware=True)
-            screen.print_at("aaaa", 0, 0)
-            screen.print_at("你確", 0, 1)
-            screen.print_at("bbbb", 0, 2)
-            screen.refresh()
-            screen.print_at("cccc", 0, 0)
-            screen.print_at("你確", 1, 1)
-            screen.print_at("dddd", 0, 2)
-            screen.refresh()
+            canvas = Canvas(screen, 10, 40, 0, 0)
 
-            # Half-glyph appears as an "x" to show error and then double-width glyphs are returned
-            # twice, reflecting their extra width.
-            self.assert_line_equals(screen, u"x你你確確 ", y=1, length=6)
+            # Check underflow and overflow work as expected
+            canvas.print_at("ab", -1, 0)
+            canvas.print_at("cd", canvas.width - 1, 0)
+            self.assert_line_equals(canvas, "b                                      c")
 
 
 if __name__ == '__main__':
