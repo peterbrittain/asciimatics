@@ -693,6 +693,18 @@ With everything above, you should now be able to create a fully working text UI.
 few more final touches to consider.  These all touch on dynamically changing or reconstructing your
 Scene.
 
+At a high level, you need to decide what you want to achieve.  The basic options are as follows.
+
+1. If you just want to have some extra Frames on the same Screen - e.g. pop-up windows - that's
+   fine.  Just use the existing classes (see below)!
+2. If you want to be able to draw other content outside of your existing Frame(s), you probably
+   want to use other Effects.
+3. If you want to be able to add something inside your Frame(s), you almost certainly want to
+   create a custom Widget for that new content.
+
+The rest of this section goes through those options (and a couple more related changes) in a
+little more detail.
+
 Adding other effects
 ~~~~~~~~~~~~~~~~~~~~
 Since Frames are just another Effect, they can be combined with any other Effect in a Scene.  For
