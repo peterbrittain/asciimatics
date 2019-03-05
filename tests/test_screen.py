@@ -936,9 +936,9 @@ class TestScreen(unittest.TestCase):
         """Dummy callback for screen wrapper."""
         self.assertEqual(signal.getsignal(signal.SIGWINCH), screen._resize_handler)
 
-    def test_overflow_decorator(self):
+    def test_function_decorator(self):
         """
-        Check underflow and overflow work as expected in function decorator
+        Check ManagedScreen function decorator works.
         """
         @ManagedScreen
         def demo(screen=None):
@@ -952,9 +952,9 @@ class TestScreen(unittest.TestCase):
         demo()
 
     @ManagedScreen
-    def test_overflow_class_decorator(self, screen=None):
+    def test_class_method_decorator(self, screen=None):
         """
-        Check underflow and overflow work as expected in method decorator
+        Check ManagedScreen method decorator works.
         """
         canvas = Canvas(screen, 10, 40, 0, 0)
 
@@ -963,9 +963,9 @@ class TestScreen(unittest.TestCase):
         canvas.print_at("cd", canvas.width - 1, 0)
         self.assert_line_equals(canvas, "b                                      c")
 
-    def test_overflow_with(self):
+    def test_context_manager(self):
         """
-        Check underflow and overflow work as expected with context manager
+        Check ManagedScreen context manager works.
         """
         with ManagedScreen() as screen:
             canvas = Canvas(screen, 10, 40, 0, 0)

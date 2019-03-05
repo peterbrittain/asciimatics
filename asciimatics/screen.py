@@ -1744,7 +1744,9 @@ class ManagedScreen():
 
     def __get__(self, obj, objtype):
         """
-        Class decorator method, so we can use class in with statement
+        Class decorator method, so we can use the class in a with statement.
+
+        See https://stackoverflow.com/a/3296318/4994021 for details.
         """
         return partial(self.__call__, obj)
 

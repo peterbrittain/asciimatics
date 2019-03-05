@@ -47,7 +47,7 @@ def _credits(screen):
             Screen.COLOUR_GREEN,
             start_frame=100,
             stop_frame=200),
-        Wipe(screen, start_frame=150)
+        Wipe(screen, start_frame=150),
         Cycle(
             screen,
             FigletText("Asciimatics"),
@@ -154,7 +154,7 @@ def _credits(screen):
             screen.height + 96,
             Screen.COLOUR_GREEN)
     ]
-    scenes.append(Scene(effects, (screen.height + 96) * 3))
+    scenes.append(Scene(effects, (screen.height + 104) * 3))
 
     effects = [
         Cycle(
