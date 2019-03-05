@@ -83,3 +83,4 @@ provided by a :py:obj:`.Renderer`.  For example:
         screen.play([Scene(effects, 500)])
 
     Screen.wrapper(demo)
+

@@ -20,9 +20,8 @@ For example:
 
     Screen.wrapper(demo)
 
-You can also use the :py:obj:`.ManagedScreen` class either as a function decorator or the `with` keyword:
-
-1. Use it as a method decorator. Note that I use `screen=None` in this example to prevent linting errors:
+You can also use the :py:obj:`.ManagedScreen` class as a function decorator to achieve the same thing
+as the above.  For example:
 
 .. code-block:: python
 
@@ -38,6 +37,8 @@ You can also use the :py:obj:`.ManagedScreen` class either as a function decorat
         sleep(10)
 
     demo()
+
+Or you can also use it as a context manager (i.e. using the `with` keyword).  For example:
 
 .. code-block:: python
 
