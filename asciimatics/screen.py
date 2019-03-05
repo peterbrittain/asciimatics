@@ -14,6 +14,7 @@ import struct
 import sys
 import time
 from abc import ABCMeta, abstractmethod
+from functools import update_wrapper, partial
 from locale import getlocale, getdefaultlocale
 from logging import getLogger
 from math import sqrt
@@ -1722,6 +1723,52 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
 
         :param title: The title to be set.
         """
+
+
+class ManagedScreen():
+    """
+    Decorator and class to create a managed Screen. It can be used in
+    two ways. If used as a method decorator it will create and open a new Screen,
+    pass the screen to the method as a keyword argument, and close the
+    screen when the method has completed. If used with the with statement
+    the class will create and open a new Screen, return the screen for
+    using in the block, and close the screen when the statement ends.
+    Note that any arguments are in this class so that you can use it
+    as a decorator or using the with statment. No arguments are required
+    to use.
+    """
+
+    def __init__(self, func=lambda: None):
+        update_wrapper(self, func)
+        self.func = func
+
+    def __get__(self, obj, objtype):
+        """
+        Class decorator method, so we can use the class in a with statement.
+
+        See https://stackoverflow.com/a/3296318/4994021 for details.
+        """
+        return partial(self.__call__, obj)
+
+    def __call__(self, *args, **kwargs):
+        screen = Screen.open()
+        kwargs["screen"] = screen
+        output = self.func(*args, **kwargs)
+        screen.close()
+        return output
+
+    def __enter__(self):
+        """
+        Method used for with statement
+        """
+        self.screen = Screen.open()
+        return self.screen
+
+    def __exit__(self, type, value, traceback):
+        """
+        Method used for with statement
+        """
+        self.screen.close()
 
 
 if sys.platform == "win32":

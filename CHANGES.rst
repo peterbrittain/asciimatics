@@ -11,6 +11,7 @@ LATEST
 - Added `wait_for-input` method to `Screen`.
 - Added optional `theme` parameter to `PopupDialog`.
 - Added optional `jitter` parameter to `Noise`.
+- Added `ManagedScreen` decorator.
 - Improved performance of double-buffering.
 
   - NOTE: Drawing off-screen with a large scrolling buffer is no longer supported (as it wasn't

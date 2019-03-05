@@ -147,9 +147,14 @@ def _credits(screen):
             screen,
             FigletText("Kirtan Sakariya"),
             screen.height + 88,
+            Screen.COLOUR_GREEN),
+        Mirage(
+            screen,
+            FigletText("Jesse Lieberg"),
+            screen.height + 96,
             Screen.COLOUR_GREEN)
     ]
-    scenes.append(Scene(effects, (screen.height + 96) * 3))
+    scenes.append(Scene(effects, (screen.height + 104) * 3))
 
     effects = [
         Cycle(
