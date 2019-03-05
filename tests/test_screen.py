@@ -19,7 +19,7 @@ try:
 except ImportError:
     pass
 from asciimatics.scene import Scene
-from asciimatics.screen import Screen, Canvas
+from asciimatics.screen import Screen, Canvas, ManagedScreen
 from tests.mock_objects import MockEffect
 if sys.platform == "win32":
     import win32console
@@ -938,9 +938,9 @@ class TestScreen(unittest.TestCase):
 
     def test_overflow_decorator(self):
         """
-        Check underflow and overflow work as expected
+        Check underflow and overflow work as expected in function decorator
         """
-        @Screen.Session
+        @ManagedScreen
         def demo(screen=None):
             canvas = Canvas(screen, 10, 40, 0, 0)
 
@@ -951,10 +951,10 @@ class TestScreen(unittest.TestCase):
 
         demo()
 
-    @Screen.Session
+    @ManagedScreen
     def test_overflow_class_decorator(self, screen=None):
         """
-        Check underflow and overflow work as expected
+        Check underflow and overflow work as expected in method decorator
         """
         canvas = Canvas(screen, 10, 40, 0, 0)
 
@@ -965,9 +965,9 @@ class TestScreen(unittest.TestCase):
 
     def test_overflow_with(self):
         """
-        Check underflow and overflow work as expected
+        Check underflow and overflow work as expected with context manager
         """
-        with Screen.Session() as screen:
+        with ManagedScreen() as screen:
             canvas = Canvas(screen, 10, 40, 0, 0)
 
             # Check underflow and overflow work as expected
