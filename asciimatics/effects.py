@@ -414,6 +414,7 @@ class _Star(object):
     def __init__(self, screen, pattern):
         """
         :param screen: The Screen being used for the Scene.
+        :param pattern: The pattern to loop through
         """
         self._screen = screen
         self._star_chars = pattern
@@ -467,7 +468,7 @@ class Stars(Effect):
         """
         :param screen: The Screen being used for the Scene.
         :param count: The number of starts to create.
-        :param pattern: The pattern the star loop through
+        :param pattern: The pattern for the stars to loop through
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
