@@ -470,12 +470,13 @@ class Stars(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Stars, self).__init__(screen, pattern, **kwargs)
+        super(Stars, self).__init__(screen, **kwargs)
+        self._pattern = pattern
         self._max = count
         self._stars = []
 
     def reset(self):
-        self._stars = [_Star(self._screen) for _ in range(self._max)]
+        self._stars = [_Star(self._screen, self._pattern) for _ in range(self._max)]
 
     def _update(self, frame_no):
         for star in self._stars:
