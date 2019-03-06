@@ -468,7 +468,7 @@ class Stars(Effect):
         """
         :param screen: The Screen being used for the Scene.
         :param count: The number of starts to create.
-        :param pattern: The pattern for the stars to loop through
+        :param pattern: The string pattern for the stars to loop through
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """

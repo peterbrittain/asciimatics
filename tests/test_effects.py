@@ -216,14 +216,13 @@ class TestEffects(unittest.TestCase):
 
     def test_stars_pattern(self):
         """
-        Check that Stars custom pattern value works works.
+        Check that Stars custom pattern value works.
         """
         # Check that Stars randomly updates the Screen every frame.
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         effect = Stars(canvas, 100, "TESTTESTTEST")
         effect.reset()
-        self.assert_blank(canvas)
         my_buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
         for i in range(10):
             effect.update(i)
@@ -231,13 +230,6 @@ class TestEffects(unittest.TestCase):
                 canvas,
                 my_buffer,
                 lambda value: self.assertIn(chr(value[0]), " TES")))
-
-        # Check there is no stop frame by default.
-        self.assertEqual(effect.stop_frame, 0)
-
-        # This effect should ignore events.
-        event = object()
-        self.assertEqual(event, effect.process_event(event))
 
     def test_matrix(self):
         """

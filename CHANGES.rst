@@ -12,6 +12,7 @@ LATEST
 - Added optional `theme` parameter to `PopupDialog`.
 - Added optional `jitter` parameter to `Noise`.
 - Improved performance of double-buffering.
+- Added optional `pattern` parameter to `Stars`.
 
   - NOTE: Drawing off-screen with a large scrolling buffer is no longer supported (as it wasn't
     needed).
