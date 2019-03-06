@@ -13,6 +13,7 @@ LATEST
 - Added optional `jitter` parameter to `Noise`.
 - Added `ManagedScreen` decorator.
 - Improved performance of double-buffering.
+- Added optional `pattern` parameter to `Stars`.
 
   - NOTE: Drawing off-screen with a large scrolling buffer is no longer supported (as it wasn't
     needed).
