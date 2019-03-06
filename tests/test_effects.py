@@ -230,7 +230,7 @@ class TestEffects(unittest.TestCase):
             self.assertTrue(self.check_canvas(
                 canvas,
                 my_buffer,
-                lambda value: self.assertIn(chr(value[0]), "·x+")))
+                lambda value: self.assertIn(chr(value[0]), " ·x+")))
 
         # Check there is no stop frame by default.
         self.assertEqual(effect.stop_frame, 0)
