@@ -411,13 +411,12 @@ class _Star(object):
     Simple class to represent a single star for the Stars special effect.
     """
 
-    _star_chars = "..+..   ...x...  ...*...         "
-
-    def __init__(self, screen):
+    def __init__(self, screen, pattern):
         """
         :param screen: The Screen being used for the Scene.
         """
         self._screen = screen
+        self._star_chars = pattern
         self._cycle = None
         self._old_char = None
         self._respawn()
@@ -464,14 +463,14 @@ class Stars(Effect):
     Add random stars to the screen and make them twinkle.
     """
 
-    def __init__(self, screen, count, **kwargs):
+    def __init__(self, screen, count, pattern="..+..   ...x...  ...*...         ", **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param count: The number of starts to create.
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Stars, self).__init__(screen, **kwargs)
+        super(Stars, self).__init__(screen, pattern, **kwargs)
         self._max = count
         self._stars = []
 
