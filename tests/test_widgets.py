@@ -1230,7 +1230,7 @@ class TestWidgets(unittest.TestCase):
 
     def test_pop_up_widget(self):
         """
-        Check widget tab stops work as expected.
+        Check popup dialog work as expected.
         """
         def test_on_click(selection):
             raise NextScene(str(selection))
@@ -1264,6 +1264,35 @@ class TestWidgets(unittest.TestCase):
         # Check that the pop-up swallows all events.
         event = object()
         self.assertIsNone(form.process_event(event))
+
+    def test_pop_up_no_buttons(self):
+        """
+        Check dialog with nobuttons work as expected.
+        """
+        def test_on_click(selection):
+            raise NextScene(str(selection))
+
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = PopUpDialog(canvas, "Message", [], test_on_click)
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that the pop-up is rendered correctly.
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "               +-------+                \n" +
+            "               |Message|                \n" +
+            "               +-------+                \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
 
     def test_cjk_popup(self):
         """

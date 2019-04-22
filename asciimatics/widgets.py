@@ -2164,7 +2164,7 @@ class TextBox(Widget):
     def reset(self):
         # Reset to original data and move to end of the text.
         self._line = len(self._value) - 1
-        self._column = len(self._value[self._line])
+        self._column = 0 if self._is_disabled else len(self._value[self._line])
         self._reflowed_text_cache = None
 
     def _change_line(self, delta):
@@ -3053,7 +3053,7 @@ class PopUpDialog(Frame):
         """
         :param screen: The Screen that owns this dialog.
         :param text: The message text to display.
-        :param buttons: A list of button names to display.
+        :param buttons: A list of button names to display. This may be an empty list.
         :param on_close: Optional function to invoke on exit.
         :param has_shadow: optional flag to specify if dialog should have a shadow when drawn.
         :param theme: optional colour theme for this pop-up.  Defaults to the warning colours.
@@ -3073,14 +3073,15 @@ class PopUpDialog(Frame):
         # Decide on optimum width of the dialog.  Limit to 2/3 the screen width.
         string_len = wcswidth if screen.unicode_aware else len
         width = max([string_len(x) for x in text.split("\n")])
-        width = max(width + 4,
+        width = max(width + 2,
                     sum([string_len(x) + 4 for x in buttons]) + len(buttons) + 5)
         width = min(width, screen.width * 2 // 3)
 
         # Figure out the necessary message and allow for buttons and borders
         # when deciding on height.
-        self._message = _split_text(text, width - 4, screen.height - 4, screen.unicode_aware)
-        height = len(self._message) + 4
+        dh = 4 if len(buttons) > 0 else 2
+        self._message = _split_text(text, width - 2, screen.height - dh, screen.unicode_aware)
+        height = len(self._message) + dh
 
         # Construct the Frame
         self._data = {"message": self._message}
@@ -3088,7 +3089,7 @@ class PopUpDialog(Frame):
             screen, height, width, self._data, has_shadow=has_shadow, is_modal=True)
 
         # Build up the message box
-        layout = Layout([100], fill_frame=True)
+        layout = Layout([width - 2], fill_frame=True)
         self.add_layout(layout)
         text_box = TextBox(len(self._message), name="message")
         text_box.disabled = True

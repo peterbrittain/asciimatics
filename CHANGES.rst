@@ -8,17 +8,18 @@ LATEST
 - Added support for page up/down in `TextBox`.
 - Added optional scroll bars to `MultiColumnListBox`.
 - Added `file_filter` parameter to `FileBrowser`.
-- Added `wait_for-input` method to `Screen`.
+- Added `wait_for_input` method to `Screen`.
 - Added optional `theme` parameter to `PopupDialog`.
 - Added optional `jitter` parameter to `Noise`.
 - Added `ManagedScreen` decorator.
 - Improved performance of double-buffering.
-- Added optional `pattern` parameter to `Stars`.
 
   - NOTE: Drawing off-screen with a large scrolling buffer is no longer supported (as it wasn't
     needed).
 
+- Added optional `pattern` parameter to `Stars`.
 - Improved handling of permission errors in `FileBrowser`.
+- Fixed height of PopUpDialog when no buttons are specified.
 - Fixed bug where asciimatics Scenes would hang when the clock is moved back in time.
 - Fixed off-by-one error in BarChart labels.
 - Added default date and time to DatePicker and TimePicker when no value specified.
