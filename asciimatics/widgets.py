@@ -34,8 +34,11 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 
-# Standard palettes for use with :py:meth:`~Frame.set_theme`.
-_THEMES = {
+#: Standard palettes for use with :py:meth:`~Frame.set_theme`.  Each entry in THEMES contains a colour
+#: palette for use by the widgets within a Frame.  Each colour palette is a dictionary mapping a colour key
+#: to a 3-tuple of (foreground colour, attribute, background colour).  The "default" theme defines all the
+#: required keys for a palette.
+THEMES = {
     "default": {
         "background": (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
         "shadow": (Screen.COLOUR_BLACK, None, Screen.COLOUR_BLACK),
@@ -548,8 +551,8 @@ class Frame(Effect):
 
         :param theme: The name of the theme to set.
         """
-        if theme in _THEMES:
-            self.palette = _THEMES[theme]
+        if theme in THEMES:
+            self.palette = THEMES[theme]
             if self._scroll_bar:
                 # TODO: fix protected access.
                 self._scroll_bar._palette = self.palette

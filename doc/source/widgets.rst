@@ -496,6 +496,8 @@ Name                      Description
 "tlj256"                  Shades of black white and red - 256 colour terminals only.
 ========================  =========================================================================
 
+You can add your own theme to this list by defining a new entry in the :py:obj:`~.widgets.THEMES`
+
 .. _custom-colours-ref:
 
 Custom widget colours
