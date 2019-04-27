@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 from datetime import date, time
 from time import sleep
 from mock import patch
+from builtins import ord
 from builtins import chr
 from builtins import str
 import unittest
@@ -1648,6 +1649,30 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "+--------------------------------------+\n")
 
+    def test_label_colours(self):
+        """
+        Check Label custom colour works.
+        """
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = Frame(canvas, canvas.height, canvas.width)
+        layout = Layout([1])
+        form.add_layout(layout)
+        label = Label("Some text")
+        label.custom_colour = "disabled"
+        layout.add_widget(label)
+        form.fix()
+        form.register_scene(scene)
+        scene.add_effect(form)
+        scene.reset()
+
+        # Check that the label is rendered in the correct colour palette.
+        for effect in scene.effects:
+            effect.update(0)
+        self.assertEqual(label.custom_colour, "disabled")
+        self.assertEqual(canvas.get_from(1, 1), (ord("S"), 0, 1, 4))
+
     @patch("os.path.exists")
     @patch("os.path.realpath")
     @patch("os.path.islink")
@@ -1655,7 +1680,7 @@ class TestWidgets(unittest.TestCase):
     @patch("os.lstat")
     @patch("os.stat")
     @patch("os.listdir")
-    def test_file_browser(self, mock_list, mock_stat, mock_lstat, mock_dir, mock_link, \
+    def test_file_browser(self, mock_list, mock_stat, mock_lstat, mock_dir, mock_link,
                           mock_real_path, mock_exists):
         """
         Check FileBrowser widget works as expected.
@@ -1748,7 +1773,7 @@ class TestWidgets(unittest.TestCase):
     @patch("os.lstat")
     @patch("os.stat")
     @patch("os.listdir")
-    def test_file_filter(self, mock_list, mock_stat, mock_lstat, mock_dir, mock_link, \
+    def test_file_filter(self, mock_list, mock_stat, mock_lstat, mock_dir, mock_link,
                           mock_real_path, mock_exists):
         """
         Check FileBrowser widget with a file_filter works as expected.

@@ -1547,6 +1547,29 @@ class Widget(with_metaclass(ABCMeta, object)):
             attr |= Screen.A_REVERSE
         self._frame.canvas.print_at(char, x, y, colour, attr, bg)
 
+    def _pick_palette_key(self, palette_name, selected=False, allow_input_state=True):
+        """
+        Pick the rendering colour for a widget based on the current state.
+
+        :param palette_name: The stem name for the widget - e.g. "button".
+        :param selected: Whether this item is selected or not.
+        :param allow_input_state: Whether to allow input state (e.g. focus) to affect result.
+        :returns: A colour palette key to be used.
+        """
+        key = palette_name
+        if self._custom_colour:
+            key = self._custom_colour
+        elif self.disabled:
+            key = "disabled"
+        elif not self._is_valid:
+            key = "invalid"
+        elif allow_input_state:
+            if self._has_focus:
+                key = "focus_" + palette_name
+            if selected:
+                key = "selected_" + key
+        return key
+
     def _pick_colours(self, palette_name, selected=False):
         """
         Pick the rendering colour for a widget based on the current state.
@@ -1555,20 +1578,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         :param selected: Whether this item is selected or not.
         :returns: A colour tuple (fg, attr, bg) to be used.
         """
-        if self._custom_colour:
-            key = self._custom_colour
-        elif self.disabled:
-            key = "disabled"
-        elif not self._is_valid:
-            key = "invalid"
-        else:
-            if self._has_focus:
-                key = "focus_" + palette_name
-            else:
-                key = palette_name
-            if selected:
-                key = "selected_" + key
-        return self._frame.palette[key]
+        return self._frame.palette[self._pick_palette_key(palette_name, selected)]
 
     @abstractmethod
     def update(self, frame_no):
@@ -1655,7 +1665,8 @@ class Label(Widget):
         return event
 
     def update(self, frame_no):
-        (colour, attr, bg) = self._frame.palette["label"]
+        (colour, attr, bg) = self._frame.palette[
+            self._pick_palette_key("label", selected=False, allow_input_state=False)]
         for i, text in enumerate(
                 _split_text(self._text, self._w, self._h, self._frame.canvas.unicode_aware)):
             self._frame.canvas.paint(

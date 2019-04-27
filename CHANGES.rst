@@ -23,6 +23,7 @@ LATEST
 - Fixed height of PopUpDialog when no buttons are specified.
 - Fixed bug where asciimatics Scenes would hang when the clock is moved back in time.
 - Fixed off-by-one error in BarChart labels.
+- Fixed bug where Labels ignored the custom_colour property.
 - Added default date and time to DatePicker and TimePicker when no value specified.
 
 1.10.0
