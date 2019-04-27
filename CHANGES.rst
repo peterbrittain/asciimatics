@@ -20,6 +20,7 @@ LATEST
 - Added optional `pattern` parameter to `Stars`.
 - Improved handling of permission errors in `FileBrowser`.
 - Added formal support for defining your own colour theme.
+- Added `clear_widgets` to `Layout` objects.
 - Fixed height of PopUpDialog when no buttons are specified.
 - Fixed bug where asciimatics Scenes would hang when the clock is moved back in time.
 - Fixed off-by-one error in BarChart labels.

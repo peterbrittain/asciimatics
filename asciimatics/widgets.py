@@ -967,6 +967,9 @@ class Layout(object):
         """
         Add a widget to this Layout.
 
+        If you are adding this Widget to the Layout dynamically after starting to play the Scene,
+        don't forget to ensure that the value is explicitly set before the next update.
+
         :param widget: The widget to be added.
         :param column: The column within the widget for this widget.  Defaults to zero.
         """
@@ -980,6 +983,16 @@ class Layout(object):
 
         if widget.name in self._frame.data:
             widget.value = self._frame.data[widget.name]
+
+    def clear_widgets(self):
+        """
+        Clear all widgets from this Layout.
+
+        This method allows users of the Layout to dynamically recreate a new Layout.  After calling
+        this method, you can add new widgetsback into the Layout and then need to call `fix` to
+        force the Frame to recalculate the resulting new overall layout.
+        """
+        self._columns = [[] for _ in self._columns]
 
     def focus(self, force_first=False, force_last=False, force_column=None,
               force_widget=None):

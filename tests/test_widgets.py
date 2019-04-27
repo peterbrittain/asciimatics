@@ -2554,6 +2554,77 @@ class TestWidgets(unittest.TestCase):
         form.save()
         self.assertEqual(form.data["max_len_text"], "1234")
 
+    def test_clear_widgets(self):
+        """
+        Check that clear_widgets works as expected.
+        """
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = Frame(canvas, canvas.height, canvas.width)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        layout.add_widget(Text("Test"))
+        form.fix()
+        form.register_scene(scene)
+        scene.add_effect(form)
+        scene.reset()
+
+        # Check that the frame is rendered correctly.
+        for effect in scene.effects:
+            effect.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|Test                                  |\n" +
+            "|                                      O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check removing widgets clears Frame.
+        layout.clear_widgets()
+        form.fix()
+        scene.reset()
+        for effect in scene.effects:
+            effect.update(1)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|                                      |\n" +
+            "|                                      O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check adding another widget now adds it back into the Frame.
+        layout.add_widget(Text("Another One"))
+        form.fix()
+        scene.reset()
+        for effect in scene.effects:
+            effect.update(2)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|Another One                           |\n" +
+            "|                                      O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+
 
 if __name__ == '__main__':
     unittest.main()
