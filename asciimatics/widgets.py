@@ -14,6 +14,7 @@ import re
 import os
 import unicodedata
 from builtins import chr
+from builtins import str
 from builtins import range
 from builtins import object
 from copy import copy, deepcopy
@@ -1667,9 +1668,11 @@ class Label(Widget):
         """
         # Labels have no value and so should have no name for look-ups either.
         super(Label, self).__init__(None, tab_stop=False)
+
         # Although this is a label, we don't want it to contribute to the layout
         # tab calculations, so leave internal `_label` value as None.
-        self._text = label
+        # Also ensure that the label really is text.
+        self._text = str(label)
         self._required_height = height
         self._align = align
 
