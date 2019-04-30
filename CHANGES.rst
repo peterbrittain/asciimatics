@@ -3,6 +3,10 @@ CHANGE HISTORY
 
 LATEST
 ------
+<TBD>
+
+1.11.0
+------
 - Added `allow_int` parameter to `Screen.play()`.
 - Added `max_length` parameter to `Text`.
 - Added support for page up/down in `TextBox`.
