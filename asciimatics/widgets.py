@@ -916,6 +916,9 @@ class Layout(object):
         Widget best fit the canvas as constrained by the above.
     """
 
+    __slots__ = ["_column_sizes", "_columns", "_frame", "_has_focus", "_live_col", "_live_widget",
+                 "_fill_frame"]
+
     def __init__(self, columns, fill_frame=False):
         """
         :param columns: A list of numbers specifying the width of each column in this layout.
@@ -1361,6 +1364,10 @@ class Widget(with_metaclass(ABCMeta, object)):
     #: fit the maximum space used by any other column in the Layout.
     FILL_COLUMN = -135792467
 
+    __slots__ = ["_name", "_label", "_frame", "_value", "_has_focus", "_x", "_y", "_h", "_w", "_offset",
+                 "_display_label", "_is_tab_stop", "_is_disabled", "_is_valid", "_custom_colour", "_on_focus",
+                 "_on_blur", "string_len"]
+
     def __init__(self, name, tab_stop=True, disabled=False, on_focus=None, on_blur=None):
         """
         :param name: The name of this Widget.
@@ -1658,6 +1665,8 @@ class Label(Widget):
     A text label.
     """
 
+    __slots__ = ["_text", "_required_height", "_align"]
+
     def __init__(self, label, height=1, align="<"):
         """
         :param label: The text to be displayed for the Label.
@@ -1716,6 +1725,8 @@ class Divider(Widget):
     A divider to break up a group of widgets.
     """
 
+    __slots__ = ["_draw_line", "_required_height", "_line_char"]
+
     def __init__(self, draw_line=True, height=1, line_char=None):
         """
         :param draw_line: Whether to draw a line in the centre of the gap.
@@ -1763,6 +1774,8 @@ class Text(Widget):
 
     It consists of an optional label and an entry box.
     """
+
+    __slots__ = ["_label", "_column", "_start_column", "_on_change", "_validator", "_hide_char", "_max_length"]
 
     def __init__(self, label=None, name=None, on_change=None, validator=None, hide_char=None, max_length=None,
                  **kwargs):
@@ -1924,6 +1937,8 @@ class CheckBox(Widget):
     the box and a field name.
     """
 
+    __slots__ = ["_text", "_label", "_on_change"]
+
     def __init__(self, text, label=None, name=None, on_change=None, **kwargs):
         """
         :param text: The text to explain this specific field to the user.
@@ -2005,6 +2020,8 @@ class RadioButtons(Widget):
 
     It consists of an optional label and then a list of selection bullets with field names.
     """
+
+    __slots__ = ["_options", "_label", "_selection", "_start_column", "_on_change"]
 
     def __init__(self, options, label=None, name=None, on_change=None, **kwargs):
         """
@@ -2108,6 +2125,9 @@ class TextBox(Widget):
 
     It consists of a framed box with option label.
     """
+
+    __slots__ = ["_label", "_line", "_column", "_start_line", "_start_column", "_required_height", "_as_string",
+                 "_line_wrap", "_on_change", "_reflowed_text_cache"]
 
     def __init__(self, height, label=None, name=None, as_string=False, line_wrap=False,
                  on_change=None, **kwargs):
@@ -2387,6 +2407,9 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
     """
     An Internal class to contain common function between list box types.
     """
+
+    __slots__ = ["_options", "_titles", "_label", "_line", "_start_line", "_required_height", "_on_change",
+                 "_on_select", "_validator", "_search", "_last_search", "_scroll_bar"]
 
     def __init__(self, height, options, titles=None, label=None, name=None, on_change=None,
                  on_select=None, validator=None):
@@ -3004,6 +3027,8 @@ class Button(Widget):
     on a form).
     """
 
+    __slots__ = ["_text", "_add_box", "_on_click", "_label"]
+
     def __init__(self, text, on_click, label=None, add_box=True, **kwargs):
         """
         :param text: The text for the button.
@@ -3276,6 +3301,8 @@ class TimePicker(Widget):
     A TimePicker widget allows you to pick a time from a compact, temporary, pop-up Frame.
     """
 
+    __slots__ = ["_label", "_on_change", "_value", "_child", "include_seconds"]
+
     def __init__(self, label=None, name=None, seconds=False, on_change=None, **kwargs):
         """
         :param label: An optional label for the widget.
@@ -3416,6 +3443,8 @@ class DatePicker(Widget):
     A DatePicker widget allows you to pick a date from a compact, temporary, pop-up Frame.
     """
 
+    __slots__ = ["_label", "_on_change", "_value", "_child", "_year_range"]
+
     def __init__(self, label=None, name=None, year_range=None, on_change=None, **kwargs):
         """
         :param label: An optional label for the widget.
@@ -3534,6 +3563,8 @@ class DropdownList(Widget):
     """
     This widget allows you to pick an item from a temporary pop-up list.
     """
+
+    __slots__ = ["_label", "_on_change", "_child", "_options", "_line", "_value"]
 
     def __init__(self, options, label=None, name=None, on_change=None, **kwargs):
         """
@@ -3775,6 +3806,8 @@ class VerticalDivider(Widget):
 
     This widget should be put into a column of its own in the Layout.
     """
+
+    __slots__ = ["_required_height"]
 
     def __init__(self, height=Widget.FILL_COLUMN):
         """
