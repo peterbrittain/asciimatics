@@ -1366,7 +1366,7 @@ class Widget(with_metaclass(ABCMeta, object)):
 
     __slots__ = ["_name", "_label", "_frame", "_value", "_has_focus", "_x", "_y", "_h", "_w", "_offset",
                  "_display_label", "_is_tab_stop", "_is_disabled", "_is_valid", "_custom_colour", "_on_focus",
-                 "_on_blur", "string_len"]
+                 "_on_blur", "string_len", "_output_cache"]
 
     def __init__(self, name, tab_stop=True, disabled=False, on_focus=None, on_blur=None):
         """
@@ -1393,6 +1393,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         self._custom_colour = None
         self._on_focus = on_focus
         self._on_blur = on_blur
+        self._output_cache = None
 
         # Helper function to optimise string length calculations - default for now and pick
         # the optimal version when we know whether we need unicode support or not.
@@ -1428,6 +1429,8 @@ class Widget(with_metaclass(ABCMeta, object)):
 
     @disabled.setter
     def disabled(self, new_value):
+        if self._is_disabled != new_value:
+            self._output_cache = None
         self._is_disabled = new_value
 
     @property
@@ -1441,6 +1444,8 @@ class Widget(with_metaclass(ABCMeta, object)):
 
     @custom_colour.setter
     def custom_colour(self, new_value):
+        if new_value != self._custom_colour:
+            self._output_cache = None
         self._custom_colour = new_value
 
     @property
@@ -1465,6 +1470,8 @@ class Widget(with_metaclass(ABCMeta, object)):
 
         :param frame: The owning Frame.
         """
+        if frame != self._frame:
+            self._output_cache = None
         self._frame = frame
         self.string_len = wcswidth if self._frame.canvas.unicode_aware else len
 
@@ -1481,6 +1488,8 @@ class Widget(with_metaclass(ABCMeta, object)):
         :param w: The width of the widget.
         :param h: The height of the widget.
         """
+        if self._x != x or self._y != y or self._offset != offset or self._w != w or self._h != h:
+            self._output_cache = None
         self._x = x
         self._y = y
         self._offset = offset
@@ -1502,6 +1511,8 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         Call this to give this Widget the input focus.
         """
+        if not self._has_focus:
+            self._output_cache = None
         self._has_focus = True
         self._frame.move_to(self._x, self._y, self._h)
         if self._on_focus is not None:
@@ -1533,6 +1544,8 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         Call this to take the input focus from this Widget.
         """
+        if self._has_focus:
+            self._output_cache = None
         self._has_focus = False
         if self._on_blur is not None:
             self._on_blur()
@@ -1690,12 +1703,19 @@ class Label(Widget):
         return event
 
     def update(self, frame_no):
-        (colour, attr, bg) = self._frame.palette[
-            self._pick_palette_key("label", selected=False, allow_input_state=False)]
-        for i, text in enumerate(
-                _split_text(self._text, self._w, self._h, self._frame.canvas.unicode_aware)):
+        if not self._output_cache:
+            (colour, attr, bg) = self._frame.palette[
+                self._pick_palette_key("label", selected=False, allow_input_state=False)]
+            self._output_cache = {
+                "lines": _split_text(self._text, self._w, self._h, self._frame.canvas.unicode_aware),
+                "colour": colour,
+                "attr": attr,
+                "bg": bg}
+
+        for i, text in enumerate(self._output_cache["lines"]):
             self._frame.canvas.paint(
-                "{:{}{}}".format(text, self._align, self._w), self._x, self._y + i, colour, attr, bg)
+                "{:{}{}}".format(text, self._align, self._w), self._x, self._y + i, self._output_cache["colour"],
+                self._output_cache["attr"], self._output_cache["bg"])
 
     def reset(self):
         pass
@@ -1713,6 +1733,9 @@ class Label(Widget):
 
     @text.setter
     def text(self, new_value):
+        """Set text and clear output cache."""
+        if new_value != self._text:
+            self._output_cache = None
         self._text = new_value
 
     @property
