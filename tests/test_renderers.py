@@ -185,7 +185,7 @@ class TestRenderers(unittest.TestCase):
         # This typically means we're running inside a non-standard terminal.
         # For example, this happens when embedded in PyCharm.
         if sys.platform != "win32":
-            if not sys.stdout.isatty():
+            if not (("FORCE_TTY" in os.environ and os.environ["FORCE_TTY"] == "Y") or sys.stdout.isatty()):
                 self.skipTest("Not a valid TTY")
             curses.initscr()
             if curses.tigetstr("ri") is None:
@@ -256,7 +256,7 @@ class TestRenderers(unittest.TestCase):
         # This typically means we're running inside a non-standard terminal.
         # For example, this happens when embedded in PyCharm.
         if sys.platform != "win32":
-            if not sys.stdout.isatty():
+            if not (("FORCE_TTY" in os.environ and os.environ["FORCE_TTY"] == "Y") or sys.stdout.isatty()):
                 self.skipTest("Not a valid TTY")
             curses.initscr()
             if curses.tigetstr("ri") is None:
@@ -303,7 +303,7 @@ class TestRenderers(unittest.TestCase):
         # This typically means we're running inside a non-standard terminal.
         # For example, this happens when embedded in PyCharm.
         if sys.platform != "win32":
-            if not sys.stdout.isatty():
+            if not (("FORCE_TTY" in os.environ and os.environ["FORCE_TTY"] == "Y") or sys.stdout.isatty()):
                 self.skipTest("Not a valid TTY")
             curses.initscr()
             if curses.tigetstr("ri") is None:
