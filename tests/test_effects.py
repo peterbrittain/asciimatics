@@ -3,6 +3,7 @@ import unittest
 from datetime import datetime
 from mock.mock import MagicMock, patch
 from random import randint
+import os
 import sys
 from asciimatics.effects import Print, Cycle, BannerText, Mirage, Scroll, \
     Stars, Matrix, Snow, Wipe, Clock, Cog, RandomNoise, Julia
@@ -45,6 +46,8 @@ class TestEffects(unittest.TestCase):
         # This typically means we're running inside a non-standard termina;.
         # For example, thi happens when embedded in PyCharm.
         if sys.platform != "win32":
+            if not (("FORCE_TTY" in os.environ and os.environ["FORCE_TTY"] == "Y") or sys.stdout.isatty()):
+                self.skipTest("Not a valid TTY")
             curses.initscr()
             if curses.tigetstr("ri") is None:
                 self.skipTest("No valid terminal definition")
