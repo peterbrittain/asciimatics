@@ -334,7 +334,7 @@ with labels for each field, indenting all of the fields to the same depth:
 .. code-block:: python
 
     layout = Layout([100])
-    self.add_layout(layout)
+    frame.add_layout(layout)
     layout.add_widget(Text("Name:", "name"))
     layout.add_widget(Text("Address:", "address"))
     layout.add_widget(Text("Phone number:", "phone"))
@@ -344,6 +344,23 @@ with labels for each field, indenting all of the fields to the same depth:
 Or maybe you just want some static text in your UI?  The simplest thing to do there is to use
 the :py:obj:`.Label` widget.  If you need something a little more advanced - e.g. a pre-formatted
 multi-line status bar, use a :py:obj:`.TextBox` and disable it as described below.
+
+In some cases, you may want to have different alignments for various blocks of Widgets.  You can use multiple
+Layouts in one Frame to handle this case.
+
+For example, if you want a search page, which allows you to enter data at the top and a list of results at the
+bottom of the Frame, you could use code like this:
+
+.. code-block:: python
+
+    layout1 = Layout([100])
+    frame.add_layout(layout1)
+    layout1.add_widget(Text(label="Search:", name="search_string"))
+
+    layout2 = Layout([100])
+    frame.add_layout(layout2)
+    layout1.add_widget(TextBox(Widget.FILL_FRAME, name="results"))
+
 
 Disabling widgets
 ~~~~~~~~~~~~~~~~~

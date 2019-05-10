@@ -53,3 +53,15 @@ Install the dependencies and run the tests with the following:
 
     $ pip install -r requirements/dev.txt
     $ nosetests
+
+On most systems this will avoid running tests that require a Linux TTY.  If you are making changes to the
+Screen, you must also run the TTY tests.  You can force that on a Linux box using the following:
+
+.. code-block:: bash
+
+    $ FORCE_TTY=Y nosetests
+
+The reason for this split is that you only typically get a TTY on a live interactive connection to your
+terminal.  This means you should always be able to run the full suite manually.  However, many CI systems
+do not provide a valid TTY and so these tests regularly fail on various build servers.  Fortunately, Travis
+provides a working TTY and so we enable the full suite of tests on any check-in to master.
