@@ -17,6 +17,8 @@ matrix:
       python: '3.6'
     - env: BUILD=test FORCE_TTY=Y
       python: '3.7'
+      dist: xenial
+      sudo: true
     - env: BUILD=test FORCE_TTY=Y
       python: 'pypy'
 
