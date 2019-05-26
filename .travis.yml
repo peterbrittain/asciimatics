@@ -14,9 +14,9 @@ matrix:
     - env: BUILD=test FORCE_TTY=Y
       python: '3.4'
     - env: BUILD=test FORCE_TTY=Y
-      python: '3.5'
-    - env: BUILD=test FORCE_TTY=Y
       python: '3.6'
+    - env: BUILD=test FORCE_TTY=Y
+      python: '3.7'
     - env: BUILD=test FORCE_TTY=Y
       python: 'pypy'
 

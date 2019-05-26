@@ -3,7 +3,7 @@ CHANGE HISTORY
 
 LATEST
 ------
-<TBD>
+- Fixed exception on reinstating NoneType signal handler
 
 1.11.0
 ------
