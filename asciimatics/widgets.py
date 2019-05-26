@@ -1269,7 +1269,9 @@ class Layout(object):
         """
         for column in self._columns:
             for widget in column:
-                widget.update(frame_no)
+                # Don't bother with invisible widgets
+                if widget.is_visible:
+                    widget.update(frame_no)
 
     def save(self, validate):
         """
@@ -1418,6 +1420,14 @@ class Widget(with_metaclass(ABCMeta, object)):
         Whether this widget is a valid tab stop for keyboard navigation.
         """
         return self._is_tab_stop
+
+    @property
+    def is_visible(self):
+        """
+        Whether this widget is visible on the Canvas or not.
+        """
+        return not (self._y + self._h <= self._frame.canvas.start_line or 
+                    self._y >= self._frame.canvas.start_line + self._frame.canvas.height)
 
     @property
     def disabled(self):
