@@ -2543,6 +2543,10 @@ else:
             :param handler: The function/const to set the signal to
             """
             old_handler = signal.getsignal(signalnum)
+            # Some environments may install a non-Python handler (which returns None at this point).
+            # We can't reinstate these, so just reset the default handler in such cases.
+            if old_handler is None:
+                old_handler = signal.SIG_DFL
             self._old_signal_states.append((signalnum, old_handler))
             signal.signal(signalnum, handler)
 
