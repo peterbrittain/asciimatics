@@ -22,6 +22,10 @@ from functools import partial
 from datetime import date, datetime, timedelta
 from future.moves.itertools import zip_longest
 from future.utils import with_metaclass
+try:
+    from functools import lru_cache
+except ImportError:
+    from backports.functools_lru_cache import lru_cache
 from abc import ABCMeta, abstractmethod, abstractproperty
 from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent, MouseEvent
@@ -211,6 +215,7 @@ def _get_offset(text, visible_width, unicode_aware=True):
     return result
 
 
+@lru_cache(256)
 def _split_text(text, width, height, unicode_aware=True):
     """
     Split text to required dimensions.

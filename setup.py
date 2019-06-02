@@ -67,6 +67,7 @@ setup(
         'Pillow >= 2.7.0',
         'wcwidth',
         'future',
+        'backports.functools_lru_cache;python_version<"3.0"',
     ],
     extras_require={
         ':sys_platform == "win32"': ['pypiwin32'],
