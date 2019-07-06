@@ -14,6 +14,7 @@ import re
 import os
 import unicodedata
 from builtins import chr
+from builtins import str
 from builtins import range
 from builtins import object
 from copy import copy, deepcopy
@@ -2147,19 +2148,20 @@ class TextBox(Widget):
             if self._start_line <= line < self._start_line + height:
                 paint_text = _enforce_width(text[display_start_column:], self.width, self._frame.canvas.unicode_aware)
                 self._frame.canvas.paint(
-                    paint_text,
+                    str(paint_text),
                     self._x + self._offset,
                     self._y + line - self._start_line,
                     colour, attr, bg,
-                    colour_map=text.colour_map if isinstance(text, ColouredText) else None)
+                    colour_map=paint_text.colour_map)
 
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
         if self._has_focus:
             line = display_text[display_line][0]
+            logger.debug("Cursor: {}".format((display_start_column, display_column)))
             text_width = self.string_len(line[display_start_column:display_column])
             self._draw_cursor(
-                " " if display_column >= len(line) else line[display_column],
+                " " if display_column >= len(line) else str(line[display_column]),
                 frame_no,
                 self._x + self._offset + text_width,
                 self._y + display_line - self._start_line)
@@ -2184,6 +2186,9 @@ class TextBox(Widget):
             self._column = len(self._value[self._line])
 
     def process_event(self, event):
+        def _join(a, b):
+            return ColouredText(a, parser=self._parser()).join(b)
+
         if isinstance(event, KeyboardEvent):
             old_value = copy(self._value)
             if event.key_code in [10, 13]:
@@ -2196,9 +2201,9 @@ class TextBox(Widget):
             elif event.key_code == Screen.KEY_BACK:
                 if self._column > 0:
                     # Delete character in front of cursor.
-                    self._value[self._line] = "".join([
-                        self._value[self._line][:self._column - 1],
-                        self._value[self._line][self._column:]])
+                    self._value[self._line] = _join("",
+                        [self._value[self._line][:self._column - 1],
+                         self._value[self._line][self._column:]])
                     self._column -= 1
                 else:
                     if self._line > 0:
@@ -2209,9 +2214,9 @@ class TextBox(Widget):
                             self._value.pop(self._line + 1)
             elif event.key_code == Screen.KEY_DELETE:
                 if self._column < len(self._value[self._line]):
-                    self._value[self._line] = "".join([
-                        self._value[self._line][:self._column],
-                        self._value[self._line][self._column + 1:]])
+                    self._value[self._line] = _join("",
+                        [self._value[self._line][:self._column],
+                         self._value[self._line][self._column + 1:]])
                 else:
                     if self._line < len(self._value) - 1:
                         # Join this line with next
@@ -2251,9 +2256,9 @@ class TextBox(Widget):
                 self._column = len(self._value[self._line])
             elif event.key_code >= 32:
                 # Insert any visible text at the current cursor position.
-                self._value[self._line] = chr(event.key_code).join([
-                    self._value[self._line][:self._column],
-                    self._value[self._line][self._column:]])
+                self._value[self._line] = _join(chr(event.key_code),
+                    [self._value[self._line][:self._column],
+                     self._value[self._line][self._column:]])
                 self._column += 1
             else:
                 # Ignore any other key press.
@@ -2263,12 +2268,14 @@ class TextBox(Widget):
             if old_value != self._value:
                 # Re-parse if needed.
                 # TODO: Needs optimising?
-                if self._parser:
-                    new_value = []
-                    for line in self._value:
-                        parser = self._parser()
+                new_value = []
+                for line in self._value:
+                    parser = self._parser()
+                    try:
+                        new_value.append(ColouredText(line.raw_text, parser))
+                    except AttributeError:
                         new_value.append(ColouredText(line, parser))
-                    self._value = new_value
+                self._value = new_value
 
                 self._reflowed_text_cache = None
                 if self._on_change:
@@ -2356,12 +2363,11 @@ class TextBox(Widget):
         self._value = new_value
 
         # TODO: Sort out duplication and speed of this code
-        if self._parser:
-            new_value = []
-            for line in self._value:
-                parser = self._parser()
-                new_value.append(ColouredText(line, parser))
-            self._value = new_value
+        new_value = []
+        for line in self._value:
+            parser = self._parser()
+            new_value.append(ColouredText(line, parser))
+        self._value = new_value
         self.reset()
 
         # Only trigger the notification after we've changed the value.

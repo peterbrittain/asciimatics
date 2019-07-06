@@ -10,7 +10,11 @@ import re
 from future.utils import with_metaclass
 from datetime import date, datetime
 from abc import ABCMeta, abstractmethod
+from logging import getLogger
 
+
+# Diagnostic logging
+logger = getLogger(__name__)
 
 #: Attribute conversion table for the ${c,a} form of attributes for
 #: :py:obj:`~.Screen.paint`.
@@ -72,6 +76,7 @@ class ColouredText(object):
         super(ColouredText, self).__init__()
         self._raw_text = text
         self._raw_map = colour_map
+        self._raw_offsets = []
         self._parser = parser
         self._colour_map = None
         self._create_colour_map()
@@ -83,32 +88,58 @@ class ColouredText(object):
         if self._parser is None:
             self._colour_map = self._raw_map
             self._text = self._raw_text
+            self._raw_offsets = [x for x in range(len(self._text))]
         else:
             self._colour_map = []
             self._text = ""
-            for text, colour in self._parser.parse(self._raw_text):
-                for _ in text:
+            for text, colour, offset in self._parser.parse(self._raw_text):
+                for i, _ in enumerate(text):
                     self._colour_map.append(colour)
+                    self._raw_offsets.append(offset + i)
                 self._text += text
 
     def __repr__(self):
+        logger.debug("Str: {}".format(self._text))
         return self._text
 
     def __len__(self):
+        logger.debug("Len: {}".format(len(self._text)))
         return len(self._text)
 
     def __getitem__(self, item):
-        return self._text[item]
+        logger.debug("Item: {}".format((item, self._raw_text)))
+        if isinstance(item, int):
+            start = self._raw_offsets[item]
+            stop = None if item == len(self._raw_offsets) - 1 else self._raw_offsets[item + 1]
+            step = 1
+        else:
+            try:
+                start = None if item.start is None else self._raw_offsets[slice(item.start, None, None)][0]
+            except IndexError:
+                start = len(self._raw_text)
+            try:
+                stop = None if item.stop is None else self._raw_offsets[slice(item.stop, None, None)][0]
+            except IndexError:
+                stop = None
+            step = item.step
+        logger.debug("Slice: '{}'".format((self._raw_text[slice(start, stop, step)], start, stop)))
+        return ColouredText(self._raw_text[slice(start, stop, step)], parser=self._parser)
 
     def __add__(self, other):
-        return ColouredText(self._text + str(other), parser=self._parser)
+        logger.debug("Add: '{}' '{}'".format(self._raw_text, other.raw_text))
+        return ColouredText(self._raw_text + other.raw_text, parser=self._parser)
 
-    def encode(self, encoding):
-        return self._text.encode(encoding)
+    def join(self, others):
+        logger.debug("Join: '{}' {}".format(self._raw_text, others))
+        return ColouredText(self._raw_text.join([x.raw_text for x in others]), parser=self._parser)
 
     @property
     def colour_map(self):
         return self._colour_map
+
+    @property
+    def raw_text(self):
+        return self._raw_text
 
 
 class Parser(with_metaclass(ABCMeta, object)):
@@ -139,11 +170,14 @@ class AsciimaticsParser(Parser):
 
     def parse(self, text):
         attributes = (None, None, None)
+        offset = last_offset = 0
         while len(text) > 0:
             match = self._colour_sequence.match(str(text))
             if match is None:
-                yield text[0], attributes
+                yield text[0], attributes, last_offset
                 text = text[1:]
+                offset += 1
+                last_offset = offset
             else:
                 # The regexp either matches:
                 # - 2,3,4 for ${c,a,b}
@@ -159,4 +193,5 @@ class AsciimaticsParser(Parser):
                                   None)
                 else:
                     attributes = (int(match.group(7)), 0, None)
+                offset += 3 + len(match.group(1))
                 text = match.group(8)
