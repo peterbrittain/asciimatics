@@ -142,7 +142,6 @@ class ColouredText(object):
         return NotImplemented
 
     def join(self, others):
-        logger.debug("Join: '{}' {}".format(self._raw_text, others))
         return ColouredText(self._raw_text.join([x.raw_text for x in others]), parser=self._parser)
 
     @property
