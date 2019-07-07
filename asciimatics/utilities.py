@@ -129,6 +129,18 @@ class ColouredText(object):
         logger.debug("Add: '{}' '{}'".format(self._raw_text, other.raw_text))
         return ColouredText(self._raw_text + other.raw_text, parser=self._parser)
 
+
+    def __eq__(self, other):
+        if isinstance(other, ColouredText):
+            return self.raw_text == other.raw_text
+        return NotImplemented
+
+    def __ne__(self, other):
+        x = self.__eq__(other)
+        if x is not NotImplemented:
+            return not x
+        return NotImplemented
+
     def join(self, others):
         logger.debug("Join: '{}' {}".format(self._raw_text, others))
         return ColouredText(self._raw_text.join([x.raw_text for x in others]), parser=self._parser)

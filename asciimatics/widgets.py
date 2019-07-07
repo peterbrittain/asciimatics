@@ -676,6 +676,7 @@ class Frame(Effect):
         # data from the old object to the new (using the name).
         if self._name is not None:
             for effect in scene.effects:
+                logger.debug("Cloning: %s", effect._name)
                 if isinstance(effect, Frame):
                     if effect._name == self._name:
                         effect.data = self.data
@@ -1298,6 +1299,7 @@ class Layout(object):
         """
         for column in self._columns:
             for widget in column:
+                logger.debug("Updating: %s", widget.name)
                 # First handle the normal case - pull the default data from the current frame.
                 if widget.name in self._frame.data:
                     widget.value = self._frame.data[widget.name]
@@ -2351,7 +2353,8 @@ class TextBox(Widget):
     def value(self):
         if self._value is None:
             self._value = [""]
-        return "\n".join(self._value) if self._as_string else self._value
+        value = [str(x) for x in self._value]
+        return "\n".join(value) if self._as_string else value
 
     @value.setter
     def value(self, new_value):
