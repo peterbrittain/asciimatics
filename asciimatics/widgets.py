@@ -146,6 +146,7 @@ def _enforce_width(text, width, unicode_aware=True):
     if unicode_aware:
         size = 0
         for i, c in enumerate(text):
+            c = str(c)
             w = wcwidth(c) if ord(c) >= 256 else 1
             if size + w > width:
                 return text[0:i]
@@ -2118,7 +2119,7 @@ class TextBox(Widget):
                 self._value[self._line][self._start_column:self._column + 1],
                 self.width,
                 self._frame.canvas.unicode_aware,
-                self._column >= self.string_len(self._value[self._line]))
+                self._column >= self.string_len(str(self._value[self._line])))
 
         # Clear out the existing box content
         (colour, attr, bg) = self._pick_colours("edit_text")
@@ -2159,7 +2160,7 @@ class TextBox(Widget):
         if self._has_focus:
             line = display_text[display_line][0]
             logger.debug("Cursor: {}".format((display_start_column, display_column)))
-            text_width = self.string_len(line[display_start_column:display_column])
+            text_width = self.string_len(str(line[display_start_column:display_column]))
             self._draw_cursor(
                 " " if display_column >= len(line) else str(line[display_column]),
                 frame_no,
@@ -2187,7 +2188,7 @@ class TextBox(Widget):
 
     def process_event(self, event):
         def _join(a, b):
-            return ColouredText(a, parser=self._parser()).join(b)
+            return ColouredText(a, parser=self._parser() if self._parser else None).join(b)
 
         if isinstance(event, KeyboardEvent):
             old_value = copy(self._value)
@@ -2270,7 +2271,7 @@ class TextBox(Widget):
                 # TODO: Needs optimising?
                 new_value = []
                 for line in self._value:
-                    parser = self._parser()
+                    parser = self._parser() if self._parser else None
                     try:
                         new_value.append(ColouredText(line.raw_text, parser))
                     except AttributeError:
@@ -2302,7 +2303,7 @@ class TextBox(Widget):
                     # Now figure out location in text based on width of each glyph.
                     self._column = (self._start_column + text_col +
                                     _get_offset(
-                                        self._value[self._line][self._start_column + text_col:],
+                                        str(self._value[self._line][self._start_column + text_col:]),
                                         event.x - self._x - self._offset,
                                         self._frame.canvas.unicode_aware))
                     self._column = min(len(self._value[self._line]), self._column)
@@ -2365,8 +2366,11 @@ class TextBox(Widget):
         # TODO: Sort out duplication and speed of this code
         new_value = []
         for line in self._value:
-            parser = self._parser()
-            new_value.append(ColouredText(line, parser))
+            parser = self._parser() if self._parser else None
+            try:
+                new_value.append(ColouredText(line.raw_text, parser))
+            except AttributeError:
+                new_value.append(ColouredText(line, parser))
         self._value = new_value
         self.reset()
 
