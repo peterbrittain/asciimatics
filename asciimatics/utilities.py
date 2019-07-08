@@ -67,32 +67,30 @@ class ColouredText(object):
     Unicode string-like object to store text and colour maps
     """
 
-    def __init__(self, text, parser, colour_map=None):
+    def __init__(self, text, parser, colours=None):
         """
         :param text: The raw unicode string to be processed
         :param parser: The parser to process the text
-        :param colour_map: Optional pre-calculated colour map to use for this text.
+        :param colours: Optional starting colour tuple to use for this text.
         """
         super(ColouredText, self).__init__()
         self._raw_text = text
-        self._raw_map = colour_map
         self._raw_offsets = []
         self._parser = parser
         self._colour_map = None
-        self._create_colour_map()
+        self._create_colour_map(colours)
 
-    def _create_colour_map(self):
+    def _create_colour_map(self, colours):
         """
         Create the colour map for the current text
         """
         if self._parser is None:
-            self._colour_map = self._raw_map
             self._text = self._raw_text
             self._raw_offsets = [x for x in range(len(self._text))]
         else:
             self._colour_map = []
             self._text = ""
-            for text, colour, offset in self._parser.parse(self._raw_text):
+            for text, colour, offset in self._parser.parse(self._raw_text, colours):
                 for i, _ in enumerate(text):
                     self._colour_map.append(colour)
                     self._raw_offsets.append(offset + i)
@@ -122,8 +120,14 @@ class ColouredText(object):
             except IndexError:
                 stop = None
             step = item.step
-        logger.debug("Slice: '{}'".format((self._raw_text[slice(start, stop, step)], start, stop)))
-        return ColouredText(self._raw_text[slice(start, stop, step)], parser=self._parser)
+        try:
+            colours = self._colour_map[item][-1]
+        except Exception:
+            colours = None
+        logger.debug("Slice: '{}'".format((slice(start, stop, step), item, self._raw_text)))
+        return ColouredText(self._raw_text[slice(start, stop, step)],
+                            parser=self._parser,
+                            colours=colours)
 
     def __add__(self, other):
         logger.debug("Add: '{}' '{}'".format(self._raw_text, other.raw_text))
@@ -159,7 +163,7 @@ class Parser(with_metaclass(ABCMeta, object)):
     """
 
     @abstractmethod
-    def parse(self, text):
+    def parse(self, text, colours):
         """
         Generator to return coloured text
         :return:
@@ -179,8 +183,8 @@ class AsciimaticsParser(Parser):
     def __init__(self):
         super(AsciimaticsParser, self).__init__()
 
-    def parse(self, text):
-        attributes = (None, None, None)
+    def parse(self, text, colours):
+        attributes = colours if colours else (None, None, None)
         offset = last_offset = 0
         while len(text) > 0:
             match = self._colour_sequence.match(str(text))

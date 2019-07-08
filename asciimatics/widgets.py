@@ -2118,7 +2118,7 @@ class TextBox(Widget):
         if not self._line_wrap:
             self._start_column = min(self._start_column, self._column)
             self._start_column += _find_min_start(
-                self._value[self._line][self._start_column:self._column + 1],
+                str(self._value[self._line][self._start_column:self._column + 1]),
                 self.width,
                 self._frame.canvas.unicode_aware,
                 self._column >= self.string_len(str(self._value[self._line])))
