@@ -216,8 +216,8 @@ basic classes:
                 raise StopApplication("User pressed quit")
 
 3. `ContactView`: This is the detailed view.  It queries the `ContactModel` for the current contact
-   to be displayed at the start (which may be none if the user is adding a contact) and writes any
-   changes back to the model when the user clicks OK.
+   to be displayed when it is reset (note: there may be no contact if the user is adding a contact) and writes
+   any changes back to the model when the user clicks OK.
 
 .. container:: toggle
 
@@ -706,11 +706,29 @@ example:
     # You can use this code to move back to the first scene at any time...
     raise NextScene("Main")
 
+Data handling
+-------------
+By this stage you should have everything you need for a fully functional UI.  However, it may not be quite
+clear how to pass data around all your component parts because asciimatics doesn't provide any classes to do
+it for you.  Why?  Because we don't want to tie you down to a specific implementation.  You should be able to
+pick your own!
+
+Look back at the earlier explanation of model/view design.  The model can be any class you like!  All you
+need to do is:
+
+1. Define a model class to store any state and provide suitable APIs to access it as needed from your UI
+   (a.k.a. views).
+2. Define your own views (based on an ``Effect`` or ``Frame``) to define your UI and store a reference to the
+   model (typically as a parameter on construction).
+3. Use that saved reference to the model to handle updates as needed inside your view's callbacks or methods.
+
+For a concrete example of how to do this check out the contact list sample and look at how it defines and uses
+the ``ContactModel``.
+
 Dynamic scenes
 --------------
-With everything above, you should now be able to create a fully working text UI.  There are just a
-few more final touches to consider.  These all touch on dynamically changing or reconstructing your
-Scene.
+That done, there are just a few more final touches to consider.  These all touch on dynamically changing or
+reconstructing your Scene.
 
 At a high level, you need to decide what you want to achieve.  The basic options are as follows.
 
