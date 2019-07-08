@@ -121,7 +121,7 @@ class ColouredText(object):
                 stop = None
             step = item.step
         try:
-            colours = self._colour_map[item][-1]
+            colours = self._colour_map[start]
         except Exception:
             colours = None
         logger.debug("Slice: '{}'".format((slice(start, stop, step), item, self._raw_text)))
