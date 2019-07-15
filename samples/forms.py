@@ -6,15 +6,14 @@ from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, NextScene, StopApplication, \
     InvalidFields
-from asciimatics.utilities import AsciimaticsParser
+from asciimatics.utilities import AsciimaticsParser, AnsiTerminalParser
 import sys
 import re
 import datetime
 import logging
 
-# Initial data for the form
-form_data = {
-    "TA": r"""
+# Test data
+tree = r"""
        ${3,1}*
 ${2}      / \
 ${2}     /${1}o${2}  \
@@ -29,7 +28,37 @@ ${2}  / ${4}o     ${1}o${2}.\
 ${2} /___________\
       ${3}|||
       ${3}|||
-""".split("\n"),
+""".split("\n")
+
+terminal = """
+[0m[38;5;27masciimatics[0m
+[38;5;27masciimatics.old[0m
+[38;5;27mbase-setuptools[0m
+bug_rep.py
+[38;5;27mcaesar[0m
+[38;5;27mcode-maat[0m
+core.5193
+[38;5;27mdata-warehouse-config[0m
+dates.csv
+[38;5;27mDesktop[0m
+[38;5;27mDocuments[0m
+[38;5;27mDownloads[0m
+editor.py
+files.csv
+forms.log
+git.log
+[38;5;27mgoogle-cloud-sdk[0m
+[38;5;27mhack[0m
+[38;5;27mjira_cli[0m
+[38;5;27mjira-export-tool[0m
+[38;5;27mjira-to-bigquery[0m
+[38;5;27mkivy[0m
+[38;5;34mlein[0m
+""".split("\n")
+
+# Initial data for the form
+form_data = {
+    "TA": terminal,
     "TB": "alphabet",
     "TC": "123",
     "TD": "a@b.com",
@@ -61,7 +90,7 @@ class DemoFrame(Frame):
         layout.add_widget(TextBox(5,
                                   label="My First Box:",
                                   name="TA",
-                                  parser=AsciimaticsParser,
+                                  parser=AnsiTerminalParser,
                                   on_change=self._on_change), 1)
         layout.add_widget(
             Text(label="Alpha:",

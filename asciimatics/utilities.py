@@ -7,6 +7,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 import re
+
 from future.utils import with_metaclass
 from datetime import date, datetime
 from abc import ABCMeta, abstractmethod
@@ -110,6 +111,7 @@ class ColouredText(object):
             start = self._raw_offsets[item]
             stop = None if item == len(self._raw_offsets) - 1 else self._raw_offsets[item + 1]
             step = 1
+            colour_index = max(0, item - 1)
         else:
             try:
                 start = None if item.start is None else self._raw_offsets[slice(item.start, None, None)][0]
@@ -120,8 +122,9 @@ class ColouredText(object):
             except IndexError:
                 stop = None
             step = item.step
+            colour_index = max(0, item.start - 1 if item.start else 0)
         try:
-            colours = self._colour_map[start]
+            colours = self._colour_map[colour_index]
         except Exception:
             colours = None
         logger.debug("Slice: '{}'".format((slice(start, stop, step), item, self._raw_text)))
@@ -132,7 +135,6 @@ class ColouredText(object):
     def __add__(self, other):
         logger.debug("Add: '{}' '{}'".format(self._raw_text, other.raw_text))
         return ColouredText(self._raw_text + other.raw_text, parser=self._parser)
-
 
     def __eq__(self, other):
         if isinstance(other, ColouredText):
@@ -210,3 +212,94 @@ class AsciimaticsParser(Parser):
                     attributes = (int(match.group(7)), 0, None)
                 offset += 3 + len(match.group(1))
                 text = match.group(8)
+
+
+class AnsiTerminalParser(Parser):
+    # Regular expression for use to find colour sequences in multi-colour text.
+    _colour_sequence = re.compile(r"^(\x1B\[([^@-~]*)([@-~]))(.*)")
+
+    """
+    Parser to handle ANSI terminal escape codes. 
+    """
+    def __init__(self):
+        super(AnsiTerminalParser, self).__init__()
+
+    def parse(self, text, colours):
+        attributes = colours if colours else [None, None, None]
+        offset = last_offset = 0
+        while len(text) > 0:
+            match = self._colour_sequence.match(str(text))
+            if match is None:
+                yield text[0], attributes, last_offset
+                text = text[1:]
+                offset += 1
+                last_offset = offset
+            else:
+                # The regex matches general CSI sequences.  Look for colour codes (i.e. 'CSI ... m').  These
+                # can have embedded arguments, so create a simple FSM to process the parameter stream.
+                if match.group(3) == "m":
+                    in_set_mode = False
+                    in_index_mode = False
+                    in_rgb_mode = False
+                    skip_size = 0
+                    attribute_index = 0
+                    for parameter in match.group(2).split(";"):
+                        parameter = int(parameter)
+                        if in_set_mode:
+                            # We are processing a set fore/background colour code
+                            if parameter == 5:
+                                in_index_mode = True
+                            elif parameter == 5:
+                                in_rgb_mode = True
+                                skip_size = 3
+                            else:
+                                logger.info(("Unexpected colour setting", parameter))
+                            in_set_mode = False
+                        elif in_index_mode:
+                            # We are processing a 5;n sequence for colour indeces
+                            attributes[attribute_index] = parameter
+                            in_index_mode = False
+                        elif in_rgb_mode:
+                            # We are processing a 2;r;g;b sequence for RGB colours - just ignore.
+                            skip_size -= 1
+                            if skip_size <= 0:
+                                in_rgb_mode = False
+                        else:
+                            # top-level stream processing
+                            if parameter == 0:
+                                # Reset
+                                attributes = [None, None, None]
+                            elif parameter == 1:
+                                # Bold
+                                # TODO - fix hard-coded constant
+                                attributes[1] = 1
+                            elif parameter in (2, 22):
+                                # Faint/normal
+                                # TODO: Are these SGR modes really the same?  And fix constant
+                                attributes[1] = 2
+                            elif parameter == 7:
+                                # Inverse
+                                # TODO - fix hard-coded constant
+                                attributes[1] = 3
+                            elif parameter == 27:
+                                # Inverse off
+                                # TODO - fix hard-coded constant.  Also what about bold/inverse?
+                                attributes[1] = 0
+                            elif parameter in range(30, 38):
+                                # Standard foreground colours
+                                attributes[0] = parameter - 30
+                            elif parameter in range(40, 48):
+                                # Standard background colours
+                                attributes[2] = parameter - 40
+                            elif parameter == 38:
+                                # Set foreground colour - next parameter is either 5 (index) or 2 (RGB color)
+                                in_set_mode = True
+                                attribute_index = 0
+                            elif parameter == 38:
+                                # Set background colour - next parameter is either 5 (index) or 2 (RGB color)
+                                in_set_mode = True
+                                attribute_index = 2
+                            else:
+                                logger.debug("Ignoring parameter:", parameter)
+                offset += len(match.group(1))
+                text = match.group(4)
