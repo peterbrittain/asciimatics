@@ -96,6 +96,7 @@ class ColouredText(object):
                     self._colour_map.append(colour)
                     self._raw_offsets.append(offset + i)
                 self._text += text
+        logger.debug("Parsed text: {} {}".format(self._text, self._colour_map))
 
     def __repr__(self):
         logger.debug("Str: {}".format(self._text))
@@ -225,12 +226,12 @@ class AnsiTerminalParser(Parser):
         super(AnsiTerminalParser, self).__init__()
 
     def parse(self, text, colours):
-        attributes = colours if colours else [None, None, None]
+        attributes = [x for x in colours] if colours else [None, None, None]
         offset = last_offset = 0
         while len(text) > 0:
             match = self._colour_sequence.match(str(text))
             if match is None:
-                yield text[0], attributes, last_offset
+                yield text[0], tuple(attributes), last_offset
                 text = text[1:]
                 offset += 1
                 last_offset = offset
@@ -268,7 +269,7 @@ class AnsiTerminalParser(Parser):
                             # top-level stream processing
                             if parameter == 0:
                                 # Reset
-                                attributes = [None, None, None]
+                                attributes = [7, 0, 0]
                             elif parameter == 1:
                                 # Bold
                                 # TODO - fix hard-coded constant
@@ -301,5 +302,7 @@ class AnsiTerminalParser(Parser):
                                 attribute_index = 2
                             else:
                                 logger.debug("Ignoring parameter:", parameter)
+                else:
+                    logger.debug("Ignoring control:", match.group(3))
                 offset += len(match.group(1))
                 text = match.group(4)

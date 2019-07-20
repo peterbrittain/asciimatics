@@ -31,6 +31,42 @@ ${2} /___________\
 """.split("\n")
 
 terminal = """
+[35mこんにちわ[0m[33m[ik][0m[33m、[0m[35mこにちわ[0m[33m[ik][0m[33m、[0m[35mこにちは[0m[33m[ik][0m
+[32m1.[0m [33m[int;col] [misspelling of こんにちは][0m [1m[31mhello[0m[33m; [0mgood day (daytime greeting)
+
+[1m[32m※[0m [35mどうも[0m
+[32m1.[0m [33m[int;abbr][0m thanks
+[32m2.[0m [33m[adv][0m much (thanks)[33m; [0mvery (sorry)[33m; [0mquite (regret)
+[32m3.[0m quite[33m; [0mreally[33m; [0mmostly
+[32m4.[0m somehow
+[32m5.[0m [33m[in positive sense, esp. どうも〜しまう][0m in spite of oneself[33m; [0mno matter how hard one may try (one is unable to) (with negative verb)[33m; [0mno matter how hard one may try not to (one ends up doing) (with positive verb, esp. -shimau)
+[32m6.[0m [33m[int][0m greetings[33m; [0m[1m[31mhello[0m[33m; [0mgoodbye
+
+[1m[32m※[0m [35mハロー[0m[33m、[0m[35mハロ[0m
+[32m1.[0m [33m[n][0m halo
+[32m2.[0m [33m〔ハロー〕[0m [1m[31mhello[0m[33m; [0mhallo[33m; [0mhullo
+[32m3.[0m [33m〔ハロー〕[0m harrow
+
+[1m[32m※[0m [36m今日は[0m[33m（[0m[35mこんにちは[0m[33m、[0m[35mこんちは[0m[33m）[0m
+[32m1.[0m [33m[int;uk] [こんちは is col.][0m [1m[31mhello[0m[33m; [0mgood day (daytime greeting)
+
+[35mニーハオ[0m
+[32m1.[0m [33m[int][0m [1m[31mhello[0m
+
+[35mハイサイ[0m[33m、[0m[35mはいさい[0m
+[32m1.[0m [33m[int;rkb][0m [1m[31mhello[0m[33m; [0mhi
+
+[35mほいほい[0m[33m、[0m[35mホイホイ[0m
+[32m1.[0m [33m[adv,adv-to,vs;on-mim][0m recklessly[33m; [0mthoughtlessly[33m; [0mcarelessly[33m; [0mreadily[33m; [0mblithely[33m; [0mwillingly[33m; [0measily
+[32m2.[0m [33m[on-mim][0m pamperingly[33m; [0mindulgently[33m; [0mcarefully (not angering)
+[32m3.[0m [33m[int][0m shoo!
+[32m4.[0m heave-ho
+[32m5.[0m hallo[33m; [0m[1m[31mhello[0m
+[32m6.[0m [33m[n] 〔ホイホイ〕[0m Hui (people)
+[32m7.[0m [33m[arch][0m novice[33m; [0mbeginner
+
+[35mアニョハセヨ[0m[33m、[0m[35mアンニョンハセヨ[0m
+[32m1.[0m [33m[n][0m [1m[31mhello[0m[33m; [0mhi
 [0m[38;5;27masciimatics[0m
 [38;5;27masciimatics.old[0m
 [38;5;27mbase-setuptools[0m
@@ -91,6 +127,7 @@ class DemoFrame(Frame):
                                   label="My First Box:",
                                   name="TA",
                                   parser=AnsiTerminalParser,
+                                  line_wrap=True,
                                   on_change=self._on_change), 1)
         layout.add_widget(
             Text(label="Alpha:",

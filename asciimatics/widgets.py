@@ -2337,7 +2337,7 @@ class TextBox(Widget):
                 limit = self._w - self._offset
                 for i, line in enumerate(self._value):
                     column = 0
-                    while self.string_len(line) >= limit:
+                    while self.string_len(str(line)) >= limit:
                         sub_string = _enforce_width(
                             line, limit, self._frame.canvas.unicode_aware)
                         self._reflowed_text_cache.append((sub_string, i, column))
