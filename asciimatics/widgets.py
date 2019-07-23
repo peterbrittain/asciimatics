@@ -2272,12 +2272,15 @@ class TextBox(Widget):
                 # Re-parse if needed.
                 # TODO: Needs optimising?
                 new_value = []
+                last_colour = None
                 for line in self._value:
                     parser = self._parser() if self._parser else None
                     try:
-                        new_value.append(ColouredText(line.raw_text, parser))
+                        value = ColouredText(line.raw_text, parser, colour=last_colour)
                     except AttributeError:
-                        new_value.append(ColouredText(line, parser))
+                        value = ColouredText(line, parser, colour=last_colour)
+                    new_value.append(value)
+                    last_colour = value.last_colour
                 self._value = new_value
 
                 self._reflowed_text_cache = None
@@ -2368,12 +2371,15 @@ class TextBox(Widget):
 
         # TODO: Sort out duplication and speed of this code
         new_value = []
+        last_colour = None
         for line in self._value:
             parser = self._parser() if self._parser else None
             try:
-                new_value.append(ColouredText(line.raw_text, parser))
+                value = ColouredText(line.raw_text, parser, colour=last_colour)
             except AttributeError:
-                new_value.append(ColouredText(line, parser))
+                value = ColouredText(line, parser, colour=last_colour)
+            new_value.append(value)
+            last_colour = value.last_colour
         self._value = new_value
         self.reset()
 

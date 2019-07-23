@@ -68,20 +68,22 @@ class ColouredText(object):
     Unicode string-like object to store text and colour maps
     """
 
-    def __init__(self, text, parser, colours=None):
+    def __init__(self, text, parser, colour=None):
         """
         :param text: The raw unicode string to be processed
         :param parser: The parser to process the text
-        :param colours: Optional starting colour tuple to use for this text.
+        :param colour: Optional starting colour tuple to use for this text.
         """
         super(ColouredText, self).__init__()
         self._raw_text = text
         self._raw_offsets = []
         self._parser = parser
         self._colour_map = None
-        self._create_colour_map(colours)
+        self._last_colour = None
+        self._init_colour = colour
+        self._create_colour_map()
 
-    def _create_colour_map(self, colours):
+    def _create_colour_map(self):
         """
         Create the colour map for the current text
         """
@@ -91,23 +93,20 @@ class ColouredText(object):
         else:
             self._colour_map = []
             self._text = ""
-            for text, colour, offset in self._parser.parse(self._raw_text, colours):
+            for text, colour, offset in self._parser.parse(self._raw_text, self._init_colour):
                 for i, _ in enumerate(text):
                     self._colour_map.append(colour)
                     self._raw_offsets.append(offset + i)
                 self._text += text
-        logger.debug("Parsed text: {} {}".format(self._text, self._colour_map))
+                self._last_colour = colour
 
     def __repr__(self):
-        logger.debug("Str: {}".format(self._text))
         return self._text
 
     def __len__(self):
-        logger.debug("Len: {}".format(len(self._text)))
         return len(self._text)
 
     def __getitem__(self, item):
-        logger.debug("Item: {}".format((item, self._raw_text)))
         if isinstance(item, int):
             start = self._raw_offsets[item]
             stop = None if item == len(self._raw_offsets) - 1 else self._raw_offsets[item + 1]
@@ -125,17 +124,15 @@ class ColouredText(object):
             step = item.step
             colour_index = max(0, item.start - 1 if item.start else 0)
         try:
-            colours = self._colour_map[colour_index]
+            colour = self._colour_map[colour_index]
         except Exception:
-            colours = None
-        logger.debug("Slice: '{}'".format((slice(start, stop, step), item, self._raw_text)))
+            colour = None
         return ColouredText(self._raw_text[slice(start, stop, step)],
                             parser=self._parser,
-                            colours=colours)
+                            colour=colour)
 
     def __add__(self, other):
-        logger.debug("Add: '{}' '{}'".format(self._raw_text, other.raw_text))
-        return ColouredText(self._raw_text + other.raw_text, parser=self._parser)
+        return ColouredText(self._raw_text + other.raw_text, parser=self._parser, colour=self._init_colour)
 
     def __eq__(self, other):
         if isinstance(other, ColouredText):
@@ -149,7 +146,7 @@ class ColouredText(object):
         return NotImplemented
 
     def join(self, others):
-        return ColouredText(self._raw_text.join([x.raw_text for x in others]), parser=self._parser)
+        return ColouredText(self._raw_text.join([x.raw_text for x in others]), parser=self._parser, colour=self._init_colour)
 
     @property
     def colour_map(self):
@@ -158,6 +155,13 @@ class ColouredText(object):
     @property
     def raw_text(self):
         return self._raw_text
+
+    @property
+    def last_colour(self):
+        """
+        Last colour triplet used for this text.
+        """
+        return self._last_colour
 
 
 class Parser(with_metaclass(ABCMeta, object)):
