@@ -21,6 +21,7 @@ import re
 from wcwidth.wcwidth import wcswidth
 
 from asciimatics.screen import Screen
+from asciimatics.constants import COLOUR_REGEX
 
 
 #: Attribute conversion table for the ${c,a} form of attributes for
@@ -91,8 +92,7 @@ class StaticRenderer(Renderer):
 
     # Regular expression for use to find colour sequences in multi-colour text.
     # It should match ${n}, ${m,n} or ${m,n,o}
-    _colour_esc_code = r"^\$\{((\d+),(\d+),(\d+)|(\d+),(\d+)|(\d+))\}(.*)"
-    _colour_sequence = re.compile(_colour_esc_code)
+    _colour_sequence = re.compile(COLOUR_REGEX)
 
     def __init__(self, images=None, animation=None):
         """
