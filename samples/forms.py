@@ -94,7 +94,7 @@ git.log
 
 # Initial data for the form
 form_data = {
-    "TA": terminal,
+    "TA": tree,
     "TB": "alphabet",
     "TC": "123",
     "TD": "a@b.com",
@@ -126,7 +126,8 @@ class DemoFrame(Frame):
         layout.add_widget(TextBox(5,
                                   label="My First Box:",
                                   name="TA",
-                                  parser=AnsiTerminalParser,
+                                  # parser=AnsiTerminalParser(),
+                                  parser=AsciimaticsParser(),
                                   line_wrap=True,
                                   on_change=self._on_change), 1)
         layout.add_widget(

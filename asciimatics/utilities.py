@@ -79,26 +79,15 @@ class ColouredText(object):
         self._raw_offsets = []
         self._parser = parser
         self._colour_map = None
-        self._last_colour = None
-        self._init_colour = colour
-        self._create_colour_map()
-
-    def _create_colour_map(self):
-        """
-        Create the colour map for the current text
-        """
-        if self._parser is None:
-            self._text = self._raw_text
-            self._raw_offsets = [x for x in range(len(self._text))]
-        else:
-            self._colour_map = []
-            self._text = ""
-            for text, colour, offset in self._parser.parse(self._raw_text, self._init_colour):
-                for i, _ in enumerate(text):
-                    self._colour_map.append(colour)
-                    self._raw_offsets.append(offset + i)
-                self._text += text
-                self._last_colour = colour
+        self._last_colour = self._init_colour = colour
+        self._colour_map = []
+        self._text = ""
+        for text, colour, offset in self._parser.parse(self._raw_text, self._init_colour):
+            for i, _ in enumerate(text):
+                self._colour_map.append(colour)
+                self._raw_offsets.append(offset + i)
+            self._text += text
+            self._last_colour = colour
 
     def __repr__(self):
         return self._text
@@ -126,7 +115,7 @@ class ColouredText(object):
         try:
             colour = self._colour_map[colour_index]
         except Exception:
-            colour = None
+            colour = self._init_colour
         return ColouredText(self._raw_text[slice(start, stop, step)],
                             parser=self._parser,
                             colour=colour)
@@ -155,6 +144,13 @@ class ColouredText(object):
     @property
     def raw_text(self):
         return self._raw_text
+
+    @property
+    def first_colour(self):
+        """
+        First colour triplet used for this text.
+        """
+        return self._init_colour
 
     @property
     def last_colour(self):

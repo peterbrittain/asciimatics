@@ -2155,7 +2155,7 @@ class TextBox(Widget):
                     self._x + self._offset,
                     self._y + line - self._start_line,
                     colour, attr, bg,
-                    colour_map=paint_text.colour_map)
+                    colour_map=paint_text.colour_map if hasattr(paint_text, "colour_map") else None)
 
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
@@ -2190,7 +2190,7 @@ class TextBox(Widget):
 
     def process_event(self, event):
         def _join(a, b):
-            return ColouredText(a, parser=self._parser() if self._parser else None).join(b)
+            return ColouredText(a, self._parser, colour=b[0].first_colour).join(b) if self._parser else a.join(b)
 
         if isinstance(event, KeyboardEvent):
             old_value = copy(self._value)
@@ -2269,20 +2269,6 @@ class TextBox(Widget):
 
             # If we got here we might have changed the value...
             if old_value != self._value:
-                # Re-parse if needed.
-                # TODO: Needs optimising?
-                new_value = []
-                last_colour = None
-                for line in self._value:
-                    parser = self._parser() if self._parser else None
-                    try:
-                        value = ColouredText(line.raw_text, parser, colour=last_colour)
-                    except AttributeError:
-                        value = ColouredText(line, parser, colour=last_colour)
-                    new_value.append(value)
-                    last_colour = value.last_colour
-                self._value = new_value
-
                 self._reflowed_text_cache = None
                 if self._on_change:
                     self._on_change()
@@ -2369,18 +2355,18 @@ class TextBox(Widget):
             new_value = new_value.split("\n")
         self._value = new_value
 
-        # TODO: Sort out duplication and speed of this code
-        new_value = []
-        last_colour = None
-        for line in self._value:
-            parser = self._parser() if self._parser else None
-            try:
-                value = ColouredText(line.raw_text, parser, colour=last_colour)
-            except AttributeError:
-                value = ColouredText(line, parser, colour=last_colour)
-            new_value.append(value)
-            last_colour = value.last_colour
-        self._value = new_value
+        # TODO: Sort out speed of this code
+        if self._parser:
+            new_value = []
+            last_colour = None
+            for line in self._value:
+                try:
+                    value = ColouredText(line.raw_text, self._parser, colour=last_colour)
+                except AttributeError:
+                    value = ColouredText(line, self._parser, colour=last_colour)
+                new_value.append(value)
+                last_colour = value.last_colour
+            self._value = new_value
         self.reset()
 
         # Only trigger the notification after we've changed the value.
