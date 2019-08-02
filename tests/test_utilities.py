@@ -61,9 +61,20 @@ class TestUtilities(unittest.TestCase):
         self.assertEquals(ct[0], ColouredText("S", AsciimaticsParser()))
         self.assertEquals(ct[1:-1], ColouredText("ome ${1}tex", AsciimaticsParser()))
         self.assertNotEquals(ct[1:-1], ColouredText("ome tex", AsciimaticsParser()))
+        self.assertEquals(ct[100:101], ColouredText("", AsciimaticsParser()))
 
         # Adding
         self.assertEquals(
             ColouredText("Some ", AsciimaticsParser()) +
             ColouredText("${3}Text", AsciimaticsParser()),
             ColouredText("Some ${3}Text", AsciimaticsParser()))
+
+        # Joining
+        self.assertEquals(ColouredText(" ", AsciimaticsParser()).join([
+            ColouredText("Hello", AsciimaticsParser()),
+            ColouredText("${3}World", AsciimaticsParser())]),
+            ColouredText("Hello ${3}World", AsciimaticsParser()))
+
+        # Bad data comparisons
+        self.assertNotEquals(ct, 1)
+        self.assertFalse(ct == "Some text")
