@@ -105,7 +105,7 @@ class AnsiTerminalParser(Parser):
                             # We are processing a set fore/background colour code
                             if parameter == 5:
                                 in_index_mode = True
-                            elif parameter == 5:
+                            elif parameter == 2:
                                 in_rgb_mode = True
                                 skip_size = 3
                             else:
@@ -124,7 +124,7 @@ class AnsiTerminalParser(Parser):
                             # top-level stream processing
                             if parameter == 0:
                                 # Reset
-                                attributes = [7, 0, 0]
+                                attributes = [constants.COLOUR_WHITE, constants.A_NORMAL, constants.COLOUR_BLACK]
                             elif parameter == 1:
                                 # Bold
                                 attributes[1] = constants.A_BOLD
@@ -147,13 +147,13 @@ class AnsiTerminalParser(Parser):
                                 # Set foreground colour - next parameter is either 5 (index) or 2 (RGB color)
                                 in_set_mode = True
                                 attribute_index = 0
-                            elif parameter == 38:
+                            elif parameter == 48:
                                 # Set background colour - next parameter is either 5 (index) or 2 (RGB color)
                                 in_set_mode = True
                                 attribute_index = 2
                             else:
-                                logger.debug("Ignoring parameter:", parameter)
+                                logger.debug("Ignoring parameter: %s", parameter)
                 else:
-                    logger.debug("Ignoring control:", match.group(3))
+                    logger.debug("Ignoring control: %s", match.group(3))
                 offset += len(match.group(1))
                 text = match.group(4)
