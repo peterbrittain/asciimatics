@@ -2104,7 +2104,7 @@ if sys.platform == "win32":
 
             :param timeout: Time to wait for input in seconds (floating point).
             """
-            rc = win32event.WaitForSingleObject(self._stdin, timeout * 1000)
+            rc = win32event.WaitForSingleObject(self._stdin, int(timeout * 1000))
             if rc not in [0, 258]:
                 raise RuntimeError(rc)
 
