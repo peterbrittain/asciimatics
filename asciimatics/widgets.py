@@ -2145,7 +2145,7 @@ class TextBox(Widget):
     """
     
     __slots__ = ["_label", "_line", "_column", "_start_line", "_start_column", "_required_height", "_as_string",
-                 "_line_wrap", "_on_change", "_reflowed_text_cache"]
+                 "_line_wrap", "_on_change", "_reflowed_text_cache", "_parser"]
 
     def __init__(self, height, label=None, name=None, as_string=False, line_wrap=False, parser=None,
                  on_change=None, **kwargs):
