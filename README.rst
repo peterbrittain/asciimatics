@@ -54,7 +54,7 @@ Currently this package has been proven to work on CentOS 6 & 7, Raspbian (i.e. D
 Ubuntu 14.04, Windows 7, 8 & 10, OSX 10.11 and Android Marshmallow (courtesy of https://termux.com),
 though it should also work for any other platform that provides a working curses implementation.
 
-It should be implementation agnostic and has been successfully tested on the CPython and PyPy2.
+It should be implementation agnostic and has been successfully tested on CPython and PyPy2.
 
 (Please let me know if you successfully verified it on other platforms so that I can update this
 list).
@@ -149,7 +149,7 @@ More examples
 -------------
 
 More examples of what you can do are available in the project samples directory, hosted on GitHub.
-See https://github.com/peterbrittain/asciimatics/tree/v1.10/samples.
+See https://github.com/peterbrittain/asciimatics/tree/v1.11/samples.
 
 To view them, simply download these files and then simply run them directly with `python`.
 Alternatively, you can browse recordings of many of the samples in the gallery at

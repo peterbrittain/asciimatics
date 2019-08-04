@@ -52,6 +52,7 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: Software Development :: User Interfaces',
@@ -66,6 +67,7 @@ setup(
         'Pillow >= 2.7.0',
         'wcwidth',
         'future',
+        'backports.functools_lru_cache;python_version<"3.0"',
     ],
     extras_require={
         ':sys_platform == "win32"': ['pypiwin32'],

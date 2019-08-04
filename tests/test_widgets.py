@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 from datetime import date, time
 from time import sleep
 from mock import patch
+from builtins import ord
 from builtins import chr
 from builtins import str
 import unittest
@@ -1230,7 +1231,7 @@ class TestWidgets(unittest.TestCase):
 
     def test_pop_up_widget(self):
         """
-        Check widget tab stops work as expected.
+        Check popup dialog work as expected.
         """
         def test_on_click(selection):
             raise NextScene(str(selection))
@@ -1264,6 +1265,35 @@ class TestWidgets(unittest.TestCase):
         # Check that the pop-up swallows all events.
         event = object()
         self.assertIsNone(form.process_event(event))
+
+    def test_pop_up_no_buttons(self):
+        """
+        Check dialog with nobuttons work as expected.
+        """
+        def test_on_click(selection):
+            raise NextScene(str(selection))
+
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = PopUpDialog(canvas, "Message", [], test_on_click)
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that the pop-up is rendered correctly.
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "               +-------+                \n" +
+            "               |Message|                \n" +
+            "               +-------+                \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
 
     def test_cjk_popup(self):
         """
@@ -1619,6 +1649,30 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "+--------------------------------------+\n")
 
+    def test_label_colours(self):
+        """
+        Check Label custom colour works.
+        """
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = Frame(canvas, canvas.height, canvas.width)
+        layout = Layout([1])
+        form.add_layout(layout)
+        label = Label("Some text")
+        label.custom_colour = "disabled"
+        layout.add_widget(label)
+        form.fix()
+        form.register_scene(scene)
+        scene.add_effect(form)
+        scene.reset()
+
+        # Check that the label is rendered in the correct colour palette.
+        for effect in scene.effects:
+            effect.update(0)
+        self.assertEqual(label.custom_colour, "disabled")
+        self.assertEqual(canvas.get_from(1, 1), (ord("S"), 0, 1, 4))
+
     @patch("os.path.exists")
     @patch("os.path.realpath")
     @patch("os.path.islink")
@@ -1626,7 +1680,7 @@ class TestWidgets(unittest.TestCase):
     @patch("os.lstat")
     @patch("os.stat")
     @patch("os.listdir")
-    def test_file_browser(self, mock_list, mock_stat, mock_lstat, mock_dir, mock_link, \
+    def test_file_browser(self, mock_list, mock_stat, mock_lstat, mock_dir, mock_link,
                           mock_real_path, mock_exists):
         """
         Check FileBrowser widget works as expected.
@@ -1719,7 +1773,7 @@ class TestWidgets(unittest.TestCase):
     @patch("os.lstat")
     @patch("os.stat")
     @patch("os.listdir")
-    def test_file_filter(self, mock_list, mock_stat, mock_lstat, mock_dir, mock_link, \
+    def test_file_filter(self, mock_list, mock_stat, mock_lstat, mock_dir, mock_link,
                           mock_real_path, mock_exists):
         """
         Check FileBrowser widget with a file_filter works as expected.
@@ -2499,6 +2553,77 @@ class TestWidgets(unittest.TestCase):
         self.process_keys(form, "123456")
         form.save()
         self.assertEqual(form.data["max_len_text"], "1234")
+
+    def test_clear_widgets(self):
+        """
+        Check that clear_widgets works as expected.
+        """
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = Frame(canvas, canvas.height, canvas.width)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        layout.add_widget(Text("Test"))
+        form.fix()
+        form.register_scene(scene)
+        scene.add_effect(form)
+        scene.reset()
+
+        # Check that the frame is rendered correctly.
+        for effect in scene.effects:
+            effect.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|Test                                  |\n" +
+            "|                                      O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check removing widgets clears Frame.
+        layout.clear_widgets()
+        form.fix()
+        scene.reset()
+        for effect in scene.effects:
+            effect.update(1)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|                                      |\n" +
+            "|                                      O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check adding another widget now adds it back into the Frame.
+        layout.add_widget(Text("Another One"))
+        form.fix()
+        scene.reset()
+        for effect in scene.effects:
+            effect.update(2)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|Another One                           |\n" +
+            "|                                      O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
 
 
 if __name__ == '__main__':

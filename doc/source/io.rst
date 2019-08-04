@@ -20,6 +20,41 @@ For example:
 
     Screen.wrapper(demo)
 
+You can also use the :py:obj:`.ManagedScreen` class as a function decorator to achieve the same thing
+as the above.  For example:
+
+.. code-block:: python
+
+    from asciimatics.screen import ManagedScreen
+    from asciimatics.scene import Scene
+    from asciimatics.effects import Cycle, Stars
+    from asciimatics.renderers import FigletText
+
+    @ManagedScreen
+    def demo(screen=None):
+        screen.print_at('Hello world!', 0, 0)
+        screen.refresh()
+        sleep(10)
+
+    demo()
+
+Or you can also use it as a context manager (i.e. using the `with` keyword).  For example:
+
+.. code-block:: python
+
+    from asciimatics.screen import ManagedScreen
+    from asciimatics.scene import Scene
+    from asciimatics.effects import Cycle, Stars
+    from asciimatics.renderers import FigletText
+
+    def demo():
+        with ManagedScreen() as screen:
+            screen.print_at('Hello world!', 0, 0)
+            screen.refresh()
+            sleep(10)
+
+    demo()
+
 If you need more control than this allows, you can fall back to using :py:meth:`.open`, but then
 you have to call :py:meth:`.close` before exiting your application to restore the environment.
 

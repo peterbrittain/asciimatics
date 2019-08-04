@@ -22,6 +22,10 @@ from functools import partial
 from datetime import date, datetime, timedelta
 from future.moves.itertools import zip_longest
 from future.utils import with_metaclass
+try:
+    from functools import lru_cache
+except ImportError:
+    from backports.functools_lru_cache import lru_cache
 from abc import ABCMeta, abstractmethod, abstractproperty
 from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent, MouseEvent
@@ -35,8 +39,11 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 
-# Standard palettes for use with :py:meth:`~Frame.set_theme`.
-_THEMES = {
+#: Standard palettes for use with :py:meth:`~Frame.set_theme`.  Each entry in THEMES contains a colour
+#: palette for use by the widgets within a Frame.  Each colour palette is a dictionary mapping a colour key
+#: to a 3-tuple of (foreground colour, attribute, background colour).  The "default" theme defines all the
+#: required keys for a palette.
+THEMES = {
     "default": {
         "background": (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
         "shadow": (Screen.COLOUR_BLACK, None, Screen.COLOUR_BLACK),
@@ -209,6 +216,7 @@ def _get_offset(text, visible_width, unicode_aware=True):
     return result
 
 
+@lru_cache(256)
 def _split_text(text, width, height, unicode_aware=True):
     """
     Split text to required dimensions.
@@ -550,8 +558,8 @@ class Frame(Effect):
 
         :param theme: The name of the theme to set.
         """
-        if theme in _THEMES:
-            self.palette = _THEMES[theme]
+        if theme in THEMES:
+            self.palette = THEMES[theme]
             if self._scroll_bar:
                 # TODO: fix protected access.
                 self._scroll_bar._palette = self.palette
@@ -915,6 +923,9 @@ class Layout(object):
         Widget best fit the canvas as constrained by the above.
     """
 
+    __slots__ = ["_column_sizes", "_columns", "_frame", "_has_focus", "_live_col", "_live_widget",
+                 "_fill_frame"]
+
     def __init__(self, columns, fill_frame=False):
         """
         :param columns: A list of numbers specifying the width of each column in this layout.
@@ -967,6 +978,9 @@ class Layout(object):
         """
         Add a widget to this Layout.
 
+        If you are adding this Widget to the Layout dynamically after starting to play the Scene,
+        don't forget to ensure that the value is explicitly set before the next update.
+
         :param widget: The widget to be added.
         :param column: The column within the widget for this widget.  Defaults to zero.
         """
@@ -980,6 +994,16 @@ class Layout(object):
 
         if widget.name in self._frame.data:
             widget.value = self._frame.data[widget.name]
+
+    def clear_widgets(self):
+        """
+        Clear all widgets from this Layout.
+
+        This method allows users of the Layout to dynamically recreate a new Layout.  After calling
+        this method, you can add new widgetsback into the Layout and then need to call `fix` to
+        force the Frame to recalculate the resulting new overall layout.
+        """
+        self._columns = [[] for _ in self._columns]
 
     def focus(self, force_first=False, force_last=False, force_column=None,
               force_widget=None):
@@ -1252,7 +1276,9 @@ class Layout(object):
         """
         for column in self._columns:
             for widget in column:
-                widget.update(frame_no)
+                # Don't bother with invisible widgets
+                if widget.is_visible:
+                    widget.update(frame_no)
 
     def save(self, validate):
         """
@@ -1348,6 +1374,10 @@ class Widget(with_metaclass(ABCMeta, object)):
     #: fit the maximum space used by any other column in the Layout.
     FILL_COLUMN = -135792467
 
+    __slots__ = ["_name", "_label", "_frame", "_value", "_has_focus", "_x", "_y", "_h", "_w", "_offset",
+                 "_display_label", "_is_tab_stop", "_is_disabled", "_is_valid", "_custom_colour", "_on_focus",
+                 "_on_blur", "string_len"]
+
     def __init__(self, name, tab_stop=True, disabled=False, on_focus=None, on_blur=None):
         """
         :param name: The name of this Widget.
@@ -1398,6 +1428,14 @@ class Widget(with_metaclass(ABCMeta, object)):
         Whether this widget is a valid tab stop for keyboard navigation.
         """
         return self._is_tab_stop
+
+    @property
+    def is_visible(self):
+        """
+        Whether this widget is visible on the Canvas or not.
+        """
+        return not (self._y + self._h <= self._frame.canvas.start_line or 
+                    self._y >= self._frame.canvas.start_line + self._frame.canvas.height)
 
     @property
     def disabled(self):
@@ -1548,6 +1586,29 @@ class Widget(with_metaclass(ABCMeta, object)):
             attr |= Screen.A_REVERSE
         self._frame.canvas.print_at(char, x, y, colour, attr, bg)
 
+    def _pick_palette_key(self, palette_name, selected=False, allow_input_state=True):
+        """
+        Pick the rendering colour for a widget based on the current state.
+
+        :param palette_name: The stem name for the widget - e.g. "button".
+        :param selected: Whether this item is selected or not.
+        :param allow_input_state: Whether to allow input state (e.g. focus) to affect result.
+        :returns: A colour palette key to be used.
+        """
+        key = palette_name
+        if self._custom_colour:
+            key = self._custom_colour
+        elif self.disabled:
+            key = "disabled"
+        elif not self._is_valid:
+            key = "invalid"
+        elif allow_input_state:
+            if self._has_focus:
+                key = "focus_" + palette_name
+            if selected:
+                key = "selected_" + key
+        return key
+
     def _pick_colours(self, palette_name, selected=False):
         """
         Pick the rendering colour for a widget based on the current state.
@@ -1556,20 +1617,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         :param selected: Whether this item is selected or not.
         :returns: A colour tuple (fg, attr, bg) to be used.
         """
-        if self._custom_colour:
-            key = self._custom_colour
-        elif self.disabled:
-            key = "disabled"
-        elif not self._is_valid:
-            key = "invalid"
-        else:
-            if self._has_focus:
-                key = "focus_" + palette_name
-            else:
-                key = palette_name
-            if selected:
-                key = "selected_" + key
-        return self._frame.palette[key]
+        return self._frame.palette[self._pick_palette_key(palette_name, selected)]
 
     @abstractmethod
     def update(self, frame_no):
@@ -1635,6 +1683,8 @@ class Label(Widget):
     A text label.
     """
 
+    __slots__ = ["_text", "_required_height", "_align"]
+
     def __init__(self, label, height=1, align="<"):
         """
         :param label: The text to be displayed for the Label.
@@ -1645,9 +1695,11 @@ class Label(Widget):
         """
         # Labels have no value and so should have no name for look-ups either.
         super(Label, self).__init__(None, tab_stop=False)
+
         # Although this is a label, we don't want it to contribute to the layout
         # tab calculations, so leave internal `_label` value as None.
-        self._text = label
+        # Also ensure that the label really is text.
+        self._text = str(label)
         self._required_height = height
         self._align = align
 
@@ -1656,7 +1708,8 @@ class Label(Widget):
         return event
 
     def update(self, frame_no):
-        (colour, attr, bg) = self._frame.palette["label"]
+        (colour, attr, bg) = self._frame.palette[
+            self._pick_palette_key("label", selected=False, allow_input_state=False)]
         for i, text in enumerate(
                 _split_text(self._text, self._w, self._h, self._frame.canvas.unicode_aware)):
             self._frame.canvas.paint(
@@ -1689,6 +1742,8 @@ class Divider(Widget):
     """
     A divider to break up a group of widgets.
     """
+
+    __slots__ = ["_draw_line", "_required_height", "_line_char"]
 
     def __init__(self, draw_line=True, height=1, line_char=None):
         """
@@ -1737,6 +1792,8 @@ class Text(Widget):
 
     It consists of an optional label and an entry box.
     """
+
+    __slots__ = ["_label", "_column", "_start_column", "_on_change", "_validator", "_hide_char", "_max_length"]
 
     def __init__(self, label=None, name=None, on_change=None, validator=None, hide_char=None, max_length=None,
                  **kwargs):
@@ -1898,6 +1955,8 @@ class CheckBox(Widget):
     the box and a field name.
     """
 
+    __slots__ = ["_text", "_label", "_on_change"]
+
     def __init__(self, text, label=None, name=None, on_change=None, **kwargs):
         """
         :param text: The text to explain this specific field to the user.
@@ -1979,6 +2038,8 @@ class RadioButtons(Widget):
 
     It consists of an optional label and then a list of selection bullets with field names.
     """
+
+    __slots__ = ["_options", "_label", "_selection", "_start_column", "_on_change"]
 
     def __init__(self, options, label=None, name=None, on_change=None, **kwargs):
         """
@@ -2082,6 +2143,9 @@ class TextBox(Widget):
 
     It consists of a framed box with option label.
     """
+    
+    __slots__ = ["_label", "_line", "_column", "_start_line", "_start_column", "_required_height", "_as_string",
+                 "_line_wrap", "_on_change", "_reflowed_text_cache"]
 
     def __init__(self, height, label=None, name=None, as_string=False, line_wrap=False, parser=None,
                  on_change=None, **kwargs):
@@ -2172,7 +2236,7 @@ class TextBox(Widget):
     def reset(self):
         # Reset to original data and move to end of the text.
         self._line = len(self._value) - 1
-        self._column = len(self._value[self._line])
+        self._column = 0 if self._is_disabled else len(self._value[self._line])
         self._reflowed_text_cache = None
 
     def _change_line(self, delta):
@@ -2383,6 +2447,9 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
     """
     An Internal class to contain common function between list box types.
     """
+
+    __slots__ = ["_options", "_titles", "_label", "_line", "_start_line", "_required_height", "_on_change",
+                 "_on_select", "_validator", "_search", "_last_search", "_scroll_bar"]
 
     def __init__(self, height, options, titles=None, label=None, name=None, on_change=None,
                  on_select=None, validator=None):
@@ -3000,6 +3067,8 @@ class Button(Widget):
     on a form).
     """
 
+    __slots__ = ["_text", "_add_box", "_on_click", "_label"]
+
     def __init__(self, text, on_click, label=None, add_box=True, **kwargs):
         """
         :param text: The text for the button.
@@ -3079,7 +3148,7 @@ class PopUpDialog(Frame):
         """
         :param screen: The Screen that owns this dialog.
         :param text: The message text to display.
-        :param buttons: A list of button names to display.
+        :param buttons: A list of button names to display. This may be an empty list.
         :param on_close: Optional function to invoke on exit.
         :param has_shadow: optional flag to specify if dialog should have a shadow when drawn.
         :param theme: optional colour theme for this pop-up.  Defaults to the warning colours.
@@ -3099,14 +3168,15 @@ class PopUpDialog(Frame):
         # Decide on optimum width of the dialog.  Limit to 2/3 the screen width.
         string_len = wcswidth if screen.unicode_aware else len
         width = max([string_len(x) for x in text.split("\n")])
-        width = max(width + 4,
+        width = max(width + 2,
                     sum([string_len(x) + 4 for x in buttons]) + len(buttons) + 5)
         width = min(width, screen.width * 2 // 3)
 
         # Figure out the necessary message and allow for buttons and borders
         # when deciding on height.
-        self._message = _split_text(text, width - 4, screen.height - 4, screen.unicode_aware)
-        height = len(self._message) + 4
+        dh = 4 if len(buttons) > 0 else 2
+        self._message = _split_text(text, width - 2, screen.height - dh, screen.unicode_aware)
+        height = len(self._message) + dh
 
         # Construct the Frame
         self._data = {"message": self._message}
@@ -3114,7 +3184,7 @@ class PopUpDialog(Frame):
             screen, height, width, self._data, has_shadow=has_shadow, is_modal=True)
 
         # Build up the message box
-        layout = Layout([100], fill_frame=True)
+        layout = Layout([width - 2], fill_frame=True)
         self.add_layout(layout)
         text_box = TextBox(len(self._message), name="message")
         text_box.disabled = True
@@ -3271,6 +3341,8 @@ class TimePicker(Widget):
     A TimePicker widget allows you to pick a time from a compact, temporary, pop-up Frame.
     """
 
+    __slots__ = ["_label", "_on_change", "_value", "_child", "include_seconds"]
+
     def __init__(self, label=None, name=None, seconds=False, on_change=None, **kwargs):
         """
         :param label: An optional label for the widget.
@@ -3411,6 +3483,8 @@ class DatePicker(Widget):
     A DatePicker widget allows you to pick a date from a compact, temporary, pop-up Frame.
     """
 
+    __slots__ = ["_label", "_on_change", "_value", "_child", "_year_range"]
+
     def __init__(self, label=None, name=None, year_range=None, on_change=None, **kwargs):
         """
         :param label: An optional label for the widget.
@@ -3529,6 +3603,8 @@ class DropdownList(Widget):
     """
     This widget allows you to pick an item from a temporary pop-up list.
     """
+
+    __slots__ = ["_label", "_on_change", "_child", "_options", "_line", "_value"]
 
     def __init__(self, options, label=None, name=None, on_change=None, **kwargs):
         """
@@ -3770,6 +3846,8 @@ class VerticalDivider(Widget):
 
     This widget should be put into a column of its own in the Layout.
     """
+
+    __slots__ = ["_required_height"]
 
     def __init__(self, height=Widget.FILL_COLUMN):
         """

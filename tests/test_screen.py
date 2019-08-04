@@ -20,7 +20,7 @@ try:
 except ImportError:
     pass
 from asciimatics.scene import Scene
-from asciimatics.screen import Screen, Canvas
+from asciimatics.screen import Screen, Canvas, ManagedScreen
 from tests.mock_objects import MockEffect
 if sys.platform == "win32":
     import win32console
@@ -47,6 +47,8 @@ class TestScreen(unittest.TestCase):
         # This typically means we're running inside a non-standard terminal.
         # For example, this happens when embedded in PyCharm.
         if sys.platform != "win32":
+            if not (("FORCE_TTY" in os.environ and os.environ["FORCE_TTY"] == "Y") or sys.stdout.isatty()):
+                self.skipTest("Not a valid TTY")
             curses.initscr()
             if curses.tigetstr("ri") is None:
                 self.skipTest("No valid terminal definition")
@@ -947,6 +949,45 @@ class TestScreen(unittest.TestCase):
     def signal_check(self, screen):
         """Dummy callback for screen wrapper."""
         self.assertEqual(signal.getsignal(signal.SIGWINCH), screen._resize_handler)
+
+    def test_function_decorator(self):
+        """
+        Check ManagedScreen function decorator works.
+        """
+        @ManagedScreen
+        def demo(screen=None):
+            canvas = Canvas(screen, 10, 40, 0, 0)
+
+            # Check underflow and overflow work as expected
+            canvas.print_at("ab", -1, 0)
+            canvas.print_at("cd", canvas.width - 1, 0)
+            self.assert_line_equals(canvas, "b                                      c")
+
+        demo()
+
+    @ManagedScreen
+    def test_class_method_decorator(self, screen=None):
+        """
+        Check ManagedScreen method decorator works.
+        """
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Check underflow and overflow work as expected
+        canvas.print_at("ab", -1, 0)
+        canvas.print_at("cd", canvas.width - 1, 0)
+        self.assert_line_equals(canvas, "b                                      c")
+
+    def test_context_manager(self):
+        """
+        Check ManagedScreen context manager works.
+        """
+        with ManagedScreen() as screen:
+            canvas = Canvas(screen, 10, 40, 0, 0)
+
+            # Check underflow and overflow work as expected
+            canvas.print_at("ab", -1, 0)
+            canvas.print_at("cd", canvas.width - 1, 0)
+            self.assert_line_equals(canvas, "b                                      c")
 
 
 if __name__ == '__main__':

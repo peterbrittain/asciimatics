@@ -3,22 +3,32 @@ CHANGE HISTORY
 
 LATEST
 ------
+- Fixed exception on reinstating NoneType signal handler
+
+1.11.0
+------
 - Added `allow_int` parameter to `Screen.play()`.
 - Added `max_length` parameter to `Text`.
 - Added support for page up/down in `TextBox`.
 - Added optional scroll bars to `MultiColumnListBox`.
 - Added `file_filter` parameter to `FileBrowser`.
-- Added `wait_for-input` method to `Screen`.
+- Added `wait_for_input` method to `Screen`.
 - Added optional `theme` parameter to `PopupDialog`.
 - Added optional `jitter` parameter to `Noise`.
+- Added `ManagedScreen` decorator.
 - Improved performance of double-buffering.
 
   - NOTE: Drawing off-screen with a large scrolling buffer is no longer supported (as it wasn't
     needed).
 
+- Added optional `pattern` parameter to `Stars`.
 - Improved handling of permission errors in `FileBrowser`.
+- Added formal support for defining your own colour theme.
+- Added `clear_widgets` to `Layout` objects.
+- Fixed height of PopUpDialog when no buttons are specified.
 - Fixed bug where asciimatics Scenes would hang when the clock is moved back in time.
 - Fixed off-by-one error in BarChart labels.
+- Fixed bug where Labels ignored the custom_colour property.
 - Added default date and time to DatePicker and TimePicker when no value specified.
 
 1.10.0

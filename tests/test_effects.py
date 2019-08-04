@@ -3,6 +3,7 @@ import unittest
 from datetime import datetime
 from mock.mock import MagicMock, patch
 from random import randint
+import os
 import sys
 from asciimatics.effects import Print, Cycle, BannerText, Mirage, Scroll, \
     Stars, Matrix, Snow, Wipe, Clock, Cog, RandomNoise, Julia
@@ -45,6 +46,8 @@ class TestEffects(unittest.TestCase):
         # This typically means we're running inside a non-standard termina;.
         # For example, thi happens when embedded in PyCharm.
         if sys.platform != "win32":
+            if not (("FORCE_TTY" in os.environ and os.environ["FORCE_TTY"] == "Y") or sys.stdout.isatty()):
+                self.skipTest("Not a valid TTY")
             curses.initscr()
             if curses.tigetstr("ri") is None:
                 self.skipTest("No valid terminal definition")
@@ -213,6 +216,23 @@ class TestEffects(unittest.TestCase):
         # This effect should ignore events.
         event = object()
         self.assertEqual(event, effect.process_event(event))
+
+    def test_stars_pattern(self):
+        """
+        Check that Stars custom pattern value works.
+        """
+        # Check that Stars randomly updates the Screen every frame.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        effect = Stars(canvas, 100, "TESTTESTTEST")
+        effect.reset()
+        my_buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
+        for i in range(10):
+            effect.update(i)
+            self.assertTrue(self.check_canvas(
+                canvas,
+                my_buffer,
+                lambda value: self.assertIn(chr(value[0]), " TES")))
 
     def test_matrix(self):
         """

@@ -84,6 +84,14 @@ asciimatics.utilities module
     :inherited-members:
     :show-inheritance:
 
+asciimatics.version module
+--------------------------
+
+.. automodule:: asciimatics.version
+    :members:
+    :inherited-members:
+    :show-inheritance:
+
 asciimatics.widgets module
 --------------------------
 
