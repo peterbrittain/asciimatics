@@ -59,7 +59,7 @@ class TestParsers(unittest.TestCase):
             next(tokens)
 
         # Special case colour specifications
-        tokens = parser.parse("\x1B[38;1ma\x1B[38;5;17mb\x1B[48;2;1;2;3mc\x1B[48;5;54md", None)
+        tokens = parser.parse("\x1B[38;1ma\x1B[38;5;17mb\x1B[48;2;1;2;3mc\x1B[48;5;54md\x1B[999me", None)
 
         # Bad colour scheme - ignore
         self.assertEquals(next(tokens), ("a", (None, None, None), 0))
@@ -73,3 +73,5 @@ class TestParsers(unittest.TestCase):
         # Standard colour palette
         self.assertEquals(next(tokens), ("d", (17, None, 54), 33))
 
+        # Unknown parameter
+        self.assertEquals(next(tokens), ("e", (17, None, 54), 44))
