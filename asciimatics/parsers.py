@@ -97,7 +97,7 @@ class AnsiTerminalParser(Parser):
 
         :param text: raw text to process.
         :param colours: colour tuple to initialise the colour map.
-        :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)  
+        :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)
         """
         attributes = [x for x in colours] if colours else [None, None, None]
         offset = last_offset = 0
@@ -143,7 +143,7 @@ class AnsiTerminalParser(Parser):
                             if parameter == 0:
                                 # Reset
                                 attributes = [constants.COLOUR_WHITE,
-                                              constants.A_NORMAL, 
+                                              constants.A_NORMAL,
                                               constants.COLOUR_BLACK]
                             elif parameter == 1:
                                 # Bold
