@@ -1,6 +1,6 @@
 
 """
-This module is just a collection of simple helper functions.
+This module provides parsers to create ColouredText objects from embedded control strings.
 """
 from __future__ import division
 from __future__ import absolute_import
@@ -19,29 +19,40 @@ logger = getLogger(__name__)
 
 class Parser(with_metaclass(ABCMeta, object)):
     """
-    Abstract class to represent text parsers for text colouring.
+    Abstract class to represent text parsers Cthat extract colour control codes from raw text and
+    convert them to displayable text and associated colour maps.
     """
 
     @abstractmethod
     def parse(self, text, colours):
         """
-        Generator to return coloured text
-        :return:
+        Generator to return coloured text from raw text.
+
+        :param text: raw text to process.
+        :param colours: colour tuple to initialise the colour map.
+        :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)  
         """
 
 
 class AsciimaticsParser(Parser):
+    """
+    Parser to handle Asciimatics rendering escape strings.
+    """
     # Regular expression for use to find colour sequences in multi-colour text.
     # It should match ${n}, ${m,n} or ${m,n,o}
     _colour_sequence = re.compile(constants.COLOUR_REGEX)
 
-    """
-    Parser to handle Asciimatics' rendering escape strings 
-    """
     def __init__(self):
         super(AsciimaticsParser, self).__init__()
 
     def parse(self, text, colours):
+        """
+        Generator to return coloured text from raw text.
+
+        :param text: raw text to process.
+        :param colours: colour tuple to initialise the colour map.
+        :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)  
+        """
         attributes = colours if colours else (None, None, None)
         offset = last_offset = 0
         while len(text) > 0:
@@ -71,16 +82,23 @@ class AsciimaticsParser(Parser):
 
 
 class AnsiTerminalParser(Parser):
+    """
+    Parser to handle ANSI terminal escape codes.
+    """
     # Regular expression for use to find colour sequences in multi-colour text.
     _colour_sequence = re.compile(r"^(\x1B\[([^@-~]*)([@-~]))(.*)")
 
-    """
-    Parser to handle ANSI terminal escape codes. 
-    """
     def __init__(self):
         super(AnsiTerminalParser, self).__init__()
 
     def parse(self, text, colours):
+        """
+        Generator to return coloured text from raw text.
+
+        :param text: raw text to process.
+        :param colours: colour tuple to initialise the colour map.
+        :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)  
+        """
         attributes = [x for x in colours] if colours else [None, None, None]
         offset = last_offset = 0
         while len(text) > 0:
@@ -124,7 +142,9 @@ class AnsiTerminalParser(Parser):
                             # top-level stream processing
                             if parameter == 0:
                                 # Reset
-                                attributes = [constants.COLOUR_WHITE, constants.A_NORMAL, constants.COLOUR_BLACK]
+                                attributes = [constants.COLOUR_WHITE,
+                                              constants.A_NORMAL, 
+                                              constants.COLOUR_BLACK]
                             elif parameter == 1:
                                 # Bold
                                 attributes[1] = constants.A_BOLD

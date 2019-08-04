@@ -6,10 +6,7 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
-import re
-from future.utils import with_metaclass
 from datetime import date, datetime
-from abc import ABCMeta, abstractmethod
 from logging import getLogger
 
 
@@ -54,7 +51,8 @@ class _DotDict(dict):
 
 class ColouredText(object):
     """
-    Unicode string-like object to store text and colour maps
+    Unicode string-like object to store text and colour maps, using a parser to convert the raw text
+    passed in into visible text and an associated colour map.
     """
 
     def __init__(self, text, parser, colour=None):
@@ -79,12 +77,21 @@ class ColouredText(object):
             self._last_colour = colour
 
     def __repr__(self):
+        """
+        Return the processed (displayable) text.
+        """
         return self._text
 
     def __len__(self):
+        """
+        Returns the length of the processed (displayable) text.
+        """
         return len(self._text)
 
     def __getitem__(self, item):
+        """
+        Slice magic method.
+        """
         if isinstance(item, int):
             start = self._raw_offsets[item]
             stop = None if item == len(self._raw_offsets) - 1 else self._raw_offsets[item + 1]
@@ -110,28 +117,50 @@ class ColouredText(object):
                             colour=colour)
 
     def __add__(self, other):
+        """
+        Addition magic method.
+        """
         return ColouredText(self._raw_text + other.raw_text, parser=self._parser, colour=self._init_colour)
 
     def __eq__(self, other):
+        """
+        Equals magic method.
+        """
         if isinstance(other, ColouredText):
             return self.raw_text == other.raw_text
         return NotImplemented
 
     def __ne__(self, other):
+        """
+        Not equals magic method.
+        """
         x = self.__eq__(other)
         if x is not NotImplemented:
             return not x
         return NotImplemented
 
     def join(self, others):
-        return ColouredText(self._raw_text.join([x.raw_text for x in others]), parser=self._parser, colour=self._init_colour)
+        """
+        Join the list of ColouredObjects using this ColouredObject.
+
+        :param others: the list of other objects to join.
+        """
+        return ColouredText(self._raw_text.join([x.raw_text for x in others]),
+                            parser=self._parser,
+                            colour=self._init_colour)
 
     @property
     def colour_map(self):
+        """
+        Colour map for the processed text (for use with `paint` method).
+        """
         return self._colour_map
 
     @property
     def raw_text(self):
+        """
+        Raw (unprocessed) text for this object.
+        """
         return self._raw_text
 
     @property
