@@ -6,14 +6,33 @@ from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, NextScene, StopApplication, \
     InvalidFields
+from asciimatics.parsers import AsciimaticsParser
 import sys
 import re
 import datetime
 import logging
 
+# Test data
+tree = r"""
+       ${3,1}*
+${2}      / \
+${2}     /${1}o${2}  \
+${2}    /_   _\
+${2}     /   \${4}b
+${2}    /     \
+${2}   /   ${1}o${2}   \
+${2}  /__     __\
+  ${1}d${2} / ${4}o${2}   \
+${2}   /       \
+${2}  / ${4}o     ${1}o${2}.\
+${2} /___________\
+      ${3}|||
+      ${3}|||
+""".split("\n")
+
 # Initial data for the form
 form_data = {
-    "TA": ["Hello world!", "How are you?"],
+    "TA": tree,
     "TB": "alphabet",
     "TC": "123",
     "TD": "a@b.com",
@@ -45,6 +64,8 @@ class DemoFrame(Frame):
         layout.add_widget(TextBox(5,
                                   label="My First Box:",
                                   name="TA",
+                                  parser=AsciimaticsParser(),
+                                  line_wrap=True,
                                   on_change=self._on_change), 1)
         layout.add_widget(
             Text(label="Alpha:",

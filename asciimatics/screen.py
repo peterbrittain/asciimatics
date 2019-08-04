@@ -30,6 +30,7 @@ from wcwidth import wcwidth, wcswidth
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import ResizeScreenError, StopApplication, NextScene
 from asciimatics.utilities import _DotDict
+import asciimatics.constants as constants
 
 logger = getLogger(__name__)
 
@@ -1111,20 +1112,20 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
     """
 
     # Text attributes for use when printing to the Screen.
-    A_BOLD = 1
-    A_NORMAL = 2
-    A_REVERSE = 3
-    A_UNDERLINE = 4
+    A_BOLD = constants.A_BOLD
+    A_NORMAL = constants.A_NORMAL
+    A_REVERSE = constants.A_REVERSE
+    A_UNDERLINE = constants.A_UNDERLINE
 
     # Text colours for use when printing to the Screen.
-    COLOUR_BLACK = 0
-    COLOUR_RED = 1
-    COLOUR_GREEN = 2
-    COLOUR_YELLOW = 3
-    COLOUR_BLUE = 4
-    COLOUR_MAGENTA = 5
-    COLOUR_CYAN = 6
-    COLOUR_WHITE = 7
+    COLOUR_BLACK = constants.COLOUR_BLACK
+    COLOUR_RED = constants.COLOUR_RED
+    COLOUR_GREEN = constants.COLOUR_GREEN
+    COLOUR_YELLOW = constants.COLOUR_YELLOW
+    COLOUR_BLUE = constants.COLOUR_BLUE
+    COLOUR_MAGENTA = constants.COLOUR_MAGENTA
+    COLOUR_CYAN = constants.COLOUR_CYAN
+    COLOUR_WHITE = constants.COLOUR_WHITE
 
     # Standard extended key codes.
     KEY_ESCAPE = -1

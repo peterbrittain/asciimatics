@@ -31,7 +31,7 @@ from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import Highlander, InvalidFields
 from asciimatics.screen import Screen, Canvas
-from asciimatics.utilities import readable_timestamp, readable_mem, _DotDict
+from asciimatics.utilities import readable_timestamp, readable_mem, _DotDict, ColouredText
 from wcwidth import wcswidth, wcwidth
 
 # Logging
@@ -153,6 +153,7 @@ def _enforce_width(text, width, unicode_aware=True):
     if unicode_aware:
         size = 0
         for i, c in enumerate(text):
+            c = str(c)
             w = wcwidth(c) if ord(c) >= 256 else 1
             if size + w > width:
                 return text[0:i]
@@ -683,6 +684,7 @@ class Frame(Effect):
         # data from the old object to the new (using the name).
         if self._name is not None:
             for effect in scene.effects:
+                logger.debug("Cloning: %s", effect._name)
                 if isinstance(effect, Frame):
                     if effect._name == self._name:
                         effect.data = self.data
@@ -1323,6 +1325,7 @@ class Layout(object):
         """
         for column in self._columns:
             for widget in column:
+                logger.debug("Updating: %s", widget.name)
                 # First handle the normal case - pull the default data from the current frame.
                 if widget.name in self._frame.data:
                     widget.value = self._frame.data[widget.name]
@@ -2140,11 +2143,11 @@ class TextBox(Widget):
 
     It consists of a framed box with option label.
     """
-
+    
     __slots__ = ["_label", "_line", "_column", "_start_line", "_start_column", "_required_height", "_as_string",
-                 "_line_wrap", "_on_change", "_reflowed_text_cache"]
+                 "_line_wrap", "_on_change", "_reflowed_text_cache", "_parser"]
 
-    def __init__(self, height, label=None, name=None, as_string=False, line_wrap=False,
+    def __init__(self, height, label=None, name=None, as_string=False, line_wrap=False, parser=None,
                  on_change=None, **kwargs):
         """
         :param height: The required number of input lines for this TextBox.
@@ -2153,6 +2156,7 @@ class TextBox(Widget):
         :param as_string: Use string with newline separator instead of a list
             for the value of this widget.
         :param line_wrap: Whether to wrap at the end of the line.
+        :param parser: Optional parser to colour text.
         :param on_change: Optional function to call when text changes.
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
@@ -2166,6 +2170,7 @@ class TextBox(Widget):
         self._required_height = height
         self._as_string = as_string
         self._line_wrap = line_wrap
+        self._parser = parser
         self._on_change = on_change
         self._reflowed_text_cache = None
 
@@ -2177,10 +2182,10 @@ class TextBox(Widget):
         if not self._line_wrap:
             self._start_column = min(self._start_column, self._column)
             self._start_column += _find_min_start(
-                self._value[self._line][self._start_column:self._column + 1],
+                str(self._value[self._line][self._start_column:self._column + 1]),
                 self.width,
                 self._frame.canvas.unicode_aware,
-                self._column >= self.string_len(self._value[self._line]))
+                self._column >= self.string_len(str(self._value[self._line])))
 
         # Clear out the existing box content
         (colour, attr, bg) = self._pick_colours("edit_text")
@@ -2208,20 +2213,22 @@ class TextBox(Widget):
         # Render visible portion of the text.
         for line, (text, _, _) in enumerate(display_text):
             if self._start_line <= line < self._start_line + height:
-                self._frame.canvas.print_at(
-                    _enforce_width(text[display_start_column:], self.width,
-                                   self._frame.canvas.unicode_aware),
+                paint_text = _enforce_width(text[display_start_column:], self.width, self._frame.canvas.unicode_aware)
+                self._frame.canvas.paint(
+                    str(paint_text),
                     self._x + self._offset,
                     self._y + line - self._start_line,
-                    colour, attr, bg)
+                    colour, attr, bg,
+                    colour_map=paint_text.colour_map if hasattr(paint_text, "colour_map") else None)
 
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
         if self._has_focus:
             line = display_text[display_line][0]
-            text_width = self.string_len(line[display_start_column:display_column])
+            logger.debug("Cursor: {}".format((display_start_column, display_column)))
+            text_width = self.string_len(str(line[display_start_column:display_column]))
             self._draw_cursor(
-                " " if display_column >= len(line) else line[display_column],
+                " " if display_column >= len(line) else str(line[display_column]),
                 frame_no,
                 self._x + self._offset + text_width,
                 self._y + display_line - self._start_line)
@@ -2246,6 +2253,9 @@ class TextBox(Widget):
             self._column = len(self._value[self._line])
 
     def process_event(self, event):
+        def _join(a, b):
+            return ColouredText(a, self._parser, colour=b[0].first_colour).join(b) if self._parser else a.join(b)
+
         if isinstance(event, KeyboardEvent):
             old_value = copy(self._value)
             if event.key_code in [10, 13]:
@@ -2258,9 +2268,9 @@ class TextBox(Widget):
             elif event.key_code == Screen.KEY_BACK:
                 if self._column > 0:
                     # Delete character in front of cursor.
-                    self._value[self._line] = "".join([
-                        self._value[self._line][:self._column - 1],
-                        self._value[self._line][self._column:]])
+                    self._value[self._line] = _join("",
+                        [self._value[self._line][:self._column - 1],
+                         self._value[self._line][self._column:]])
                     self._column -= 1
                 else:
                     if self._line > 0:
@@ -2271,9 +2281,9 @@ class TextBox(Widget):
                             self._value.pop(self._line + 1)
             elif event.key_code == Screen.KEY_DELETE:
                 if self._column < len(self._value[self._line]):
-                    self._value[self._line] = "".join([
-                        self._value[self._line][:self._column],
-                        self._value[self._line][self._column + 1:]])
+                    self._value[self._line] = _join("",
+                        [self._value[self._line][:self._column],
+                         self._value[self._line][self._column + 1:]])
                 else:
                     if self._line < len(self._value) - 1:
                         # Join this line with next
@@ -2313,9 +2323,9 @@ class TextBox(Widget):
                 self._column = len(self._value[self._line])
             elif event.key_code >= 32:
                 # Insert any visible text at the current cursor position.
-                self._value[self._line] = chr(event.key_code).join([
-                    self._value[self._line][:self._column],
-                    self._value[self._line][self._column:]])
+                self._value[self._line] = _join(chr(event.key_code),
+                    [self._value[self._line][:self._column],
+                     self._value[self._line][self._column:]])
                 self._column += 1
             else:
                 # Ignore any other key press.
@@ -2348,7 +2358,7 @@ class TextBox(Widget):
                     # Now figure out location in text based on width of each glyph.
                     self._column = (self._start_column + text_col +
                                     _get_offset(
-                                        self._value[self._line][self._start_column + text_col:],
+                                        str(self._value[self._line][self._start_column + text_col:]),
                                         event.x - self._x - self._offset,
                                         self._frame.canvas.unicode_aware))
                     self._column = min(len(self._value[self._line]), self._column)
@@ -2380,7 +2390,7 @@ class TextBox(Widget):
                 limit = self._w - self._offset
                 for i, line in enumerate(self._value):
                     column = 0
-                    while self.string_len(line) >= limit:
+                    while self.string_len(str(line)) >= limit:
                         sub_string = _enforce_width(
                             line, limit, self._frame.canvas.unicode_aware)
                         self._reflowed_text_cache.append((sub_string, i, column))
@@ -2396,19 +2406,34 @@ class TextBox(Widget):
     def value(self):
         if self._value is None:
             self._value = [""]
-        return "\n".join(self._value) if self._as_string else self._value
+        value = [str(x) for x in self._value]
+        return "\n".join(value) if self._as_string else value
 
     @value.setter
     def value(self, new_value):
-        # Only trigger the notification after we've changed the value.
+        # Convert to the internal format
         old_value = self._value
         if new_value is None:
-            self._value = [""]
+            new_value = [""]
         elif self._as_string:
-            self._value = new_value.split("\n")
-        else:
+            new_value = new_value.split("\n")
+        self._value = new_value
+
+        # TODO: Sort out speed of this code
+        if self._parser:
+            new_value = []
+            last_colour = None
+            for line in self._value:
+                try:
+                    value = ColouredText(line.raw_text, self._parser, colour=last_colour)
+                except AttributeError:
+                    value = ColouredText(line, self._parser, colour=last_colour)
+                new_value.append(value)
+                last_colour = value.last_colour
             self._value = new_value
         self.reset()
+
+        # Only trigger the notification after we've changed the value.
         if old_value != self._value and self._on_change:
             self._on_change()
 

@@ -1446,7 +1446,7 @@ class TestWidgets(unittest.TestCase):
         scene2 = Scene([frame2], 10)
         frame.register_scene(scene)
         frame2.register_scene(scene)
-        frame.data = {"TA": "something"}
+        frame.data = {"TA": ["something"]}
         frame2.data = {}
 
         self.assertEqual(frame2.data, {})

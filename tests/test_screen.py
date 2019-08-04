@@ -9,6 +9,7 @@ from mock import MagicMock
 from random import randint
 import unittest
 import sys
+import time
 from builtins import str
 from builtins import chr
 from builtins import bytes
@@ -823,6 +824,17 @@ class TestScreen(unittest.TestCase):
             # It's not possible to read values back, so just check code doesn't
             # crash.
             screen.set_title("Asciimatics test")
+
+        Screen.wrapper(internal_checks, height=15)
+
+    def test_wait(self):
+        """
+        Check that wait_for_input dleyas as requested when no input.
+        """
+        def internal_checks(screen):
+            start = time.time()
+            screen.wait_for_input(0.1)
+            self.assertGreaterEqual(time.time() - start, 0.1)
 
         Screen.wrapper(internal_checks, height=15)
 
