@@ -524,6 +524,20 @@ fine-grained approach to the colouring, you can customize the colour for any Wid
 :py:obj:`~.Widget.custom_colour` for that Widget.  The only constraint on this property is that
 it must still be the value of one of the keys within the owning Frame's palette.
 
+Changing colours inline
+~~~~~~~~~~~~~~~~~~~~~~~
+The previous options should be enough for most UIs.  However, sometimes it is useful to be able to
+change the colour of some text inside the value for some widgets, e.g. to provide syntax highlighting
+in a `TextBox`.  You can do this using a :py:obj:`.Parser` object for those widgets that support it.
+
+By passing in a parser that understands extra control codes or the need to highlight certain
+characters differently, you can control colours on a letter by letter basis.  Out of the box,
+asciimatics provides 2 parsers, which can handle the ${c,a,b} format used by its Renderers, or
+the ANSI standard terminal escape codes (used by many Linux terminals).  Simply use the relevant
+parser and pass in values containing the associated control codes to change colours where needed.
+
+Check out the latest code in forms.py for an example of how this works.
+
 Setting values
 --------------
 By this stage, you should have a basic User Interface up and running, but how do you set the values

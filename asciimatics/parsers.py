@@ -51,7 +51,7 @@ class AsciimaticsParser(Parser):
 
         :param text: raw text to process.
         :param colours: colour tuple to initialise the colour map.
-        :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)  
+        :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)
         """
         attributes = colours if colours else (None, None, None)
         offset = last_offset = 0

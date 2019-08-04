@@ -829,7 +829,7 @@ class TestScreen(unittest.TestCase):
 
     def test_wait(self):
         """
-        Check that wait_for_input dleyas as requested when no input.
+        Check that wait_for_input delays as requested when no input.
         """
         def internal_checks(screen):
             start = time.time()

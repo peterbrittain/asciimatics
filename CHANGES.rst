@@ -3,7 +3,9 @@ CHANGE HISTORY
 
 LATEST
 ------
-- Fixed exception on reinstating NoneType signal handler
+- Added ColouredText objects to handle embedded colour codes in text for some widgets.
+- Fixed exception on reinstating NoneType signal handler.
+- Fixed float/int issue with recent builds of pywin32.
 
 1.11.0
 ------
