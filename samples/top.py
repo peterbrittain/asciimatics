@@ -3,6 +3,7 @@ from asciimatics.widgets import Frame, Layout, MultiColumnListBox, Widget, Label
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, StopApplication
+from asciimatics.parsers import AsciimaticsParser
 import sys
 from collections import defaultdict
 try:
@@ -50,7 +51,8 @@ class DemoFrame(Frame):
             [">6", 10, ">4", ">7", ">7", ">5", ">5", "100%"],
             [],
             titles=["PID", "USER", "NI", "VIRT", "RSS", "CPU%", "MEM%", "CMD"],
-            name="mc_list")
+            name="mc_list",
+            parser=AsciimaticsParser())
         self.add_layout(layout)
         layout.add_widget(self._header)
         layout.add_widget(self._list)
@@ -128,8 +130,22 @@ class DemoFrame(Frame):
                 ], x[0]) for x in list_data
             ]
 
+            # Add colours...
+            coloured_data = []
+            for cols, val in new_data:
+                cpu = float(cols[5])
+                if cpu < 40:
+                    colour = ""
+                elif cpu < 60:
+                    colour = "${3}"
+                elif cpu < 80:
+                    colour = "${1}"
+                else:
+                    colour = "${1,1}"
+                coloured_data.append(([colour + x for x in cols], val))
+
             # Update the list and try to reset the last selection.
-            self._list.options = new_data
+            self._list.options = coloured_data
             self._list.value = last_selection
             self._list.start_line = last_start
             self._header.value = (

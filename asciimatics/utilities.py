@@ -6,6 +6,7 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
+from builtins import str
 from datetime import date, datetime
 from logging import getLogger
 
@@ -120,7 +121,11 @@ class ColouredText(object):
         """
         Addition magic method.
         """
-        return ColouredText(self._raw_text + other.raw_text, parser=self._parser, colour=self._init_colour)
+        if hasattr(other, "raw_text"):
+            new_text = self._raw_text + other.raw_text
+        else:
+            new_text = self._raw_text + str(other)
+        return ColouredText(new_text, parser=self._parser, colour=self._init_colour)
 
     def __eq__(self, other):
         """
@@ -138,6 +143,12 @@ class ColouredText(object):
         if x is not NotImplemented:
             return not x
         return NotImplemented
+
+    def startswith(self, text):
+        """
+        Check whether parsed (i.e. displayed) text starts woth specified string.
+        """
+        return self._text.startswith(text)
 
     def join(self, others):
         """

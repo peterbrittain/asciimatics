@@ -2638,19 +2638,13 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         self._start_line = max(
             0, max(self._line - self._h + 1, min(self._start_line, self._line)))
 
-    @property
+    @abstractproperty
     def options(self):
         """
         The list of options available for user selection
 
-        This is a list of tuples (<human readable string>, <internal value>).
+        This is a list of tuples ([<col 1 string>, ..., <col n string>], <internal value>).
         """
-        return self._options
-
-    @options.setter
-    def options(self, new_value):
-        self._options = new_value
-        self.value = self._options[0][1] if len(self._options) > 0 else None
 
 
 class ListBox(_BaseListBox):
@@ -2740,6 +2734,20 @@ class ListBox(_BaseListBox):
                 return value
         return None
 
+    @property
+    def options(self):
+        """
+        The list of options available for user selection
+
+        This is a list of tuples (<human readable string>, <internal value>).
+        """
+        return self._options
+
+    @options.setter
+    def options(self, new_value):
+        self._options = new_value
+        self.value = self._options[0][1] if len(self._options) > 0 else None
+
 
 class MultiColumnListBox(_BaseListBox):
     """
@@ -2749,7 +2757,7 @@ class MultiColumnListBox(_BaseListBox):
     """
 
     def __init__(self, height, columns, options, titles=None, label=None,
-                 name=None, add_scroll_bar=False, on_change=None, on_select=None):
+                 name=None, add_scroll_bar=False, parser=None, on_change=None, on_select=None):
         """
         :param height: The required number of input lines for this ListBox.
         :param columns: A list of widths and alignments for each column.
@@ -2759,6 +2767,7 @@ class MultiColumnListBox(_BaseListBox):
         :param label: An optional label for the widget.
         :param name: The name for the ListBox.
         :param add_scroll_bar: Whether to add optional scrollbar for large lists.
+        :param parser: Optional parser to colour text.
         :param on_change: Optional function to call when selection changes.
         :param on_select: Optional function to call when the user actually selects an entry from
 
@@ -2796,6 +2805,7 @@ class MultiColumnListBox(_BaseListBox):
         self._align = []
         self._spacing = []
         self._add_scroll_bar = add_scroll_bar
+        self._parser = parser
         for i, column in enumerate(columns):
             if isinstance(column, int):
                 self._columns.append(column)
@@ -2888,14 +2898,16 @@ class MultiColumnListBox(_BaseListBox):
                     cell_width = self._get_width(cell_width, width)
                     if len(text) > cell_width:
                         text = text[:cell_width - 3] + "..."
-                    self._frame.canvas.print_at(
-                        "{}{:{}{}}".format(" " * space,
-                                           _enforce_width(
-                                               text, cell_width, self._frame.canvas.unicode_aware),
-                                           align, cell_width),
+                    self._frame.canvas.paint(
+                        # "{}{:{}{}}".format(" " * space,
+                        #                    _enforce_width(
+                        #                        text, cell_width, self._frame.canvas.unicode_aware),
+                        #                    align, cell_width),
+                        str(text),
                         self._x + self._offset + row_dx,
                         self._y + i + dy - self._start_line,
-                        colour, attr, bg)
+                        colour, attr, bg,
+                        colour_map=text.colour_map if hasattr(text, "colour_map") else None)
                     row_dx += cell_width + space
 
         # And finally draw any scroll bar.
@@ -2908,6 +2920,33 @@ class MultiColumnListBox(_BaseListBox):
             if row[0].startswith(search_value):
                 return value
         return None
+
+    @property
+    def options(self):
+        """
+        The list of options available for user selection
+
+        This is a list of tuples ([<col 1 string>, ..., <col n string>], <internal value>).
+        """
+        return self._options
+
+    @options.setter
+    def options(self, new_value):
+        if self._parser:
+            parsed_value = []
+            for option in new_value:
+                option_items = []
+                for item in option[0]:
+                    try:
+                        value = ColouredText(item.raw_text, self._parser)
+                    except AttributeError:
+                        value = ColouredText(item, self._parser)
+                    option_items.append(value)
+                parsed_value.append((option_items, option[1]))
+            self._options = parsed_value
+        else:
+            self._options = new_value
+        self.value = self._options[0][1] if len(self._options) > 0 else None
 
 
 class FileBrowser(MultiColumnListBox):

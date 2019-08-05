@@ -536,7 +536,7 @@ asciimatics provides 2 parsers, which can handle the ${c,a,b} format used by its
 the ANSI standard terminal escape codes (used by many Linux terminals).  Simply use the relevant
 parser and pass in values containing the associated control codes to change colours where needed.
 
-Check out the latest code in forms.py for an example of how this works.
+Check out the latest code in forms.py and top.py for examples of how this works.
 
 Setting values
 --------------
