@@ -10,6 +10,7 @@ matrix:
     - env: BUILD=test FORCE_TTY=Y
       python: '2.7'
     - env: BUILD=test FORCE_TTY=Y
+      dist: trusty
       python: '3.3'
     - env: BUILD=test FORCE_TTY=Y
       python: '3.4'
