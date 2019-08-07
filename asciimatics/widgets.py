@@ -2451,23 +2451,26 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
     __slots__ = ["_options", "_titles", "_label", "_line", "_start_line", "_required_height", "_on_change",
                  "_on_select", "_validator", "_search", "_last_search", "_scroll_bar"]
 
-    def __init__(self, height, options, titles=None, label=None, name=None, on_change=None,
-                 on_select=None, validator=None):
+    def __init__(self, height, options, titles=None, label=None, name=None, parser=None,
+                 on_change=None, on_select=None, validator=None):
         """
         :param height: The required number of input lines for this widget.
         :param options: The options for each row in the widget.
         :param label: An optional label for the widget.
         :param name: The name for the widget.
+        :param parser: Optional parser to colour text.
         :param on_change: Optional function to call when selection changes.
         :param on_select: Optional function to call when the user actually selects an entry from
             this list - e.g. by double-clicking or pressing Enter.
         :param validator: Optional function to validate selection for this widget.
         """
         super(_BaseListBox, self).__init__(name)
-        self._options = options
         self._titles = titles
         self._label = label
+        self._parser = parser
+        self._options = self._parse_options(options)
         self._line = 0
+        self._value = None 
         self._start_line = 0
         self._required_height = height
         self._on_change = on_change
@@ -2638,6 +2641,22 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         self._start_line = max(
             0, max(self._line - self._h + 1, min(self._start_line, self._line)))
 
+    def _parse_options(self, options):
+        if self._parser:
+            parsed_value = []
+            for option in options:
+                option_items = []
+                for item in option[0]:
+                    try:
+                        value = ColouredText(item.raw_text, self._parser)
+                    except AttributeError:
+                        value = ColouredText(item, self._parser)
+                    option_items.append(value)
+                parsed_value.append((option_items, option[1]))
+            return parsed_value
+        else:
+            return options
+
     @abstractproperty
     def options(self):
         """
@@ -2799,13 +2818,12 @@ class MultiColumnListBox(_BaseListBox):
         this widget.
         """
         super(MultiColumnListBox, self).__init__(
-            height, options, titles=titles, label=label, name=name, on_change=on_change,
-            on_select=on_select)
+            height, options, titles=titles, label=label, name=name, parser=parser,
+            on_change=on_change, on_select=on_select)
         self._columns = []
         self._align = []
         self._spacing = []
         self._add_scroll_bar = add_scroll_bar
-        self._parser = parser
         for i, column in enumerate(columns):
             if isinstance(column, int):
                 self._columns.append(column)
@@ -2832,6 +2850,30 @@ class MultiColumnListBox(_BaseListBox):
             width = (max_width - sum(self._spacing) -
                      sum([self._get_width(x, max_width) for x in self._columns if x != 0]))
         return width
+
+    def _print_cell(self, space, text, align, width, x, y, fg, attr, bg):
+        # Sort out spacing first.
+        if space:
+            self._frame.canvas.print_at(" " * space, x, y, fg, attr, bg)
+
+        # Now align text, taking into account double space glyphs.
+        paint_text = _enforce_width(text, width, self._frame.canvas.unicode_aware)
+        text_size = self.string_len(str(paint_text))
+        if text_size < width:
+            # Default does no alignment or padding.
+            buffer_1 = buffer_2 = ""
+            if align == "<":
+                buffer_2 = " " * (width - text_size)
+            elif align == ">":
+                buffer_1 = " " * (width - text_size)
+            elif align == "^":
+                start_len = int((width - text_size) / 2)
+                buffer_1 = " " * start_len
+                buffer_2 = " " * (width - text_size - start_len)
+            paint_text = paint_text.join([buffer_1, buffer_2])
+        self._frame.canvas.paint(
+            str(paint_text), x + space, y, fg, attr, bg,
+            colour_map=paint_text.colour_map if hasattr(paint_text, "colour_map") else None)
 
     def update(self, frame_no):
         self._draw_label()
@@ -2868,13 +2910,8 @@ class MultiColumnListBox(_BaseListBox):
             for i, [title, align, space] in enumerate(
                     zip(self._titles, self._align, self._spacing)):
                 cell_width = self._get_width(self._columns[i], width)
-                self._frame.canvas.print_at(
-                    "{}{:{}{}}".format(" " * space,
-                                       _enforce_width(
-                                           title, cell_width, self._frame.canvas.unicode_aware),
-                                       align, cell_width),
-                    self._x + self._offset + row_dx,
-                    self._y,
+                self._print_cell(
+                    space, title, align, cell_width, self._x + self._offset + row_dx, self._y,
                     colour, attr, bg)
                 row_dx += cell_width + space
 
@@ -2898,16 +2935,11 @@ class MultiColumnListBox(_BaseListBox):
                     cell_width = self._get_width(cell_width, width)
                     if len(text) > cell_width:
                         text = text[:cell_width - 3] + "..."
-                    self._frame.canvas.paint(
-                        # "{}{:{}{}}".format(" " * space,
-                        #                    _enforce_width(
-                        #                        text, cell_width, self._frame.canvas.unicode_aware),
-                        #                    align, cell_width),
-                        str(text),
+                    self._print_cell(
+                        space, text, align, cell_width,
                         self._x + self._offset + row_dx,
                         self._y + i + dy - self._start_line,
-                        colour, attr, bg,
-                        colour_map=text.colour_map if hasattr(text, "colour_map") else None)
+                        colour, attr, bg)
                     row_dx += cell_width + space
 
         # And finally draw any scroll bar.
@@ -2932,20 +2964,7 @@ class MultiColumnListBox(_BaseListBox):
 
     @options.setter
     def options(self, new_value):
-        if self._parser:
-            parsed_value = []
-            for option in new_value:
-                option_items = []
-                for item in option[0]:
-                    try:
-                        value = ColouredText(item.raw_text, self._parser)
-                    except AttributeError:
-                        value = ColouredText(item, self._parser)
-                    option_items.append(value)
-                parsed_value.append((option_items, option[1]))
-            self._options = parsed_value
-        else:
-            self._options = new_value
+        self._options = self._parse_options(new_value)
         self.value = self._options[0][1] if len(self._options) > 0 else None
 
 

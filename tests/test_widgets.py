@@ -20,6 +20,7 @@ from asciimatics.widgets import Frame, Layout, Button, Label, TextBox, Text, \
     Divider, RadioButtons, CheckBox, PopUpDialog, ListBox, Widget, MultiColumnListBox, \
     FileBrowser, DatePicker, TimePicker, Background, DropdownList, PopupMenu, \
     _find_min_start, VerticalDivider
+from asciimatics.parsers import AsciimaticsParser, AnsiTerminalParser
 
 
 class TestFrame(Frame):
@@ -2625,6 +2626,44 @@ class TestWidgets(unittest.TestCase):
             "+--------------------------------------+\n")
 
 
+    def test_inline_colours(self):
+        """
+        Check inline colours work as expected.
+        """
+        # Create a dummy screen.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        text_box = TextBox(5, as_string=True, parser=AsciimaticsParser())
+        layout.add_widget(text_box)
+        mc_list = MultiColumnListBox(
+            Widget.FILL_FRAME,
+            [3, "100%"],
+            [(["1", "\x1B[32m2"], 1)],
+            titles=["A", "B"],
+            parser=AnsiTerminalParser(),
+            name="mc_list")
+        layout.add_widget(mc_list)
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that the Asciimatics colour parsing worked.
+        text_box.value = "A${1}B"
+        form.update(0)
+        self.assertEqual(canvas.get_from(0, 0), (ord("A"), 7, 2, 4))
+        self.assertEqual(canvas.get_from(1, 0), (ord("B"), 1, 0, 4))
+
+        # Check that the Ansi terminal colour parsing worked.
+        self.assertEqual(canvas.get_from(0, 5), (ord("A"), 7, 1, 4))
+        self.assertEqual(canvas.get_from(3, 5), (ord("B"), 7, 1, 4))
+        self.assertEqual(canvas.get_from(0, 6), (ord("1"), 3, 1, 4))
+        self.assertEqual(canvas.get_from(3, 6), (ord("2"), 2, 1, 4))
 
 if __name__ == '__main__':
     unittest.main()

@@ -156,9 +156,14 @@ class ColouredText(object):
 
         :param others: the list of other objects to join.
         """
-        return ColouredText(self._raw_text.join([x.raw_text for x in others]),
-                            parser=self._parser,
-                            colour=self._init_colour)
+        try:
+            return ColouredText(self._raw_text.join([x.raw_text for x in others]),
+                                parser=self._parser,
+                                colour=self._init_colour)
+        except AttributeError:
+            return ColouredText(self._raw_text.join(others),
+                                parser=self._parser,
+                                colour=self._init_colour)
 
     @property
     def colour_map(self):
