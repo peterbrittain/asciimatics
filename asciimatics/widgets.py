@@ -2642,27 +2642,33 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
             0, max(self._line - self._h + 1, min(self._start_line, self._line)))
 
     def _parse_options(self, options):
+        """
+        Parse a the options list for ColouredText.
+
+        :param options: the options list to parse
+        :returns: the options list parsed and converted to ColouredText as needed.
+        """
         if self._parser:
             parsed_value = []
             for option in options:
-                option_items = []
-                for item in option[0]:
-                    try:
-                        value = ColouredText(item.raw_text, self._parser)
-                    except AttributeError:
-                        value = ColouredText(item, self._parser)
-                    option_items.append(value)
-                parsed_value.append((option_items, option[1]))
+                parsed_value.append((self._parse_option(option[0]), option[1]))
             return parsed_value
         else:
             return options
 
+    @abstractmethod
+    def _parse_option(self, option):
+        """
+        Parse a single option for ColouredText.
+
+        :param option: the option to parse
+        :returns: the option parsed and converted to ColouredText.
+        """
+
     @abstractproperty
     def options(self):
         """
-        The list of options available for user selection
-
-        This is a list of tuples ([<col 1 string>, ..., <col n string>], <internal value>).
+        The list of options available for user selection.
         """
 
 
@@ -2672,13 +2678,14 @@ class ListBox(_BaseListBox):
     """
 
     def __init__(self, height, options, centre=False, label=None, name=None, add_scroll_bar=False,
-                 on_change=None, on_select=None, validator=None):
+                 parser=None, on_change=None, on_select=None, validator=None):
         """
         :param height: The required number of input lines for this ListBox.
         :param options: The options for each row in the widget.
         :param centre: Whether to centre the selected line in the list.
         :param label: An optional label for the widget.
         :param name: The name for the ListBox.
+        :param parser: Optional parser to colour text.
         :param on_change: Optional function to call when selection changes.
         :param on_select: Optional function to call when the user actually selects an entry from
         :param validator: Optional function to validate selection for this widget.
@@ -2690,8 +2697,8 @@ class ListBox(_BaseListBox):
             options=[("First option", 1), ("Second option", 2)]
         """
         super(ListBox, self).__init__(
-            height, options, label=label, name=name, on_change=on_change, on_select=on_select,
-            validator=validator)
+            height, options, label=label, name=name, parser=parser, on_change=on_change,
+            on_select=on_select, validator=validator)
         self._centre = centre
         self._add_scroll_bar = add_scroll_bar
 
@@ -2736,12 +2743,14 @@ class ListBox(_BaseListBox):
                 colour, attr, bg = self._pick_colours("field", i == self._line)
                 if len(text) > width:
                     text = text[:width - 3] + "..."
-                self._frame.canvas.print_at(
-                    "{:{}}".format(
-                        _enforce_width(text, width, self._frame.canvas.unicode_aware), width),
+                paint_text = _enforce_width(text, width, self._frame.canvas.unicode_aware)
+                paint_text += " " * (width - self.string_len(paint_text))
+                self._frame.canvas.paint(
+                    str(paint_text),
                     self._x + self._offset,
                     self._y + y_offset + i - start_line,
-                    colour, attr, bg)
+                    colour, attr, bg,
+                    colour_map=paint_text.colour_map if hasattr(paint_text, "colour_map") else None)
 
         # And finally draw any scroll bar.
         if self._scroll_bar:
@@ -2752,6 +2761,18 @@ class ListBox(_BaseListBox):
             if text.startswith(search_value):
                 return value
         return None
+
+    def _parse_option(self, option):
+        """
+        Parse a single option for ColouredText.
+
+        :param option: the option to parse
+        :returns: the option parsed and converted to ColouredText.
+        """
+        try:
+            return ColouredText(option.raw_text, self._parser)
+        except AttributeError:
+            return ColouredText(option, self._parser)
 
     @property
     def options(self):
@@ -2952,6 +2973,22 @@ class MultiColumnListBox(_BaseListBox):
             if row[0].startswith(search_value):
                 return value
         return None
+
+    def _parse_option(self, option):
+        """
+        Parse a single option for ColouredText.
+
+        :param option: the option to parse
+        :returns: the option parsed and converted to ColouredText.
+        """
+        option_items = []
+        for item in option:
+            try:
+                value = ColouredText(item.raw_text, self._parser)
+            except AttributeError:
+                value = ColouredText(item, self._parser)
+            option_items.append(value)
+        return option_items
 
     @property
     def options(self):

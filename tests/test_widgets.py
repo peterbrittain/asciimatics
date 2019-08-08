@@ -2639,15 +2639,16 @@ class TestWidgets(unittest.TestCase):
         form = Frame(canvas, canvas.height, canvas.width, has_border=False)
         layout = Layout([100], fill_frame=True)
         form.add_layout(layout)
-        text_box = TextBox(5, as_string=True, parser=AsciimaticsParser())
+        text_box = TextBox(3, as_string=True, parser=AsciimaticsParser())
         layout.add_widget(text_box)
+        listbox = ListBox(2, [("P", 1), ("${9,2}Q", 2), ("R", 3), ("S", 4)], parser=AsciimaticsParser())
+        layout.add_widget(listbox)
         mc_list = MultiColumnListBox(
             Widget.FILL_FRAME,
             [3, "100%"],
             [(["1", "\x1B[32m2"], 1)],
             titles=["A", "B"],
-            parser=AnsiTerminalParser(),
-            name="mc_list")
+            parser=AnsiTerminalParser())
         layout.add_widget(mc_list)
         form.fix()
         form.register_scene(scene)
@@ -2658,6 +2659,8 @@ class TestWidgets(unittest.TestCase):
         form.update(0)
         self.assertEqual(canvas.get_from(0, 0), (ord("A"), 7, 2, 4))
         self.assertEqual(canvas.get_from(1, 0), (ord("B"), 1, 0, 4))
+        self.assertEqual(canvas.get_from(0, 3), (ord("P"), 3, 1, 4))
+        self.assertEqual(canvas.get_from(0, 4), (ord("Q"), 9, 2, 4))
 
         # Check that the Ansi terminal colour parsing worked.
         self.assertEqual(canvas.get_from(0, 5), (ord("A"), 7, 1, 4))
