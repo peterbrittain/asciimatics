@@ -1793,7 +1793,8 @@ class Text(Widget):
     It consists of an optional label and an entry box.
     """
 
-    __slots__ = ["_label", "_column", "_start_column", "_on_change", "_validator", "_hide_char", "_max_length"]
+    __slots__ = ["_label", "_column", "_start_column", "_on_change", "_validator", "_hide_char",
+                 "_max_length"]
 
     def __init__(self, label=None, name=None, on_change=None, validator=None, hide_char=None, max_length=None,
                  **kwargs):
@@ -2143,9 +2144,9 @@ class TextBox(Widget):
 
     It consists of a framed box with option label.
     """
-    
-    __slots__ = ["_label", "_line", "_column", "_start_line", "_start_column", "_required_height", "_as_string",
-                 "_line_wrap", "_on_change", "_reflowed_text_cache", "_parser"]
+
+    __slots__ = ["_label", "_line", "_column", "_start_line", "_start_column", "_required_height",
+                 "_as_string", "_line_wrap", "_on_change", "_reflowed_text_cache", "_parser"]
 
     def __init__(self, height, label=None, name=None, as_string=False, line_wrap=False, parser=None,
                  on_change=None, **kwargs):
@@ -2213,7 +2214,8 @@ class TextBox(Widget):
         # Render visible portion of the text.
         for line, (text, _, _) in enumerate(display_text):
             if self._start_line <= line < self._start_line + height:
-                paint_text = _enforce_width(text[display_start_column:], self.width, self._frame.canvas.unicode_aware)
+                paint_text = _enforce_width(
+                    text[display_start_column:], self.width, self._frame.canvas.unicode_aware)
                 self._frame.canvas.paint(
                     str(paint_text),
                     self._x + self._offset,
@@ -2225,7 +2227,7 @@ class TextBox(Widget):
         # if we have the input focus.
         if self._has_focus:
             line = display_text[display_line][0]
-            logger.debug("Cursor: {}".format((display_start_column, display_column)))
+            logger.debug("Cursor: {},{}".format(display_start_column, display_column))
             text_width = self.string_len(str(line[display_start_column:display_column]))
             self._draw_cursor(
                 " " if display_column >= len(line) else str(line[display_column]),
@@ -2254,7 +2256,10 @@ class TextBox(Widget):
 
     def process_event(self, event):
         def _join(a, b):
-            return ColouredText(a, self._parser, colour=b[0].first_colour).join(b) if self._parser else a.join(b)
+            if self._parser:
+                return ColouredText(a, self._parser, colour=b[0].first_colour).join(b)
+            else:
+                return a.join(b)
 
         if isinstance(event, KeyboardEvent):
             old_value = copy(self._value)
@@ -2269,8 +2274,7 @@ class TextBox(Widget):
                 if self._column > 0:
                     # Delete character in front of cursor.
                     self._value[self._line] = _join("",
-                        [self._value[self._line][:self._column - 1],
-                         self._value[self._line][self._column:]])
+                        [self._value[self._line][:self._column - 1], self._value[self._line][self._column:]])
                     self._column -= 1
                 else:
                     if self._line > 0:
@@ -2282,8 +2286,7 @@ class TextBox(Widget):
             elif event.key_code == Screen.KEY_DELETE:
                 if self._column < len(self._value[self._line]):
                     self._value[self._line] = _join("",
-                        [self._value[self._line][:self._column],
-                         self._value[self._line][self._column + 1:]])
+                        [self._value[self._line][:self._column], self._value[self._line][self._column + 1:]])
                 else:
                     if self._line < len(self._value) - 1:
                         # Join this line with next
@@ -2324,8 +2327,7 @@ class TextBox(Widget):
             elif event.key_code >= 32:
                 # Insert any visible text at the current cursor position.
                 self._value[self._line] = _join(chr(event.key_code),
-                    [self._value[self._line][:self._column],
-                     self._value[self._line][self._column:]])
+                    [self._value[self._line][:self._column], self._value[self._line][self._column:]])
                 self._column += 1
             else:
                 # Ignore any other key press.
@@ -2406,8 +2408,7 @@ class TextBox(Widget):
     def value(self):
         if self._value is None:
             self._value = [""]
-        value = [str(x) for x in self._value]
-        return "\n".join(value) if self._as_string else value
+        return "\n".join([str(x) for x in self._value]) if self._as_string else self._value
 
     @value.setter
     def value(self, new_value):
@@ -2424,9 +2425,9 @@ class TextBox(Widget):
             new_value = []
             last_colour = None
             for line in self._value:
-                try:
-                    value = ColouredText(line.raw_text, self._parser, colour=last_colour)
-                except AttributeError:
+                if hasattr(line, "raw_text"):
+                    value = line
+                else:
                     value = ColouredText(line, self._parser, colour=last_colour)
                 new_value.append(value)
                 last_colour = value.last_colour
@@ -2449,7 +2450,7 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
     """
 
     __slots__ = ["_options", "_titles", "_label", "_line", "_start_line", "_required_height", "_on_change",
-                 "_on_select", "_validator", "_search", "_last_search", "_scroll_bar"]
+                 "_on_select", "_validator", "_search", "_last_search", "_scroll_bar", "_parser"]
 
     def __init__(self, height, options, titles=None, label=None, name=None, parser=None,
                  on_change=None, on_select=None, validator=None):

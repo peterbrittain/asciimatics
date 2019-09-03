@@ -29,7 +29,7 @@ class TestParsers(unittest.TestCase):
         Check AnsiTerminalParser works as expected.
         """
         parser = AnsiTerminalParser()
-        tokens = parser.parse("a\x1B[23ab\x1B[0mc\x1B[1md\x1B[2me\x1B[7mf\x1B[27mg\x1B[31;42mh", None)
+        tokens = parser.parse("a\x1B[23ab\x1B[0mc\x1B[1md\x1B[2me\x1B[7mf\x1B[27mg\x1B[31;42mh\x1B[m", None)
 
         # Normal text
         self.assertEquals(next(tokens), ("a", (None, None, None), 0))
@@ -54,6 +54,9 @@ class TestParsers(unittest.TestCase):
 
         # Standard colours, using multiple parameters
         self.assertEquals(next(tokens), ("h", (constants.COLOUR_RED, constants.A_NORMAL, constants.COLOUR_GREEN), 33))
+
+        # Final escape sequence with no visible text is returned with no text.
+        self.assertEquals(next(tokens), (None, (constants.COLOUR_WHITE, constants.A_NORMAL, constants.COLOUR_BLACK), 42))
 
         with self.assertRaises(StopIteration):
             next(tokens)

@@ -1740,8 +1740,12 @@ class ManagedScreen():
     """
 
     def __init__(self, func=lambda: None):
+        """
+        :param func: The function to call once the Screen has been created.
+        """
         update_wrapper(self, func)
         self.func = func
+        self.screen = None
 
     def __get__(self, obj, objtype):
         """

@@ -19,7 +19,7 @@ logger = getLogger(__name__)
 
 class Parser(with_metaclass(ABCMeta, object)):
     """
-    Abstract class to represent text parsers Cthat extract colour control codes from raw text and
+    Abstract class to represent text parsers that extract colour control codes from raw text and
     convert them to displayable text and associated colour maps.
     """
 
@@ -28,9 +28,12 @@ class Parser(with_metaclass(ABCMeta, object)):
         """
         Generator to return coloured text from raw text.
 
+        Generally returns a stream of text/color tuple/offset tuples.  If there is a colour update with no
+        visible text, the first element of the tuple may be None.
+
         :param text: raw text to process.
         :param colours: colour tuple to initialise the colour map.
-        :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)  
+        :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)
         """
 
 
@@ -38,12 +41,10 @@ class AsciimaticsParser(Parser):
     """
     Parser to handle Asciimatics rendering escape strings.
     """
+
     # Regular expression for use to find colour sequences in multi-colour text.
     # It should match ${n}, ${m,n} or ${m,n,o}
     _colour_sequence = re.compile(constants.COLOUR_REGEX)
-
-    def __init__(self):
-        super(AsciimaticsParser, self).__init__()
 
     def parse(self, text, colours):
         """
@@ -85,11 +86,9 @@ class AnsiTerminalParser(Parser):
     """
     Parser to handle ANSI terminal escape codes.
     """
+
     # Regular expression for use to find colour sequences in multi-colour text.
     _colour_sequence = re.compile(r"^(\x1B\[([^@-~]*)([@-~]))(.*)")
-
-    def __init__(self):
-        super(AnsiTerminalParser, self).__init__()
 
     def parse(self, text, colours):
         """
@@ -118,7 +117,10 @@ class AnsiTerminalParser(Parser):
                     skip_size = 0
                     attribute_index = 0
                     for parameter in match.group(2).split(";"):
-                        parameter = int(parameter)
+                        try:
+                            parameter = int(parameter)
+                        except ValueError:
+                            parameter = 0
                         if in_set_mode:
                             # We are processing a set fore/background colour code
                             if parameter == 5:
@@ -177,3 +179,5 @@ class AnsiTerminalParser(Parser):
                     logger.debug("Ignoring control: %s", match.group(3))
                 offset += len(match.group(1))
                 text = match.group(4)
+        if last_offset != offset:
+            yield None, tuple(attributes), last_offset

@@ -70,12 +70,13 @@ class ColouredText(object):
         self._last_colour = self._init_colour = colour
         self._colour_map = []
         self._text = ""
-        for text, colour, offset in self._parser.parse(self._raw_text, self._init_colour):
-            for i, _ in enumerate(text):
-                self._colour_map.append(colour)
-                self._raw_offsets.append(offset + i)
-            self._text += text
-            self._last_colour = colour
+        for text_matched, colour_tuple, offset in self._parser.parse(self._raw_text, self._init_colour):
+            if text_matched is not None:
+                for i, _ in enumerate(text_matched):
+                    self._colour_map.append(colour_tuple)
+                    self._raw_offsets.append(offset + i)
+                self._text += text_matched
+            self._last_colour = colour_tuple
 
     def __repr__(self):
         """
@@ -111,7 +112,7 @@ class ColouredText(object):
             colour_index = max(0, item.start - 1 if item.start else 0)
         try:
             colour = self._colour_map[colour_index]
-        except Exception:
+        except IndexError:
             colour = self._init_colour
         return ColouredText(self._raw_text[slice(start, stop, step)],
                             parser=self._parser,
@@ -192,4 +193,3 @@ class ColouredText(object):
         Last colour triplet used for this text.
         """
         return self._last_colour
-
