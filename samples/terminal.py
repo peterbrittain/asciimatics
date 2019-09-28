@@ -1,8 +1,9 @@
-from asciimatics.widgets import Frame, TextBox, Layout, Divider, Text, Button, Background, Widget
+from asciimatics.widgets import Frame, TextBox, Layout, Background, Widget
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError
 from asciimatics.parsers import AnsiTerminalParser
+from asciimatics.event import KeyboardEvent
 import sys
 import subprocess
 import threading
@@ -11,25 +12,31 @@ import pty
 import os
 import fcntl
 import time
+import curses
+import re
+import logging
 
 
-class DemoFrame(Frame):
-    def __init__(self, screen):
-        super(DemoFrame, self).__init__(screen, screen.height, screen.width)
+# logging.basicConfig(filename="terminal.log", level=logging.DEBUG)
 
-        # Create the widgets for the demo.
-        layout = Layout([1, 18, 1], fill_frame=True)
-        self.add_layout(layout)
-        self._term_out = TextBox(Widget.FILL_FRAME, line_wrap=True, parser=AnsiTerminalParser())
-        layout.add_widget(self._term_out, 1)
-        layout.add_widget(Divider(height=2), 1)
-        layout2 = Layout([1, 15, 3, 1])
-        self.add_layout(layout2)
-        self._term_in = Text()
-        layout2.add_widget(self._term_in, 1)
-        layout2.add_widget(Button("Run", self._run), 2)
-        self.fix()
-        self.set_theme("monochrome")
+
+class Terminal(TextBox):
+    def __init__(self, height):
+        super(Terminal, self).__init__(height, line_wrap=False, parser=AnsiTerminalParser())
+
+        #Key definitions
+        self._map = {}
+        for k, v in [
+            (Screen.KEY_LEFT, "kcub1"),
+            (Screen.KEY_RIGHT, "kcuf1"),
+            (Screen.KEY_UP, "kcuu1"),
+            (Screen.KEY_DOWN, "kcud1"),
+            (Screen.KEY_HOME, "khome"),
+            (Screen.KEY_END, "kend"),
+            (Screen.KEY_BACK, "kbs"),
+        ]:
+            self._map[k] = curses.tigetstr(v)
+        self._map[Screen.KEY_TAB] = "\t".encode()
 
         # Open a pseudo TTY to control the interactive session.  Make it non-blocking.
         self._master, slave = pty.openpty()
@@ -46,12 +53,17 @@ class DemoFrame(Frame):
     def update(self, frame_no):
         # Don't allow background thread to update values mid screen refresh.
         with self._lock:
-            super(DemoFrame, self).update(frame_no)
+            super(Terminal, self).update(frame_no)
 
-    def _run(self):
-        entry = self._term_in.value + "\n"
-        os.write(self._master, entry.encode())
-        self._term_in.value = ""
+    def process_event(self, event):
+        if isinstance(event, KeyboardEvent):
+            if event.key_code > 0:
+                os.write(self._master, chr(event.key_code).encode())
+                return
+            elif event.key_code in self._map:
+                os.write(self._master, self._map[event.key_code])
+                return
+        return event
 
     def _background(self):
         while True:
@@ -61,14 +73,28 @@ class DemoFrame(Frame):
                 while True:
                     try:
                         data = os.read(stream, 102400)
-                        data = data.decode("utf8").replace("\r", "")
+                        data = data.decode("utf8", "replace")
                         value += data
                     except BlockingIOError:
                         with self._lock:
-                            value = "\n".join([x.raw_text for x in self._term_out.value]) + value
-                            self._term_out.value = value.split("\n")[-100:]
-                            self._screen.force_update()
+                            value = "\n".join([x.raw_text for x in self.value]) + value
+                            self.value = value.split("\n")[-self._h:]
+                            cursor = self.value[-1:][0]._cursor
+                            if cursor > 0:
+                                self._column -= cursor
+                            self._frame.screen.force_update()
                         break
+
+class DemoFrame(Frame):
+    def __init__(self, screen):
+        super(DemoFrame, self).__init__(screen, screen.height, screen.width)
+
+        # Create the widgets for the demo.
+        layout = Layout([1, 18, 1], fill_frame=True)
+        self.add_layout(layout)
+        layout.add_widget(Terminal(Widget.FILL_FRAME), 1)
+        self.fix()
+        self.set_theme("monochrome")
 
 def demo(screen, scene):
     screen.play([Scene([

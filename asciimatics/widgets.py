@@ -146,7 +146,7 @@ def _enforce_width(text, width, unicode_aware=True):
     """
     # Double-width strings cannot be more than twice the string length, so no need to try
     # expensive truncation if this upper bound isn't an issue.
-    if 2 * len(text) < width:
+    if (2 * len(text) < width) or (len(text) < width and not unicode_aware):
         return text
 
     # Can still optimize performance if we are not handling unicode characters.

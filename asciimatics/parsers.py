@@ -23,16 +23,24 @@ class Parser(with_metaclass(ABCMeta, object)):
     convert them to displayable text and associated colour maps.
     """
 
-    @abstractmethod
-    def parse(self, text, colours):
+    def reset(self, text, colours):
         """
-        Generator to return coloured text from raw text.
+        Reset the parser to analyze the supplied raw text.
+
+        :param text: raw text to process.
+        :param colours: colour tuple to initialise the colour map.
+        """
+        self._raw_text = text
+        self._attributes = colours
+
+    @abstractmethod
+    def parse(self):
+        """
+        Generator to return coloured text from the current raw text.
 
         Generally returns a stream of text/color tuple/offset tuples.  If there is a colour update with no
         visible text, the first element of the tuple may be None.
 
-        :param text: raw text to process.
-        :param colours: colour tuple to initialise the colour map.
         :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)
         """
 
@@ -46,20 +54,22 @@ class AsciimaticsParser(Parser):
     # It should match ${n}, ${m,n} or ${m,n,o}
     _colour_sequence = re.compile(constants.COLOUR_REGEX)
 
-    def parse(self, text, colours):
+    def reset(self, text, colours):
         """
-        Generator to return coloured text from raw text.
+        Reset the parser to analyze the supplied raw text.
 
         :param text: raw text to process.
         :param colours: colour tuple to initialise the colour map.
-        :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)
         """
-        attributes = colours if colours else (None, None, None)
+        super(AsciimaticsParser, self).reset(text, colours)
+        self._result = []
+        attributes = [x for x in self._attributes] if self._attributes else [None, None, None]
         offset = last_offset = 0
+        text = self._raw_text
         while len(text) > 0:
             match = self._colour_sequence.match(str(text))
             if match is None:
-                yield text[0], attributes, last_offset
+                self._result.append((text[0], attributes, last_offset))
                 text = text[1:]
                 offset += 1
                 last_offset = offset
@@ -81,6 +91,21 @@ class AsciimaticsParser(Parser):
                 offset += 3 + len(match.group(1))
                 text = match.group(8)
 
+        if last_offset != offset:
+            self._result.append([None, tuple(attributes), last_offset])
+
+    def parse(self):
+        """
+        Generator to return coloured text from raw text.
+
+        :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)
+        """
+        for element in self._result:
+            yield tuple(element)
+
+    def normalize(self):
+        return self._raw_text
+
 
 class AnsiTerminalParser(Parser):
     """
@@ -90,27 +115,43 @@ class AnsiTerminalParser(Parser):
     # Regular expression for use to find colour sequences in multi-colour text.
     _colour_sequence = re.compile(r"^(\x1B\[([^@-~]*)([@-~]))(.*)")
 
-    def parse(self, text, colours):
+    def reset(self, text, colours):
         """
-        Generator to return coloured text from raw text.
+        Reset the parser to analyze the supplied raw text.
 
         :param text: raw text to process.
         :param colours: colour tuple to initialise the colour map.
-        :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)
         """
-        attributes = [x for x in colours] if colours else [None, None, None]
-        offset = last_offset = 0
+        super(AnsiTerminalParser, self).reset(text, colours)
+        self._result = []
+        attributes = [x for x in self._attributes] if self._attributes else [None, None, None]
+        offset = last_offset = cursor = 0
+        text = self._raw_text
         while len(text) > 0:
             match = self._colour_sequence.match(str(text))
             if match is None:
-                yield text[0], tuple(attributes), last_offset
+                char = ord(text[0])
+                if char > 31:
+                    self._result[cursor:cursor + 1] = [[text[0], tuple(attributes), last_offset]]
+                    last_offset = offset
+                    cursor += 1
+                elif char == 8:
+                    # Back space
+                    cursor = max(cursor - 1, 0)
+                elif char == 13:
+                    # Carriage return
+                    cursor = 0
+                elif char == 27:
+                    # Escape - ignore next char as a minimal way to handle many sequences
+                    text = text[1:]
+                else:
+                    logger.debug("Ignoring character: %d", char)
                 text = text[1:]
                 offset += 1
-                last_offset = offset
             else:
-                # The regex matches general CSI sequences.  Look for colour codes (i.e. 'CSI ... m').  These
-                # can have embedded arguments, so create a simple FSM to process the parameter stream.
                 if match.group(3) == "m":
+                # We have found a SGR escape sequence ( CSI ... m ).  These have zero or more
+                # embedded arguments, so create a simple FSM to process the parameter stream.
                     in_set_mode = False
                     in_index_mode = False
                     in_rgb_mode = False
@@ -175,9 +216,72 @@ class AnsiTerminalParser(Parser):
                                 attribute_index = 2
                             else:
                                 logger.debug("Ignoring parameter: %s", parameter)
+                elif match.group(3) == "K":
+                    # This is a line delete sequence.  Parameter defines which parts to delete.
+                    param = match.group(2)
+                    if param in ("", "0"):
+                        self._result = self._result[:cursor]
+                    elif param == "1":
+                        self._result = [" ", attributes, offset] * cursor + self._result[cursor:]
+                    elif param == "2":
+                        self._result = [" ", attributes, offset] * cursor
+                elif match.group(3) == "P":
+                    # This is a character delete sequence.  Parameter defines how many to delete.
+                    param = 1 if match.group(2) == "" else int(match.group(2))
+                    self._result = self._result[:cursor] + self._result[cursor + param:]
+                elif match.group(3) == "C":
+                    # Move cursor forwards.  Parameter defines how far to move..
+                    param = 1 if match.group(2) == "" else int(match.group(2))
+                    cursor += param
+                elif match.group(3) == "D":
+                    # Move cursor backwards.  Parameter defines how far to move..
+                    param = 1 if match.group(2) == "" else int(match.group(2))
+                    cursor -= param
                 else:
                     logger.debug("Ignoring control: %s", match.group(3))
                 offset += len(match.group(1))
                 text = match.group(4)
+
+        self._cursor = len(self._result) - cursor
+
         if last_offset != offset:
-            yield None, tuple(attributes), last_offset
+            self._result.append([None, tuple(attributes), last_offset])
+
+    def parse(self):
+        """
+        Generator to return coloured text from raw text.
+
+        :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)
+        """
+        for element in self._result:
+            yield tuple(element)
+
+    def normalize(self):
+        new_value = ""
+        attributes = None, None, None
+        last_offset = 0
+        for i, element in enumerate(self._result):
+            # Convert parsed output to the simplest form
+            if attributes != element[1]:
+                format = []
+                if attributes[0] != element[1][0]:
+                    format.append("38;5;{}".format(element[1][0]))
+                if attributes[1] != element[1][1]:
+                    if element[1][1] == constants.A_BOLD:
+                        format.append("1")
+                    elif element[1][1] == constants.A_NORMAL:
+                        format.append("2")
+                    elif element[1][1] == constants.A_REVERSE:
+                        format.append("7")
+                if attributes[2] != element[1][2]:
+                    format.append("48;5;{}".format(element[1][2]))
+                new_value += "\x1B[{}m".format(";".join(format))
+                attributes = element[1]
+            if element[0] is not None:
+                new_value += element[0]
+            self._result[i][2] = last_offset
+            last_offset = len(new_value)
+        if self._cursor > 0:
+            new_value += "\x1B[{}D".format(self._cursor)
+        self._raw_text = new_value
+        return new_value
