@@ -23,6 +23,7 @@ from builtins import object
 from builtins import range
 from builtins import ord
 from builtins import chr
+from builtins import str
 from future.utils import with_metaclass
 from future.moves.itertools import zip_longest
 from wcwidth import wcwidth, wcswidth
@@ -583,6 +584,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         if y < 0 or y >= self._buffer_height or x > self.width:
             return
 
+        text = str(text)
         if len(text) > 0:
             j = 0
             for i, c in enumerate(text):
@@ -702,9 +704,14 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         if colour_map is None:
             self.print_at(text, x, y, colour, attr, bg, transparent)
         else:
-            offset = 0
-            for c, m in zip_longest(text, colour_map):
+            offset = next_offset = 0
+            current = ""
+            for c, m in zip_longest(str(text), colour_map):
                 if m:
+                    if len(current) > 0:
+                        self.print_at(current, x + offset, y, colour, attr, bg, transparent)
+                        offset = next_offset
+                        current = ""
                     if len(m) > 0 and m[0] is not None:
                         colour = m[0]
                     if len(m) > 1 and m[1] is not None:
@@ -712,8 +719,10 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                     if len(m) > 2 and m[2] is not None:
                         bg = m[2]
                 if c:
-                    self.print_at(c, x + offset, y, colour, attr, bg, transparent)
-                    offset += wcwidth(c) if ord(c) >= 256 else 1
+                    current += c
+                    next_offset += wcwidth(c) if ord(c) >= 256 else 1
+            if len(current) > 0:
+                self.print_at(current, x + offset, y, colour, attr, bg, transparent)
 
     def _blend(self, new, old, ratio):
         """

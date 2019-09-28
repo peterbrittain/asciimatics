@@ -152,8 +152,7 @@ def _enforce_width(text, width, unicode_aware=True):
     # Can still optimize performance if we are not handling unicode characters.
     if unicode_aware:
         size = 0
-        for i, c in enumerate(text):
-            c = str(c)
+        for i, c in enumerate(str(text)):
             w = wcwidth(c) if ord(c) >= 256 else 1
             if size + w > width:
                 return text[0:i]
@@ -2226,11 +2225,11 @@ class TextBox(Widget):
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
         if self._has_focus:
-            line = display_text[display_line][0]
+            line = str(display_text[display_line][0])
             logger.debug("Cursor: {},{}".format(display_start_column, display_column))
-            text_width = self.string_len(str(line[display_start_column:display_column]))
+            text_width = self.string_len(line[display_start_column:display_column])
             self._draw_cursor(
-                " " if display_column >= len(line) else str(line[display_column]),
+                " " if display_column >= len(line) else line[display_column],
                 frame_no,
                 self._x + self._offset + text_width,
                 self._y + display_line - self._start_line)

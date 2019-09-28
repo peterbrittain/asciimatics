@@ -11,9 +11,7 @@ import select
 import pty
 import os
 import fcntl
-import time
 import curses
-import re
 import logging
 
 
@@ -22,7 +20,7 @@ import logging
 
 class Terminal(TextBox):
     def __init__(self, height):
-        super(Terminal, self).__init__(height, line_wrap=False, parser=AnsiTerminalParser())
+        super(Terminal, self).__init__(height, line_wrap=True, parser=AnsiTerminalParser())
 
         #Key definitions
         self._map = {}
@@ -75,7 +73,8 @@ class Terminal(TextBox):
                         data = os.read(stream, 102400)
                         data = data.decode("utf8", "replace")
                         value += data
-                    except BlockingIOError:
+                    # Python 2 and 3 raise different exceptions when they would block
+                    except Exception:
                         with self._lock:
                             value = "\n".join([x.raw_text for x in self.value]) + value
                             self.value = value.split("\n")[-self._h:]
@@ -90,9 +89,9 @@ class DemoFrame(Frame):
         super(DemoFrame, self).__init__(screen, screen.height, screen.width)
 
         # Create the widgets for the demo.
-        layout = Layout([1, 18, 1], fill_frame=True)
+        layout = Layout([100], fill_frame=True)
         self.add_layout(layout)
-        layout.add_widget(Terminal(Widget.FILL_FRAME), 1)
+        layout.add_widget(Terminal(Widget.FILL_FRAME))
         self.fix()
         self.set_theme("monochrome")
 
@@ -103,7 +102,7 @@ def demo(screen, scene):
     ], -1)], stop_on_resize=True, start_scene=scene, allow_int=True)
 
 
-if sys.platform != "linux":
+if "linux" not in sys.platform:
     print("This demo only runs on Unix systems.")
     sys.exit(0)
 last_scene = None
