@@ -2544,7 +2544,8 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
 
                 # Check for scroll bar interactions:
                 if self._scroll_bar:
-                    event = self._scroll_bar.process_event(event)
+                    if self._scroll_bar.process_event(event):
+                        return None
 
             # Ignore other mouse events.
             return event
