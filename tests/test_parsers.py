@@ -15,7 +15,8 @@ class TestParsers(unittest.TestCase):
         Check AsciimaticsParser works as expected.
         """
         parser = AsciimaticsParser()
-        tokens = parser.parse("a${1}b${2,1}c${3,2,4}de", None)
+        tokens = parser.reset("a${1}b${2,1}c${3,2,4}de", None)
+        tokens = parser.parse()
         self.assertEquals(next(tokens), ("a", (None, None, None), 0))
         self.assertEquals(next(tokens), ("b", (1, 0, None), 1))
         self.assertEquals(next(tokens), ("c", (2, 1, None), 6))
@@ -29,7 +30,8 @@ class TestParsers(unittest.TestCase):
         Check AnsiTerminalParser works as expected.
         """
         parser = AnsiTerminalParser()
-        tokens = parser.parse("a\x1B[23ab\x1B[0mc\x1B[1md\x1B[2me\x1B[7mf\x1B[27mg\x1B[31;42mh\x1B[m", None)
+        tokens = parser.reset("a\x1B[23ab\x1B[0mc\x1B[1md\x1B[2me\x1B[7mf\x1B[27mg\x1B[31;42mh\x1B[m", None)
+        tokens = parser.parse()
 
         # Normal text
         self.assertEquals(next(tokens), ("a", (None, None, None), 0))
@@ -62,7 +64,8 @@ class TestParsers(unittest.TestCase):
             next(tokens)
 
         # Special case colour specifications
-        tokens = parser.parse("\x1B[38;1ma\x1B[38;5;17mb\x1B[48;2;1;2;3mc\x1B[48;5;54md\x1B[999me", None)
+        tokens = parser.reset("\x1B[38;1ma\x1B[38;5;17mb\x1B[48;2;1;2;3mc\x1B[48;5;54md\x1B[999me", None)
+        tokens = parser.parse()
 
         # Bad colour scheme - ignore
         self.assertEquals(next(tokens), ("a", (None, None, None), 0))

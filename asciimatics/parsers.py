@@ -95,6 +95,9 @@ class AsciimaticsParser(Parser):
         if last_offset != offset:
             self._result.append([None, tuple(attributes), last_offset])
 
+        # TODO: fix me
+        self._cursor = 0
+
     def parse(self):
         """
         Generator to return coloured text from raw text.
