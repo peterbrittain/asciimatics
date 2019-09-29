@@ -70,7 +70,7 @@ class AsciimaticsParser(Parser):
         while len(text) > 0:
             match = self._colour_sequence.match(str(text))
             if match is None:
-                self._result.append((text[0], attributes, last_offset))
+                self._result.append((text[0], tuple(attributes), last_offset))
                 text = text[1:]
                 offset += 1
                 last_offset = offset
@@ -135,7 +135,8 @@ class AnsiTerminalParser(Parser):
             char = ord(text[0])
             if char > 31:
                 self._result[cursor:cursor + 1] = [[text[0], tuple(attributes), last_offset]]
-                last_offset = offset
+                #TODO : Surely this logic can be better
+                last_offset = offset + 1
                 cursor += 1
             elif char == 8:
                 # Back space
