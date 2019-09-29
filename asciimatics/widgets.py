@@ -2202,7 +2202,7 @@ class TextBox(Widget):
         display_start_column = self._start_column
         display_line, display_column = 0, 0
         for i, (_, line, col) in enumerate(display_text):
-            if line <= self._line and col <= self._column:
+            if line < self._line or (line == self._line and col <= self._column):
                 display_line = i
                 display_column = self._column - col
 
@@ -2236,6 +2236,7 @@ class TextBox(Widget):
 
     def reset(self):
         # Reset to original data and move to end of the text.
+        self._start_line = 0
         self._line = len(self._value) - 1
         self._column = 0 if self._is_disabled else len(self._value[self._line])
         self._reflowed_text_cache = None
