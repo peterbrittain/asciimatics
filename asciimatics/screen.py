@@ -619,6 +619,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                 # Optimized version that ignores double-width characters
                 if x < 0:
                     text = text[-x:]
+                    x = 0
                 if x + len(text) > self.width:
                     text = text[:self.width - x]
                 for i, c in enumerate(text):
