@@ -223,9 +223,9 @@ class AnsiTerminalParser(Parser):
                         if param in ("", "0"):
                             self._result = self._result[:cursor]
                         elif param == "1":
-                            self._result = [" ", attributes, offset] * cursor + self._result[cursor:]
+                            self._result = [[" ", tuple(attributes), offset] for _ in range(cursor)] + self._result[cursor:]
                         elif param == "2":
-                            self._result = [" ", attributes, offset] * cursor
+                            self._result = [[" ", tuple(attributes), offset] for _ in range(cursor)]
                     elif match.group(3) == "P":
                         # This is a character delete sequence.  Parameter defines how many to delete.
                         param = 1 if match.group(2) == "" else int(match.group(2))
