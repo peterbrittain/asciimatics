@@ -78,3 +78,6 @@ class TestUtilities(unittest.TestCase):
         # Bad data comparisons
         self.assertNotEquals(ct, 1)
         self.assertFalse(ct == "Some text")
+
+        # Startswith
+        self.assertTrue(ct.startswith("Some"))

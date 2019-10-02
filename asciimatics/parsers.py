@@ -149,6 +149,7 @@ class AnsiTerminalParser(Parser):
                 if match is None:
                     # Escape - ignore next char as a minimal way to handle many sequences
                     text = text[1:]
+                    offset += 1
                 else:
                     if match.group(3) == "m":
                     # We have found a SGR escape sequence ( CSI ... m ).  These have zero or more

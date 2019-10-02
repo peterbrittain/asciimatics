@@ -147,10 +147,42 @@ class TestParsers(unittest.TestCase):
         with self.assertRaises(StopIteration):
             next(tokens)
 
+        # Delete char
+        parser.reset("abcde\x08\x08\x08\x1B[P", None)
+        tokens = parser.parse()
+        self.assertEquals(next(tokens), ("a", (None, None, None), 0))
+        self.assertEquals(next(tokens), ("b", (None, None, None), 1))
+        self.assertEquals(next(tokens), ("d", (None, None, None), 3))
+        self.assertEquals(next(tokens), ("e", (None, None, None), 4))
+        self.assertEquals(next(tokens), (None, (None, None, None), 5))
+        with self.assertRaises(StopIteration):
+            next(tokens)
+
     def test_ansi_terminal_parser_normalization(self):
         """
         Check AnsiTerminalParser normalization works as expected.
         """
         parser = AnsiTerminalParser()
+
+        # SGR0 sets black and white normal text.
         parser.reset("\x1B[ma", None)
         self.assertEquals(parser.normalize(), "\x1B[38;5;7;2;48;5;0ma")
+
+        # SGR1 sets bold and SGR7 reverse video.
+        parser.reset("\x1B[1ma\x1B[7mb", None)
+        self.assertEquals(parser.normalize(), "\x1B[1ma\x1B[7mb")
+
+    def test_ansi_terminal_parser_errors(self):
+        """
+        Check AnsiTerminalParser handles unsupported encodings gracefully.
+        """
+        parser = AnsiTerminalParser()
+        parser.reset("a\x1BZb\x07c", None)
+        tokens = parser.parse()
+
+        # Ignore unknown escape and next letter
+        self.assertEquals(next(tokens), ("a", (None, None, None), 0))
+        self.assertEquals(next(tokens), ("b", (None, None, None), 1))
+
+        # Ignore unknown control char
+        self.assertEquals(next(tokens), ("c", (None, None, None), 4))
