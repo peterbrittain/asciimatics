@@ -4,11 +4,23 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 import unittest
-from asciimatics.parsers import AsciimaticsParser, AnsiTerminalParser
+from asciimatics.parsers import AsciimaticsParser, AnsiTerminalParser, ControlCodeParser
 import asciimatics.constants as constants
 
 
 class TestParsers(unittest.TestCase):
+
+    def test_controlcode_parser(self):
+        """
+        Check ControlCodeParser  works as expected
+        """
+        parser = ControlCodeParser()
+        tokens = parser.parse('\0\b\ra[')
+        self.assertEquals(next(tokens), "^@")
+        self.assertEquals(next(tokens), "^H")
+        self.assertEquals(next(tokens), "^M")
+        self.assertEquals(next(tokens), "a")
+        self.assertEquals(next(tokens), "[")
 
     def test_asciimatics_parser(self):
         """

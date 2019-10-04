@@ -476,6 +476,9 @@ class TestWidgets(unittest.TestCase):
         event = object()
         self.assertEqual(event, form.process_event(event))
 
+        # Check forms don't want global input handling.
+        self.assertFalse(form.safe_to_default_unhandled_input)
+
     def test_textbox_input(self):
         """
         Check TextBox input works as expected.
@@ -679,9 +682,14 @@ class TestWidgets(unittest.TestCase):
         form.save()
         self.assertEqual(form.data["Things"], 2)
 
-        # Check that the current focus ignores unknown events.
+        # Check that a radio button ignores unknown events.
         event = object()
         self.assertEqual(event, form.process_event(event))
+
+        # Check that setting an unknown value resets to first radio button.
+        form.focussed_widget.value = "Nonexistent value"
+        form.save()
+        self.assertEqual(form.data["Things"], 1)
 
     def test_mouse_input(self):
         """
@@ -741,6 +749,11 @@ class TestWidgets(unittest.TestCase):
 
         # If the Frame loses the focus it must not return a focussed widget.
         form._has_focus = False
+        self.assertIsNone(form.focussed_widget)
+
+        # If the Frame focus is undefined, it must not return a focussed widget.
+        form._has_focus = True
+        form._focus = 9999
         self.assertIsNone(form.focussed_widget)
 
     def test_frame_focus_widget_property_when_frame_focussed(self):
@@ -992,7 +1005,7 @@ class TestWidgets(unittest.TestCase):
         layout = Layout([100], fill_frame=True)
         mc_list = MultiColumnListBox(
             Widget.FILL_FRAME,
-            [3, "4", ">4", "<4", ">10%", "100%"],
+            [3, "4", ">4", "<4", "^10%", "100%"],
             [
                 (["1", "2", "3", "4", "5", "6"], 1),
                 (["11", "222", "333", "444", "555", "6"], 2),
@@ -1032,12 +1045,12 @@ class TestWidgets(unittest.TestCase):
         form.update(0)
         self.assert_canvas_equals(
             canvas,
-            "A  B      C D      E F                  \n" +
-            "1  2      3 4      5 6                  \n" +
-            "11 222  333 444  555 6                  \n" +
-            "1112      3 4      5 6                  \n" +
-            "1  2   3... 4      5 6                  \n" +
-            "1  2      3 4      5 6666666666666666666\n" +
+            "A  B      C D    E  F                   \n" +
+            "1  2      3 4    5  6                   \n" +
+            "11 222  333 444 555 6                   \n" +
+            "1112      3 4    5  6                   \n" +
+            "1  2   3... 4    5  6                   \n" +
+            "1  2      3 4    5  66666666666666666666\n" +
             "                                        \n" +
             "                                        \n" +
             "                                        \n" +
@@ -1069,7 +1082,7 @@ class TestWidgets(unittest.TestCase):
         form.update(1)
         self.assert_canvas_equals(
             canvas,
-            "A  B      C D      E F                  \n" +
+            "A  B      C D    E  F                   \n" +
             "                                        \n" +
             "                                        \n" +
             "                                        \n" +
@@ -1104,6 +1117,81 @@ class TestWidgets(unittest.TestCase):
             (["d", "b", "c", "d", "e", "f"], 3),
         ]
         self.assertEqual(mc_list.value, 0)
+
+    def test_list_box_scrollbar(self):
+        """
+        Check ListBox scrollbar works.
+        """
+        # Create a dummy screen.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        simple_list = ListBox(
+            3,
+            [
+                ("Some", 1),
+                ("Stuff", 2),
+                ("To", 3),
+                ("See", 4),
+            ],
+            add_scroll_bar=True,
+            name="simple_list")
+        form.add_layout(layout)
+        layout.add_widget(simple_list)
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that the widget is rendered correctly with the scrollbar
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "Some                                   O\n" +
+            "Stuff                                  |\n" +
+            "To                                     |\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        # Check that mouse input works
+        self.process_mouse(form, [(39, 2, MouseEvent.LEFT_CLICK)])
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "Stuff                                  |\n" +
+            "To                                     |\n" +
+            "See                                    O\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        # Check that options can be set and hide scrollbar
+        simple_list.options = [("New list", 1)]
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "New list                                \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
 
     def test_multi_column_list_box_scrollbar(self):
         """
@@ -1695,6 +1783,10 @@ class TestWidgets(unittest.TestCase):
         self.assertEqual(label.custom_colour, "disabled")
         self.assertEqual(canvas.get_from(1, 1), (ord("S"), 0, 1, 4))
 
+        # Cheeky test that Labels always pass on events.
+        event = object()
+        self.assertEqual(event, label.process_event(event))
+
     @patch("os.path.exists")
     @patch("os.path.realpath")
     @patch("os.path.islink")
@@ -2087,6 +2179,10 @@ class TestWidgets(unittest.TestCase):
                 self.assertEquals(char, ord(" "))
                 self.assertEquals(bg, 7)
 
+        # Check properties
+        self.assertEquals(form.stop_frame, 0)
+        self.assertGreater(form.frame_update_count, 1000)
+
     def test_dropdown_list(self):
         """
         Check DropdownList widget works as expected.
@@ -2238,6 +2334,30 @@ class TestWidgets(unittest.TestCase):
             "||------------------------------------||\n" +
             "||Item 0                              ||\n" +
             "++------------------------------------++\n")
+
+    def test_divider(self):
+        """
+        Check Divider widget sundry features work.
+        """
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = Frame(canvas, canvas.height, canvas.width)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        divider = Divider(draw_line=False, height=7)
+        layout.add_widget(divider)
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        # Check events are ignored
+        event = object()
+        self.assertEqual(event, divider.process_event(event))
+
+        # Check value is None
+        self.assertIsNone(divider.value)
 
     def test_find_widget(self):
         """

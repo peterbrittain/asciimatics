@@ -37,6 +37,26 @@ class Parser(with_metaclass(ABCMeta, object)):
         """
 
 
+class ControlCodeParser(Parser):
+    """
+    Parser to replace all control codes with a readable version - e.g. "^M" for \r,
+    """
+
+    def parse(self, text, colours=None):
+        """
+        Generator to return sanitized text from raw text.
+
+        :param text: raw text to process.
+        :param colours: colour tuple to initialise the colour map.
+        :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)
+        """
+        for letter in text:
+            if ord(letter) < 32:
+                yield "^" + chr(ord("@") + ord(letter))
+            else:
+                yield letter
+
+
 class AsciimaticsParser(Parser):
     """
     Parser to handle Asciimatics rendering escape strings.
