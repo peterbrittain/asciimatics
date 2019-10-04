@@ -816,6 +816,17 @@ class TestWidgets(unittest.TestCase):
         self.assertEqual(form._layouts[form._focus]._live_col, 2)
         self.process_keys(form, [Screen.KEY_LEFT])
         self.assertEqual(form._layouts[form._focus]._live_col, 1)
+        self.process_keys(form, [Screen.KEY_LEFT])
+        # Reset will be disabled.
+        self.assertEqual(form._layouts[form._focus]._live_col, 2)
+        self.process_keys(form, [Screen.KEY_RIGHT])
+        self.assertEqual(form._layouts[form._focus]._live_col, 1)
+
+        # Check up and down stay in column.
+        self.process_keys(form, [Screen.KEY_UP])
+        self.assertEqual(form._layouts[form._focus]._live_col, 1)
+        self.process_keys(form, [Screen.KEY_DOWN])
+        self.assertEqual(form._layouts[form._focus]._live_col, 1)
 
     def test_list_box(self):
         """
@@ -1787,6 +1798,76 @@ class TestWidgets(unittest.TestCase):
         event = object()
         self.assertEqual(event, label.process_event(event))
 
+    @patch("os.stat")
+    @patch("os.listdir")
+    def test_file_browser_stat_err(self, mock_list, mock_stat):
+        """
+        Check FileBrowser widget copes with permissions error on stat.
+        """
+        # First we need to mock out the file system calls to have a regressible test
+        if sys.platform == "win32":
+            self.skipTest("File names wrong for windows")
+
+        mock_list.return_value = ["A Directory", "A File", "A Lnk"]
+        mock_stat.side_effect = OSError("Fake error")
+
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame4(canvas)
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that the Frame is rendered correctly.
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "/                     Size Last modified\n" +
+            "|-- A Directory          0    1970-01-01\n" +
+            "|-- A File               0    1970-01-01\n" +
+            "|-- A Lnk                0    1970-01-01\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+    @patch("os.listdir")
+    def test_file_browser_list_err(self, mock_list):
+        """
+        Check FileBrowser widget copes with permissions error on list.
+        """
+        # First we need to mock out the file system calls to have a regressible test
+        if sys.platform == "win32":
+            self.skipTest("File names wrong for windows")
+
+        mock_list.side_effect = OSError("Fake error")
+
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame4(canvas)
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that the Frame is rendered correctly.
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "/                     Size Last modified\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
     @patch("os.path.exists")
     @patch("os.path.realpath")
     @patch("os.path.islink")
@@ -1803,7 +1884,7 @@ class TestWidgets(unittest.TestCase):
         if sys.platform == "win32":
             self.skipTest("File names wrong for windows")
 
-        mock_list.return_value = ["A Directory", "A File", "A Lnk", str(b"oo\xcc\x88o\xcc\x88O\xcc\x88.txt", 'utf-8')]
+        mock_list.return_value = ["A Directory", "A File", "A Lnk", str(b"oo\xcc\x88o\xcc\x88O\xcc\x88.txt", 'utf-8'), "Lnk Directory"]
         mock_result = MagicMock()
         mock_result.st_mtime = 0
         mock_result.st_size = 10000
@@ -1834,24 +1915,24 @@ class TestWidgets(unittest.TestCase):
             canvas,
             "/                     Size Last modified\n" +
             "|-+ A Directory         9K    1970-01-01\n" +
+            "|-+ Lnk Directo...      9K    1970-01-01\n" +
             "|-- A File              9K    1970-01-01\n" +
             "|-- A Lnk -> A Tgt      9K    1970-01-01\n" +
             "|-- oööÖ.txt            9K    1970-01-01\n" +
             "                                        \n" +
             "                                        \n" +
             "                                        \n" +
-            "                                        \n" +
             "                                        \n")
 
         # Check that mouse inpput changes selection.
-        self.process_mouse(form, [(2, 2, MouseEvent.LEFT_CLICK)])
+        self.process_mouse(form, [(2, 3, MouseEvent.LEFT_CLICK)])
         form.save()
         self.assertEqual(form.data, {"file_list": "/A File"})
         self.assertEqual(form.highlighted, "/A File")
         self.assertIsNone(form.selected)
 
         # Check that UP/DOWN change selection.
-        self.process_keys(form, [Screen.KEY_UP])
+        self.process_keys(form, [Screen.KEY_UP, Screen.KEY_UP])
         form.save()
         self.assertEqual(form.data, {"file_list": "/A Directory"})
         self.assertEqual(form.highlighted, "/A Directory")
@@ -1867,16 +1948,16 @@ class TestWidgets(unittest.TestCase):
             "/A Directory          Size Last modified\n" +
             "|-+ ..                                  \n" +
             "|-+ A Directory         9K    1970-01-01\n" +
+            "|-+ Lnk Directo...      9K    1970-01-01\n" +
             "|-- A File              9K    1970-01-01\n" +
             "|-- A Lnk -> A Tgt      9K    1970-01-01\n" +
             "|-- oööÖ.txt            9K    1970-01-01\n" +
             "                                        \n" +
             "                                        \n" +
-            "                                        \n" +
             "                                        \n")
 
         # Check that enter key handles correctly on files.
-        self.process_keys(form, [Screen.KEY_DOWN, Screen.KEY_DOWN, Screen.ctrl("m")])
+        self.process_keys(form, [Screen.KEY_DOWN, Screen.KEY_DOWN, Screen.KEY_DOWN, Screen.ctrl("m")])
         self.assertEqual(form.highlighted, "/A Directory/A File")
         self.assertEqual(form.selected, "/A Directory/A File")
 
@@ -2580,7 +2661,8 @@ class TestWidgets(unittest.TestCase):
         layout.add_widget(VerticalDivider(), 1)
         layout.add_widget(Label("B"), 1)
         layout.add_widget(TextBox(5), 2)
-        layout.add_widget(VerticalDivider(), 3)
+        divider = VerticalDivider()
+        layout.add_widget(divider, 3)
         layout.add_widget(Label("END"), 4)
         form.fix()
         form.register_scene(scene)
@@ -2602,6 +2684,13 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "|                                      |\n" +
             "+--------------------------------------+\n")
+
+        # Check that a vertcial divider ignores unknown events.
+        event = object()
+        self.assertEqual(event, divider.process_event(event))
+
+        # Check that it has no value.
+        self.assertEqual(divider.value, None)
 
     def test_value_defaults(self):
         """
