@@ -156,7 +156,7 @@ def _credits(screen):
         Mirage(
             screen,
             FigletText("Erik Doffagne"),
-            screen.height + 98,
+            screen.height + 104,
             Screen.COLOUR_GREEN)
     ]
     scenes.append(Scene(effects, (screen.height + 104) * 3))
