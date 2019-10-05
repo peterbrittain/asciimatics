@@ -1097,6 +1097,27 @@ class TestWidgets(unittest.TestCase):
         event = object()
         self.assertEqual(event, form.process_event(event))
 
+        # Check that options retain the current value where possible.
+        mc_list.options = [
+            (["a", "b", "c", "d", "e", "f"], 0),
+            (["b", "b", "c", "d", "e", "f"], 1),
+            (["c", "b", "c", "d", "e", "f"], 2),
+        ]
+        mc_list.value = 1
+        mc_list.options = [
+            (["a", "b", "c", "d", "e", "f"], 0),
+            (["b", "b", "c", "d", "e", "f"], 1),
+            (["c", "b", "c", "d", "e", "f"], 2),
+            (["d", "b", "c", "d", "e", "f"], 3),
+        ]
+        self.assertEqual(mc_list.value, 1)
+        mc_list.options = [
+            (["a", "b", "c", "d", "e", "f"], 0),
+            (["c", "b", "c", "d", "e", "f"], 2),
+            (["d", "b", "c", "d", "e", "f"], 3),
+        ]
+        self.assertEqual(mc_list.value, 0)
+
     def test_list_box_scrollbar(self):
         """
         Check ListBox scrollbar works.

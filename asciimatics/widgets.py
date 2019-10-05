@@ -1434,7 +1434,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         Whether this widget is visible on the Canvas or not.
         """
-        return not (self._y + self._h <= self._frame.canvas.start_line or 
+        return not (self._y + self._h <= self._frame.canvas.start_line or
                     self._y >= self._frame.canvas.start_line + self._frame.canvas.height)
 
     @property
@@ -2471,7 +2471,7 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         self._parser = parser
         self._options = self._parse_options(options)
         self._line = 0
-        self._value = None 
+        self._value = None
         self._start_line = 0
         self._required_height = height
         self._on_change = on_change
@@ -2787,8 +2787,9 @@ class ListBox(_BaseListBox):
 
     @options.setter
     def options(self, new_value):
+        # Set net list of options and then force an update to the current value to align with the new options.
         self._options = new_value
-        self.value = self._options[0][1] if len(self._options) > 0 else None
+        self.value = self._value
 
 
 class MultiColumnListBox(_BaseListBox):
@@ -3003,8 +3004,9 @@ class MultiColumnListBox(_BaseListBox):
 
     @options.setter
     def options(self, new_value):
+        # Set net list of options and then force an update to the current value to align with the new options.
         self._options = self._parse_options(new_value)
-        self.value = self._options[0][1] if len(self._options) > 0 else None
+        self.value = self._value
 
 
 class FileBrowser(MultiColumnListBox):
