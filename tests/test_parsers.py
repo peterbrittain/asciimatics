@@ -4,11 +4,23 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 import unittest
-from asciimatics.parsers import AsciimaticsParser, AnsiTerminalParser
+from asciimatics.parsers import AsciimaticsParser, AnsiTerminalParser, SanitizeParser
 import asciimatics.constants as constants
 
 
 class TestParsers(unittest.TestCase):
+
+    def test_sanitize_parser(self):
+        """
+        Check SanitizeParser works as expected
+        """
+        parser = SanitizeParser()
+        tokens = parser.parse('a${1}\r${2,3,4}d', None)
+        self.assertEquals(next(tokens), ("a", (None, None, None), 0))
+        self.assertEquals(next(tokens), ("^", (None, None, None), 1))
+        self.assertEquals(next(tokens), ("M", (None, None, None), 6))
+        self.assertEquals(next(tokens), ("d", (None, None, None), 7))
+
 
     def test_asciimatics_parser(self):
         """
