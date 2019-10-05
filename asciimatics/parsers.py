@@ -36,6 +36,39 @@ class Parser(with_metaclass(ABCMeta, object)):
         :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)
         """
 
+class SanitizeParser(Parser):
+    """
+    Parser to sanitize raw text and return readable version of control codes
+    """
+    _colour_sequence = re.compile(constants.COLOUR_REGEX)
+
+    def parse(self, text, colours):
+        """
+        Generator to return sanitized text from raw text.
+
+        :param text: raw text to process.
+        :param colours: colour tuple to initialise the colour map.
+        :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)
+        """
+        attributes = colours if colours else (None, None, None)
+        offset = last_offset = 0
+        while len(text) > 0:
+            char = ord(text[0])
+            # carriage return /r
+            if char == 13:
+                text = "^M" + text[1:]
+
+            match = self._colour_sequence.match(str(text))
+            if match is  None:
+                yield text[0], attributes, last_offset
+                text = text[1:]
+                offset += 1
+                last_offset = offset
+            else:
+                offset += 3 + len(match.group(1))
+                text = match.group(8)
+
+
 
 class AsciimaticsParser(Parser):
     """
