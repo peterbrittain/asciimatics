@@ -816,6 +816,17 @@ class TestWidgets(unittest.TestCase):
         self.assertEqual(form._layouts[form._focus]._live_col, 2)
         self.process_keys(form, [Screen.KEY_LEFT])
         self.assertEqual(form._layouts[form._focus]._live_col, 1)
+        self.process_keys(form, [Screen.KEY_LEFT])
+        # Reset will be disabled.
+        self.assertEqual(form._layouts[form._focus]._live_col, 2)
+        self.process_keys(form, [Screen.KEY_RIGHT])
+        self.assertEqual(form._layouts[form._focus]._live_col, 1)
+
+        # Check up and down stay in column.
+        self.process_keys(form, [Screen.KEY_UP])
+        self.assertEqual(form._layouts[form._focus]._live_col, 1)
+        self.process_keys(form, [Screen.KEY_DOWN])
+        self.assertEqual(form._layouts[form._focus]._live_col, 1)
 
     def test_list_box(self):
         """
