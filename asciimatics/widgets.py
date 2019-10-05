@@ -3387,7 +3387,6 @@ class _TempPopup(Frame):
         This method can raise an InvalidFields exception to indicate that the current selection is
         invalid and so the pop-up cannot be dismissed.
         """
-        pass
 
 
 class _TimePickerPopup(_TempPopup):
