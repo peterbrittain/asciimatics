@@ -15,12 +15,12 @@ class TestParsers(unittest.TestCase):
         Check SanitizeParser works as expected
         """
         parser = SanitizeParser()
-        tokens = parser.parse('a${1}\r${2,3,4}d', None)
-        self.assertEquals(next(tokens), ("a", (None, None, None), 0))
-        self.assertEquals(next(tokens), ("^", (None, None, None), 1))
-        self.assertEquals(next(tokens), ("M", (None, None, None), 6))
-        self.assertEquals(next(tokens), ("d", (None, None, None), 7))
-
+        tokens = parser.parse('\0\b\ra[')
+        self.assertEquals(next(tokens), "^@")
+        self.assertEquals(next(tokens), "^H")
+        self.assertEquals(next(tokens), "^M")
+        self.assertEquals(next(tokens), "a")
+        self.assertEquals(next(tokens), "[")
 
     def test_asciimatics_parser(self):
         """
