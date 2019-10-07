@@ -4,17 +4,17 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 import unittest
-from asciimatics.parsers import AsciimaticsParser, AnsiTerminalParser, SanitizeParser
+from asciimatics.parsers import AsciimaticsParser, AnsiTerminalParser, ControlCodeParser
 import asciimatics.constants as constants
 
 
 class TestParsers(unittest.TestCase):
 
-    def test_sanitize_parser(self):
+    def test_controlcode_parser(self):
         """
-        Check SanitizeParser works as expected
+        Check ControlCodeParser  works as expected
         """
-        parser = SanitizeParser()
+        parser = ControlCodeParser()
         tokens = parser.parse('\0\b\ra[')
         self.assertEquals(next(tokens), "^@")
         self.assertEquals(next(tokens), "^H")

@@ -37,9 +37,9 @@ class Parser(with_metaclass(ABCMeta, object)):
         """
 
 
-class SanitizeParser(Parser):
+class ControlCodeParser(Parser):
     """
-    Parser to sanitize raw text and return readable version of control codes
+    Parser to replace all control codes with a readable version - e.g. "^M" for \r,
     """
 
     def parse(self, text, colours=None):
