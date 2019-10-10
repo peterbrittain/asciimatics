@@ -1129,6 +1129,135 @@ class TestWidgets(unittest.TestCase):
         ]
         self.assertEqual(mc_list.value, 0)
 
+
+    def test_multi_column_list_box_delimiter(self):
+        """
+        Check MultiColumnListBox works as expected with space_delimiter
+        """
+        # Create a dummy screen.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        mc_list = MultiColumnListBox(
+            Widget.FILL_FRAME,
+            [3, "4", ">4", "<4", "^10%", "100%"],
+            [
+                (["1", "2", "3", "4", "5", "6"], 1),
+                (["11", "222", "333", "444", "555", "6"], 2),
+                (["111", "2", "3", "4", "5", "6"], 3),
+                (["1", "2", "33333", "4", "5", "6"], 4),
+                (["1", "2", "3", "4", "5", "6666666666666666666666"], 5),
+            ],
+            titles=["A", "B", "C", "D", "E", "F"],
+            name="mc_list",
+            space_delimiter='|')
+        form.add_layout(layout)
+        layout.add_widget(mc_list)
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        # Check we have a default value for our list.
+        form.save()
+        self.assertEqual(form.data, {"mc_list": 1})
+
+        # Check that UP/DOWN change selection.
+        self.process_keys(form, [Screen.KEY_DOWN])
+        form.save()
+        self.assertEqual(form.data, {"mc_list": 2})
+        self.process_keys(form, [Screen.KEY_UP])
+        form.save()
+        self.assertEqual(form.data, {"mc_list": 1})
+
+        # Check that PGUP/PGDN change selection.
+        self.process_keys(form, [Screen.KEY_PAGE_DOWN])
+        form.save()
+        self.assertEqual(form.data, {"mc_list": 5})
+        self.process_keys(form, [Screen.KEY_PAGE_UP])
+        form.save()
+        self.assertEqual(form.data, {"mc_list": 1})
+
+        # Check that the widget is rendered correctly.
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "A  |B   |   C|D   | E  |F               \n" +
+            "1  |2   |   3|4   | 5  |6               \n" +
+            "11 |222 | 333|444 |555 |6               \n" +
+            "111|2   |   3|4   | 5  |6               \n" +
+            "1  |2   |3...|4   | 5  |6               \n" +
+            "1  |2   |   3|4   | 5  |6666666666666666\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        # Check that mouse input changes selection.
+        self.process_mouse(form, [(2, 2, MouseEvent.LEFT_CLICK)])
+        form.save()
+        self.assertEqual(form.data, {"mc_list": 2})
+        self.process_mouse(form, [(2, 1, MouseEvent.LEFT_CLICK)])
+        form.save()
+        self.assertEqual(form.data, {"mc_list": 1})
+
+        # Check that the start_line can be read and set - and enforces good behaviour
+        mc_list.start_line = 0
+        self.assertEqual(mc_list.start_line, 0)
+        mc_list.start_line = len(mc_list.options) - 1
+        self.assertEqual(mc_list.start_line, len(mc_list.options) - 1)
+        mc_list.start_line = 10000000
+        self.assertEqual(mc_list.start_line, len(mc_list.options) - 1)
+
+        # Check that options can be read and set.
+        mc_list.options = [(["a", "b", "c", "d", "e", "f"], 0)]
+        self.assertEqual(mc_list.options, [(["a", "b", "c", "d", "e", "f"], 0)])
+        mc_list.options = []
+        self.assertEqual(mc_list.options, [])
+
+        # Check that the form re-renders correctly afterwards.
+        form.update(1)
+        self.assert_canvas_equals(
+            canvas,
+            "A  B      C D    E  F                   \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        # Check that the current focus ignores unknown events.
+        event = object()
+        self.assertEqual(event, form.process_event(event))
+
+        # Check that options retain the current value where possible.
+        mc_list.options = [
+            (["a", "b", "c", "d", "e", "f"], 0),
+            (["b", "b", "c", "d", "e", "f"], 1),
+            (["c", "b", "c", "d", "e", "f"], 2),
+        ]
+        mc_list.value = 1
+        mc_list.options = [
+            (["a", "b", "c", "d", "e", "f"], 0),
+            (["b", "b", "c", "d", "e", "f"], 1),
+            (["c", "b", "c", "d", "e", "f"], 2),
+            (["d", "b", "c", "d", "e", "f"], 3),
+        ]
+        self.assertEqual(mc_list.value, 1)
+        mc_list.options = [
+            (["a", "b", "c", "d", "e", "f"], 0),
+            (["c", "b", "c", "d", "e", "f"], 2),
+            (["d", "b", "c", "d", "e", "f"], 3),
+        ]
+        self.assertEqual(mc_list.value, 0)
+
     def test_list_box_scrollbar(self):
         """
         Check ListBox scrollbar works.
