@@ -1222,7 +1222,7 @@ class TestWidgets(unittest.TestCase):
         form.update(1)
         self.assert_canvas_equals(
             canvas,
-            "A  B      C D    E  F                   \n" +
+            "A  |B   |   C|D   | E  |F               \n" +
             "                                        \n" +
             "                                        \n" +
             "                                        \n" +
