@@ -2453,7 +2453,7 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
                  "_on_select", "_validator", "_search", "_last_search", "_scroll_bar", "_parser"]
 
     def __init__(self, height, options, titles=None, label=None, name=None, parser=None,
-                 on_change=None, on_select=None, validator=None, space_delimiter=None):
+                 on_change=None, on_select=None, validator=None):
         """
         :param height: The required number of input lines for this widget.
         :param options: The options for each row in the widget.
@@ -2464,7 +2464,6 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         :param on_select: Optional function to call when the user actually selects an entry from
             this list - e.g. by double-clicking or pressing Enter.
         :param validator: Optional function to validate selection for this widget.
-        :param space_delimiter: Optional parameter to define the delimiter between columns.
         """
         super(_BaseListBox, self).__init__(name)
         self._titles = titles
@@ -2847,7 +2846,7 @@ class MultiColumnListBox(_BaseListBox):
         """
         super(MultiColumnListBox, self).__init__(
             height, options, titles=titles, label=label, name=name, parser=parser,
-            on_change=on_change, on_select=on_select, space_delimiter=space_delimiter)
+            on_change=on_change, on_select=on_select)
         self._columns = []
         self._align = []
         self._spacing = []
