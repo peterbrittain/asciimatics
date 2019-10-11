@@ -1129,6 +1129,53 @@ class TestWidgets(unittest.TestCase):
         ]
         self.assertEqual(mc_list.value, 0)
 
+
+    def test_multi_column_list_box_delimiter(self):
+        """
+        Check MultiColumnListBox works as expected with space_delimiter
+        """
+        # Create a dummy screen.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        mc_list = MultiColumnListBox(
+            Widget.FILL_FRAME,
+            [3, "4", ">4", "<4", "^10%", "100%"],
+            [
+                (["1", "2", "3", "4", "5", "6"], 1),
+                (["11", "222", "333", "444", "555", "6"], 2),
+                (["111", "2", "3", "4", "5", "6"], 3),
+                (["1", "2", "33333", "4", "5", "6"], 4),
+                (["1", "2", "3", "4", "5", "6666666666666666666666"], 5),
+            ],
+            titles=["A", "B", "C", "D", "E", "F"],
+            name="mc_list",
+            space_delimiter='|')
+        form.add_layout(layout)
+        layout.add_widget(mc_list)
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that the widget is rendered correctly.
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "A  |B   |   C|D   | E  |F               \n" +
+            "1  |2   |   3|4   | 5  |6               \n" +
+            "11 |222 | 333|444 |555 |6               \n" +
+            "111|2   |   3|4   | 5  |6               \n" +
+            "1  |2   |3...|4   | 5  |6               \n" +
+            "1  |2   |   3|4   | 5  |6666666666666666\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
     def test_list_box_scrollbar(self):
         """
         Check ListBox scrollbar works.
