@@ -1161,26 +1161,6 @@ class TestWidgets(unittest.TestCase):
         form.register_scene(scene)
         form.reset()
 
-        # Check we have a default value for our list.
-        form.save()
-        self.assertEqual(form.data, {"mc_list": 1})
-
-        # Check that UP/DOWN change selection.
-        self.process_keys(form, [Screen.KEY_DOWN])
-        form.save()
-        self.assertEqual(form.data, {"mc_list": 2})
-        self.process_keys(form, [Screen.KEY_UP])
-        form.save()
-        self.assertEqual(form.data, {"mc_list": 1})
-
-        # Check that PGUP/PGDN change selection.
-        self.process_keys(form, [Screen.KEY_PAGE_DOWN])
-        form.save()
-        self.assertEqual(form.data, {"mc_list": 5})
-        self.process_keys(form, [Screen.KEY_PAGE_UP])
-        form.save()
-        self.assertEqual(form.data, {"mc_list": 1})
-
         # Check that the widget is rendered correctly.
         form.update(0)
         self.assert_canvas_equals(
@@ -1195,68 +1175,6 @@ class TestWidgets(unittest.TestCase):
             "                                        \n" +
             "                                        \n" +
             "                                        \n")
-
-        # Check that mouse input changes selection.
-        self.process_mouse(form, [(2, 2, MouseEvent.LEFT_CLICK)])
-        form.save()
-        self.assertEqual(form.data, {"mc_list": 2})
-        self.process_mouse(form, [(2, 1, MouseEvent.LEFT_CLICK)])
-        form.save()
-        self.assertEqual(form.data, {"mc_list": 1})
-
-        # Check that the start_line can be read and set - and enforces good behaviour
-        mc_list.start_line = 0
-        self.assertEqual(mc_list.start_line, 0)
-        mc_list.start_line = len(mc_list.options) - 1
-        self.assertEqual(mc_list.start_line, len(mc_list.options) - 1)
-        mc_list.start_line = 10000000
-        self.assertEqual(mc_list.start_line, len(mc_list.options) - 1)
-
-        # Check that options can be read and set.
-        mc_list.options = [(["a", "b", "c", "d", "e", "f"], 0)]
-        self.assertEqual(mc_list.options, [(["a", "b", "c", "d", "e", "f"], 0)])
-        mc_list.options = []
-        self.assertEqual(mc_list.options, [])
-
-        # Check that the form re-renders correctly afterwards.
-        form.update(1)
-        self.assert_canvas_equals(
-            canvas,
-            "A  |B   |   C|D   | E  |F               \n" +
-            "                                        \n" +
-            "                                        \n" +
-            "                                        \n" +
-            "                                        \n" +
-            "                                        \n" +
-            "                                        \n" +
-            "                                        \n" +
-            "                                        \n" +
-            "                                        \n")
-
-        # Check that the current focus ignores unknown events.
-        event = object()
-        self.assertEqual(event, form.process_event(event))
-
-        # Check that options retain the current value where possible.
-        mc_list.options = [
-            (["a", "b", "c", "d", "e", "f"], 0),
-            (["b", "b", "c", "d", "e", "f"], 1),
-            (["c", "b", "c", "d", "e", "f"], 2),
-        ]
-        mc_list.value = 1
-        mc_list.options = [
-            (["a", "b", "c", "d", "e", "f"], 0),
-            (["b", "b", "c", "d", "e", "f"], 1),
-            (["c", "b", "c", "d", "e", "f"], 2),
-            (["d", "b", "c", "d", "e", "f"], 3),
-        ]
-        self.assertEqual(mc_list.value, 1)
-        mc_list.options = [
-            (["a", "b", "c", "d", "e", "f"], 0),
-            (["c", "b", "c", "d", "e", "f"], 2),
-            (["d", "b", "c", "d", "e", "f"], 3),
-        ]
-        self.assertEqual(mc_list.value, 0)
 
     def test_list_box_scrollbar(self):
         """
