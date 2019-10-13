@@ -72,8 +72,7 @@ class ColouredText(object):
         self._text = ""
         self._parser.reset(self._raw_text, self._init_colour)
         self._raw_text = self._parser.normalize()
-        #TODO: fix up use of internal properties
-        self._cursor = self._parser._cursor
+        self._cursor = self._parser.cursor
         for text_matched, colour_tuple, offset in self._parser.parse():
             if text_matched is not None:
                 for i, _ in enumerate(text_matched):

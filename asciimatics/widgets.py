@@ -560,8 +560,7 @@ class Frame(Effect):
         if theme in THEMES:
             self.palette = THEMES[theme]
             if self._scroll_bar:
-                # TODO: fix protected access.
-                self._scroll_bar._palette = self.palette
+                self._scroll_bar.palette = self.palette
 
     @property
     def title(self):
@@ -3813,7 +3812,7 @@ class _ScrollBar(object):
         these two functions to translate that internal state into a form the scroll bar can use.
         """
         self._canvas = canvas
-        self._palette = palette
+        self.palette = palette
         self.max_height = 0
         self._x = x
         self._y = y
@@ -3837,7 +3836,7 @@ class _ScrollBar(object):
             sb_pos = max(int(self._height * sb_pos) - 1, 0)
         except ZeroDivisionError:
             sb_pos = 0
-        (colour, attr, bg) = self._palette["scroll"]
+        (colour, attr, bg) = self.palette["scroll"]
         y = self._canvas.start_line if self._absolute else 0
         for dy in range(self._height):
             self._canvas.print_at(cursor if dy == sb_pos else back,
