@@ -2188,12 +2188,8 @@ class TextBox(Widget):
 
         # Clear out the existing box content
         (colour, attr, bg) = self._pick_colours("edit_text")
-        for i in range(height):
-            self._frame.canvas.print_at(
-                " " * self.width,
-                self._x + self._offset,
-                self._y + i,
-                colour, attr, bg)
+        self._frame.canvas.clear_buffer(
+                colour, attr, bg, self._x + self._offset, self._y, self.width, height)
 
         # Convert value offset to display offsets
         # NOTE: _start_column is always in display coordinates.

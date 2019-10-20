@@ -76,8 +76,10 @@ class Terminal(TextBox):
                     # Python 2 and 3 raise different exceptions when they would block
                     except Exception:
                         with self._lock:
-                            value = "\n".join([x.raw_text for x in self.value]) + value
-                            self.value = value.split("\n")[-self._h:]
+                            value = value.split("\n")
+                            if len(self.value) > 0:
+                                value = self.value[:-1] + ["".join([self.value[-1].raw_text, value[0]])] + value[1:]
+                            self.value = value[-self._h:]
                             cursor = self.value[-1:][0]._cursor
                             if cursor > 0:
                                 self._column -= cursor

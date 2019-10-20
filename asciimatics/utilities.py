@@ -75,9 +75,8 @@ class ColouredText(object):
         self._cursor = self._parser.cursor
         for text_matched, colour_tuple, offset in self._parser.parse():
             if text_matched is not None:
-                for i, _ in enumerate(text_matched):
-                    self._colour_map.append(colour_tuple)
-                    self._raw_offsets.append(offset + i)
+                self._colour_map.append(colour_tuple)
+                self._raw_offsets.append(offset)
                 self._text += text_matched
             self._last_colour = colour_tuple
 

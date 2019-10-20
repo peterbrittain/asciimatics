@@ -58,7 +58,7 @@ class _DoubleBuffer(object):
         self._screen_buffer = [line[:] for _ in range(self._height)]
         self.clear(Screen.COLOUR_WHITE, 0, 0)
 
-    def clear(self, fg, attr, bg):
+    def clear(self, fg, attr, bg, x=0, y=0, w=None, h=None):
         """
         Clear the double-buffer.
 
@@ -68,8 +68,14 @@ class _DoubleBuffer(object):
         :param attr: The attribute value to use for the new buffer.
         :param bg: The background colour to use for the new buffer.
         """
-        line = [(u" ", fg, attr, bg, 1) for _ in range(self._width)]
-        self._double_buffer = [line[:] for _ in range(self._height)]
+        width = self._width if w is None else w
+        height = self._height if h is None else h
+        line = [(u" ", fg, attr, bg, 1) for _ in range(width)]
+        if x == 0 and y == 0 and w is None and h is None:
+            self._double_buffer = [line[:] for _ in range(height)]
+        else:
+            for i in range(y, y + height):
+                self._double_buffer[i][x:x+w] = line[:]
 
     def get(self, x, y):
         """
@@ -495,7 +501,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         # Reset the screen ready to go...
         self.reset()
 
-    def clear_buffer(self, fg, attr, bg):
+    def clear_buffer(self, fg, attr, bg, x=0, y=0, w=None, h=None):
         """
         Clear the current double-buffer used by this object.
 
@@ -503,7 +509,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         :param attr: The attribute value to use for the new buffer.
         :param bg: The background colour to use for the new buffer.
         """
-        self._buffer.clear(fg, attr, bg)
+        self._buffer.clear(fg, attr, bg, x, y, w, h)
 
     def reset(self):
         """
@@ -622,9 +628,12 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                     x = 0
                 if x + len(text) > self.width:
                     text = text[:self.width - x]
-                for i, c in enumerate(text):
-                    if c != " " or not transparent:
-                        self._buffer.set(x + i, y, (c, colour, attr, bg, 1))
+                if not transparent:
+                    self._buffer.set(slice(x, x + len(text)), y, [(c, colour, attr, bg, 1) for c in text])
+                else:
+                    for i, c in enumerate(text):
+                        if c != " ":
+                            self._buffer.set(x + i, y, (c, colour, attr, bg, 1))
 
     def block_transfer(self, buffer, x, y):
         """
