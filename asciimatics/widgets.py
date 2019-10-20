@@ -1432,7 +1432,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         Whether this widget is visible on the Canvas or not.
         """
-        return not (self._y + self._h <= self._frame.canvas.start_line or 
+        return not (self._y + self._h <= self._frame.canvas.start_line or
                     self._y >= self._frame.canvas.start_line + self._frame.canvas.height)
 
     @property
@@ -2469,7 +2469,7 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
         self._parser = parser
         self._options = self._parse_options(options)
         self._line = 0
-        self._value = None 
+        self._value = None
         self._start_line = 0
         self._required_height = height
         self._on_change = on_change
@@ -2542,7 +2542,8 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
 
                 # Check for scroll bar interactions:
                 if self._scroll_bar:
-                    event = self._scroll_bar.process_event(event)
+                    if self._scroll_bar.process_event(event):
+                        return None
 
             # Ignore other mouse events.
             return event
@@ -2784,8 +2785,9 @@ class ListBox(_BaseListBox):
 
     @options.setter
     def options(self, new_value):
+        # Set net list of options and then force an update to the current value to align with the new options.
         self._options = new_value
-        self.value = self._options[0][1] if len(self._options) > 0 else None
+        self.value = self._value
 
 
 class MultiColumnListBox(_BaseListBox):
@@ -2796,7 +2798,8 @@ class MultiColumnListBox(_BaseListBox):
     """
 
     def __init__(self, height, columns, options, titles=None, label=None,
-                 name=None, add_scroll_bar=False, parser=None, on_change=None, on_select=None):
+                 name=None, add_scroll_bar=False, parser=None, on_change=None,
+                 on_select=None, space_delimiter=' '):
         """
         :param height: The required number of input lines for this ListBox.
         :param columns: A list of widths and alignments for each column.
@@ -2809,6 +2812,8 @@ class MultiColumnListBox(_BaseListBox):
         :param parser: Optional parser to colour text.
         :param on_change: Optional function to call when selection changes.
         :param on_select: Optional function to call when the user actually selects an entry from
+        :param space_delimiter: Optional parameter to define the delimiter between columns.
+            The default value is blank space.
 
         The `columns` parameter is a list of integers or strings.  If it is an integer, this is
         the absolute width of the column in characters.  If it is a string, it must be of the
@@ -2844,6 +2849,7 @@ class MultiColumnListBox(_BaseListBox):
         self._align = []
         self._spacing = []
         self._add_scroll_bar = add_scroll_bar
+        self._space_delimiter = space_delimiter
         for i, column in enumerate(columns):
             if isinstance(column, int):
                 self._columns.append(column)
@@ -2853,8 +2859,11 @@ class MultiColumnListBox(_BaseListBox):
                 self._columns.append(float(match.group(2)) / 100
                                      if match.group(3) else int(match.group(2)))
                 self._align.append(match.group(1) if match.group(1) else "<")
-            self._spacing.append(1 if i > 0 and self._align[i] == "<" and
+            if space_delimiter == ' ':
+                self._spacing.append(1 if i > 0 and self._align[i] == "<" and
                                  self._align[i - 1] == ">" else 0)
+            else:
+                self._spacing.append(1 if i > 0 else 0)
 
     def _get_width(self, width, max_width):
         """
@@ -2874,7 +2883,7 @@ class MultiColumnListBox(_BaseListBox):
     def _print_cell(self, space, text, align, width, x, y, fg, attr, bg):
         # Sort out spacing first.
         if space:
-            self._frame.canvas.print_at(" " * space, x, y, fg, attr, bg)
+            self._frame.canvas.print_at(self._space_delimiter * space, x, y, fg, attr, bg)
 
         # Now align text, taking into account double space glyphs.
         paint_text = _enforce_width(text, width, self._frame.canvas.unicode_aware)
@@ -3000,8 +3009,9 @@ class MultiColumnListBox(_BaseListBox):
 
     @options.setter
     def options(self, new_value):
+        # Set net list of options and then force an update to the current value to align with the new options.
         self._options = self._parse_options(new_value)
-        self.value = self._options[0][1] if len(self._options) > 0 else None
+        self.value = self._value
 
 
 class FileBrowser(MultiColumnListBox):

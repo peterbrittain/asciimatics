@@ -476,6 +476,9 @@ class TestWidgets(unittest.TestCase):
         event = object()
         self.assertEqual(event, form.process_event(event))
 
+        # Check forms don't want global input handling.
+        self.assertFalse(form.safe_to_default_unhandled_input)
+
     def test_textbox_input(self):
         """
         Check TextBox input works as expected.
@@ -679,9 +682,14 @@ class TestWidgets(unittest.TestCase):
         form.save()
         self.assertEqual(form.data["Things"], 2)
 
-        # Check that the current focus ignores unknown events.
+        # Check that a radio button ignores unknown events.
         event = object()
         self.assertEqual(event, form.process_event(event))
+
+        # Check that setting an unknown value resets to first radio button.
+        form.focussed_widget.value = "Nonexistent value"
+        form.save()
+        self.assertEqual(form.data["Things"], 1)
 
     def test_mouse_input(self):
         """
@@ -743,6 +751,11 @@ class TestWidgets(unittest.TestCase):
         form._has_focus = False
         self.assertIsNone(form.focussed_widget)
 
+        # If the Frame focus is undefined, it must not return a focussed widget.
+        form._has_focus = True
+        form._focus = 9999
+        self.assertIsNone(form.focussed_widget)
+
     def test_frame_focus_widget_property_when_frame_focussed(self):
         """
         check the frame exposes nothing when frame is foccused
@@ -802,6 +815,17 @@ class TestWidgets(unittest.TestCase):
         self.process_keys(form, [Screen.KEY_RIGHT])
         self.assertEqual(form._layouts[form._focus]._live_col, 2)
         self.process_keys(form, [Screen.KEY_LEFT])
+        self.assertEqual(form._layouts[form._focus]._live_col, 1)
+        self.process_keys(form, [Screen.KEY_LEFT])
+        # Reset will be disabled.
+        self.assertEqual(form._layouts[form._focus]._live_col, 2)
+        self.process_keys(form, [Screen.KEY_RIGHT])
+        self.assertEqual(form._layouts[form._focus]._live_col, 1)
+
+        # Check up and down stay in column.
+        self.process_keys(form, [Screen.KEY_UP])
+        self.assertEqual(form._layouts[form._focus]._live_col, 1)
+        self.process_keys(form, [Screen.KEY_DOWN])
         self.assertEqual(form._layouts[form._focus]._live_col, 1)
 
     def test_list_box(self):
@@ -992,7 +1016,7 @@ class TestWidgets(unittest.TestCase):
         layout = Layout([100], fill_frame=True)
         mc_list = MultiColumnListBox(
             Widget.FILL_FRAME,
-            [3, "4", ">4", "<4", ">10%", "100%"],
+            [3, "4", ">4", "<4", "^10%", "100%"],
             [
                 (["1", "2", "3", "4", "5", "6"], 1),
                 (["11", "222", "333", "444", "555", "6"], 2),
@@ -1032,12 +1056,12 @@ class TestWidgets(unittest.TestCase):
         form.update(0)
         self.assert_canvas_equals(
             canvas,
-            "A  B      C D      E F                  \n" +
-            "1  2      3 4      5 6                  \n" +
-            "11 222  333 444  555 6                  \n" +
-            "1112      3 4      5 6                  \n" +
-            "1  2   3... 4      5 6                  \n" +
-            "1  2      3 4      5 6666666666666666666\n" +
+            "A  B      C D    E  F                   \n" +
+            "1  2      3 4    5  6                   \n" +
+            "11 222  333 444 555 6                   \n" +
+            "1112      3 4    5  6                   \n" +
+            "1  2   3... 4    5  6                   \n" +
+            "1  2      3 4    5  66666666666666666666\n" +
             "                                        \n" +
             "                                        \n" +
             "                                        \n" +
@@ -1069,7 +1093,7 @@ class TestWidgets(unittest.TestCase):
         form.update(1)
         self.assert_canvas_equals(
             canvas,
-            "A  B      C D      E F                  \n" +
+            "A  B      C D    E  F                   \n" +
             "                                        \n" +
             "                                        \n" +
             "                                        \n" +
@@ -1083,6 +1107,149 @@ class TestWidgets(unittest.TestCase):
         # Check that the current focus ignores unknown events.
         event = object()
         self.assertEqual(event, form.process_event(event))
+
+        # Check that options retain the current value where possible.
+        mc_list.options = [
+            (["a", "b", "c", "d", "e", "f"], 0),
+            (["b", "b", "c", "d", "e", "f"], 1),
+            (["c", "b", "c", "d", "e", "f"], 2),
+        ]
+        mc_list.value = 1
+        mc_list.options = [
+            (["a", "b", "c", "d", "e", "f"], 0),
+            (["b", "b", "c", "d", "e", "f"], 1),
+            (["c", "b", "c", "d", "e", "f"], 2),
+            (["d", "b", "c", "d", "e", "f"], 3),
+        ]
+        self.assertEqual(mc_list.value, 1)
+        mc_list.options = [
+            (["a", "b", "c", "d", "e", "f"], 0),
+            (["c", "b", "c", "d", "e", "f"], 2),
+            (["d", "b", "c", "d", "e", "f"], 3),
+        ]
+        self.assertEqual(mc_list.value, 0)
+
+
+    def test_multi_column_list_box_delimiter(self):
+        """
+        Check MultiColumnListBox works as expected with space_delimiter
+        """
+        # Create a dummy screen.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        mc_list = MultiColumnListBox(
+            Widget.FILL_FRAME,
+            [3, "4", ">4", "<4", "^10%", "100%"],
+            [
+                (["1", "2", "3", "4", "5", "6"], 1),
+                (["11", "222", "333", "444", "555", "6"], 2),
+                (["111", "2", "3", "4", "5", "6"], 3),
+                (["1", "2", "33333", "4", "5", "6"], 4),
+                (["1", "2", "3", "4", "5", "6666666666666666666666"], 5),
+            ],
+            titles=["A", "B", "C", "D", "E", "F"],
+            name="mc_list",
+            space_delimiter='|')
+        form.add_layout(layout)
+        layout.add_widget(mc_list)
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that the widget is rendered correctly.
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "A  |B   |   C|D   | E  |F               \n" +
+            "1  |2   |   3|4   | 5  |6               \n" +
+            "11 |222 | 333|444 |555 |6               \n" +
+            "111|2   |   3|4   | 5  |6               \n" +
+            "1  |2   |3...|4   | 5  |6               \n" +
+            "1  |2   |   3|4   | 5  |6666666666666666\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+    def test_list_box_scrollbar(self):
+        """
+        Check ListBox scrollbar works.
+        """
+        # Create a dummy screen.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        simple_list = ListBox(
+            3,
+            [
+                ("Some", 1),
+                ("Stuff", 2),
+                ("To", 3),
+                ("See", 4),
+            ],
+            add_scroll_bar=True,
+            name="simple_list")
+        form.add_layout(layout)
+        layout.add_widget(simple_list)
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that the widget is rendered correctly with the scrollbar
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "Some                                   O\n" +
+            "Stuff                                  |\n" +
+            "To                                     |\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        # Check that mouse input works
+        self.process_mouse(form, [(39, 2, MouseEvent.LEFT_CLICK)])
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "Stuff                                  |\n" +
+            "To                                     |\n" +
+            "See                                    O\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        # Check that options can be set and hide scrollbar
+        simple_list.options = [("New list", 1)]
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "New list                                \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
 
     def test_multi_column_list_box_scrollbar(self):
         """
@@ -1674,6 +1841,80 @@ class TestWidgets(unittest.TestCase):
         self.assertEqual(label.custom_colour, "disabled")
         self.assertEqual(canvas.get_from(1, 1), (ord("S"), 0, 1, 4))
 
+        # Cheeky test that Labels always pass on events.
+        event = object()
+        self.assertEqual(event, label.process_event(event))
+
+    @patch("os.stat")
+    @patch("os.listdir")
+    def test_file_browser_stat_err(self, mock_list, mock_stat):
+        """
+        Check FileBrowser widget copes with permissions error on stat.
+        """
+        # First we need to mock out the file system calls to have a regressible test
+        if sys.platform == "win32":
+            self.skipTest("File names wrong for windows")
+
+        mock_list.return_value = ["A Directory", "A File", "A Lnk"]
+        mock_stat.side_effect = OSError("Fake error")
+
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame4(canvas)
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that the Frame is rendered correctly.
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "/                     Size Last modified\n" +
+            "|-- A Directory          0    1970-01-01\n" +
+            "|-- A File               0    1970-01-01\n" +
+            "|-- A Lnk                0    1970-01-01\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+    @patch("os.listdir")
+    def test_file_browser_list_err(self, mock_list):
+        """
+        Check FileBrowser widget copes with permissions error on list.
+        """
+        # First we need to mock out the file system calls to have a regressible test
+        if sys.platform == "win32":
+            self.skipTest("File names wrong for windows")
+
+        mock_list.side_effect = OSError("Fake error")
+
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame4(canvas)
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that the Frame is rendered correctly.
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "/                     Size Last modified\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
     @patch("os.path.exists")
     @patch("os.path.realpath")
     @patch("os.path.islink")
@@ -1690,7 +1931,7 @@ class TestWidgets(unittest.TestCase):
         if sys.platform == "win32":
             self.skipTest("File names wrong for windows")
 
-        mock_list.return_value = ["A Directory", "A File", "A Lnk", str(b"oo\xcc\x88o\xcc\x88O\xcc\x88.txt", 'utf-8')]
+        mock_list.return_value = ["A Directory", "A File", "A Lnk", str(b"oo\xcc\x88o\xcc\x88O\xcc\x88.txt", 'utf-8'), "Lnk Directory"]
         mock_result = MagicMock()
         mock_result.st_mtime = 0
         mock_result.st_size = 10000
@@ -1721,24 +1962,24 @@ class TestWidgets(unittest.TestCase):
             canvas,
             "/                     Size Last modified\n" +
             "|-+ A Directory         9K    1970-01-01\n" +
+            "|-+ Lnk Directo...      9K    1970-01-01\n" +
             "|-- A File              9K    1970-01-01\n" +
             "|-- A Lnk -> A Tgt      9K    1970-01-01\n" +
             "|-- oööÖ.txt            9K    1970-01-01\n" +
             "                                        \n" +
             "                                        \n" +
             "                                        \n" +
-            "                                        \n" +
             "                                        \n")
 
         # Check that mouse inpput changes selection.
-        self.process_mouse(form, [(2, 2, MouseEvent.LEFT_CLICK)])
+        self.process_mouse(form, [(2, 3, MouseEvent.LEFT_CLICK)])
         form.save()
         self.assertEqual(form.data, {"file_list": "/A File"})
         self.assertEqual(form.highlighted, "/A File")
         self.assertIsNone(form.selected)
 
         # Check that UP/DOWN change selection.
-        self.process_keys(form, [Screen.KEY_UP])
+        self.process_keys(form, [Screen.KEY_UP, Screen.KEY_UP])
         form.save()
         self.assertEqual(form.data, {"file_list": "/A Directory"})
         self.assertEqual(form.highlighted, "/A Directory")
@@ -1754,16 +1995,16 @@ class TestWidgets(unittest.TestCase):
             "/A Directory          Size Last modified\n" +
             "|-+ ..                                  \n" +
             "|-+ A Directory         9K    1970-01-01\n" +
+            "|-+ Lnk Directo...      9K    1970-01-01\n" +
             "|-- A File              9K    1970-01-01\n" +
             "|-- A Lnk -> A Tgt      9K    1970-01-01\n" +
             "|-- oööÖ.txt            9K    1970-01-01\n" +
             "                                        \n" +
             "                                        \n" +
-            "                                        \n" +
             "                                        \n")
 
         # Check that enter key handles correctly on files.
-        self.process_keys(form, [Screen.KEY_DOWN, Screen.KEY_DOWN, Screen.ctrl("m")])
+        self.process_keys(form, [Screen.KEY_DOWN, Screen.KEY_DOWN, Screen.KEY_DOWN, Screen.ctrl("m")])
         self.assertEqual(form.highlighted, "/A Directory/A File")
         self.assertEqual(form.selected, "/A Directory/A File")
 
@@ -2066,6 +2307,10 @@ class TestWidgets(unittest.TestCase):
                 self.assertEquals(char, ord(" "))
                 self.assertEquals(bg, 7)
 
+        # Check properties
+        self.assertEquals(form.stop_frame, 0)
+        self.assertGreater(form.frame_update_count, 1000)
+
     def test_dropdown_list(self):
         """
         Check DropdownList widget works as expected.
@@ -2217,6 +2462,30 @@ class TestWidgets(unittest.TestCase):
             "||------------------------------------||\n" +
             "||Item 0                              ||\n" +
             "++------------------------------------++\n")
+
+    def test_divider(self):
+        """
+        Check Divider widget sundry features work.
+        """
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = Frame(canvas, canvas.height, canvas.width)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        divider = Divider(draw_line=False, height=7)
+        layout.add_widget(divider)
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        # Check events are ignored
+        event = object()
+        self.assertEqual(event, divider.process_event(event))
+
+        # Check value is None
+        self.assertIsNone(divider.value)
 
     def test_find_widget(self):
         """
@@ -2439,7 +2708,8 @@ class TestWidgets(unittest.TestCase):
         layout.add_widget(VerticalDivider(), 1)
         layout.add_widget(Label("B"), 1)
         layout.add_widget(TextBox(5), 2)
-        layout.add_widget(VerticalDivider(), 3)
+        divider = VerticalDivider()
+        layout.add_widget(divider, 3)
         layout.add_widget(Label("END"), 4)
         form.fix()
         form.register_scene(scene)
@@ -2461,6 +2731,13 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "|                                      |\n" +
             "+--------------------------------------+\n")
+
+        # Check that a vertcial divider ignores unknown events.
+        event = object()
+        self.assertEqual(event, divider.process_event(event))
+
+        # Check that it has no value.
+        self.assertEqual(divider.value, None)
 
     def test_value_defaults(self):
         """
