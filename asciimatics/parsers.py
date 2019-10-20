@@ -25,6 +25,15 @@ class Parser(with_metaclass(ABCMeta, object)):
     convert them to displayable text and associated colour maps.
     """
 
+    def __init__(self):
+        """
+        Initialize the parser.
+        """
+        self._raw_text = ""
+        self._attributes = None
+        self._cursor = 0
+        self._result = []
+
     def reset(self, text, colours):
         """
         Reset the parser to analyze the supplied raw text.
@@ -224,7 +233,8 @@ class AnsiTerminalParser(Parser):
                     if param in ("", "0"):
                         st.result = st.result[:st.cursor]
                     elif param == "1":
-                        st.result = [[" ", tuple(st.attributes), st.offset] for _ in range(st.cursor)] + st.result[st.cursor:]
+                        st.result = [[" ", tuple(st.attributes), st.offset] for _ in range(st.cursor)] + \
+                                     st.result[st.cursor:]
                     elif param == "2":
                         st.result = [[" ", tuple(st.attributes), st.offset] for _ in range(st.cursor)]
                 elif match.group(3) == "P":

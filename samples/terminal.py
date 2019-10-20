@@ -7,15 +7,15 @@ from asciimatics.event import KeyboardEvent
 import sys
 import subprocess
 import threading
-import select
-import pty
-import os
-import fcntl
-import curses
-import logging
-
-
-# logging.basicConfig(filename="terminal.log", level=logging.DEBUG)
+try:
+    import select
+    import pty
+    import os
+    import fcntl
+    import curses
+except Exception:
+    print("This demo only runs on Unix systems.")
+    sys.exit(0)
 
 
 class Terminal(TextBox):
@@ -104,9 +104,6 @@ def demo(screen, scene):
     ], -1)], stop_on_resize=True, start_scene=scene, allow_int=True)
 
 
-if "linux" not in sys.platform:
-    print("This demo only runs on Unix systems.")
-    sys.exit(0)
 last_scene = None
 while True:
     try:

@@ -80,7 +80,7 @@ class _DoubleBuffer(object):
             self._double_buffer = [line[:] for _ in range(height)]
         else:
             for i in range(y, y + height):
-                self._double_buffer[i][x:x+w] = line[:]
+                self._double_buffer[i][x:x + w] = line[:]
 
     def get(self, x, y):
         """
@@ -2422,7 +2422,6 @@ else:
                 curses.ungetch(3)
             elif signal_no == signal.SIGTSTP:
                 curses.ungetch(26)
-            return
 
         def get_event(self):
             """

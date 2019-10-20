@@ -2189,7 +2189,7 @@ class TextBox(Widget):
         # Clear out the existing box content
         (colour, attr, bg) = self._pick_colours("edit_text")
         self._frame.canvas.clear_buffer(
-                colour, attr, bg, self._x + self._offset, self._y, self.width, height)
+            colour, attr, bg, self._x + self._offset, self._y, self.width, height)
 
         # Convert value offset to display offsets
         # NOTE: _start_column is always in display coordinates.
@@ -2221,7 +2221,7 @@ class TextBox(Widget):
         # if we have the input focus.
         if self._has_focus:
             line = str(display_text[display_line][0])
-            logger.debug("Cursor: {},{}".format(display_start_column, display_column))
+            logger.debug("Cursor: %d,%d", display_start_column, display_column)
             text_width = self.string_len(line[display_start_column:display_column])
             self._draw_cursor(
                 " " if display_column >= len(line) else line[display_column],
@@ -2268,7 +2268,8 @@ class TextBox(Widget):
             elif event.key_code == Screen.KEY_BACK:
                 if self._column > 0:
                     # Delete character in front of cursor.
-                    self._value[self._line] = _join("",
+                    self._value[self._line] = _join(
+                        "",
                         [self._value[self._line][:self._column - 1], self._value[self._line][self._column:]])
                     self._column -= 1
                 else:
@@ -2280,7 +2281,8 @@ class TextBox(Widget):
                             self._value.pop(self._line + 1)
             elif event.key_code == Screen.KEY_DELETE:
                 if self._column < len(self._value[self._line]):
-                    self._value[self._line] = _join("",
+                    self._value[self._line] = _join(
+                        "",
                         [self._value[self._line][:self._column], self._value[self._line][self._column + 1:]])
                 else:
                     if self._line < len(self._value) - 1:
@@ -2321,7 +2323,8 @@ class TextBox(Widget):
                 self._column = len(self._value[self._line])
             elif event.key_code >= 32:
                 # Insert any visible text at the current cursor position.
-                self._value[self._line] = _join(chr(event.key_code),
+                self._value[self._line] = _join(
+                    chr(event.key_code),
                     [self._value[self._line][:self._column], self._value[self._line][self._column:]])
                 self._column += 1
             else:
@@ -3379,7 +3382,6 @@ class _TempPopup(Frame):
         This method can raise an InvalidFields exception to indicate that the current selection is
         invalid and so the pop-up cannot be dismissed.
         """
-        pass
 
 
 class _TimePickerPopup(_TempPopup):
