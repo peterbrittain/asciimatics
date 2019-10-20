@@ -60,13 +60,18 @@ class _DoubleBuffer(object):
 
     def clear(self, fg, attr, bg, x=0, y=0, w=None, h=None):
         """
-        Clear the double-buffer.
+        Clear a box in the double-buffer.
 
         This does not clear the screen buffer and so the next call to deltas will still show all changes.
+        Default box is the whole screen buffer.
 
         :param fg: The foreground colour to use for the new buffer.
         :param attr: The attribute value to use for the new buffer.
         :param bg: The background colour to use for the new buffer.
+        :param x: Optional X coordinate for top left of box.
+        :param y: Optional Y coordinate for top left of box.
+        :param w: Optional width of the box.
+        :param h: Optional height of the box.
         """
         width = self._width if w is None else w
         height = self._height if h is None else h
@@ -503,11 +508,17 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
 
     def clear_buffer(self, fg, attr, bg, x=0, y=0, w=None, h=None):
         """
-        Clear the current double-buffer used by this object.
+        Clear a box in the current double-buffer used by this object.
+
+        Defaults to the whole buffer if no box is specified.
 
         :param fg: The foreground colour to use for the new buffer.
         :param attr: The attribute value to use for the new buffer.
         :param bg: The background colour to use for the new buffer.
+        :param x: Optional X coordinate for top left of box.
+        :param y: Optional Y coordinate for top left of box.
+        :param w: Optional width of the box.
+        :param h: Optional height of the box.
         """
         self._buffer.clear(fg, attr, bg, x, y, w, h)
 
