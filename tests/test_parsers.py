@@ -15,12 +15,14 @@ class TestParsers(unittest.TestCase):
         Check ControlCodeParser  works as expected
         """
         parser = ControlCodeParser()
-        tokens = parser.parse('\0\b\ra[')
-        self.assertEquals(next(tokens), "^@")
-        self.assertEquals(next(tokens), "^H")
-        self.assertEquals(next(tokens), "^M")
-        self.assertEquals(next(tokens), "a")
-        self.assertEquals(next(tokens), "[")
+        parser.reset("\0\b\ra[", None)
+        self.assertEquals(parser.normalize(), "\0\b\ra[")
+        tokens = parser.parse()
+        self.assertEquals(next(tokens), ("^@", (None, None, None), 0))
+        self.assertEquals(next(tokens), ("^H", (None, None, None), 1))
+        self.assertEquals(next(tokens), ("^M", (None, None, None), 2))
+        self.assertEquals(next(tokens), ("a", (None, None, None), 3))
+        self.assertEquals(next(tokens), ("[", (None, None, None), 4))
 
     def test_asciimatics_parser(self):
         """

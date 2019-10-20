@@ -44,6 +44,7 @@ class Parser(with_metaclass(ABCMeta, object)):
         self._raw_text = text
         self._attributes = colours
         self._cursor = 0
+        self._result = []
 
     @property
     def cursor(self):
@@ -53,15 +54,22 @@ class Parser(with_metaclass(ABCMeta, object)):
         return self._cursor
 
     @abstractmethod
+    def normalize(self):
+        """
+        Return the normalized version of the raw string.
+        """
+
     def parse(self):
         """
-        Generator to return coloured text from the current raw text.
+        Generator to return coloured text from raw text.
 
         Generally returns a stream of text/color tuple/offset tuples.  If there is a colour update with no
         visible text, the first element of the tuple may be None.
 
         :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)
         """
+        for element in self._result:
+            yield tuple(element)
 
 
 class ControlCodeParser(Parser):
@@ -69,19 +77,27 @@ class ControlCodeParser(Parser):
     Parser to replace all control codes with a readable version - e.g. "^M" for \r,
     """
 
-    def parse(self, text, colours=None):
+    def reset(self, text, colours=None):
         """
-        Generator to return sanitized text from raw text.
+        Reset the parser to analyze the supplied raw text.
 
         :param text: raw text to process.
         :param colours: colour tuple to initialise the colour map.
-        :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)
         """
-        for letter in text:
+        super(ControlCodeParser, self).reset(text, colours)
+        attributes = (x for x in self._attributes) if self._attributes else (None, None, None)
+        for i, letter in enumerate(text):
             if ord(letter) < 32:
-                yield "^" + chr(ord("@") + ord(letter))
+                self._result.append(
+                    ("^" + chr(ord("@") + ord(letter)), attributes, i))
             else:
-                yield letter
+                self._result.append((letter, attributes, i))
+
+    def normalize(self):
+        """
+        Return the normalized version of the raw string.
+        """
+        return self._raw_text
 
 
 class AsciimaticsParser(Parser):
@@ -101,7 +117,6 @@ class AsciimaticsParser(Parser):
         :param colours: colour tuple to initialise the colour map.
         """
         super(AsciimaticsParser, self).reset(text, colours)
-        self._result = []
         attributes = [x for x in self._attributes] if self._attributes else [None, None, None]
         offset = last_offset = 0
         text = self._raw_text
@@ -137,16 +152,10 @@ class AsciimaticsParser(Parser):
         if last_offset != offset:
             self._result.append([None, tuple(attributes), last_offset])
 
-    def parse(self):
-        """
-        Generator to return coloured text from raw text.
-
-        :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)
-        """
-        for element in self._result:
-            yield tuple(element)
-
     def normalize(self):
+        """
+        Return the normalized version of the raw string.
+        """
         return self._raw_text
 
 
@@ -298,15 +307,6 @@ class AnsiTerminalParser(Parser):
         self._cursor = len(state.result) - state.cursor
         if state.last_offset != state.offset:
             self._result.append([None, tuple(state.attributes), state.last_offset])
-
-    def parse(self):
-        """
-        Generator to return coloured text from raw text.
-
-        :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)
-        """
-        for element in self._result:
-            yield tuple(element)
 
     def normalize(self):
         new_value = ""
