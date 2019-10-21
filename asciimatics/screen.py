@@ -23,6 +23,7 @@ from builtins import object
 from builtins import range
 from builtins import ord
 from builtins import chr
+from builtins import str
 from future.utils import with_metaclass
 from future.moves.itertools import zip_longest
 from wcwidth import wcwidth, wcswidth
@@ -53,22 +54,33 @@ class _DoubleBuffer(object):
         self._height = height
         self._width = width
         self._double_buffer = None
-        line = [(ord(u" "), Screen.COLOUR_WHITE, 0, 0, 1) for _ in range(self._width)]
+        line = [(u" ", Screen.COLOUR_WHITE, 0, 0, 1) for _ in range(self._width)]
         self._screen_buffer = [line[:] for _ in range(self._height)]
         self.clear(Screen.COLOUR_WHITE, 0, 0)
 
-    def clear(self, fg, attr, bg):
+    def clear(self, fg, attr, bg, x=0, y=0, w=None, h=None):
         """
-        Clear the double-buffer.
+        Clear a box in the double-buffer.
 
         This does not clear the screen buffer and so the next call to deltas will still show all changes.
+        Default box is the whole screen buffer.
 
         :param fg: The foreground colour to use for the new buffer.
         :param attr: The attribute value to use for the new buffer.
         :param bg: The background colour to use for the new buffer.
+        :param x: Optional X coordinate for top left of box.
+        :param y: Optional Y coordinate for top left of box.
+        :param w: Optional width of the box.
+        :param h: Optional height of the box.
         """
-        line = [(ord(u" "), fg, attr, bg, 1) for _ in range(self._width)]
-        self._double_buffer = [line[:] for _ in range(self._height)]
+        width = self._width if w is None else w
+        height = self._height if h is None else h
+        line = [(u" ", fg, attr, bg, 1) for _ in range(width)]
+        if x == 0 and y == 0 and w is None and h is None:
+            self._double_buffer = [line[:] for _ in range(height)]
+        else:
+            for i in range(y, y + height):
+                self._double_buffer[i][x:x + w] = line[:]
 
     def get(self, x, y):
         """
@@ -108,7 +120,7 @@ class _DoubleBuffer(object):
 
         :param lines: Number of lines to scroll.  Negative numbers move the buffer up.
         """
-        line = [(ord(u" "), Screen.COLOUR_WHITE, 0, 0, 1) for _ in range(self._width)]
+        line = [(u" ", Screen.COLOUR_WHITE, 0, 0, 1) for _ in range(self._width)]
         if lines > 0:
             # Limit to buffer size - this will just invalidate all the data
             lines = min(lines, self._height)
@@ -494,15 +506,21 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         # Reset the screen ready to go...
         self.reset()
 
-    def clear_buffer(self, fg, attr, bg):
+    def clear_buffer(self, fg, attr, bg, x=0, y=0, w=None, h=None):
         """
-        Clear the current double-buffer used by this object.
+        Clear a box in the current double-buffer used by this object.
+
+        Defaults to the whole buffer if no box is specified.
 
         :param fg: The foreground colour to use for the new buffer.
         :param attr: The attribute value to use for the new buffer.
         :param bg: The background colour to use for the new buffer.
+        :param x: Optional X coordinate for top left of box.
+        :param y: Optional Y coordinate for top left of box.
+        :param w: Optional width of the box.
+        :param h: Optional height of the box.
         """
-        self._buffer.clear(fg, attr, bg)
+        self._buffer.clear(fg, attr, bg, x, y, w, h)
 
     def reset(self):
         """
@@ -557,7 +575,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         if y < 0 or y >= self._buffer_height or x < 0 or x >= self.width:
             return None
         cell = self._buffer.get(x, y)
-        return cell[0], cell[1], cell[2], cell[3]
+        return ord(cell[0]), cell[1], cell[2], cell[3]
 
     def print_at(self, text, x, y, colour=7, attr=0, bg=0, transparent=False):
         """
@@ -583,39 +601,50 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         if y < 0 or y >= self._buffer_height or x > self.width:
             return
 
+        text = str(text)
         if len(text) > 0:
-            j = 0
-            for i, c in enumerate(text):
-                # Handle under-run and overrun of double-width glyphs now.
-                #
-                # Note that wcwidth uses significant resources, so only call when we have a
-                # unicode aware application.  The rest of the time assume ASCII.
-                width = wcwidth(c) if self._unicode_aware and ord(c) >= 256 else 1
-                if x + i + j < 0:
-                    x += (width - 1)
-                    continue
-                if x + i + j + width > self.width:
-                    return
+            if self._unicode_aware:
+                j = 0
+                for i, c in enumerate(text):
+                    # Handle under-run and overrun of double-width glyphs now.
+                    #
+                    # Note that wcwidth uses significant resources, so only call when we have a
+                    # unicode aware application.  The rest of the time assume ASCII.
+                    width = wcwidth(c) if self._unicode_aware and ord(c) >= 256 else 1
+                    if x + i + j < 0:
+                        x += (width - 1)
+                        continue
+                    if x + i + j + width > self.width:
+                        return
 
-                # Now handle the update.
-                if c != " " or not transparent:
-                    # Fix up orphaned double-width glyphs that we've just bisected.
-                    if x + i + j - 1 >= 0 and self._buffer.get(x + i + j - 1, y)[4] == 2:
-                        self._buffer.set(x + i + j - 1, y,
-                                         (ord("x"), 0, 0, 0, 1))
+                    # Now handle the update.
+                    if c != " " or not transparent:
+                        # Fix up orphaned double-width glyphs that we've just bisected.
+                        if x + i + j - 1 >= 0 and self._buffer.get(x + i + j - 1, y)[4] == 2:
+                            self._buffer.set(x + i + j - 1, y, ("x", 0, 0, 0, 1))
 
-                    self._buffer.set(
-                        x + i + j, y, (ord(c), colour, attr, bg, width))
-                    if width == 2:
-                        j += 1
-                        if x + i + j < self.width:
-                            self._buffer.set(
-                                x + i + j, y, (ord(c), colour, attr, bg, 0))
+                        self._buffer.set(x + i + j, y, (c, colour, attr, bg, width))
+                        if width == 2:
+                            j += 1
+                            if x + i + j < self.width:
+                                self._buffer.set(x + i + j, y, (c, colour, attr, bg, 0))
 
-                    # Now fix up any glyphs we may have bisected the other way.
-                    if x + i + j + 1 < self.width and self._buffer.get(x + i + j + 1, y)[4] == 0:
-                        self._buffer.set(x + i + j + 1, y,
-                                         (ord("x"), 0, 0, 0, 1))
+                        # Now fix up any glyphs we may have bisected the other way.
+                        if x + i + j + 1 < self.width and self._buffer.get(x + i + j + 1, y)[4] == 0:
+                            self._buffer.set(x + i + j + 1, y, ("x", 0, 0, 0, 1))
+            else:
+                # Optimized version that ignores double-width characters
+                if x < 0:
+                    text = text[-x:]
+                    x = 0
+                if x + len(text) > self.width:
+                    text = text[:self.width - x]
+                if not transparent:
+                    self._buffer.set(slice(x, x + len(text)), y, [(c, colour, attr, bg, 1) for c in text])
+                else:
+                    for i, c in enumerate(text):
+                        if c != " ":
+                            self._buffer.set(x + i, y, (c, colour, attr, bg, 1))
 
     def block_transfer(self, buffer, x, y):
         """
@@ -702,9 +731,14 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         if colour_map is None:
             self.print_at(text, x, y, colour, attr, bg, transparent)
         else:
-            offset = 0
-            for c, m in zip_longest(text, colour_map):
+            offset = next_offset = 0
+            current = ""
+            for c, m in zip_longest(str(text), colour_map):
                 if m:
+                    if len(current) > 0:
+                        self.print_at(current, x + offset, y, colour, attr, bg, transparent)
+                        offset = next_offset
+                        current = ""
                     if len(m) > 0 and m[0] is not None:
                         colour = m[0]
                     if len(m) > 1 and m[1] is not None:
@@ -712,8 +746,10 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
                     if len(m) > 2 and m[2] is not None:
                         bg = m[2]
                 if c:
-                    self.print_at(c, x + offset, y, colour, attr, bg, transparent)
-                    offset += wcwidth(c) if ord(c) >= 256 else 1
+                    current += c
+                    next_offset += wcwidth(c) if ord(c) >= 256 else 1
+            if len(current) > 0:
+                self.print_at(current, x + offset, y, colour, attr, bg, transparent)
 
     def _blend(self, new, old, ratio):
         """
@@ -1375,7 +1411,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             new_cell = self._buffer.get(x, y)
             if new_cell[4] > 0:
                 self._change_colours(new_cell[1], new_cell[2], new_cell[3])
-                self._print_at(chr(new_cell[0]), x, y, new_cell[4])
+                self._print_at(new_cell[0], x, y, new_cell[4])
 
         # Resynch for next refresh.
         self._buffer.sync()
@@ -2386,7 +2422,6 @@ else:
                 curses.ungetch(3)
             elif signal_no == signal.SIGTSTP:
                 curses.ungetch(26)
-            return
 
         def get_event(self):
             """

@@ -146,14 +146,13 @@ def _enforce_width(text, width, unicode_aware=True):
     """
     # Double-width strings cannot be more than twice the string length, so no need to try
     # expensive truncation if this upper bound isn't an issue.
-    if 2 * len(text) < width:
+    if (2 * len(text) < width) or (len(text) < width and not unicode_aware):
         return text
 
     # Can still optimize performance if we are not handling unicode characters.
     if unicode_aware:
         size = 0
-        for i, c in enumerate(text):
-            c = str(c)
+        for i, c in enumerate(str(text)):
             w = wcwidth(c) if ord(c) >= 256 else 1
             if size + w > width:
                 return text[0:i]
@@ -561,8 +560,7 @@ class Frame(Effect):
         if theme in THEMES:
             self.palette = THEMES[theme]
             if self._scroll_bar:
-                # TODO: fix protected access.
-                self._scroll_bar._palette = self.palette
+                self._scroll_bar.palette = self.palette
 
     @property
     def title(self):
@@ -2190,12 +2188,8 @@ class TextBox(Widget):
 
         # Clear out the existing box content
         (colour, attr, bg) = self._pick_colours("edit_text")
-        for i in range(height):
-            self._frame.canvas.print_at(
-                " " * self.width,
-                self._x + self._offset,
-                self._y + i,
-                colour, attr, bg)
+        self._frame.canvas.clear_buffer(
+            colour, attr, bg, self._x + self._offset, self._y, self.width, height)
 
         # Convert value offset to display offsets
         # NOTE: _start_column is always in display coordinates.
@@ -2203,7 +2197,7 @@ class TextBox(Widget):
         display_start_column = self._start_column
         display_line, display_column = 0, 0
         for i, (_, line, col) in enumerate(display_text):
-            if line <= self._line and col <= self._column:
+            if line < self._line or (line == self._line and col <= self._column):
                 display_line = i
                 display_column = self._column - col
 
@@ -2226,17 +2220,18 @@ class TextBox(Widget):
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
         if self._has_focus:
-            line = display_text[display_line][0]
-            logger.debug("Cursor: {},{}".format(display_start_column, display_column))
-            text_width = self.string_len(str(line[display_start_column:display_column]))
+            line = str(display_text[display_line][0])
+            logger.debug("Cursor: %d,%d", display_start_column, display_column)
+            text_width = self.string_len(line[display_start_column:display_column])
             self._draw_cursor(
-                " " if display_column >= len(line) else str(line[display_column]),
+                " " if display_column >= len(line) else line[display_column],
                 frame_no,
                 self._x + self._offset + text_width,
                 self._y + display_line - self._start_line)
 
     def reset(self):
         # Reset to original data and move to end of the text.
+        self._start_line = 0
         self._line = len(self._value) - 1
         self._column = 0 if self._is_disabled else len(self._value[self._line])
         self._reflowed_text_cache = None
@@ -2273,7 +2268,8 @@ class TextBox(Widget):
             elif event.key_code == Screen.KEY_BACK:
                 if self._column > 0:
                     # Delete character in front of cursor.
-                    self._value[self._line] = _join("",
+                    self._value[self._line] = _join(
+                        "",
                         [self._value[self._line][:self._column - 1], self._value[self._line][self._column:]])
                     self._column -= 1
                 else:
@@ -2285,7 +2281,8 @@ class TextBox(Widget):
                             self._value.pop(self._line + 1)
             elif event.key_code == Screen.KEY_DELETE:
                 if self._column < len(self._value[self._line]):
-                    self._value[self._line] = _join("",
+                    self._value[self._line] = _join(
+                        "",
                         [self._value[self._line][:self._column], self._value[self._line][self._column + 1:]])
                 else:
                     if self._line < len(self._value) - 1:
@@ -2326,7 +2323,8 @@ class TextBox(Widget):
                 self._column = len(self._value[self._line])
             elif event.key_code >= 32:
                 # Insert any visible text at the current cursor position.
-                self._value[self._line] = _join(chr(event.key_code),
+                self._value[self._line] = _join(
+                    chr(event.key_code),
                     [self._value[self._line][:self._column], self._value[self._line][self._column:]])
                 self._column += 1
             else:
@@ -3822,7 +3820,7 @@ class _ScrollBar(object):
         these two functions to translate that internal state into a form the scroll bar can use.
         """
         self._canvas = canvas
-        self._palette = palette
+        self.palette = palette
         self.max_height = 0
         self._x = x
         self._y = y
@@ -3846,7 +3844,7 @@ class _ScrollBar(object):
             sb_pos = max(int(self._height * sb_pos) - 1, 0)
         except ZeroDivisionError:
             sb_pos = 0
-        (colour, attr, bg) = self._palette["scroll"]
+        (colour, attr, bg) = self.palette["scroll"]
         y = self._canvas.start_line if self._absolute else 0
         for dy in range(self._height):
             self._canvas.print_at(cursor if dy == sb_pos else back,
