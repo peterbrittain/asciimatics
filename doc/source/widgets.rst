@@ -341,6 +341,9 @@ with labels for each field, indenting all of the fields to the same depth:
     layout.add_widget(Text("Email address:", "email"))
     layout.add_widget(TextBox(5, "Notes:", "notes", as_string=True))
 
+If you want more direct control of your labels, you could use the :py:obj:`.Label` widget to place
+them anywhere in the Layout as well as control the justification (left, centre or right) of the text.
+
 Or maybe you just want some static text in your UI?  The simplest thing to do there is to use
 the :py:obj:`.Label` widget.  If you need something a little more advanced - e.g. a pre-formatted
 multi-line status bar, use a :py:obj:`.TextBox` and disable it as described below.
