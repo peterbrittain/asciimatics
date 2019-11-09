@@ -74,7 +74,7 @@ class Parser(with_metaclass(ABCMeta, object)):
 
 class ControlCodeParser(Parser):
     """
-    Parser to replace all control codes with a readable version - e.g. "^M" for \r,
+    Parser to replace all control codes with a readable version - e.g. "^M" for \\r.
     """
 
     def reset(self, text, colours=None):
