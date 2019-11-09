@@ -140,6 +140,12 @@ In an attempt to minimize the number of affected platforms, asciimatics v1.9.0 a
 check the OS terminal definitions for ERASE and use that for backspace if it differs from the curses
 terminal definition.
 
+There's a big delay when I press Escape
+---------------------------------------
+This is a well-known default operation for ncurses.  As documented `here 
+<https://stackoverflow.com/a/28020568/4994021>`__ you need to set the `ESCDELAY` environment
+variable before opening the Screen so that ncurses uses a shorter delay.
+
 I can't run it inside PyCharm or other IDEs
 -------------------------------------------
 Depending on which version you're using, you may see pywintypes.error 6 (ERROR_INVALID_HANDLE), or
