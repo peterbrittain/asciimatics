@@ -76,7 +76,7 @@ full 24 bit colour on some terminals.
 
 For now, asciimatics limits itself to a maximum of the 256 colour palette.  You can find how many
 colours your terminal supports by looking at the :py:obj:`~.Screen.colours` property.  These days
-most terminals will zupport a minimum of 8 colours.  These are defined by the `COLOUR_xxx` constants
+most terminals will support a minimum of 8 colours.  These are defined by the `COLOUR_xxx` constants
 in the Screen class.  The full list is as follows:
 
 .. code-block:: python
