@@ -2945,5 +2945,52 @@ class TestWidgets(unittest.TestCase):
         self.assertEqual(canvas.get_from(0, 6), (ord("1"), 3, 1, 4))
         self.assertEqual(canvas.get_from(3, 6), (ord("2"), 2, 1, 4))
 
+    def test_readonly(self):
+        """
+        Check readonly widgets work as expected.
+        """
+        # Create a dummy screen.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        text_box = TextBox(3, as_string=True, readonly=True)
+        layout.add_widget(text_box)
+        text = Text(readonly=True)
+        layout.add_widget(text)
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that entering text has no effect.
+        text_box.value = "Untouchable"
+        text.value = "You can't touch this..."
+        self.process_keys(form, ["1234\r\n", Screen.KEY_BACK, Screen.KEY_DELETE])
+        form.save()
+        self.assertEqual(text_box.value, "Untouchable")
+        self.process_keys(form, [Screen.KEY_TAB, "123", Screen.KEY_BACK, Screen.KEY_DELETE])
+        form.save()
+        self.assertEqual(text.value, "You can't touch this...")
+
+        # Check property works.
+        self.assertTrue(text.readonly)
+        self.assertTrue(text_box.readonly)
+        text.readonly = False
+        text_box.readonly = False
+        self.assertFalse(text.readonly)
+        self.assertFalse(text_box.readonly)
+
+        # Check that entering text now has an effect.
+        self.process_keys(form, [Screen.KEY_TAB, "1234\r\n", Screen.KEY_BACK, Screen.KEY_DELETE])
+        form.save()
+        self.assertEqual(text_box.value, "Untouchable1234\n")
+        self.process_keys(form, [Screen.KEY_TAB, "123", Screen.KEY_BACK, Screen.KEY_DELETE])
+        form.save()
+        self.assertEqual(text.value, "You can't touch this...12")
+
 if __name__ == '__main__':
     unittest.main()

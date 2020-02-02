@@ -55,6 +55,8 @@ THEMES = {
         "title": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLUE),
         "edit_text": (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
         "focus_edit_text": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
+        "readonly": (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLUE),
+        "focus_readonly": (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_CYAN),
         "button": (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
         "focus_button": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN),
         "control": (Screen.COLOUR_YELLOW, Screen.A_NORMAL, Screen.COLOUR_BLUE),
@@ -1579,7 +1581,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         :param x: The x coordinate for the cursor.
         :param y: The y coordinate for the cursor.
         """
-        (colour, attr, bg) = self._pick_colours("edit_text")
+        (colour, attr, bg) = self._pick_colours("readonly" if self._readonly else "edit_text")
         if frame_no % 10 < 5 or self._frame.reduce_cpu:
             attr |= Screen.A_REVERSE
         self._frame.canvas.print_at(char, x, y, colour, attr, bg)
@@ -1792,10 +1794,10 @@ class Text(Widget):
     """
 
     __slots__ = ["_label", "_column", "_start_column", "_on_change", "_validator", "_hide_char",
-                 "_max_length"]
+                 "_max_length", "_readonly"]
 
-    def __init__(self, label=None, name=None, on_change=None, validator=None, hide_char=None, max_length=None,
-                 **kwargs):
+    def __init__(self, label=None, name=None, on_change=None, validator=None, hide_char=None,
+                 max_length=None, readonly=False, **kwargs):
         """
         :param label: An optional label for the widget.
         :param name: The name for the widget.
@@ -1806,6 +1808,7 @@ class Text(Widget):
         :param hide_char: Character to use instead of what the user types - e.g. to hide passwords.
         :param max_length: Optional maximum length of the field.  If set, the widget will limit
             data entry to this length.
+        :param readonly: Whether the widget prevents user input to change values.  Default is False.
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
         """
@@ -1817,6 +1820,7 @@ class Text(Widget):
         self._validator = validator
         self._hide_char = hide_char
         self._max_length = max_length
+        self._readonly = readonly
 
     def set_layout(self, x, y, offset, w, h):
         # Do the usual layout work. then apply max length to resulting dimensions.
@@ -1835,7 +1839,7 @@ class Text(Widget):
                                               self._column >= self.string_len(self._value))
 
         # Render visible portion of the text.
-        (colour, attr, bg) = self._pick_colours("edit_text")
+        (colour, attr, bg) = self._pick_colours("readonly" if self._readonly else "edit_text")
         text = self._value[self._start_column:]
         text = _enforce_width(text, self.width, self._frame.canvas.unicode_aware)
         if self._hide_char:
@@ -1864,13 +1868,13 @@ class Text(Widget):
 
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
-            if event.key_code == Screen.KEY_BACK:
+            if event.key_code == Screen.KEY_BACK and not self._readonly:
                 if self._column > 0:
                     # Delete character in front of cursor.
                     self._set_and_check_value("".join([self._value[:self._column - 1],
                                                        self._value[self._column:]]))
                     self._column -= 1
-            if event.key_code == Screen.KEY_DELETE:
+            elif event.key_code == Screen.KEY_DELETE and not self._readonly:
                 if self._column < len(self._value):
                     self._set_and_check_value("".join([self._value[:self._column],
                                                        self._value[self._column + 1:]]))
@@ -1884,7 +1888,7 @@ class Text(Widget):
                 self._column = 0
             elif event.key_code == Screen.KEY_END:
                 self._column = len(self._value)
-            elif event.key_code >= 32:
+            elif event.key_code >= 32 and not self._readonly:
                 # Enforce required max length - swallow event if not allowed
                 if self._max_length is None or len(self._value) < self._max_length:
                     # Insert any visible text at the current cursor position.
@@ -1921,6 +1925,17 @@ class Text(Widget):
     def frame_update_count(self):
         # Force refresh for cursor if needed.
         return 5 if self._has_focus and not self._frame.reduce_cpu else 0
+
+    @property
+    def readonly(self):
+        """
+        Whether this widget is readonly or not.
+        """
+        return self._readonly
+
+    @readonly.setter
+    def readonly(self, new_value):
+        self._readonly = new_value
 
     @property
     def value(self):
@@ -2144,10 +2159,11 @@ class TextBox(Widget):
     """
 
     __slots__ = ["_label", "_line", "_column", "_start_line", "_start_column", "_required_height",
-                 "_as_string", "_line_wrap", "_on_change", "_reflowed_text_cache", "_parser"]
+                 "_as_string", "_line_wrap", "_on_change", "_reflowed_text_cache", "_parser",
+                 "_readonly"]
 
     def __init__(self, height, label=None, name=None, as_string=False, line_wrap=False, parser=None,
-                 on_change=None, **kwargs):
+                 on_change=None, readonly=False, **kwargs):
         """
         :param height: The required number of input lines for this TextBox.
         :param label: An optional label for the widget.
@@ -2157,6 +2173,7 @@ class TextBox(Widget):
         :param line_wrap: Whether to wrap at the end of the line.
         :param parser: Optional parser to colour text.
         :param on_change: Optional function to call when text changes.
+        :param readonly: Whether the widget prevents user input to change values.  Default is False.
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
         """
@@ -2172,6 +2189,7 @@ class TextBox(Widget):
         self._parser = parser
         self._on_change = on_change
         self._reflowed_text_cache = None
+        self._readonly = readonly
 
     def update(self, frame_no):
         self._draw_label()
@@ -2187,7 +2205,7 @@ class TextBox(Widget):
                 self._column >= self.string_len(str(self._value[self._line])))
 
         # Clear out the existing box content
-        (colour, attr, bg) = self._pick_colours("edit_text")
+        (colour, attr, bg) = self._pick_colours("readonly" if self._readonly else "edit_text")
         self._frame.canvas.clear_buffer(
             colour, attr, bg, self._x + self._offset, self._y, self.width, height)
 
@@ -2258,14 +2276,14 @@ class TextBox(Widget):
 
         if isinstance(event, KeyboardEvent):
             old_value = copy(self._value)
-            if event.key_code in [10, 13]:
+            if event.key_code in [10, 13] and not self._readonly:
                 # Split and insert line  on CR or LF.
                 self._value.insert(self._line + 1,
                                    self._value[self._line][self._column:])
                 self._value[self._line] = self._value[self._line][:self._column]
                 self._line += 1
                 self._column = 0
-            elif event.key_code == Screen.KEY_BACK:
+            elif event.key_code == Screen.KEY_BACK and not self._readonly:
                 if self._column > 0:
                     # Delete character in front of cursor.
                     self._value[self._line] = _join(
@@ -2279,7 +2297,7 @@ class TextBox(Widget):
                         self._column = len(self._value[self._line])
                         self._value[self._line] += \
                             self._value.pop(self._line + 1)
-            elif event.key_code == Screen.KEY_DELETE:
+            elif event.key_code == Screen.KEY_DELETE and not self._readonly:
                 if self._column < len(self._value[self._line]):
                     self._value[self._line] = _join(
                         "",
@@ -2321,7 +2339,7 @@ class TextBox(Widget):
             elif event.key_code == Screen.KEY_END:
                 # Go to the end of this line
                 self._column = len(self._value[self._line])
-            elif event.key_code >= 32:
+            elif event.key_code >= 32 and not self._readonly:
                 # Insert any visible text at the current cursor position.
                 self._value[self._line] = _join(
                     chr(event.key_code),
@@ -2435,6 +2453,17 @@ class TextBox(Widget):
         # Only trigger the notification after we've changed the value.
         if old_value != self._value and self._on_change:
             self._on_change()
+
+    @property
+    def readonly(self):
+        """
+        Whether this widget is readonly or not.
+        """
+        return self._readonly
+
+    @readonly.setter
+    def readonly(self, new_value):
+        self._readonly = new_value
 
     @property
     def frame_update_count(self):

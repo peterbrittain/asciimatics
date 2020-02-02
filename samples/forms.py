@@ -36,6 +36,7 @@ form_data = {
     "TB": "alphabet",
     "TC": "123",
     "TD": "a@b.com",
+    "RO": "You can't touch this",
     "Things": 2,
     "CA": False,
     "CB": True,
@@ -83,6 +84,7 @@ class DemoFrame(Frame):
                  name="TD",
                  on_change=self._on_change,
                  validator=self._check_email), 1)
+        layout.add_widget(Text(label="Readonly:", name="RO", readonly=True), 1)
         layout.add_widget(Divider(height=2), 1)
         layout.add_widget(Label("Group 2:"), 1)
         layout.add_widget(RadioButtons([("Option 1", 1),
