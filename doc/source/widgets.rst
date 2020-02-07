@@ -323,8 +323,8 @@ button to the first and last columns:
 
 .. code-block:: python
 
-    layout2.add_widget(Button("OK", self._ok), 0)
-    layout2.add_widget(Button("Cancel", self._cancel), 3)
+    layout.add_widget(Button("OK", self._ok), 0)
+    layout.add_widget(Button("Cancel", self._cancel), 3)
 
 If you want to put a standard label on all your input fields, that's fine too; asciimatics will
 decide how big your label needs to be across all fields in the same column and then indent them all
