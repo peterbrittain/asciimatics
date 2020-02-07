@@ -156,7 +156,9 @@ asciimatics will not work.  There are 2 workarounds.
 1. The simplest is just to run asciimatics inside a real terminal or window - i.e. not inside
    PyCharm/the IDE.
 
-2. If you must run inside PyCharm, the Professional edition offers an option to emulate console output directly in PyCharm. To enable this functionality, see *Run | Edit Configurations | Configuration | Execution | Emulate terminal in output console*, otherwise you must start a
+2. If you must run inside PyCharm, the Professional edition offers an option to emulate console
+   output directly in PyCharm. To enable this functionality, see *Run | Edit Configurations | 
+   Configuration | Execution | Emulate terminal in output console*, otherwise you must start a
    real console from the Terminal window e.g. using `start cmd /c "python <your file name>"`.
 
 .. _unicode-issues-ref:
