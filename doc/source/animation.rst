@@ -33,11 +33,6 @@ can pass this list to :py:meth:`.play` which will run through the Scenes in
 order, or stop playing if the user exits by pressing 'q' (assuming you use the
 default key handling).
 
-If you cannot allow asciimatics to schedule each frame itself, e.g. because you
-are using an asynchronous framework of your own like gevent or twisted, you
-can use :py:meth:`.set_scenes` to set up your scenes and
-:py:meth:`.draw_next_frame` (every 1/20 of a second) to draw the next frame.
-
 Sprites and Paths
 -----------------
 A :py:obj:`.Sprite` is a special Effect designed to move some rendered text
@@ -139,3 +134,56 @@ asciimatics is being too conservative and you need to refresh the ``Screen``
 before it thinks you need to do so.  In this case, you can simply force its hand
 by calling :py:meth:`.force_update`, which will force a full refresh of the
 ``Screen`` next time that :py:meth:`.draw_next_frame` is called.
+
+Using async frameworks
+----------------------
+If you cannot allow asciimatics to schedule each frame itself, e.g. because you
+are using an asynchronous framework like gevent, asyncio or twisted, that's
+fine.  Asciimatics is designed to run in tiny time slices that are ideal for 
+such a framework.  All you need to do is call :py:meth:`.set_scenes` to set up
+your scenes and :py:meth:`.draw_next_frame` (every 1/20 of a second) to draw
+the next frame.
+
+For example, here is how you can run inside an asyncio event loop.
+
+.. code-block:: python
+
+    import asyncio
+    from asciimatics.effects import Cycle, Stars
+    from asciimatics.renderers import FigletText
+    from asciimatics.scene import Scene
+    from asciimatics.screen import Screen
+
+
+    def update_screen(end_time, loop, screen):
+        screen.draw_next_frame()
+        if loop.time() < end_time:
+            loop.call_later(0.05, update_screen, end_time, loop, screen)
+        else:
+            loop.stop()
+
+
+    # Define the scene that you'd like to play.
+    screen = Screen.open()
+    effects = [
+        Cycle(
+            screen,
+            FigletText("ASCIIMATICS", font='big'),
+            screen.height // 2 - 8),
+        Cycle(
+            screen,
+            FigletText("ROCKS!", font='big'),
+            screen.height // 2 + 3),
+        Stars(screen, (screen.width + screen.height) // 2)
+    ]
+    screen.set_scenes([Scene(effects, 500)])
+
+    # Schedule the first call to display_date()
+    loop = asyncio.get_event_loop()
+    end_time = loop.time() + 5.0
+    loop.call_soon(update_screen, end_time, loop, screen)
+
+    # Blocking call interrupted by loop.stop()
+    loop.run_forever()
+    loop.close()
+    screen.close()
