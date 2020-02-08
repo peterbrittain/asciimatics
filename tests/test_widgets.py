@@ -1002,6 +1002,30 @@ class TestWidgets(unittest.TestCase):
         self.assertEqual(self._did_blur, True)
         self.assertEqual(self._did_focus, False)
 
+    def test_load_callback(self):
+        """
+        Check that the _on_load callback works as expected.
+        """
+        def _on_load():
+            self._did_load = True
+
+        # Reset state for test
+        self._did_load = False
+
+        # Create a dummy screen
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        canvas = Canvas(screen, 2, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, on_load=_on_load)
+        form.fix()
+        scene = Scene([form], -1)
+
+        # Check only called on reset.
+        self.assertEqual(self._did_load, False)
+        scene.reset()
+        self.assertEqual(self._did_load, True)
+
     def test_multi_column_list_box(self):
         """
         Check MultiColumnListBox works as expected.
