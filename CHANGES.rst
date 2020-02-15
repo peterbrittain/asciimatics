@@ -7,6 +7,7 @@ LATEST
 - Added parsers to handle Asciimatics and Ansi Terminal escape sequences.
 - Added ControlCodeParser to create human readable text from raw text with control codes in it.
 - Added readonly logic for Text and TextBox.
+- Added ability to enable/disable widgets by column in layouts.
 - Fixed exception on reinstating NoneType signal handler.
 - Fixed float/int issue with recent builds of pywin32.
 - Fixed issue where setting options changed the selected value (even if it was still present).

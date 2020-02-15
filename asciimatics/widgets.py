@@ -1360,6 +1360,32 @@ class Layout(object):
         self._live_widget = -1
         self._find_next_widget(1)
 
+    def enable(self, columns=None):
+        """
+        Enable all widgets in the specified columns of  this Layout.
+
+        :param columns: The list of columns to enable.  Defaults to all columns.
+        """
+        # Enable all widgets in required columns.
+        for column in columns if columns else range(len(self._columns)):
+            for widget in self._columns[column]:
+                widget.disabled = False
+
+    def disable(self, columns=None):
+        """
+        Disable all widgets in the specified columns of  this Layout.
+
+        :param columns: The list of columns to disable.  Defaults to all columns.
+        """
+        # Disable all widgets in required columns.
+        for column in columns if columns else range(len(self._columns)):
+            for widget in self._columns[column]:
+                widget.disabled = True
+
+        # Update focus if needed.
+        if columns is None or self._live_col in columns:
+            self._find_next_widget(1)
+
 
 class Widget(with_metaclass(ABCMeta, object)):
     """

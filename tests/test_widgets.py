@@ -3016,5 +3016,55 @@ class TestWidgets(unittest.TestCase):
         form.save()
         self.assertEqual(text.value, "You can't touch this...12")
 
+    def test_layout_disable(self):
+        """
+        Check en/disable on layouts work as expected.
+        """
+        # Create a dummy screen.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([1,1], fill_frame=True)
+        form.add_layout(layout)
+        for col in range(2):
+            layout.add_widget(Label("A field"), col)
+            layout.add_widget(Text(), col)
+            layout.add_widget(Button("OK", None), col)
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        def _assert_disabled(cols):
+            for i, widgets in enumerate(layout._columns):
+                for widget in widgets:
+                    self.assertEqual(widget.disabled, i in cols)
+
+        # Check focus moves away from disabled widgets.
+        self.assertEqual(layout._live_col, 0)
+        self.assertEqual(layout._live_widget, 1)
+        layout.disable([0])
+        self.assertEqual(layout._live_col, 1)
+        self.assertEqual(layout._live_widget, 1)
+        layout.enable([1])
+        self.assertEqual(layout._live_col, 1)
+        self.assertEqual(layout._live_widget, 1)
+
+        # Check that disabling only disables specified columns.
+        for col in range(2):
+            layout.disable([col])
+            _assert_disabled([col])
+            layout.enable([col])
+            _assert_disabled([])
+
+        # Check that no parameter disables everything
+        layout.disable()
+        _assert_disabled(range(2))
+        layout.enable()
+        _assert_disabled([])
+
+
 if __name__ == '__main__':
     unittest.main()
