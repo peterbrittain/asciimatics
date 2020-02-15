@@ -740,7 +740,8 @@ need to do is:
 3. Use that saved reference to the model to handle updates as needed inside your view's callbacks or methods.
 
 For a concrete example of how to do this check out the contact list sample and look at how it defines and uses
-the ``ContactModel``.
+the ``ContactModel``.  Alternatively, the quick_model sample shows how the same forms would work witha simple
+list of dictionaries instead.
 
 Dynamic scenes
 --------------
