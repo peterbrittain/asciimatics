@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
-from math import sin, cos, tan, atan2, pi, copysign, sqrt
+from math import sin, cos, tan, pi, copysign, sqrt
 from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent
 from asciimatics.exceptions import ResizeScreenError, StopApplication
@@ -45,18 +45,26 @@ class GameState(object):
         self.mode = 1
         self.show_mini_map = True
 
-    # TODO: Consider changing to property for this and update y.
     def safe_update_x(self, new_x):
+        new_x += self.x
         if 0 <= self.y < len(self.map) and 0 <= new_x < len(self.map[0]):
             if self.map[int(self.y)][int(new_x)] == "X":
                 return
         self.x = new_x
 
     def safe_update_y(self, new_y):
+        new_y += self.y
         if 0 <= new_y < len(self.map) and 0 <= self.x < len(self.map[0]):
             if self.map[int(new_y)][int(self.x)] == "X":
                 return
         self.y = new_y
+
+    def safe_update_angle(self, new_angle):
+        self.player_angle += new_angle
+        if self.player_angle < 0:
+            self.player_angle += 2 * pi
+        if self.player_angle > 2 * pi:
+            self.player_angle -= 2 * pi
 
 
 class MiniMap(Effect):
@@ -85,8 +93,12 @@ class MiniMap(Effect):
             for my in range(self._size):
                 px = int(self._state.x) + mx - self._size // 2
                 py = int(self._state.y) + my - self._size // 2
-                text = self._state.map[py][px] * 2 if 0 <= py < len(self._state.map) and 0 <= px < len(self._state.map[0]) else "  "
-                self._screen.print_at(text, self._x + 2 * mx, self._y + my, Screen.COLOUR_RED)
+                if (0 <= py < len(self._state.map) and
+                        0 <= px < len(self._state.map[0]) and self._state.map[py][px] != " "):
+                    colour = Screen.COLOUR_RED
+                else:
+                    colour = Screen.COLOUR_BLACK
+                self._screen.print_at("  ", self._x + 2 * mx, self._y + my, colour, bg=colour)
 
         # Draw the player
         text = ">>"
@@ -94,7 +106,8 @@ class MiniMap(Effect):
             if a < self._state.player_angle <= b:
                 text = direction
                 break
-        self._screen.print_at(text, self._x + self._size // 2 * 2, self._y + self._size // 2, Screen.COLOUR_GREEN)
+        self._screen.print_at(
+            text, self._x + self._size // 2 * 2, self._y + self._size // 2, Screen.COLOUR_GREEN)
 
     @property
     def stop_frame(self):
@@ -120,49 +133,24 @@ class RayCaster(Effect):
 
     def __init__(self, screen, game_state):
         super(RayCaster, self).__init__(screen)
-        # Basic state
         self._state = game_state
         self._block_size = screen.height // 3
         if screen.colours >= 256:
             self._colours = [x for x in zip(range(255, 232, -1), [0] * 24, range(255, 232, -1))]
         else:
-            self._colours = [
-                (7, Screen.A_BOLD, 0),
-                (7, Screen.A_BOLD, 0),
-                (7, Screen.A_BOLD, 0),
-                (7, Screen.A_BOLD, 0),
-                (7, Screen.A_BOLD, 0),
-                (7, Screen.A_BOLD, 0),
-                (7, Screen.A_NORMAL, 0),
-                (7, Screen.A_NORMAL, 0),
-                (7, Screen.A_NORMAL, 0),
-                (7, Screen.A_NORMAL, 0),
-                (7, Screen.A_NORMAL, 0),
-                (7, Screen.A_NORMAL, 0),
-                (7, Screen.A_NORMAL, 0),
-                (7, Screen.A_NORMAL, 0),
-                (7, Screen.A_NORMAL, 0),
-                (0, Screen.A_BOLD, 0),
-                (0, Screen.A_BOLD, 0),
-                (0, Screen.A_BOLD, 0),
-                (0, Screen.A_BOLD, 0),
-                (0, Screen.A_BOLD, 0),
-                (0, Screen.A_BOLD, 0),
-                (0, Screen.A_BOLD, 0),
-                (0, Screen.A_BOLD, 0),
-                (0, Screen.A_BOLD, 0),
-                (0, 0, 0)]
+            self._colours = [(Screen.COLOUR_WHITE, Screen.A_BOLD, 0) for _ in range(6)]
+            self._colours.extend([(Screen.COLOUR_WHITE, Screen.A_NORMAL, 0) for _ in range(9)])
+            self._colours.extend([(Screen.COLOUR_BLACK, Screen.A_BOLD, 0) for _ in range(9)])
+            self._colours.append((Screen.COLOUR_BLACK, Screen.A_NORMAL, 0))
 
     def _update(self, _):
-        # First Draw the background - simple split of floor and ceiling.
-        # TODO: Use some form of distance for shading?
-        self._screen.clear_buffer(0, 0, 0, 0, 0, self._screen.width, self._screen.height // 2)
-        self._screen.clear_buffer(0, 0, 0, 0, self._screen.height // 2, self._screen.width, self._screen.height - self._screen.height // 2)
+        # First draw the background - which is theoretically the floor and ceiling.
+        self._screen.clear_buffer(0, 0, 0, 0, 0, self._screen.width, self._screen.height)
 
         # TODO: Revisit this algorithm.  Look at the combined version from other tutorial
         # Now do the ray casting across the visible canvas.
         # Compensate for aspect ratio by treating 2 cells as a single pixel.
-        last_x, last_y, last_side = -1, -1, None
+        last_side = None
         for sx in range(0, self._screen.width, 2):
             # Calculate the ray for this vertical slice.
             angle = self.FOV * sx / self._screen.width - (self.FOV / 2) + self._state.player_angle
@@ -211,21 +199,23 @@ class RayCaster(Effect):
                     wall = int(self._block_size * self.VIEW_DISTANCE / dist)
                     colour, attr, bg = self._colours[min(len(self._colours) - 1, int(3 * dist))]
                     text = self._TEXTURES[min(len(self._TEXTURES) - 1, int(2 * dist))]
-                    new_x, new_y, new_side = int(map_x), int(map_y), False
+                    new_side = False
                 else:
                     wall = int(self._block_size * self.VIEW_DISTANCE / dist2)
                     colour, attr, bg = self._colours[min(len(self._colours) - 1, int(3 * dist2))]
                     text = self._TEXTURES[min(len(self._TEXTURES) - 1, int(2 * dist2))]
-                    new_x, new_y, new_side = int(map2_x), int(map2_y), True
+                    new_side = True
                 wall = min(self._screen.height, wall)
 
                 # Now draw the wall segment
                 for sy in range(wall):
-                    self._screen.print_at(text * 2, sx, (self._screen.height - wall) // 2 + sy, colour, attr, bg=0 if self._state.mode == 1 else bg)
+                    self._screen.print_at(
+                        text * 2, sx, (self._screen.height - wall) // 2 + sy,
+                        colour, attr, bg=0 if self._state.mode == 1 else bg)
 
                 # Draw a line when we change surfaces to help make it easier to see the 3d effect
                 if new_side != last_side:
-                    last_x, last_y, last_side = new_x, new_y, new_side
+                    last_side = new_side
                     for sy in range(wall):
                         self._screen.print_at("|", sx, (self._screen.height - wall) // 2 + sy, 0, bg=0)
 
@@ -243,8 +233,8 @@ class DemoScene(Scene):
     """
     Scene to control the combined Effects for the demo.
 
-    This class handles the user input, updating the game state as required and will redraw everything on
-    each frame update.
+    This class handles the user input, updating the game state updating required Effects as needed.
+    Drawing of the Scene is then handled in the usual way.
     """
 
     def __init__(self, screen, game_state):
@@ -268,20 +258,15 @@ class DemoScene(Scene):
             if c in (ord("x"), ord("X")):
                 raise StopApplication("User exit")
             elif c in (ord("a"), Screen.KEY_LEFT):
-                # TODO: Consider moving to game state property
-                self._state.player_angle -= pi / 45
-                if self._state.player_angle < 0:
-                    self._state.player_angle += 2 * pi
+                self._state.safe_update_angle(-pi / 45)
             elif c in (ord("d"), Screen.KEY_RIGHT):
-                self._state.player_angle += pi / 45
-                if self._state.player_angle > 2 * pi:
-                    self._state.player_angle -= 2 * pi
+                self._state.safe_update_angle(pi / 45)
             elif c in (ord("w"), Screen.KEY_UP):
-                self._state.safe_update_x(self._state.x + cos(self._state.player_angle) / 5)
-                self._state.safe_update_y(self._state.y + sin(self._state.player_angle) / 5)
+                self._state.safe_update_x(cos(self._state.player_angle) / 5)
+                self._state.safe_update_y(sin(self._state.player_angle) / 5)
             elif c in (ord("s"), Screen.KEY_DOWN):
-                self._state.safe_update_x(self._state.x - cos(self._state.player_angle) / 5)
-                self._state.safe_update_y(self._state.y - sin(self._state.player_angle) / 5)
+                self._state.safe_update_x(-cos(self._state.player_angle) / 5)
+                self._state.safe_update_y(-sin(self._state.player_angle) / 5)
             elif c in (ord("1"), ord("2")):
                 self._state.mode = c - ord("0")
             elif c in (ord("m"), ord("M")):
@@ -310,5 +295,5 @@ if __name__ == "__main__":
         try:
             Screen.wrapper(demo, catch_interrupt=False, arguments=[game_state])
             sys.exit(0)
-        except ResizeScreenError as e:
+        except ResizeScreenError:
             pass
