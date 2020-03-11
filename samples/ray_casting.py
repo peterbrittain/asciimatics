@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
-from math import sin, cos, tan, pi, copysign, sqrt
+from math import sin, cos, pi, copysign, sqrt
 from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent
 from asciimatics.exceptions import ResizeScreenError, StopApplication
@@ -122,6 +122,8 @@ class MiniMap(Effect):
 class RayCaster(Effect):
     """
     Raycaster effect - will draw a 3D rendition of the map stored in the GameState.
+
+    This class follows the logic from https://lodev.org/cgtutor/raycasting.html.
     """
 
     # Textures to emulate h distance.
@@ -147,65 +149,69 @@ class RayCaster(Effect):
         # First draw the background - which is theoretically the floor and ceiling.
         self._screen.clear_buffer(0, 0, 0, 0, 0, self._screen.width, self._screen.height)
 
-        # TODO: Revisit this algorithm.  Look at the combined version from other tutorial
         # Now do the ray casting across the visible canvas.
         # Compensate for aspect ratio by treating 2 cells as a single pixel.
         last_side = None
         for sx in range(0, self._screen.width, 2):
             # Calculate the ray for this vertical slice.
-            angle = self.FOV * sx / self._screen.width - (self.FOV / 2) + self._state.player_angle
-            ray_x = cos(angle)
-            ray_y = sin(angle)
+            #TODO: Check that this is right for the camera plane conversion
+            angle = self.FOV * sx / self._screen.width - (self.FOV / 2)
+            ray_x = cos(angle + self._state.player_angle)
+            ray_y = sin(angle + self._state.player_angle)
 
-            # Find current square in map
-            next_y_step = int(copysign(1, ray_y))
-            try:
-                next_x_step = next_y_step / tan(angle)
-            except ZeroDivisionError:
-                next_x_step = 9999999
-            map_y = int(self._state.y + (next_y_step + 1) // 2)
-            map_x = self._state.x + next_x_step * abs(map_y - self._state.y)
+            # Representation of the ray within our map
+            map_x = int(self._state.x)
+            map_y = int(self._state.y)
             hit = False
+            hit_side = False
+
+            # Logical length along the ray from one x or y-side to next x or y-side
+            try:
+                ratio_to_x = abs(1 / ray_x)
+            except ZeroDivisionError:
+                ratio_to_x = 999999
+            try:
+                ratio_to_y = abs(1 / ray_y)
+            except ZeroDivisionError:
+                ratio_to_y = 999999
+
+            # Calculate block step direction and initial partial step to the next side (on same
+            # logical scale as the previous ratios).
+            step_x = int(copysign(1, ray_x))
+            step_y = int(copysign(1, ray_y))
+            side_x = (self._state.x - map_x) if ray_x < 0 else (map_x + 1.0 - self._state.x)
+            side_x *= ratio_to_x
+            side_y = (self._state.y - map_y) if ray_y < 0 else (map_y + 1.0 - self._state.y)
+            side_y *= ratio_to_y
+
             while True:
+                # Move along the ray to the next nearest side (measured in distance along the ray).
+                if side_x < side_y:
+                    side_x += ratio_to_x
+                    map_x += step_x
+                    hit_side = False
+                else:
+                    side_y += ratio_to_y
+                    map_y += step_y
+                    hit_side = True
+                # Check whether the ray has now hit a wall.
                 try:
-                    if self._state.map[map_y + (next_y_step - 1) // 2][int(map_x)] == "X":
+                    if self._state.map[map_y][map_x] == "X":
                         hit = True
                         break
-                    map_x += next_x_step
-                    map_y += next_y_step
                 except IndexError:
                     break
 
-            next_x_step = int(copysign(1, ray_x))
-            next_y_step = next_x_step * tan(angle)
-            map2_x = int(self._state.x + (next_x_step + 1) // 2)
-            map2_y = self._state.y + next_y_step * abs(map2_x - self._state.x)
-            hit2 = False
-            while True:
-                try:
-                    if self._state.map[int(map2_y)][map2_x + (next_x_step - 1) // 2] == "X":
-                        hit2 = True
-                        break
-                    map2_x += next_x_step
-                    map2_y += next_y_step
-                except IndexError:
-                    break
-
-            if hit or hit2:
+            # Draw wall if needed.
+            if hit:
                 # Figure out textures and colours to use based on the distance to the wall.
-                dist = sqrt((map_x - self._state.x) ** 2 + (map_y - self._state.y) ** 2) * cos(self.FOV * sx / self._screen.width - (self.FOV / 2))
-                dist2 = sqrt((map2_x - self._state.x) ** 2 + (map2_y - self._state.y) ** 2) * cos(self.FOV * sx / self._screen.width - (self.FOV / 2))
-                if hit and dist < dist2:
-                    wall = int(self._block_size * self.VIEW_DISTANCE / dist)
-                    colour, attr, bg = self._colours[min(len(self._colours) - 1, int(3 * dist))]
-                    text = self._TEXTURES[min(len(self._TEXTURES) - 1, int(2 * dist))]
-                    new_side = False
+                if hit_side:
+                    dist = (map_y - self._state.y + (1 - step_y) / 2) / ray_y
                 else:
-                    wall = int(self._block_size * self.VIEW_DISTANCE / dist2)
-                    colour, attr, bg = self._colours[min(len(self._colours) - 1, int(3 * dist2))]
-                    text = self._TEXTURES[min(len(self._TEXTURES) - 1, int(2 * dist2))]
-                    new_side = True
-                wall = min(self._screen.height, wall)
+                    dist = (map_x - self._state.x + (1 - step_x) / 2) / ray_x
+                wall = min(self._screen.height, int(self._block_size * self.VIEW_DISTANCE / dist))
+                colour, attr, bg = self._colours[min(len(self._colours) - 1, int(3 * dist))]
+                text = self._TEXTURES[min(len(self._TEXTURES) - 1, int(2 * dist))]
 
                 # Now draw the wall segment
                 for sy in range(wall):
@@ -214,8 +220,8 @@ class RayCaster(Effect):
                         colour, attr, bg=0 if self._state.mode == 1 else bg)
 
                 # Draw a line when we change surfaces to help make it easier to see the 3d effect
-                if new_side != last_side:
-                    last_side = new_side
+                if hit_side != last_side:
+                    last_side = hit_side
                     for sy in range(wall):
                         self._screen.print_at("|", sx, (self._screen.height - wall) // 2 + sy, 0, bg=0)
 
