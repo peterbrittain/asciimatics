@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
-from math import sin, cos, pi, copysign, sqrt
+from math import sin, cos, pi, copysign
 from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent
 from asciimatics.exceptions import ResizeScreenError, StopApplication
@@ -110,6 +110,11 @@ class MiniMap(Effect):
             text, self._x + self._size // 2 * 2, self._y + self._size // 2, Screen.COLOUR_GREEN)
 
     @property
+    def frame_update_count(self):
+        # No animation required.
+        return 0
+
+    @property
     def stop_frame(self):
         # No specific end point for this Effect.  Carry on running forever.
         return 0
@@ -129,9 +134,8 @@ class RayCaster(Effect):
     # Textures to emulate h distance.
     _TEXTURES = "@&#$AHhwai;:. "
 
-    # Controls for rendering - where to project screen and field of vision for that projection
-    VIEW_DISTANCE = 4
-    FOV = pi / 3
+    # Controls for rendering - this is the relative size of the camera plane to the viewing vector.
+    FOV = 0.66
 
     def __init__(self, screen, game_state):
         super(RayCaster, self).__init__(screen)
@@ -154,10 +158,11 @@ class RayCaster(Effect):
         last_side = None
         for sx in range(0, self._screen.width, 2):
             # Calculate the ray for this vertical slice.
-            #TODO: Check that this is right for the camera plane conversion
-            angle = self.FOV * sx / self._screen.width - (self.FOV / 2)
-            ray_x = cos(angle + self._state.player_angle)
-            ray_y = sin(angle + self._state.player_angle)
+            camera_x = cos(self._state.player_angle + pi / 2) * self.FOV
+            camera_y = sin(self._state.player_angle + pi / 2) * self.FOV
+            camera_segment = 2 * sx / self._screen.width - 1
+            ray_x = cos(self._state.player_angle) + camera_x * camera_segment
+            ray_y = sin(self._state.player_angle) + camera_y * camera_segment
 
             # Representation of the ray within our map
             map_x = int(self._state.x)
@@ -209,7 +214,7 @@ class RayCaster(Effect):
                     dist = (map_y - self._state.y + (1 - step_y) / 2) / ray_y
                 else:
                     dist = (map_x - self._state.x + (1 - step_x) / 2) / ray_x
-                wall = min(self._screen.height, int(self._block_size * self.VIEW_DISTANCE / dist))
+                wall = min(self._screen.height, int(self._screen.height / dist))
                 colour, attr, bg = self._colours[min(len(self._colours) - 1, int(3 * dist))]
                 text = self._TEXTURES[min(len(self._TEXTURES) - 1, int(2 * dist))]
 
@@ -226,6 +231,11 @@ class RayCaster(Effect):
                         self._screen.print_at("|", sx, (self._screen.height - wall) // 2 + sy, 0, bg=0)
 
     @property
+    def frame_update_count(self):
+        # No animation required.
+        return 0
+
+    @property
     def stop_frame(self):
         # No specific end point for this Effect.  Carry on running forever.
         return 0
@@ -235,11 +245,11 @@ class RayCaster(Effect):
         pass
 
 
-class DemoScene(Scene):
+class GameController(Scene):
     """
     Scene to control the combined Effects for the demo.
 
-    This class handles the user input, updating the game state updating required Effects as needed.
+    This class handles the user input, updating the game state and updating required Effects as needed.
     Drawing of the Scene is then handled in the usual way.
     """
 
@@ -251,11 +261,11 @@ class DemoScene(Scene):
             RayCaster(screen, self._state),
             self._mini_map
         ]
-        super(DemoScene, self).__init__(effects, -1)
+        super(GameController, self).__init__(effects, -1)
 
     def process_event(self, event):
         # Allow standard event processing first
-        if super(DemoScene, self).process_event(event) is None:
+        if super(GameController, self).process_event(event) is None:
             return
 
         # If that didn't handle it, check for a key that this demo understands.
@@ -292,7 +302,7 @@ class DemoScene(Scene):
 
 
 def demo(screen, game_state):
-    screen.play([DemoScene(screen, game_state)], stop_on_resize=True)
+    screen.play([GameController(screen, game_state)], stop_on_resize=True)
 
 
 if __name__ == "__main__":
