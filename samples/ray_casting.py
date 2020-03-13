@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
-from math import sin, cos, pi, copysign
+from math import sin, cos, pi, copysign, floor
 from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent
 from asciimatics.exceptions import ResizeScreenError, StopApplication
@@ -45,17 +45,25 @@ class GameState(object):
         self.mode = 1
         self.show_mini_map = True
 
+    @property
+    def map_x(self):
+        return int(floor(self.x))
+
+    @property
+    def map_y(self):
+        return int(floor(self.y))
+
     def safe_update_x(self, new_x):
         new_x += self.x
         if 0 <= self.y < len(self.map) and 0 <= new_x < len(self.map[0]):
-            if self.map[int(self.y)][int(new_x)] == "X":
+            if self.map[self.map_y][int(floor(new_x))] == "X":
                 return
         self.x = new_x
 
     def safe_update_y(self, new_y):
         new_y += self.y
         if 0 <= new_y < len(self.map) and 0 <= self.x < len(self.map[0]):
-            if self.map[int(new_y)][int(self.x)] == "X":
+            if self.map[int(floor(new_y))][self.map_x] == "X":
                 return
         self.y = new_y
 
@@ -91,8 +99,8 @@ class MiniMap(Effect):
         # Draw the miniature map.
         for mx in range(self._size):
             for my in range(self._size):
-                px = int(self._state.x) + mx - self._size // 2
-                py = int(self._state.y) + my - self._size // 2
+                px = self._state.map_x + mx - self._size // 2
+                py = self._state.map_y + my - self._size // 2
                 if (0 <= py < len(self._state.map) and
                         0 <= px < len(self._state.map[0]) and self._state.map[py][px] != " "):
                     colour = Screen.COLOUR_RED
@@ -165,8 +173,8 @@ class RayCaster(Effect):
             ray_y = sin(self._state.player_angle) + camera_y * camera_segment
 
             # Representation of the ray within our map
-            map_x = int(self._state.x)
-            map_y = int(self._state.y)
+            map_x = self._state.map_x
+            map_y = self._state.map_y
             hit = False
             hit_side = False
 
@@ -189,7 +197,9 @@ class RayCaster(Effect):
             side_y = (self._state.y - map_y) if ray_y < 0 else (map_y + 1.0 - self._state.y)
             side_y *= ratio_to_y
 
-            while True:
+            # Give up if we'll never intersect the map
+            while ((step_x < 0 and map_x >= 0) or (step_x > 0 and map_x < len(self._state.map[0])) and
+                    (step_y < 0 and map_y >= 0) or (step_y > 0 and map_y < len(self._state.map))):
                 # Move along the ray to the next nearest side (measured in distance along the ray).
                 if side_x < side_y:
                     side_x += ratio_to_x
@@ -199,13 +209,12 @@ class RayCaster(Effect):
                     side_y += ratio_to_y
                     map_y += step_y
                     hit_side = True
+
                 # Check whether the ray has now hit a wall.
-                try:
+                if 0 <= map_x < len(self._state.map[0]) and 0 <= map_y < len(self._state.map):
                     if self._state.map[map_y][map_x] == "X":
                         hit = True
                         break
-                except IndexError:
-                    break
 
             # Draw wall if needed.
             if hit:
