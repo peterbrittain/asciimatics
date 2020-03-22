@@ -12,6 +12,7 @@ LATEST
 - Fixed float/int issue with recent builds of pywin32.
 - Fixed issue where setting options changed the selected value (even if it was still present).
 - Fixed erroneuos trigger of on_load for all Frames at start of day.
+- Fixed bug where Frames passed on events that they already handled.
 
 1.11.0
 ------

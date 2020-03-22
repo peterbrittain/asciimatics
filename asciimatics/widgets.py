@@ -902,8 +902,9 @@ class Frame(Effect):
                         return None
 
         # Don't allow events to bubble down if this window owns the Screen (as already
-        # calculated when taking te focus) or if the Frame is modal.
-        return None if claimed_focus or self._is_modal else old_event
+        # calculated when taking te focus) or if the Frame is modal or we handled the
+        # event.
+        return None if claimed_focus or self._is_modal or event is None else old_event
 
 
 class Layout(object):
