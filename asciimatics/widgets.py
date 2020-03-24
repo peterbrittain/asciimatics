@@ -373,6 +373,7 @@ class Frame(Effect):
         self.string_len = wcswidth if self._canvas.unicode_aware else len
 
         # Ensure that we have the default palette in place
+        self._theme = None
         self.set_theme("default")
 
     def _get_pos(self):
@@ -560,6 +561,7 @@ class Frame(Effect):
         :param theme: The name of the theme to set.
         """
         if theme in THEMES:
+            self._theme = theme
             self.palette = THEMES[theme]
             if self._scroll_bar:
                 self._scroll_bar.palette = self.palette
@@ -684,9 +686,10 @@ class Frame(Effect):
         # data from the old object to the new (using the name).
         if self._name is not None:
             for effect in scene.effects:
-                logger.debug("Cloning: %s", effect._name)
                 if isinstance(effect, Frame):
+                    logger.debug("Cloning: %s", effect._name)
                     if effect._name == self._name:
+                        effect.set_theme(self._theme)
                         effect.data = self.data
                         for layout in self._layouts:
                             layout.update_widgets(new_frame=effect)

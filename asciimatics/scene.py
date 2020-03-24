@@ -52,12 +52,10 @@ class Scene(object):
         # apply it where possible by cloning objects where appropriate.
         if old_scene:
             for old_effect in old_scene.effects:
-                # Using the "easier to ask forgiveness..." mantra, just try
-                # cloning everything and ignore any AttributeErrors.
-                try:
+                # catching AttributeErrors here has hidden bugs, so explicitly
+                # check for the cloning interface before calling it.
+                if hasattr(old_effect, "clone"):
                     old_effect.clone(screen, self)
-                except AttributeError:
-                    pass
 
     def exit(self):
         """
