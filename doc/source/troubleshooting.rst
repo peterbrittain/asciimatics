@@ -72,6 +72,29 @@ support additional colours and how to enable them see `this Wikipedia article
 In most cases, simply selecting a terminal type of ``xterm-256color`` will usually do the trick
 these days.
 
+
+The color theme resets when I resize the terminal
+-------------------------------------------------
+You can re-apply your color theme by printing the ANSI sequences to the standard output.
+For example, to re-apply a `pywal <https://github.com/dylanaraps/pywal>`_ color theme:
+
+.. code-block:: python
+
+    from pathlib import Path
+    from asciimatics.screen import ManagedScreen
+
+    with ManagedScreen() as screen:
+        # do stuff
+        if screen.has_resized():
+            wal_sequences = Path.home() / ".cache" / "wal" / "sequences"
+            try:
+                with wal_sequences.open("rb") as fd:
+                    contents = fd.read()
+                    sys.stdout.buffer.write(contents)
+            except Exception:
+                pass
+
+
 .. _mouse-issues-ref:
 
 Mouse support not working
