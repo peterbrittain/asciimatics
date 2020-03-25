@@ -60,7 +60,6 @@ error (the "ERR" result).
 
 The fix is to use a more modern terminal definition like ``xterm`` or ``xterm-256color``.
 
-
 256 colours not working
 -----------------------
 By default a lot of terminals will only support 8/16 colours.  Windows users are limited to just
@@ -72,10 +71,16 @@ support additional colours and how to enable them see `this Wikipedia article
 In most cases, simply selecting a terminal type of ``xterm-256color`` will usually do the trick
 these days.
 
-
 The color theme resets when I resize the terminal
 -------------------------------------------------
-You can re-apply your color theme by printing the ANSI sequences to the standard output.
+There was a bug where asciimatics would not maintain its own colour themes on resize.  This
+has been fixed as of early 2020.  You should just upgrade to the latest version to fix this.
+
+However, there are also some other applications that change the terminal colour scheme on
+startup using the terminal's control sequences.  These will not be invoked by asciimatics
+on a resize event.  If you use such an application, you will need to invoke the control
+sequences yourself.
+
 For example, to re-apply a `pywal <https://github.com/dylanaraps/pywal>`_ color theme:
 
 .. code-block:: python
@@ -93,7 +98,6 @@ For example, to re-apply a `pywal <https://github.com/dylanaraps/pywal>`_ color 
                     sys.stdout.buffer.write(contents)
             except Exception:
                 pass
-
 
 .. _mouse-issues-ref:
 
@@ -118,7 +122,7 @@ Windows
 Asciimatics will reprogram the Windows console to report mouse events on start-up.  However, it is
 possible to change this while the application is running.  In particular, if you switch on
 QuickEdit mode, Windows will stop reporting mouse events and process them itself.  It is not
-possible to have both, so if you want to use the mouse in yor app, please switch off QuickEdit
+possible to have both, so if you want to use the mouse in your app, please switch off QuickEdit
 mode.
 
 Windows title does not change
