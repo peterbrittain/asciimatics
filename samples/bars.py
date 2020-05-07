@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from asciimatics.effects import Print
 from asciimatics.renderers import BarChart, FigletText
 from asciimatics.scene import Scene

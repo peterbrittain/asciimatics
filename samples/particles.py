@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from random import randint
 from asciimatics.effects import Print
 from asciimatics.particles import Explosion, StarFirework, DropScreen, Rain, \

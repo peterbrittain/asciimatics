@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from asciimatics.event import KeyboardEvent
 from asciimatics.widgets import Frame, Layout, MultiColumnListBox, Widget, Label, TextBox
 from asciimatics.scene import Scene

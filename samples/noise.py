@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from asciimatics.effects import RandomNoise
 from asciimatics.renderers import FigletText, Rainbow
 from asciimatics.scene import Scene

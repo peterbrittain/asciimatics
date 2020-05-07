@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from asciimatics.effects import Stars, Print
 from asciimatics.particles import RingFirework, SerpentFirework, StarFirework, \
     PalmFirework

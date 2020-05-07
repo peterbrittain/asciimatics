@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from asciimatics.effects import Sprite, Print
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import ResizeScreenError

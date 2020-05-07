@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from asciimatics.renderers import FigletText, Fire
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from math import sqrt
 
 from asciimatics.renderers import Kaleidoscope, FigletText, Rainbow, RotatedDuplicate, \
