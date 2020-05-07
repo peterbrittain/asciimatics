@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from asciimatics.widgets import Frame, TextBox, Layout, Label, Divider, Text, \
     CheckBox, RadioButtons, Button, PopUpDialog, TimePicker, DatePicker, Background, DropdownList, \
     PopupMenu

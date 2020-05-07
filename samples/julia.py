@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from asciimatics.effects import Julia
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen

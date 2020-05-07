@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from asciimatics.renderers import BarChart
 from asciimatics.screen import Screen
 import sys

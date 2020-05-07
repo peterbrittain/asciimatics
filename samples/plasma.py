@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from random import choice
 from asciimatics.renderers import Plasma, Rainbow, FigletText
 from asciimatics.scene import Scene

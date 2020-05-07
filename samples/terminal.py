@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from asciimatics.widgets import Frame, TextBox, Layout, Background, Widget
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen

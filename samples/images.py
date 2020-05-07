@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from __future__ import division
 from asciimatics.effects import BannerText, Print, Scroll
 from asciimatics.renderers import ColourImageFile, FigletText, ImageFile
