@@ -309,7 +309,7 @@ class Print(Effect):
             If False, this will redraw all characters and so replace any Effect underneath it.
         :param speed: The refresh rate in frames between refreshes.
 
-        Note that a spped of 1 will force the Screen to redraw the Effect every frame update, while a value
+        Note that a speed of 1 will force the Screen to redraw the Effect every frame update, while a value
         of 0 will redraw on demand - i.e. will redraw every time that an update is required by another Effect.
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
