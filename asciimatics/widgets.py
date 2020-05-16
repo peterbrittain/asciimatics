@@ -3798,6 +3798,12 @@ class DropdownList(Widget):
         """
         return self._options
 
+    @options.setter
+    def options(self, new_value):
+        self._options = new_value
+        self._line = 0 if len(new_value) > 0 else None
+        self._value = new_value[self._line][1] if self._line is not None else None
+
     def update(self, frame_no):
         self._draw_label()
 
