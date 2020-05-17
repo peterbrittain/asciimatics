@@ -2448,7 +2448,8 @@ class TestWidgets(unittest.TestCase):
         layout = Layout([100], fill_frame=True)
         form.add_layout(layout)
         layout.add_widget(Divider(draw_line=False, height=7))
-        layout.add_widget(DropdownList([("Item {}".format(i), i) for i in range(10)]))
+        dd_list = DropdownList([("Item {}".format(i), i) for i in range(10)])
+        layout.add_widget(dd_list)
         form.fix()
         form.register_scene(scene)
         scene.add_effect(form)
@@ -2486,6 +2487,12 @@ class TestWidgets(unittest.TestCase):
             "||------------------------------------||\n" +
             "||Item 0                              ||\n" +
             "++------------------------------------++\n")
+
+        # Check that options can be read and set.
+        dd_list.options = [(["a", "b", "c", "d", "e", "f"], 0)]
+        self.assertEqual(dd_list.options, [(["a", "b", "c", "d", "e", "f"], 0)])
+        dd_list.options = []
+        self.assertEqual(dd_list.options, [])
 
     def test_divider(self):
         """
