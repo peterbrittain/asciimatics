@@ -473,12 +473,14 @@ class SpeechBubble(StaticRenderer):
         if uni:
             bubble = "╭─" + "─" * max_len + "─╮\n"
             for line in text.split("\n"):
-                bubble += "│ " + line + " │\n"
+                filler = " " * (max_len - len(line))
+                bubble += "│ " + line + filler + " │\n"
             bubble += "╰─" + "─" * max_len + "─╯\n"
         else:
             bubble = ".-" + "-" * max_len + "-.\n"
             for line in text.split("\n"):
-                bubble += "| " + line + " |\n"
+                filler = " " * (max_len - len(line))
+                bubble += "| " + line + filler + " |\n"
             bubble += "`-" + "-" * max_len + "-`\n"
         if tail == "L":
             bubble += "  )/  \n"
