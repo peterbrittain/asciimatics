@@ -129,6 +129,19 @@ class TestRenderers(unittest.TestCase):
                          u"│ hello │\n"
                          u"╰───────╯\n")
 
+        # Multiline text rendering
+        text =  "Hello\n"       \
+                "World! \n"     \
+                "Hello World!"
+
+        renderer = SpeechBubble(text, uni=True)
+        self.assertEqual(str(renderer),
+                        "╭──────────────╮\n" +
+                        "│ Hello        │\n" +
+                        "│ World!       │\n" +
+                        "│ Hello World! │\n" +
+                        "╰──────────────╯\n")
+
     def test_box(self):
         """
         Check that the Box renderer works.
