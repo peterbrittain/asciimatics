@@ -475,17 +475,19 @@ class SpeechBubble(StaticRenderer):
             for line in text.split("\n"):
                 filler = " " * (max_len - len(line))
                 bubble += "│ " + line + filler + " │\n"
-            bubble += "╰─" + "─" * max_len + "─╯\n"
+            bubble += "╰─" + "─" * max_len + "─╯"
         else:
             bubble = ".-" + "-" * max_len + "-.\n"
             for line in text.split("\n"):
                 filler = " " * (max_len - len(line))
                 bubble += "| " + line + filler + " |\n"
-            bubble += "`-" + "-" * max_len + "-`\n"
+            bubble += "`-" + "-" * max_len + "-`"
         if tail == "L":
+            bubble += "\n"
             bubble += "  )/  \n"
             bubble += "-\"`\n"
         elif tail == "R":
+            bubble += "\n"
             bubble += (" " * max_len) + "\\(  \n"
             bubble += (" " * max_len) + " `\"-\n"
         self._images = [bubble]

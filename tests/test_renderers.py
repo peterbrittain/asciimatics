@@ -102,7 +102,7 @@ class TestRenderers(unittest.TestCase):
         self.assertEqual(str(renderer),
                          ".-------.\n" +
                          "| hello |\n" +
-                         "`-------`\n")
+                         "`-------`")
 
         # Left bubble.
         renderer = SpeechBubble("world", tail="L")
@@ -127,20 +127,24 @@ class TestRenderers(unittest.TestCase):
         self.assertEqual(str(renderer),
                          u"╭───────╮\n"
                          u"│ hello │\n"
-                         u"╰───────╯\n")
+                         u"╰───────╯")
 
         # Multiline text rendering
-        text =  "Hello\n"       \
-                "World! \n"     \
-                "Hello World!"
+        text = "Hello\n" \
+               "World! \n" \
+               "Hello World!"
 
         renderer = SpeechBubble(text, uni=True)
         self.assertEqual(str(renderer),
-                        "╭──────────────╮\n" +
-                        "│ Hello        │\n" +
-                        "│ World!       │\n" +
-                        "│ Hello World! │\n" +
-                        "╰──────────────╯\n")
+                         "╭──────────────╮\n" +
+                         "│ Hello        │\n" +
+                         "│ World!       │\n" +
+                         "│ Hello World! │\n" +
+                         "╰──────────────╯")
+
+        # Test render height
+        renderer = SpeechBubble("Hello World", uni=True)
+        self.assertEqual(renderer.max_height, 3)
 
     def test_box(self):
         """
@@ -326,7 +330,7 @@ class TestRenderers(unittest.TestCase):
             # Create a base renderer
             plain_text = (".-------.\n" +
                           "| hello |\n" +
-                          "`-------`\n")
+                          "`-------`")
             renderer = SpeechBubble("hello")
             self.assertEqual(str(renderer), plain_text)
 
@@ -345,8 +349,7 @@ class TestRenderers(unittest.TestCase):
                     [(1, 1, None), (3, 1, None), (3, 1, None), (2, 1, None), (2, 1, None),
                      (6, 1, None), (6, 1, None), (4, 1, None), (4, 1, None)],
                     [(3, 1, None), (3, 1, None), (2, 1, None), (2, 1, None), (6, 1, None),
-                     (6, 1, None), (4, 1, None), (4, 1, None), (5, 1, None)],
-                    []])
+                     (6, 1, None), (4, 1, None), (4, 1, None), (5, 1, None)]])
 
         Screen.wrapper(internal_checks, height=15)
 
