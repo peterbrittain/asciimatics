@@ -1,6 +1,6 @@
 -r base.txt
 # Tie down version to ensure Image dithering is consistent in UTs
-Pillow == 5.4.1
+Pillow == 6.2.2
 coveralls
 appveyor-artifacts
 mock
