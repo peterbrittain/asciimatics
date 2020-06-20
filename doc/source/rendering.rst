@@ -32,7 +32,7 @@ variants.
         return randint(0, 40)
     renderer = BarChart(10, 40, [fn, fn], char='=')
 
-Once you have a Renderer you can extract the next text to de displayed by calling
+Once you have a Renderer you can extract the next text to be displayed by calling
 :py:meth:`~asciimatics.renderers.Renderer.rendered_text`.  This will cycle round the static rendered text
 sequentially or just create the new dynamic rendered text and return it (for use in the Screen paint method).
 Generally speaking, rather than doing this directly with the Screen, you will typically want to use an Effect
