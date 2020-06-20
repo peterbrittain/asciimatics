@@ -27,7 +27,8 @@ try:
 except ImportError:
     from backports.functools_lru_cache import lru_cache
 from abc import ABCMeta, abstractmethod, abstractproperty
-from asciimatics.effects import Effect
+# TODO: remove Background in move to v2.0
+from asciimatics.effects import Effect, Background
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import Highlander, InvalidFields
 from asciimatics.screen import Screen, Canvas
@@ -265,37 +266,6 @@ def _split_text(text, width, height, unicode_aware=True):
         if len(line) > width:
             result[i] = line[:width - 3] + "..."
     return result
-
-
-class Background(Effect):
-    """
-    Effect to be used as a Desktop background.  This sets the background to the specified
-    colour.
-    """
-
-    def __init__(self, screen, bg=0, **kwargs):
-        """
-        :param screen: The Screen being used for the Scene.
-        :param bg: Optional colour for the background.
-
-        Also see the common keyword arguments in :py:obj:`.Effect`.
-        """
-        super(Background, self).__init__(screen, **kwargs)
-        self._bg = bg
-
-    def reset(self):
-        pass
-
-    def _update(self, frame_no):
-        self._screen.clear_buffer(7, 0, self._bg)
-
-    @property
-    def frame_update_count(self):
-        return 1000000
-
-    @property
-    def stop_frame(self):
-        return self._stop_frame
 
 
 class Frame(Effect):

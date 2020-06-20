@@ -779,6 +779,10 @@ The ordering is important.  The effects at the bottom of the list are at the top
 order and so will be displayed in preference to those lower in the Z order (i.e. those earlier in
 the list).
 
+The most likely reason you will want to use this is to use the :py:obj:`.Background` Effect to
+set a background colour for the whole screen behind your Frames.  See the forms.py demo for an
+example of this use case.
+
 Pop-up dialogs
 ~~~~~~~~~~~~~~
 Along a similar line, you can also add a :py:obj:`.PopUpDialog` to your Scenes at any time.  These

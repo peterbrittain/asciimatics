@@ -1119,3 +1119,34 @@ class Julia(Effect):
     @property
     def stop_frame(self):
         return self._stop_frame
+
+
+class Background(Effect):
+    """
+    Effect to be used as a Desktop background.  This sets the background to the specified
+    colour.
+    """
+
+    def __init__(self, screen, bg=0, **kwargs):
+        """
+        :param screen: The Screen being used for the Scene.
+        :param bg: Optional colour for the background.
+
+        Also see the common keyword arguments in :py:obj:`.Effect`.
+        """
+        super(Background, self).__init__(screen, **kwargs)
+        self._bg = bg
+
+    def reset(self):
+        pass
+
+    def _update(self, frame_no):
+        self._screen.clear_buffer(7, 0, self._bg)
+
+    @property
+    def frame_update_count(self):
+        return 1000000
+
+    @property
+    def stop_frame(self):
+        return self._stop_frame

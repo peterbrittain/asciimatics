@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 from asciimatics.widgets import Frame, TextBox, Layout, Label, Divider, Text, \
-    CheckBox, RadioButtons, Button, PopUpDialog, TimePicker, DatePicker, Background, DropdownList, \
-    PopupMenu
+    CheckBox, RadioButtons, Button, PopUpDialog, TimePicker, DatePicker, DropdownList, PopupMenu
+from asciimatics.effects import Background
 from asciimatics.event import MouseEvent
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen

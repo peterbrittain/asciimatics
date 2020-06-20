@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-from asciimatics.widgets import Frame, TextBox, Layout, Background, Widget
+from asciimatics.widgets import Frame, TextBox, Layout, Widget
+from asciimatics.effects import Background
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError
