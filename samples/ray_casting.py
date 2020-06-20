@@ -200,8 +200,8 @@ class RayCaster(Effect):
             side_y *= ratio_to_y
 
             # Give up if we'll never intersect the map
-            while ((step_x < 0 and map_x >= 0) or (step_x > 0 and map_x < len(self._state.map[0])) and
-                    (step_y < 0 and map_y >= 0) or (step_y > 0 and map_y < len(self._state.map))):
+            while (((step_x < 0 and map_x >= 0) or (step_x > 0 and map_x < len(self._state.map[0]))) and
+                   ((step_y < 0 and map_y >= 0) or (step_y > 0 and map_y < len(self._state.map)))):
                 # Move along the ray to the next nearest side (measured in distance along the ray).
                 if side_x < side_y:
                     side_x += ratio_to_x

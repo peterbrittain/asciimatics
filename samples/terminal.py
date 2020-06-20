@@ -9,6 +9,7 @@ from asciimatics.event import KeyboardEvent
 import sys
 import subprocess
 import threading
+import logging
 try:
     import select
     import pty
@@ -18,6 +19,9 @@ try:
 except Exception:
     print("This demo only runs on Unix systems.")
     sys.exit(0)
+
+
+logging.basicConfig(filename="term.log", level=logging.DEBUG)
 
 
 class Terminal(TextBox):
