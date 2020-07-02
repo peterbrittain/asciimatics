@@ -52,7 +52,7 @@ after_success:
         appveyor-artifacts download
         python coverage_fix.py */.coverage
         coverage combine .coverage.travis */.coverage
-        coveralls
+        coveralls -v
         ;;
     esac
     set +ex
