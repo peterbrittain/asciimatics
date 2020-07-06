@@ -1378,20 +1378,21 @@ class Widget(with_metaclass(ABCMeta, object)):
                  "_display_label", "_is_tab_stop", "_is_disabled", "_is_valid", "_custom_colour", "_on_focus",
                  "_on_blur", "string_len"]
 
-    def __init__(self, name, tab_stop=True, disabled=False, on_focus=None, on_blur=None):
+    def __init__(self, name, tab_stop=True, disabled=False, on_focus=None, on_blur=None, value=None):
         """
         :param name: The name of this Widget.
         :param tab_stop: Whether this widget should take focus or not when tabbing around the Frame.
         :param disabled: Whether this Widget should be disabled or not.
         :param on_focus: Optional callback whenever this widget gets the focus.
         :param on_blur: Optional callback whenever this widget loses the focus.
+        :param value: Optional provides a default value or act as placeholder.
         """
         super(Widget, self).__init__()
         # Internal properties
         self._name = name
         self._label = None
         self._frame = None
-        self._value = None
+        self._value = value
         self._has_focus = False
         self._x = self._y = 0
         self._w = self._h = 0
