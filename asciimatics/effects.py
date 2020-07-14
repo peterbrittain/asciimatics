@@ -405,6 +405,59 @@ class Mirage(Effect):
     def stop_frame(self):
         return self._stop_frame
 
+class Typewriter(Effect):
+    """
+    Effect to render specified text from left to right.  This
+    text is automatically centred on the screen.
+    """
+
+    def __init__(self, screen, renderer, y, colour, **kwargs):
+        """
+        :param screen: The Screen being used for the Scene.
+        :param renderer: The renderer to be displayed.
+        :param y: The line (y coordinate) for the start of the text.
+        :param colour: The colour attribute to use for the text.
+
+        Also see the common keyword arguments in :py:obj:`.Effect`.
+        """
+        super(Typewriter, self).__init__(screen, **kwargs)
+        self._renderer = renderer
+        self._y = y
+        self._colour = colour
+        self._rendered_x = 0
+        self._rendered_y = 0
+
+    def reset(self):
+        pass
+
+    def _update(self, frame_no):
+        if frame_no % 2 == 0:
+            return
+
+        y = self._y
+        j = self._rendered_y
+        image, colours = self._renderer.rendered_text
+        for i, line in enumerate(image):
+            if self._screen.is_visible(0, y):
+                if self._rendered_x == 0:
+                    x = (self._screen.width - len(line)) // 2
+                else:
+                    x = self._rendered_x
+                if j < len(line) and line[j] != " ":
+                    if colours[i][j][0] is not None:
+                        self._screen.print_at(line[j], x, y,
+                                              colours[i][j][0],
+                                              colours[i][j][1])
+                    else:
+                        self._screen.print_at(line[j], x, y, self._colour)
+                x += 1
+            y += 1
+        self._rendered_x = x
+        self._rendered_y += 1
+
+    @property
+    def stop_frame(self):
+        return self._stop_frame
 
 class _Star(object):
     """

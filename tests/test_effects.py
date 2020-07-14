@@ -6,7 +6,7 @@ from random import randint
 import os
 import sys
 from asciimatics.effects import Print, Cycle, BannerText, Mirage, Scroll, \
-    Stars, Matrix, Snow, Wipe, Clock, Cog, RandomNoise, Julia
+    Stars, Matrix, Snow, Wipe, Clock, Cog, RandomNoise, Julia, Typewriter
 from asciimatics.paths import Path
 from asciimatics.renderers import FigletText, StaticRenderer
 from asciimatics.scene import Scene
@@ -174,6 +174,32 @@ class TestEffects(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         effect = Mirage(canvas, FigletText("hello"), 3, 1)
+        effect.reset()
+        effect.update(0)
+        self.assert_blank(canvas)
+        effect.update(1)
+        changed = False
+        for x in range(canvas.width):
+            for y in range(canvas.height):
+                if canvas.get_from(x, y) != (32, 7, 0, 0):
+                    changed = True
+        self.assertTrue(changed)
+
+        # Check there is no stop frame by default.
+        self.assertEqual(effect.stop_frame, 0)
+
+        # This effect should ignore events.
+        event = object()
+        self.assertEqual(event, effect.process_event(event))
+
+    def test_typewriter(self):
+        """
+        Check that Typewriter works.
+        """
+        # Check that Typewriter updates the Screen from left to right every other frame.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        effect = Typewriter(canvas, FigletText("hello"), 3, 1)
         effect.reset()
         effect.update(0)
         self.assert_blank(canvas)
