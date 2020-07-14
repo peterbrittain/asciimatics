@@ -405,6 +405,7 @@ class Mirage(Effect):
     def stop_frame(self):
         return self._stop_frame
 
+
 class Typewriter(Effect):
     """
     Effect to render specified text from left to right.  This
@@ -458,6 +459,7 @@ class Typewriter(Effect):
     @property
     def stop_frame(self):
         return self._stop_frame
+
 
 class _Star(object):
     """
