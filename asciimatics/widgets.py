@@ -2773,7 +2773,7 @@ class ListBox(_BaseListBox):
                 if len(text) > width:
                     text = text[:width - 3] + "..."
                 paint_text = _enforce_width(text, width, self._frame.canvas.unicode_aware)
-                paint_text += " " * (width - self.string_len(paint_text))
+                paint_text += " " * (width - self.string_len(str(paint_text)))
                 self._frame.canvas.paint(
                     str(paint_text),
                     self._x + self._offset,
