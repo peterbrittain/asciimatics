@@ -2815,7 +2815,7 @@ class ListBox(_BaseListBox):
     @options.setter
     def options(self, new_value):
         # Set net list of options and then force an update to the current value to align with the new options.
-        self._options = new_value
+        self._options = self._parse_options(new_value)
         self.value = self._value
 
 
