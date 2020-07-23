@@ -21,6 +21,7 @@ from asciimatics.widgets import Frame, Layout, Button, Label, TextBox, Text, \
     FileBrowser, DatePicker, TimePicker, Background, DropdownList, PopupMenu, \
     _find_min_start, VerticalDivider
 from asciimatics.parsers import AsciimaticsParser, AnsiTerminalParser
+from asciimatics.utilities import ColouredText
 
 
 class TestFrame(Frame):
@@ -2939,7 +2940,7 @@ class TestWidgets(unittest.TestCase):
         Check inline colours work as expected.
         """
         # Create a dummy screen.
-        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=True)
         scene = MagicMock(spec=Scene)
         canvas = Canvas(screen, 10, 40, 0, 0)
 
@@ -2975,6 +2976,57 @@ class TestWidgets(unittest.TestCase):
         self.assertEqual(canvas.get_from(3, 5), (ord("B"), 7, 1, 4))
         self.assertEqual(canvas.get_from(0, 6), (ord("1"), 3, 1, 4))
         self.assertEqual(canvas.get_from(3, 6), (ord("2"), 2, 1, 4))
+    
+    def test_list_box_options(self):
+        """
+        Check setting listbox options works as expected.
+        """
+        # Create a dummy screen.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=True)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        listbox = ListBox(2, [])
+        options = [("P", 1), ("Q", 2), ("R", 3), ("S", 4)]
+        listbox.options = options
+        layout.add_widget(listbox)
+
+        self.assertEquals(listbox.options, options)
+
+    def test_list_box_color_options(self):
+        """
+        Check setting listbox options with inline colors works as expected.
+        """
+        # Create a dummy screen.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=True)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Create the form we want to test.
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        listbox = ListBox(2, [], parser=AsciimaticsParser())
+        options = [("P", 1), ("${9,2}Q", 2), ("R", 3), ("${10,3}S", 4)]
+        listbox.options = options
+        layout.add_widget(listbox)
+
+        color_options = listbox.options
+        self.assertIsInstance(color_options[0][0], ColouredText)
+        self.assertEquals(color_options[0][0].raw_text, options[0][0])
+
+        self.assertIsInstance(color_options[1][0], ColouredText)
+        self.assertEquals(color_options[1][0].raw_text, options[1][0])
+
+        self.assertIsInstance(color_options[2][0], ColouredText)
+        self.assertEquals(color_options[2][0].raw_text, options[2][0])
+
+        self.assertIsInstance(color_options[3][0], ColouredText)
+        self.assertEquals(color_options[3][0].raw_text, options[3][0])
 
     def test_readonly(self):
         """
