@@ -33,6 +33,25 @@ can pass this list to :py:meth:`.play` which will run through the Scenes in
 order, or stop playing if the user exits by pressing 'q' (assuming you use the
 default key handling).
 
+Timing Effects
+--------------
+When playing animations, asciimatics will try to redraw the Screen 20 times a
+second.  Each iteration of the loop produces a new frame (no relation to the
+widget class `Frame`) and increments the frame counter.
+
+This counter is passed as the `frame_no` parameter on 
+:py:meth:`~.Effect.update` to every `Effect` amd so  an be used to time the
+animation.  For example, if you only want the Effect to do something every
+half a second, you could wait for `frame_no` to increase by 10 before doing
+the next update.
+
+This is also the counter that determines when to start/stop an `Effect` based
+on the `start_frame` and `stop_frame` properties on each `Effect`.  Specifying
+non-zero values will delay the start of the `Effect` until, or stop drawing it
+at, the specified frame count in the `Scene`.
+
+See the credits sample for an example of how to use these properties.
+
 Sprites and Paths
 -----------------
 A :py:obj:`.Sprite` is a special Effect designed to move some rendered text
