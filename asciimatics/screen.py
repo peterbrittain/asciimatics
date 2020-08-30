@@ -510,7 +510,9 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         """
         Clear a box in the current double-buffer used by this object.
 
-        Defaults to the whole buffer if no box is specified.
+        This is the recommended way to clear parts, or all, ofthe Screen without causing flicker
+        as it will only become visible at the next refresh.  Defaults to the whole buffer if no 
+        box is specified.
 
         :param fg: The foreground colour to use for the new buffer.
         :param attr: The attribute value to use for the new buffer.
@@ -1421,7 +1423,11 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         Clear the Screen of all content.
 
         Note that this will instantly clear the Screen and reset all buffers to the default state,
-        without waiting for you to call :py:meth:`~.Screen.refresh`.
+        without waiting for you to call :py:meth:`~.Screen.refresh`.  It is designed for use once
+        at the start of your application to reset all buffers and the screen to a known state.
+
+        If you want to clear parts, or all, of the Screen inside your application without any
+        flicker, use :py:meth:`~.Screen.clear_buffer` instead.
         """
         # Clear the actual terminal
         self.reset()

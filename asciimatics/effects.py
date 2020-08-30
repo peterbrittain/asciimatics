@@ -377,27 +377,29 @@ class Mirage(Effect):
         self._renderer = renderer
         self._y = y
         self._colour = colour
+        self._count = 0
 
     def reset(self):
-        pass
+        self._count = 0
 
     def _update(self, frame_no):
-        if frame_no % 2 == 0:
-            return
-
         y = self._y
         image, colours = self._renderer.rendered_text
+        count = 0
+        self._count += 3
         for i, line in enumerate(image):
-            if self._screen.is_visible(0, y):
-                x = (self._screen.width - len(line)) // 2
+            x = (self._screen.width - len(line)) // 2
+            if self._screen.is_visible(x, y):
                 for j, c in enumerate(line):
-                    if c != " " and random() > 0.85:
-                        if colours[i][j][0] is not None:
-                            self._screen.print_at(c, x, y,
-                                                  colours[i][j][0],
-                                                  colours[i][j][1])
-                        else:
-                            self._screen.print_at(c, x, y, self._colour)
+                    count += 1
+                    if count > self._count:
+                        return
+                    if colours[i][j][0] is not None:
+                        self._screen.print_at(c, x, y,
+                                              colours[i][j][0],
+                                              colours[i][j][1])
+                    else:
+                        self._screen.print_at(c, x, y, self._colour)
                     x += 1
             y += 1
 
