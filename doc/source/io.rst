@@ -148,6 +148,12 @@ If your system is configured to support unicode, this should be output correctly
 systems will work straight out of the box.  See :ref:`unicode-issues-ref` for more details on how
 to fix this.
 
+Clearing the Screen
+^^^^^^^^^^^^^^^^^^^
+Once you have started your application, you will likely want to clear parts, or all, of the Screen
+at times.  The recommended way to do that is using :py:meth:`~.Screen.clear_buffer`.  This prevents
+the flicker that you will see if you tried using the previously mentioned `clear` method instead.
+
 Refreshing the Screen
 ---------------------
 Just using the above methods to output to screen isn't quite enough.  The Screen maintains a buffer
