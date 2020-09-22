@@ -161,7 +161,7 @@ class RayCaster(Effect):
 
     def _update(self, _):
         # First draw the background - which is theoretically the floor and ceiling.
-        self._screen.clear_buffer(0, 0, 0, 0, 0, self._screen.width, self._screen.height)
+        self._screen.clear_buffer(Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_BLACK)
 
         # Now do the ray casting across the visible canvas.
         # Compensate for aspect ratio by treating 2 cells as a single pixel.
