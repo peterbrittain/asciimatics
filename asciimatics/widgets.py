@@ -834,9 +834,9 @@ class Frame(Effect):
                 focus = len(self._layouts) - 1
             if focus >= len(self._layouts):
                 focus = 0
-            new_widget, column, index = self._layouts[focus].get_nearest_widget(current_widget, direction)
-            if new_widget:
-                self.switch_focus(self._layouts[focus], column, index)
+            match = self._layouts[focus].get_nearest_widget(current_widget, direction)
+            if match:
+                self.switch_focus(self._layouts[focus], match[1], match[2])
                 return
             focus += direction
 
