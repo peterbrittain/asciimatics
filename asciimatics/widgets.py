@@ -1169,14 +1169,15 @@ class Layout(object):
             indexed_column = list(enumerate(column))
             if direction < 0:
                 indexed_column = reversed(indexed_column)
-            live_widgets = filter(lambda x: x[1].is_tab_stop and not x[1].disabled, indexed_column)
+            # Force this to be a list for python 2/3 compatibility.
+            live_widgets = [x for x in filter(lambda x: x[1].is_tab_stop and not x[1].disabled, indexed_column)]
             try:
-                j, candidate = next(live_widgets)
+                j, candidate = live_widgets[0]
                 new_distance = _euclidian_distance(target_widget, candidate)
                 if new_distance < best_distance:
                     best_distance = new_distance
                     match = candidate, i, j
-            except StopIteration:
+            except IndexError:
                 pass
         return match
 
