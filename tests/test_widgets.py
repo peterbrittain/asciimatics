@@ -76,6 +76,9 @@ class TestFrame(Frame):
         layout2.add_widget(self._reset_button, 0)
         layout2.add_widget(Button("View Data", self._view), 1)
         layout2.add_widget(Button("Quit", self._quit), 2)
+        layout2.add_widget(Button("One", self._view), 0)
+        layout2.add_widget(Button("Two", self._view), 1)
+        layout2.add_widget(Button("Three", self._view), 2)
         self.fix()
 
     def _on_change(self):
@@ -347,7 +350,7 @@ class TestWidgets(unittest.TestCase):
             "| ----------------------------------   |\n" +
             "|                                      |\n" +
             "| < Reset >  < View Data > < Quit >    |\n" +
-            "|                                      |\n" +
+            "|  < One >     < Two >    < Three >    |\n" +
             "|                                      O\n" +
             "|                                      |\n" +
             "+--------------------------------------+\n")
@@ -403,7 +406,7 @@ class TestWidgets(unittest.TestCase):
             "│ ──────────────────────────────────   ░\n" +
             "│                                      ░\n" +
             "│ < Reset >  < View Data > < Quit >    ░\n" +
-            "│                                      ░\n" +
+            "│  < One >     < Two >    < Three >    ░\n" +
             "│                                      █\n" +
             "│                                      │\n" +
             "└──────────────────────────────────────┘\n")
@@ -719,20 +722,20 @@ class TestWidgets(unittest.TestCase):
 
         # Check focus moves when clicked on a checkbox or radiobutton
         self.process_mouse(form, [(29, 1, MouseEvent.LEFT_CLICK)])
-        self.assertEqual(form._layouts[form._focus]._live_widget, 7)
+        self.assertEqual(form._layouts[form._focus]._live_widget, 8)
         # Note that the above changes the Frame start-line.
         self.process_mouse(form, [(29, 5, MouseEvent.LEFT_CLICK)])
-        self.assertEqual(form._layouts[form._focus]._live_widget, 9)
+        self.assertEqual(form._layouts[form._focus]._live_widget, 11)
 
         # Check focus moves when hovering over a widget
         self.process_mouse(form, [(39, 7, MouseEvent.LEFT_CLICK), (3, 8, 0)])
         self.assertEqual(form._focus, 1)
         self.assertEqual(form._layouts[form._focus]._live_col, 0)
-        self.assertEqual(form._layouts[form._focus]._live_widget, 0)
+        self.assertEqual(form._layouts[form._focus]._live_widget, 1)
 
         # Check button click triggers an event.
         with self.assertRaises(StopApplication):
-            self.process_mouse(form, [(30, 8, MouseEvent.LEFT_CLICK)])
+            self.process_mouse(form, [(30, 7, MouseEvent.LEFT_CLICK)])
 
         # Check that the current focus ignores unknown events.
         event = object()
@@ -808,7 +811,7 @@ class TestWidgets(unittest.TestCase):
         # Tab out into buttons and check LEFT/RIGHT keys.
         self.process_keys(form, [Screen.KEY_TAB, Screen.KEY_TAB, Screen.KEY_TAB,
                                  Screen.KEY_TAB, Screen.KEY_TAB, Screen.KEY_TAB,
-                                 Screen.KEY_TAB])
+                                 Screen.KEY_TAB, Screen.KEY_TAB])
         self.assertEqual(form._focus, 1)
         self.assertEqual(form._layouts[form._focus]._live_col, 1)
         self.assertEqual(form._layouts[form._focus]._live_widget, 0)
@@ -818,16 +821,36 @@ class TestWidgets(unittest.TestCase):
         self.process_keys(form, [Screen.KEY_LEFT])
         self.assertEqual(form._layouts[form._focus]._live_col, 1)
         self.process_keys(form, [Screen.KEY_LEFT])
-        # Reset will be disabled.
-        self.assertEqual(form._layouts[form._focus]._live_col, 2)
+        # Reset will be disabled, but move down to "One"
+        self.assertEqual(form._layouts[form._focus]._live_col, 0)
+        self.assertEqual(form._layouts[form._focus]._live_widget, 1)
         self.process_keys(form, [Screen.KEY_RIGHT])
         self.assertEqual(form._layouts[form._focus]._live_col, 1)
 
         # Check up and down stay in column.
         self.process_keys(form, [Screen.KEY_UP])
         self.assertEqual(form._layouts[form._focus]._live_col, 1)
+        self.assertEqual(form._layouts[form._focus]._live_widget, 0)
         self.process_keys(form, [Screen.KEY_DOWN])
         self.assertEqual(form._layouts[form._focus]._live_col, 1)
+        self.assertEqual(form._layouts[form._focus]._live_widget, 1)
+
+        # Check up and down find nearest widget across Layouts
+        # - Up to checkbox
+        self.process_keys(form, [Screen.KEY_UP, Screen.KEY_UP])
+        self.assertEqual(form._focus, 0)
+        self.assertEqual(form._layouts[form._focus]._live_col, 1)
+        self.assertEqual(form._layouts[form._focus]._live_widget, 10)
+        # - Down to first button row
+        self.process_keys(form, [Screen.KEY_DOWN])
+        self.assertEqual(form._focus, 1)
+        self.assertEqual(form._layouts[form._focus]._live_col, 1)
+        self.assertEqual(form._layouts[form._focus]._live_widget, 0)
+        # - Down to wrap to top of form
+        self.process_keys(form, [Screen.KEY_DOWN, Screen.KEY_DOWN])
+        self.assertEqual(form._focus, 0)
+        self.assertEqual(form._layouts[form._focus]._live_col, 1)
+        self.assertEqual(form._layouts[form._focus]._live_widget, 1)
 
     def test_list_box(self):
         """
