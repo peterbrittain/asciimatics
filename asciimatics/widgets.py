@@ -20,6 +20,8 @@ from builtins import object
 from copy import copy, deepcopy
 from functools import partial
 from datetime import date, datetime, timedelta
+from math import sqrt
+
 from future.moves.itertools import zip_longest
 from future.utils import with_metaclass
 try:
@@ -266,6 +268,18 @@ def _split_text(text, width, height, unicode_aware=True):
         if len(line) > width:
             result[i] = line[:width - 3] + "..."
     return result
+
+
+def _euclidian_distance(widget1, widget2):
+    """
+    Find the Euclidian distance between 2 widgets.
+
+    :param widget1: first widget
+    :param widget2: second widget
+    """
+    point1 = widget1.get_location()
+    point2 = widget2.get_location()
+    return sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
 
 class Frame(Effect):
@@ -786,6 +800,46 @@ class Frame(Effect):
         logger.debug("New event: %s", new_event)
         return new_event
 
+    def _find_next_tab_stop(self, direction):
+        old_focus = self._focus
+        self._focus += direction
+        while self._focus != old_focus:
+            if self._focus < 0:
+                self._focus = len(self._layouts) - 1
+            if self._focus >= len(self._layouts):
+                self._focus = 0
+            try:
+                if direction > 0:
+                    self._layouts[self._focus].focus(force_first=True)
+                else:
+                    self._layouts[self._focus].focus(force_last=True)
+                break
+            except IndexError:
+                self._focus += direction
+
+    def _switch_to_nearest_vertical_widget(self, direction):
+        """
+        Find the nearest widget above or below the current widget with the focus.
+
+        This should only be called by the Frame when normal Layout navigation fails and so this needs to find the
+        nearest widget in the next available Layout.  It will not search the existing Layout for a closer match.
+
+        :param direction: The direction to move through the Layouts.
+        """
+        current_widget = self._layouts[self._focus].get_current_widget()
+        focus = self._focus
+        focus += direction
+        while self._focus != focus:
+            if focus < 0:
+                focus = len(self._layouts) - 1
+            if focus >= len(self._layouts):
+                focus = 0
+            match = self._layouts[focus].get_nearest_widget(current_widget, direction)
+            if match:
+                self.switch_focus(self._layouts[focus], match[1], match[2])
+                return
+            focus += direction
+
     def process_event(self, event):
         # Rebase any mouse events into Frame coordinates now.
         old_event = event
@@ -833,35 +887,25 @@ class Frame(Effect):
         # it now.
         if event is not None:
             if isinstance(event, KeyboardEvent):
-                if event.key_code in [Screen.KEY_TAB, Screen.KEY_DOWN]:
+                if event.key_code == Screen.KEY_TAB:
                     # Move on to next widget.
                     self._layouts[self._focus].blur()
-                    old_focus = self._focus
-                    self._focus += 1
-                    while self._focus != old_focus:
-                        try:
-                            self._layouts[self._focus].focus(force_first=True)
-                            break
-                        except IndexError:
-                            self._focus += 1
-                            if self._focus >= len(self._layouts):
-                                self._focus = 0
+                    self._find_next_tab_stop(1)
                     self._layouts[self._focus].focus(force_first=True)
                     old_event = None
-                elif event.key_code in [Screen.KEY_BACK_TAB, Screen.KEY_UP]:
+                elif event.key_code == Screen.KEY_BACK_TAB:
                     # Move on to previous widget.
                     self._layouts[self._focus].blur()
-                    old_focus = self._focus
-                    self._focus -= 1
-                    while self._focus != old_focus:
-                        if self._focus < 0:
-                            self._focus = len(self._layouts) - 1
-                        try:
-                            self._layouts[self._focus].focus(force_last=True)
-                            break
-                        except IndexError:
-                            self._focus -= 1
+                    self._find_next_tab_stop(-1)
                     self._layouts[self._focus].focus(force_last=True)
+                    old_event = None
+                if event.key_code == Screen.KEY_DOWN:
+                    # Move on to nearest vertical widget in the next Layout
+                    self._switch_to_nearest_vertical_widget(1)
+                    old_event = None
+                elif event.key_code == Screen.KEY_UP:
+                    # Move on to nearest vertical widget in the next Layout
+                    self._switch_to_nearest_vertical_widget(-1)
                     old_event = None
             elif isinstance(event, MouseEvent):
                 # Give layouts/widgets first dibs on the mouse message.
@@ -1100,52 +1144,109 @@ class Layout(object):
 
         return max_y
 
-    def _find_next_widget(self, direction, stay_in_col=False, start_at=None,
-                          wrap=False):
+    def get_current_widget(self):
         """
-        Find the next widget to get the focus, stopping at the start/end of the list if hit.
+        Return the current widget with the focus, or None if there isn't one.
+        """
+        return self._columns[self._live_col][self._live_widget] if self._has_focus else None
+
+    def get_nearest_widget(self, target_widget, direction):
+        """
+        Find the nearest enabled widget to the specified target widget, bearing in mind the direction of travel.
+
+        Direction of travel is defined to be the movement from current Layout to next.  This is important for the
+        case where we wrap back to the beginning or end of the Layouts - and so should still only look for the
+        widgets nearest the top/bottom (depending on direction of travel).
+
+        This function may return None if there is no match (e.g. all widgets are disabled).
+
+        :param target_widget: the target widget to match.
+        :param direction: The direction of travel across Layouts.
+        """
+        best_distance = 999999999
+        match = None
+        for i, column in enumerate(self._columns):
+            indexed_column = list(enumerate(column))
+            if direction < 0:
+                indexed_column = reversed(indexed_column)
+            # Force this to be a list for python 2/3 compatibility.
+            live_widgets = [x for x in filter(lambda x: x[1].is_tab_stop and not x[1].disabled, indexed_column)]
+            try:
+                j, candidate = live_widgets[0]
+                new_distance = _euclidian_distance(target_widget, candidate)
+                if new_distance < best_distance:
+                    best_distance = new_distance
+                    match = candidate, i, j
+            except IndexError:
+                pass
+        return match
+
+    def _find_nearest_horizontal_widget(self, direction):
+        """
+        Find the nearest widget to the left or right of the current widget with the focus.
+
+        :param direction: The direction to move through the columns.
+        """
+        current_col = self._live_col
+        current_widget = self._columns[self._live_col][self._live_widget]
+        while True:
+            current_col += direction
+            # Check if we need to wrap back to the beginning or end of the columns.
+            if current_col >= len(self._columns):
+                current_col = 0
+            if current_col < 0:
+                current_col = len(self._columns) - 1
+            # Check if we've got back where we started - if so we had no match and we're done.
+            if self._live_col == current_col:
+                return
+            # OK - we're still looking.  FInd the closest live widget.
+            live_widgets = filter(lambda x: x[1].is_tab_stop and not x[1].disabled,
+                                  enumerate(self._columns[current_col]))
+            best_distance = 999999999
+            best_index = -1
+            for index, widget in live_widgets:
+                self._live_col = current_col
+                # An exact match on line (i.e. same Y value) trumps any closest distance.  Break out now if we find
+                # a match that way.
+                if widget.get_location()[1] == current_widget.get_location()[1]:
+                    self._live_col = current_col
+                    self._live_widget = index
+                    return
+                new_distance = _euclidian_distance(current_widget, widget)
+                if new_distance < best_distance:
+                    best_distance = new_distance
+                    best_index = index
+            if best_index >= 0:
+                self._live_col = current_col
+                self._live_widget = best_index
+                return
+
+    def _find_next_widget(self, direction, stay_in_col=False):
+        """
+        Find the next widget to get the focus, following TAB logic
 
         :param direction: The direction to move through the widgets.
-        :param stay_in_col: Whether to limit search to current column.
-        :param start_at: Optional starting point in current column.
-        :param wrap: Whether to wrap around columns when at the end.
+        :param stay_in_col: Whether to limit search to current column.  (Used for up/down in columns).
         """
         current_widget = self._live_widget
         current_col = self._live_col
-        if start_at is not None:
-            self._live_widget = start_at
-        still_looking = True
-        while still_looking:
-            while 0 <= self._live_col < len(self._columns):
+        while 0 <= self._live_col < len(self._columns):
+            self._live_widget += direction
+            while 0 <= self._live_widget < len(self._columns[self._live_col]):
+                widget = self._columns[self._live_col][self._live_widget]
+                if widget.is_tab_stop and not widget.disabled:
+                    return
                 self._live_widget += direction
-                while 0 <= self._live_widget < len(
-                        self._columns[self._live_col]):
-                    widget = self._columns[self._live_col][self._live_widget]
-                    if widget.is_tab_stop and not widget.disabled:
-                        return
-                    self._live_widget += direction
-                if stay_in_col:
-                    # Don't move to another column - just stay where we are.
-                    self._live_widget = current_widget
+            if stay_in_col:
+                break
+            else:
+                self._live_col += direction
+                self._live_widget = -1 if direction > 0 else len(self._columns[self._live_col])
+                if self._live_col == current_col:
                     break
-                else:
-                    self._live_col += direction
-                    self._live_widget = -1 if direction > 0 else \
-                        len(self._columns[self._live_col])
-                    if self._live_col == current_col:
-                        # We've wrapped all the way back to the same column -
-                        # give up now and stay where we were.
-                        self._live_widget = current_widget
-                        return
 
-            # If we got here we hit the end of the columns - only keep on
-            # looking if we're allowed to wrap.
-            still_looking = wrap
-            if still_looking:
-                if self._live_col < 0:
-                    self._live_col = len(self._columns) - 1
-                else:
-                    self._live_col = 0
+        # We've exhausted our search - give up and stay where we were.
+        self._live_widget = current_widget
 
     def process_event(self, event, hover_focus):
         """
@@ -1217,16 +1318,13 @@ class Layout(object):
                 elif event.key_code == Screen.KEY_LEFT:
                     # Move on to last widget in the previous column
                     self._columns[self._live_col][self._live_widget].blur()
-                    self._find_next_widget(-1, start_at=0, wrap=True)
+                    self._find_nearest_horizontal_widget(-1)
                     self._columns[self._live_col][self._live_widget].focus()
                     event = None
                 elif event.key_code == Screen.KEY_RIGHT:
                     # Move on to first widget in the next column.
                     self._columns[self._live_col][self._live_widget].blur()
-                    self._find_next_widget(
-                        1,
-                        start_at=len(self._columns[self._live_col]),
-                        wrap=True)
+                    self._find_nearest_horizontal_widget(1)
                     self._columns[self._live_col][self._live_widget].focus()
                     event = None
             elif isinstance(event, MouseEvent):
