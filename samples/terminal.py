@@ -38,6 +38,7 @@ class Terminal(TextBox):
             (Screen.KEY_DOWN, "kcud1"),
             (Screen.KEY_HOME, "khome"),
             (Screen.KEY_END, "kend"),
+            (Screen.KEY_DELETE, "kdch1"),
             (Screen.KEY_BACK, "kbs"),
         ]:
             self._map[k] = curses.tigetstr(v)

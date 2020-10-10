@@ -56,29 +56,42 @@ class ColouredText(object):
     passed in into visible text and an associated colour map.
     """
 
-    def __init__(self, text, parser, colour=None):
+    def __init__(self, raw_text, parser, colour=None, colour_map=None, offsets=None, text=None):
         """
-        :param text: The raw unicode string to be processed
+        :param raw_text: The raw unicode string to be processed
         :param parser: The parser to process the text
         :param colour: Optional starting colour tuple to use for this text.
+        :param colour_map: Optional ready parsed colour map for this text.
+        :param offsets: Optional ready parsed offsets for this text.
+        :param text: Optional ready parsed text for this text.
+
+        The colour_map, offsets and text options are to optimize creation of substrings from an
+        existing ColouredText object and should not be used in general.
         """
         super(ColouredText, self).__init__()
-        self._raw_text = text
+        self._raw_text = raw_text
         self._raw_offsets = []
         self._parser = parser
         self._colour_map = None
         self._last_colour = self._init_colour = colour
         self._colour_map = []
         self._text = ""
-        self._parser.reset(self._raw_text, self._init_colour)
-        self._raw_text = self._parser.normalize()
-        self._cursor = self._parser.cursor
-        for text_matched, colour_tuple, offset in self._parser.parse():
-            if text_matched is not None:
-                self._colour_map.append(colour_tuple)
-                self._raw_offsets.append(offset)
-                self._text += text_matched
-            self._last_colour = colour_tuple
+        if colour_map:
+            self._colour_map = colour_map
+            self._last_colour = colour_map[-1]
+            self._raw_offsets = offsets
+            self._text = text
+            self._cursor = len(text)
+        else:
+            self._parser.reset(self._raw_text, self._init_colour)
+            self._raw_text = self._parser.normalize()
+            self._cursor = self._parser.cursor
+            for text_matched, colour_tuple, offset in self._parser.parse():
+                if text_matched is not None:
+                    self._colour_map.append(colour_tuple)
+                    self._raw_offsets.append(offset)
+                    self._text += text_matched
+                self._last_colour = colour_tuple
 
     def __repr__(self):
         """
@@ -101,6 +114,8 @@ class ColouredText(object):
             stop = None if item == len(self._raw_offsets) - 1 else self._raw_offsets[item + 1]
             step = 1
             colour_index = max(0, item - 1)
+            base = self._raw_offsets[item]
+            offsets = [0]
         else:
             try:
                 start = None if item.start is None else self._raw_offsets[slice(item.start, None, None)][0]
@@ -112,13 +127,22 @@ class ColouredText(object):
                 stop = None
             step = item.step
             colour_index = max(0, item.start - 1 if item.start else 0)
+            try:
+                base = self._raw_offsets[item][0]
+                offsets = [x - base for x in self._raw_offsets[item]]
+            except IndexError:
+                base = 0
+                offsets = []
         try:
             colour = self._colour_map[colour_index]
         except IndexError:
             colour = self._init_colour
         return ColouredText(self._raw_text[slice(start, stop, step)],
                             parser=self._parser,
-                            colour=colour)
+                            colour=colour,
+                            text=self._text[item],
+                            colour_map=self._colour_map[item],
+                            offsets=offsets)
 
     def __add__(self, other):
         """
