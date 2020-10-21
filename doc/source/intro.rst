@@ -50,7 +50,7 @@ This should install all your dependencies for you.  If you don't use pip
 or it fails to install them, you can install the dependencies directly
 using the packages listed in `requirements.txt
 <https://github.com/peterbrittain/asciimatics/blob/master/requirements.txt>`_.
-Additionally, Windows users will need to install `pypiwin32`.
+Additionally, Windows users will need to install `pywin32`.
 
 Quick start guide
 -----------------
