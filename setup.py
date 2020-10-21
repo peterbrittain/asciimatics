@@ -70,7 +70,7 @@ setup(
         'backports.functools_lru_cache;python_version<"3.0"',
     ],
     extras_require={
-        ':sys_platform == "win32"': ['pypiwin32'],
+        ':sys_platform == "win32"': ['pywin32'],
     },
     setup_requires=['setuptools_scm'],
     tests_require=[

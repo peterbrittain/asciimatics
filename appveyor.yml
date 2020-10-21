@@ -17,7 +17,7 @@ install:
 
   # Project requirements
   - "python.exe -m pip install -r requirements/dev.txt"
-  - "python.exe -m pip install pypiwin32==219"
+  - "python.exe -m pip install pywin32"
 
 build: off
 
