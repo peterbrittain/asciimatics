@@ -34,7 +34,8 @@ from asciimatics.effects import Effect, Background
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import Highlander, InvalidFields
 from asciimatics.screen import Screen, Canvas
-from asciimatics.utilities import readable_timestamp, readable_mem, _DotDict, ColouredText
+from asciimatics.strings import ColouredText
+from asciimatics.utilities import readable_timestamp, readable_mem, _DotDict
 from wcwidth import wcswidth, wcwidth
 
 # Logging

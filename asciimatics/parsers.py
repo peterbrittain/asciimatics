@@ -25,13 +25,21 @@ class Parser(with_metaclass(ABCMeta, object)):
     convert them to displayable text and associated colour maps.
     """
 
+    #: Command to change active colour tuple.  Parameters are the 3-tuple of (fg, attr, bg)
+    CHANGE_COLOURS = 1
+    #: Command to move cursor to abs position.  Parameters are (x, y) where each are absolute positions.
+    MOVE_ABSOLUTE = 2
+    #: Command to move cursor to relative position.  Parameters are (x, y) where each are relative positions.
+    MOVE_RELATIVE = 3
+    #: Command to delete part of the current line. Params are 0, 1 and 2 for end, start, all.
+    DELETE_LINE = 4
+
     def __init__(self):
         """
         Initialize the parser.
         """
         self._raw_text = ""
         self._attributes = None
-        self._cursor = 0
         self._result = []
 
     def reset(self, text, colours):
@@ -43,21 +51,9 @@ class Parser(with_metaclass(ABCMeta, object)):
         """
         self._raw_text = text
         self._attributes = colours
-        self._cursor = 0
         self._result = []
-
-    @property
-    def cursor(self):
-        """
-        Location of cursor in the parsed text.
-        """
-        return self._cursor
-
-    @abstractmethod
-    def normalize(self):
-        """
-        Return the normalized version of the raw string.
-        """
+        if colours:
+            self._result.append((None, 0, Parser.CHANGE_COLOURS, colours))
 
     def parse(self):
         """
@@ -66,7 +62,7 @@ class Parser(with_metaclass(ABCMeta, object)):
         Generally returns a stream of text/color tuple/offset tuples.  If there is a colour update with no
         visible text, the first element of the tuple may be None.
 
-        :returns: a 3-tuple of (the displayable text, associated colour tuple, start offset in raw text)
+        :returns: a 4-tuple of (the displayable text, start offset in raw text, command, parameters)
         """
         for element in self._result:
             yield tuple(element)
@@ -85,19 +81,11 @@ class ControlCodeParser(Parser):
         :param colours: colour tuple to initialise the colour map.
         """
         super(ControlCodeParser, self).reset(text, colours)
-        attributes = (x for x in self._attributes) if self._attributes else (None, None, None)
         for i, letter in enumerate(text):
             if ord(letter) < 32:
-                self._result.append(
-                    ("^" + chr(ord("@") + ord(letter)), attributes, i))
+                self._result.append(("^" + chr(ord("@") + ord(letter)), i, None, None))
             else:
-                self._result.append((letter, attributes, i))
-
-    def normalize(self):
-        """
-        Return the normalized version of the raw string.
-        """
-        return self._raw_text
+                self._result.append((letter, i, None, None))
 
 
 class AsciimaticsParser(Parser):
@@ -117,13 +105,12 @@ class AsciimaticsParser(Parser):
         :param colours: colour tuple to initialise the colour map.
         """
         super(AsciimaticsParser, self).reset(text, colours)
-        attributes = [x for x in self._attributes] if self._attributes else [None, None, None]
         offset = last_offset = 0
         text = self._raw_text
         while len(text) > 0:
             match = self._colour_sequence.match(str(text))
             if match is None:
-                self._result.append((text[0], tuple(attributes), last_offset))
+                self._result.append((text[0], last_offset, None, None))
                 text = text[1:]
                 offset += 1
                 last_offset = offset
@@ -142,21 +129,9 @@ class AsciimaticsParser(Parser):
                                   None)
                 else:
                     attributes = (int(match.group(7)), 0, None)
+                self._result.append((None, last_offset, Parser.CHANGE_COLOURS, attributes))
                 offset += 3 + len(match.group(1))
                 text = match.group(8)
-
-        # Save off cursor position
-        self._cursor = len(self._result)
-
-        # Add final colours if needed.
-        if last_offset != offset:
-            self._result.append([None, tuple(attributes), last_offset])
-
-    def normalize(self):
-        """
-        Return the normalized version of the raw string.
-        """
-        return self._raw_text
 
 
 class AnsiTerminalParser(Parser):
@@ -166,6 +141,7 @@ class AnsiTerminalParser(Parser):
 
     # Regular expression for use to find colour sequences in multi-colour text.
     _colour_sequence = re.compile(r"^(\x1B\[([^@-~]*)([@-~]))(.*)")
+    _os_cmd = re.compile(r"^(\x1B].*\x07)(.*)")
 
     def reset(self, text, colours):
         """
@@ -176,7 +152,6 @@ class AnsiTerminalParser(Parser):
         """
         super(AnsiTerminalParser, self).reset(text, colours)
         state = _DotDict()
-        state.result = []
         state.attributes = [x for x in self._attributes] if self._attributes else [None, None, None]
         state.offset = 0
         state.last_offset = 0
@@ -186,7 +161,12 @@ class AnsiTerminalParser(Parser):
         def _handle_escape(st):
             match = self._colour_sequence.match(str(st.text))
             if match is None:
-                # Escape - ignore next char as a minimal way to handle many sequences
+                # Check for OS commands
+                match = self._os_cmd.match(str(st.text))
+                if match:
+                    return len(match.group(1))
+
+                # Unknown escape - ignore next char as a minimal way to handle many sequences
                 return 2
             else:
                 if match.group(3) == "m":
@@ -256,84 +236,66 @@ class AnsiTerminalParser(Parser):
                                 attribute_index = 2
                             else:
                                 logger.debug("Ignoring parameter: %s", parameter)
+                    self._result.append((None, st.last_offset, Parser.CHANGE_COLOURS, tuple(st.attributes)))
                 elif match.group(3) == "K":
                     # This is a line delete sequence.  Parameter defines which parts to delete.
                     param = match.group(2)
                     if param in ("", "0"):
-                        st.result = st.result[:st.cursor]
+                        # Delete to end of line
+                        self._result.append((None, state.last_offset, Parser.DELETE_LINE, 0))
                     elif param == "1":
-                        st.result = [[" ", tuple(st.attributes), st.offset] for _ in range(st.cursor)] + \
-                                     st.result[st.cursor:]
+                        # Delete from start of line
+                        self._result.append((None, state.last_offset, Parser.DELETE_LINE, 1))
                     elif param == "2":
-                        st.result = [[" ", tuple(st.attributes), st.offset] for _ in range(st.cursor)]
+                        # Delete whole line
+                        self._result.append((None, state.last_offset, Parser.DELETE_LINE, 2))
                 elif match.group(3) == "P":
                     # This is a character delete sequence.  Parameter defines how many to delete.
                     param = 1 if match.group(2) == "" else int(match.group(2))
-                    st.result = st.result[:st.cursor] + st.result[st.cursor + param:]
+                    # TODO: delete next N chars st.result = st.result[:st.cursor] + st.result[st.cursor + param:]
+                elif match.group(3) == "A":
+                    # Move cursor up.  Parameter defines how far to move..
+                    param = 1 if match.group(2) == "" else int(match.group(2))
+                    self._result.append((None, state.last_offset, Parser.MOVE_RELATIVE, (0, -param)))
+                elif match.group(3) == "B":
+                    # Move cursor down.  Parameter defines how far to move..
+                    param = 1 if match.group(2) == "" else int(match.group(2))
+                    self._result.append((None, state.last_offset, Parser.MOVE_RELATIVE, (0, param)))
                 elif match.group(3) == "C":
                     # Move cursor forwards.  Parameter defines how far to move..
                     param = 1 if match.group(2) == "" else int(match.group(2))
-                    st.cursor += param
+                    self._result.append((None, state.last_offset, Parser.MOVE_RELATIVE, (param, 0)))
                 elif match.group(3) == "D":
                     # Move cursor backwards.  Parameter defines how far to move..
                     param = 1 if match.group(2) == "" else int(match.group(2))
-                    st.cursor -= param
+                    self._result.append((None, state.last_offset, Parser.MOVE_RELATIVE, (-param, 0)))
+                elif match.group(3) == "H":
+                    # Move cursor to specified position.
+                    x, y = 0, 0
+                    params = match.group(2).split(";")
+                    y = int(params[0]) - 1 if params[0] != "" else 0
+                    if len(params) > 1:
+                        x = int(params[1]) - 1 if params[1] != "" else 0
+                    self._result.append((None, state.last_offset, Parser.MOVE_ABSOLUTE, (x, y)))
                 else:
-                    logger.debug("Ignoring control: %s", match.group(3))
+                    logger.debug("Ignoring control: %s", match.group(1))
                 return len(match.group(1))
 
         while len(state.text) > 0:
             char = ord(state.text[0])
             new_offset = 1
             if char > 31:
-                state.result[state.cursor:state.cursor + 1] = [
-                    [state.text[0], tuple(state.attributes), state.last_offset]]
-                state.cursor += 1
+                self._result.append((state.text[0], state.last_offset, None, None))
                 state.last_offset = state.offset + 1
             elif char == 8:
                 # Back space
-                state.cursor = max(state.cursor - 1, 0)
+                self._result.append((None, state.last_offset, Parser.MOVE_RELATIVE, (-1, 0)))
             elif char == 13:
                 # Carriage return
-                state.cursor = 0
+                self._result.append((None, state.last_offset, Parser.MOVE_ABSOLUTE, (0, None)))
             elif char == 27:
                 new_offset = _handle_escape(state)
             else:
                 logger.debug("Ignoring character: %d", char)
             state.offset += new_offset
             state.text = state.text[new_offset:]
-
-        self._result = state.result
-        self._cursor = len(state.result) - state.cursor
-        if state.last_offset != state.offset:
-            self._result.append([None, tuple(state.attributes), state.last_offset])
-
-    def normalize(self):
-        new_value = ""
-        attributes = None, None, None
-        last_offset = 0
-        for i, element in enumerate(self._result):
-            # Convert parsed output to the simplest form
-            if attributes != element[1]:
-                format = []
-                if attributes[0] != element[1][0]:
-                    format.append("38;5;{}".format(element[1][0]))
-                if attributes[1] != element[1][1]:
-                    if element[1][1] == constants.A_BOLD:
-                        format.append("1")
-                    elif element[1][1] == constants.A_NORMAL:
-                        format.append("2")
-                    elif element[1][1] == constants.A_REVERSE:
-                        format.append("7")
-                if attributes[2] != element[1][2]:
-                    format.append("48;5;{}".format(element[1][2]))
-                new_value += "\x1B[{}m".format(";".join(format))
-                attributes = element[1]
-            if element[0] is not None:
-                new_value += element[0]
-            self._result[i][2] = last_offset
-            last_offset = len(new_value)
-        if self._cursor > 0:
-            new_value += "\x1B[{}D".format(self._cursor)
-        self._raw_text = new_value
-        return new_value
