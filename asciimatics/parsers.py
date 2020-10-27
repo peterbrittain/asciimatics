@@ -33,6 +33,10 @@ class Parser(with_metaclass(ABCMeta, object)):
     MOVE_RELATIVE = 3
     #: Command to delete part of the current line. Params are 0, 1 and 2 for end, start, all.
     DELETE_LINE = 4
+    #: Command to delete next N characters from this line.
+    DELETE_CHARS = 5
+    #: Next tab stop
+    NEXT_TAB = 6
 
     def __init__(self):
         """
@@ -167,7 +171,8 @@ class AnsiTerminalParser(Parser):
                     return len(match.group(1))
 
                 # Unknown escape - ignore next char as a minimal way to handle many sequences
-                return 2
+                logger.debug("Ignoring: %s", st.text[0:2])
+                return 2 if st.text[1] != "(" else 3
             else:
                 if match.group(3) == "m":
                     # We have found a SGR escape sequence ( CSI ... m ).  These have zero or more
@@ -177,6 +182,7 @@ class AnsiTerminalParser(Parser):
                     in_rgb_mode = False
                     skip_size = 0
                     attribute_index = 0
+                    last_attributes = tuple(st.attributes)
                     for parameter in match.group(2).split(";"):
                         try:
                             parameter = int(parameter)
@@ -236,7 +242,8 @@ class AnsiTerminalParser(Parser):
                                 attribute_index = 2
                             else:
                                 logger.debug("Ignoring parameter: %s", parameter)
-                    self._result.append((None, st.last_offset, Parser.CHANGE_COLOURS, tuple(st.attributes)))
+                    if last_attributes != st.attributes:
+                        self._result.append((None, st.last_offset, Parser.CHANGE_COLOURS, tuple(st.attributes)))
                 elif match.group(3) == "K":
                     # This is a line delete sequence.  Parameter defines which parts to delete.
                     param = match.group(2)
@@ -252,7 +259,7 @@ class AnsiTerminalParser(Parser):
                 elif match.group(3) == "P":
                     # This is a character delete sequence.  Parameter defines how many to delete.
                     param = 1 if match.group(2) == "" else int(match.group(2))
-                    # TODO: delete next N chars st.result = st.result[:st.cursor] + st.result[st.cursor + param:]
+                    self._result.append((None, state.last_offset, Parser.DELETE_CHARS, param))
                 elif match.group(3) == "A":
                     # Move cursor up.  Parameter defines how far to move..
                     param = 1 if match.group(2) == "" else int(match.group(2))
@@ -290,6 +297,9 @@ class AnsiTerminalParser(Parser):
             elif char == 8:
                 # Back space
                 self._result.append((None, state.last_offset, Parser.MOVE_RELATIVE, (-1, 0)))
+            elif char == 9:
+                # Tab
+                self._result.append((None, state.last_offset, Parser.NEXT_TAB, None))
             elif char == 13:
                 # Carriage return
                 self._result.append((None, state.last_offset, Parser.MOVE_ABSOLUTE, (0, None)))

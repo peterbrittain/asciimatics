@@ -76,9 +76,11 @@ class Terminal(Widget):
                 origin = self._canvas.origin
                 x = self._cursor_x + origin[0]
                 y = self._cursor_y + origin[1] - self._canvas.start_line
-                # char, colour, attr, bg = self._canvas.get_from(self._cursor_x, self._cursor_y)
-                # attr |= Screen.A_REVERSE
-                # self._frame.canvas.print_at(chr(char), x, y, colour, attr, bg)
+                details = self._canvas.get_from(self._cursor_x, self._cursor_y)
+                if details:
+                    char, colour, attr, bg = details
+                    attr |= Screen.A_REVERSE
+                    self._frame.canvas.print_at(chr(char), x, y, colour, attr, bg)
 
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
@@ -91,6 +93,7 @@ class Terminal(Widget):
         return event
 
     def _add_stream(self, value):
+        logging.debug("Added: %s", value)
         lines = value.split("\n")
         for i, line in enumerate(lines):
             self._parser.reset(line, self._current_colours)
@@ -101,6 +104,8 @@ class Terminal(Widget):
                     self._cursor_x += len(text_matched)
                 elif command == Parser.CHANGE_COLOURS:
                     self._current_colours = params
+                elif command == Parser.NEXT_TAB:
+                    self._cursor_x = (self._cursor_x // 8) * 8 + 8
                 elif command == Parser.MOVE_RELATIVE:
                     self._cursor_x += params[0]
                     self._cursor_y += params[1]
@@ -116,6 +121,10 @@ class Terminal(Widget):
                         self._canvas.print_at(" " * self._cursor_x, 0, self._cursor_y, colour=self._current_colours[0], attr=self._current_colours[1], bg=self._current_colours[2])
                     elif params == 2:
                         self._canvas.print_at(" " * self._w, 0, self._cursor_y, colour=self._current_colours[0], attr=self._current_colours[1], bg=self._current_colours[2])
+                elif command == Parser.DELETE_CHARS:
+                    for x in range(self._cursor_x, self._w):
+                        cell = self._canvas.get_from(x + params, self._cursor_y) if x + params < self._w else (ord(" "), self._current_colours[0], self._current_colours[1], self._current_colours[2])
+                        self._canvas.print_at(chr(cell[0]), x, self._cursor_y, colour=cell[1], attr=cell[2], bg=cell[3])
             if i != len(lines) - 1:
                 self._cursor_x = 0
                 self._cursor_y += 1
