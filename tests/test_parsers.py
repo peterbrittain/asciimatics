@@ -116,7 +116,7 @@ class TestParsers(unittest.TestCase):
         Check AnsiTerminalParser cursor movement work as expected.
         """
         parser = AnsiTerminalParser()
-        parser.reset("aa\x08b\rc\x1B[Cdd\x1B[De\r", None)
+        parser.reset("aa\x08b\rc\x1B[Cdd\x1B[De\x1B[A\x1B[B\x1B[1;2H\x1B[?25h\x1B[?25l\r", None)
         tokens = parser.parse()
 
         # Normal text...
@@ -139,6 +139,17 @@ class TestParsers(unittest.TestCase):
         # Move cursor backwards and overwrite.
         self.assertEquals(next(tokens), (11, Parser.MOVE_RELATIVE, (-1, 0)))
         self.assertEquals(next(tokens), (11, Parser.DISPLAY_TEXT, "e"))
+
+        # Move cursor up and down.
+        self.assertEquals(next(tokens), (15, Parser.MOVE_RELATIVE, (0, -1)))
+        self.assertEquals(next(tokens), (15, Parser.MOVE_RELATIVE, (0, 1)))
+
+        # Move cursor to location
+        self.assertEquals(next(tokens), (15, Parser.MOVE_ABSOLUTE, (1, 0)))
+
+        # Show/hide cursor
+        self.assertEquals(next(tokens), (15, Parser.SHOW_CURSOR, True))
+        self.assertEquals(next(tokens), (15, Parser.SHOW_CURSOR, False))
 
         # Trailing Carriage return
         self.assertEquals(next(tokens), (15, Parser.MOVE_ABSOLUTE, (0, None)))
@@ -217,3 +228,32 @@ class TestParsers(unittest.TestCase):
 
         # Ignore unknown control char
         self.assertEquals(next(tokens), (4, Parser.DISPLAY_TEXT, "c"))
+
+    def test_ansi_terminal_parser_tab(self):
+        """
+        Check AnsiTerminalParser handles tabs.
+        """
+        parser = AnsiTerminalParser()
+        parser.reset("\x09", None)
+        tokens = parser.parse()
+        self.assertEquals(next(tokens), (0, Parser.NEXT_TAB, None))
+
+    def test_ansi_terminal_parser_clear(self):
+        """
+        Check AnsiTerminalParser clears screen.
+        """
+        parser = AnsiTerminalParser()
+        parser.reset("\x1B[2J", None)
+        tokens = parser.parse()
+        self.assertEquals(next(tokens), (0, Parser.CLEAR_SCREEN, None))
+
+    def test_ansi_terminal_parser_os_cmd(self):
+        """
+        Check AnsiTerminalParser removes OS commands.
+        """
+        parser = AnsiTerminalParser()
+        parser.reset("a\x1B]do something;stuff:to^ignore\x07b", None)
+        tokens = parser.parse()
+        self.assertEquals(next(tokens), (0, Parser.DISPLAY_TEXT, "a"))
+        self.assertEquals(next(tokens), (1, Parser.DISPLAY_TEXT, "b"))
+
