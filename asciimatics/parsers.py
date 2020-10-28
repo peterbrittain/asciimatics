@@ -38,7 +38,9 @@ class Parser(with_metaclass(ABCMeta, object)):
     #: Next tab stop
     NEXT_TAB = 6
     #: Set cursor visibility.  Param is boolean setting True=visible
-    SET_CURSOR = 7
+    SHOW_CURSOR = 7
+    #: Clear the screen.  No parameters.
+    CLEAR_SCREEN = 8
 
     def __init__(self):
         """
@@ -288,14 +290,15 @@ class AnsiTerminalParser(Parser):
                     if len(params) > 1:
                         x = int(params[1]) - 1 if params[1] != "" else 0
                     self._result.append((None, state.last_offset, Parser.MOVE_ABSOLUTE, (x, y)))
-                elif match.group(3) == "h":
+                elif match.group(3) == "h" and match.group(2) == "?25":
                     # Various DEC private mode commands - look for cursor visibility, ignore others.
-                    if match.group(2) == "?25":
-                        self._result.append((None, state.last_offset, Parser.SET_CURSOR, True))
-                elif match.group(3) == "l":
+                    self._result.append((None, state.last_offset, Parser.SHOW_CURSOR, True))
+                elif match.group(3) == "l" and match.group(2) == "?25":
                     # Various DEC private mode commands - look for cursor visibility, ignore others.
-                    if match.group(2) == "?25":
-                        self._result.append((None, state.last_offset, Parser.SET_CURSOR, False))
+                    self._result.append((None, state.last_offset, Parser.SHOW_CURSOR, False))
+                elif match.group(3) == "J" and match.group(2) == "2":
+                    # Clear the screen.
+                    self._result.append((None, state.last_offset, Parser.CLEAR_SCREEN, None))
                 else:
                     logger.debug("Ignoring control: %s", match.group(1))
                 return len(match.group(1))

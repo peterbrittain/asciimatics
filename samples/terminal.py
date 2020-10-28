@@ -23,7 +23,7 @@ except Exception:
     sys.exit(0)
 
 
-logging.basicConfig(filename="term.log", level=logging.DEBUG)
+logging.basicConfig(filename="term.log", level=logging.ERROR)
 
 
 class Terminal(Widget):
@@ -124,8 +124,10 @@ class Terminal(Widget):
                     for x in range(self._cursor_x, self._w):
                         cell = self._canvas.get_from(x + params, self._cursor_y) if x + params < self._w else (ord(" "), self._current_colours[0], self._current_colours[1], self._current_colours[2])
                         self._canvas.print_at(chr(cell[0]), x, self._cursor_y, colour=cell[1], attr=cell[2], bg=cell[3])
-                elif command == Parser.SET_CURSOR:
+                elif command == Parser.SHOW_CURSOR:
                     self._show_cursor = params
+                elif command == Parser.CLEAR_SCREEN:
+                    self._canvas.clear_buffer(self._current_colours[0], self._current_colours[1], self._current_colours[2])
             if i != len(lines) - 1:
                 self._cursor_x = 0
                 self._cursor_y += 1
