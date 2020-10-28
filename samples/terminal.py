@@ -113,7 +113,7 @@ class Terminal(Widget):
                     if params[0] is not None:
                         self._cursor_x = params[0]
                     if params[1] is not None:
-                        self._cursor_y = params[1]
+                        self._cursor_y = params[1] + self._canvas.start_line
                 elif command == Parser.DELETE_LINE:
                     if params == 0:
                         self._canvas.print_at(" " * (self._w - self._cursor_x), self._cursor_x, self._cursor_y, colour=self._current_colours[0], attr=self._current_colours[1], bg=self._current_colours[2])
