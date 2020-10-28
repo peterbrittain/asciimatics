@@ -97,10 +97,10 @@ class Terminal(Widget):
         lines = value.split("\n")
         for i, line in enumerate(lines):
             self._parser.reset(line, self._current_colours)
-            for text_matched, offset, command, params in self._parser.parse():
-                if text_matched is not None:
-                    self._canvas.print_at(text_matched, self._cursor_x, self._cursor_y, colour=self._current_colours[0], attr=self._current_colours[1], bg=self._current_colours[2])
-                    self._cursor_x += len(text_matched)
+            for offset, command, params in self._parser.parse():
+                if command == Parser.DISPLAY_TEXT:
+                    self._canvas.print_at(params, self._cursor_x, self._cursor_y, colour=self._current_colours[0], attr=self._current_colours[1], bg=self._current_colours[2])
+                    self._cursor_x += len(params)
                 elif command == Parser.CHANGE_COLOURS:
                     self._current_colours = params
                 elif command == Parser.NEXT_TAB:

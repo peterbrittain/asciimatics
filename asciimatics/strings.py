@@ -39,11 +39,11 @@ class ColouredText(object):
             self._text = text
         else:
             self._parser.reset(self._raw_text, self._init_colour)
-            for text_matched, offset, command, params in self._parser.parse():
-                if text_matched is not None:
+            for offset, command, params in self._parser.parse():
+                if command == Parser.DISPLAY_TEXT:
                     self._colour_map.append(self._last_colour)
                     self._raw_offsets.append(offset)
-                    self._text += text_matched
+                    self._text += params
                 elif command == Parser.CHANGE_COLOURS:
                     self._last_colour = params
 
