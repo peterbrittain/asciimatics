@@ -28,7 +28,8 @@ class ColouredText(object):
         self._raw_offsets = []
         self._parser = parser
         self._colour_map = None
-        self._last_colour = self._init_colour = colour
+        self._last_colour = colour if colour else (None, None, None)
+        self._init_colour = colour
         self._colour_map = []
         self._text = ""
         if colour_map:

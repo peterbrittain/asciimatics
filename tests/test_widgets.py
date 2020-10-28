@@ -21,7 +21,7 @@ from asciimatics.widgets import Frame, Layout, Button, Label, TextBox, Text, \
     FileBrowser, DatePicker, TimePicker, Background, DropdownList, PopupMenu, \
     _find_min_start, VerticalDivider
 from asciimatics.parsers import AsciimaticsParser, AnsiTerminalParser
-from asciimatics.utilities import ColouredText
+from asciimatics.strings import ColouredText
 
 
 class TestFrame(Frame):

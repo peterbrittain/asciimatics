@@ -197,6 +197,7 @@ class AnsiTerminalParser(Parser):
                                 skip_size = 3
                             else:
                                 logger.info(("Unexpected colour setting", parameter))
+                                break
                             in_set_mode = False
                         elif in_index_mode:
                             # We are processing a 5;n sequence for colour indeces
@@ -242,8 +243,9 @@ class AnsiTerminalParser(Parser):
                                 attribute_index = 2
                             else:
                                 logger.debug("Ignoring parameter: %s", parameter)
-                    if last_attributes != st.attributes:
-                        self._result.append((None, st.last_offset, Parser.CHANGE_COLOURS, tuple(st.attributes)))
+                    new_attributes = tuple(st.attributes)
+                    if last_attributes != new_attributes:
+                        self._result.append((None, st.last_offset, Parser.CHANGE_COLOURS, new_attributes))
                 elif match.group(3) == "K":
                     # This is a line delete sequence.  Parameter defines which parts to delete.
                     param = match.group(2)
