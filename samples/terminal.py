@@ -23,7 +23,7 @@ except Exception:
     sys.exit(0)
 
 
-logging.basicConfig(filename="term.log", level=logging.ERROR)
+logging.basicConfig(filename="term.log", level=logging.DEBUG)
 
 
 class Terminal(Widget):
@@ -34,6 +34,7 @@ class Terminal(Widget):
         self._canvas = None
         self._current_colours = None
         self._cursor_x, self._cursor_y = 0, 0
+        self._show_cursor = True
 
         #Key definitions
         self._map = {}
@@ -77,7 +78,7 @@ class Terminal(Widget):
                 x = self._cursor_x + origin[0]
                 y = self._cursor_y + origin[1] - self._canvas.start_line
                 details = self._canvas.get_from(self._cursor_x, self._cursor_y)
-                if details:
+                if details and self._show_cursor:
                     char, colour, attr, bg = details
                     attr |= Screen.A_REVERSE
                     self._frame.canvas.print_at(chr(char), x, y, colour, attr, bg)
@@ -93,12 +94,10 @@ class Terminal(Widget):
         return event
 
     def _add_stream(self, value):
-        logging.debug("Added: %s", value)
         lines = value.split("\n")
         for i, line in enumerate(lines):
             self._parser.reset(line, self._current_colours)
             for text_matched, offset, command, params in self._parser.parse():
-                logging.debug("Added: %s", (text_matched, offset, command, params))
                 if text_matched is not None:
                     self._canvas.print_at(text_matched, self._cursor_x, self._cursor_y, colour=self._current_colours[0], attr=self._current_colours[1], bg=self._current_colours[2])
                     self._cursor_x += len(text_matched)
@@ -125,6 +124,8 @@ class Terminal(Widget):
                     for x in range(self._cursor_x, self._w):
                         cell = self._canvas.get_from(x + params, self._cursor_y) if x + params < self._w else (ord(" "), self._current_colours[0], self._current_colours[1], self._current_colours[2])
                         self._canvas.print_at(chr(cell[0]), x, self._cursor_y, colour=cell[1], attr=cell[2], bg=cell[3])
+                elif command == Parser.SET_CURSOR:
+                    self._show_cursor = params
             if i != len(lines) - 1:
                 self._cursor_x = 0
                 self._cursor_y += 1
