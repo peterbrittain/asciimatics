@@ -91,7 +91,8 @@ class TestParsers(unittest.TestCase):
         Check AnsiTerminalParser colour palettes work as expected.
         """
         parser = AnsiTerminalParser()
-        parser.reset("\x1B[38;1ma\x1B[38;5;17mb\x1B[48;2;1;2;3mc\x1B[48;5;54md\x1B[999me", None)
+        parser.reset(
+            "\x1B[38;1ma\x1B[38;5;17mb\x1B[48;2;1;2;3mc\x1B[48;5;54md\x1B[999me\x1B[93m\x1B[104m", None)
         tokens = parser.parse()
 
         # Bad colour scheme - ignore
@@ -110,6 +111,10 @@ class TestParsers(unittest.TestCase):
 
         # Unknown parameter
         self.assertEquals(next(tokens), (44, Parser.DISPLAY_TEXT, "e"))
+
+        # Intense colour palette
+        self.assertEquals(next(tokens), (51, Parser.CHANGE_COLOURS, (11, None, 54)))
+        self.assertEquals(next(tokens), (51, Parser.CHANGE_COLOURS, (11, None, 12)))
 
     def test_ansi_terminal_parser_cursor(self):
         """
