@@ -9,7 +9,6 @@ from asciimatics.event import KeyboardEvent
 import sys
 import subprocess
 import threading
-import logging
 try:
     import select
     import pty
@@ -23,12 +22,13 @@ except Exception:
     sys.exit(0)
 
 
-logging.basicConfig(filename="term.log", level=logging.ERROR)
-
-
 class Terminal(Widget):
     """
     Widget to handle ansi terminals running a bash shell.
+
+    The widget will start a bash shell in the background and use a pseudo TTY to control it.  It then
+    starts a thread to transfer any data between the two processes (the one running this widget and
+    the bash shell).
     """
     def __init__(self, name, height):
         super(Terminal, self).__init__(name)
