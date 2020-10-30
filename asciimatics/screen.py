@@ -133,12 +133,12 @@ class _DoubleBuffer(object):
         else:
             # Limit to buffer size - this will just invalidate all the data
             lines = max(lines, -self._height)
-            for y in range(0, -lines):
-                self._double_buffer[self._height + lines + y] = line[:]
-                self._screen_buffer[y] = line[:]
-            for y in range(self._height - 1, -lines, -1):
+            for y in range(self._height - 1, -lines - 1, -1):
                 self._double_buffer[y] = self._double_buffer[y + lines]
                 self._screen_buffer[y] = self._screen_buffer[y + lines]
+            for y in range(0, -lines):
+                self._double_buffer[y] = line[:]
+                self._screen_buffer[y] = line[:]
 
     def block_transfer(self, buffer, x, y):
         """
@@ -534,12 +534,14 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         self._buffer = _DoubleBuffer(self._buffer_height, self.width)
         self._reset()
 
-    def scroll(self):
+    def scroll(self, lines=1):
         """
         Scroll the abstract canvas up one line.
+
+        :param lines: The number of lines to scroll.  Defaults to down by one.
         """
-        self._buffer.scroll(1)
-        self._start_line += 1
+        self._buffer.scroll(lines)
+        self._start_line += lines
 
     def scroll_to(self, line):
         """

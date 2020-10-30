@@ -46,6 +46,8 @@ class Terminal(Widget):
             (Screen.KEY_RIGHT, "kcuf1"),
             (Screen.KEY_UP, "kcuu1"),
             (Screen.KEY_DOWN, "kcud1"),
+            (Screen.KEY_PAGE_UP, "kpp"),
+            (Screen.KEY_PAGE_DOWN, "knp"),
             (Screen.KEY_HOME, "khome"),
             (Screen.KEY_END, "kend"),
             (Screen.KEY_DELETE, "kdch1"),
@@ -141,6 +143,8 @@ class Terminal(Widget):
                     # Move cursor relative to current position.
                     self._cursor_x += params[0]
                     self._cursor_y += params[1]
+                    if self._cursor_y < self._canvas.start_line:
+                        self._canvas.scroll(self._cursor_y - self._canvas.start_line)
                 elif command == Parser.MOVE_ABSOLUTE:
                     # Move cursor relative to specified absolute position.
                     if params[0] is not None:

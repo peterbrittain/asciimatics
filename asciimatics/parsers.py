@@ -171,15 +171,21 @@ class AnsiTerminalParser(Parser):
         def _handle_escape(st):
             match = self._colour_sequence.match(str(st.text))
             if match is None:
-                # Check for OS commands
+                # Not a CSI sequence... Check for some other options.
                 match = self._os_cmd.match(str(st.text))
                 if match:
+                    # OS command - just swallow it.
                     return len(match.group(1))
+                elif st.text[1] == "M":
+                    # Reverse Index - i.e. move up/scroll
+                    self._result.append((st.last_offset, Parser.MOVE_RELATIVE, (0, -1)))
+                    return 2
 
-                # Unknown escape - ignore next char as a minimal way to handle many sequences
+                # Unknown escape - guess how many characters to ignore - most likely just the next char...
                 logger.debug("Ignoring: %s", st.text[0:2])
                 return 2 if st.text[1] != "(" else 3
             else:
+                # CSI sequence - look for the various options...
                 if match.group(3) == "m":
                     # We have found a SGR escape sequence ( CSI ... m ).  These have zero or more
                     # embedded arguments, so create a simple FSM to process the parameter stream.
