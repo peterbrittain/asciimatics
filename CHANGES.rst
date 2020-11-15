@@ -3,6 +3,10 @@ CHANGE HISTORY
 
 LATEST
 ------
+- None
+
+1.12.0
+------
 - Added ColouredText objects to handle embedded colour codes in text for some widgets.
 - Added parsers to handle Asciimatics and Ansi Terminal escape sequences.
 - Added ControlCodeParser to create human readable text from raw text with control codes in it.
