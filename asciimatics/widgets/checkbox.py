@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module defines a checkbox widget"""
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.widgets.widget import Widget
