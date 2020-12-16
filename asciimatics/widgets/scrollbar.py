@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module implements a scroll bar capability for widgets"""
 
 class _ScrollBar(object):
