@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This is the baseclass for list box types"""
 from datetime import datetime, timedelta
 from abc import ABCMeta, abstractmethod, abstractproperty

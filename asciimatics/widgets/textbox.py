@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module implements a multi line editing text box"""
 from copy import copy
 from asciimatics.event import KeyboardEvent, MouseEvent

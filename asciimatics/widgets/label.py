@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This mdoule implements a widget to give a text label"""
 from asciimatics.widgets.widget import Widget
 from asciimatics.widgets.utilities import _split_text

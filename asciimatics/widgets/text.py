@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This widget implements a text based input field"""
 from re import match
 from asciimatics.event import KeyboardEvent, MouseEvent

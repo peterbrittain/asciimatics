@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module implements a base class for time picking"""
 from asciimatics.widgets.label import Label
 from asciimatics.widgets.layout import Layout

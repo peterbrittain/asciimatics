@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module defines a datepicker widget"""
 from datetime import datetime
 from asciimatics.event import KeyboardEvent, MouseEvent

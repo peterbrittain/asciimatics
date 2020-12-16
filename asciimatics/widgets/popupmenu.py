@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module implements a pop up menu widget"""
 from collections import defaultdict
 from functools import partial

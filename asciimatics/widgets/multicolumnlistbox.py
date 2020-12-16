@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module implements the widget for a multiple column list box"""
 from re import match as re_match
 from future.moves.itertools import zip_longest

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module defines an internal base class for datepickers"""
 from datetime import date
 from asciimatics.exceptions import InvalidFields

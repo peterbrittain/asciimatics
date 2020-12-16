@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module implements the displaying of widgets appropriately"""
 from wcwidth import wcswidth
 from asciimatics.event import KeyboardEvent, MouseEvent

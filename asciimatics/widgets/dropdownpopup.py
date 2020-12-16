@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module defines an internal class for drop down popups"""
 from asciimatics.widgets.divider import Divider
 from asciimatics.widgets.layout import Layout

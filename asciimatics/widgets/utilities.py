@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module defines commonly used pieces for widgets"""
 from logging import getLogger
 from math import sqrt

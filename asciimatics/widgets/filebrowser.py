@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module defines a file browser selection"""
 from re import compile as re_compile
 import os

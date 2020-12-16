@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module implements a base class for popups"""
 from collections import defaultdict
 from abc import abstractmethod

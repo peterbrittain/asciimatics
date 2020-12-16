@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module defines a class to display widgets"""
 from copy import copy, deepcopy
 from wcwidth import wcswidth

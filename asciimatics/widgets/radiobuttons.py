@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module implements the widget for radio buttons"""
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.screen import Screen

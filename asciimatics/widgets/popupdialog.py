@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module implements a Pop up dialog message box"""
 from inspect import isfunction
 from functools import partial

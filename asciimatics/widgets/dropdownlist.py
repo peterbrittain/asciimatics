@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module defines a dropdown list widget"""
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.screen import Screen

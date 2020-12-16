@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module implements a vertical division between widgets"""
 from asciimatics.widgets.widget import Widget
 

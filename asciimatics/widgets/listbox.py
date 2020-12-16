@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """This module implements the listbox widget"""
 from asciimatics.strings import ColouredText
 from asciimatics.widgets.utilities import _enforce_width
