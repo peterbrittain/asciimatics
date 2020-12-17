@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 """This module implements a base class for popups"""
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
 from collections import defaultdict
 from abc import abstractmethod
 from asciimatics.event import KeyboardEvent, MouseEvent

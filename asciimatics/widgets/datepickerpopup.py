@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 """This module defines an internal base class for datepickers"""
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import range
 from datetime import date
 from asciimatics.exceptions import InvalidFields
 from asciimatics.widgets.label import Label

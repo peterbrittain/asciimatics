@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 """This module implements a base class for time picking"""
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import range
 from asciimatics.widgets.label import Label
 from asciimatics.widgets.layout import Layout
 from asciimatics.widgets.listbox import ListBox

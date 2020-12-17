@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 """This module defines a class to display widgets"""
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import range
 from copy import copy, deepcopy
 from wcwidth import wcswidth
 from asciimatics.effects import Effect

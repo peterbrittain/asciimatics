@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 """This module implements a vertical division between widgets"""
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import range
 from asciimatics.widgets.widget import Widget
 
 class VerticalDivider(Widget):

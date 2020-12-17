@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 """This module implements a multi line editing text box"""
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import chr
+from builtins import str
 from copy import copy
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.screen import Screen

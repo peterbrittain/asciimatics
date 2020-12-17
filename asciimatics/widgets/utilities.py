@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 """This module defines commonly used pieces for widgets"""
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
 from logging import getLogger
 from math import sqrt
 from builtins import str

@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 """This module defines a divider between widgets"""
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
 from asciimatics.widgets.widget import Widget
 
 class Divider(Widget):
