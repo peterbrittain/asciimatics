@@ -3,7 +3,7 @@ CHANGE HISTORY
 
 LATEST
 ------
-- None
+- Converted widgets to a sub-package.
 
 1.12.0
 ------
