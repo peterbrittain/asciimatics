@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from __future__ import division
+import sys
 from pyfiglet import Figlet
 
 from asciimatics.effects import Scroll, Mirage, Wipe, Cycle, Matrix, \
@@ -10,7 +11,6 @@ from asciimatics.renderers import FigletText, SpeechBubble, Rainbow, Fire
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError
-import sys
 
 
 def _credits(screen):
@@ -159,6 +159,11 @@ def _credits(screen):
             screen,
             FigletText("Erik Doffagne"),
             screen.height + 104,
+            Screen.COLOUR_GREEN),
+        Mirage(
+            screen,
+            FigletText("Noah Ginsburg"),
+            screen.height + 112,
             Screen.COLOUR_GREEN)
     ]
     scenes.append(Scene(effects, (screen.height + 104) * 3))
