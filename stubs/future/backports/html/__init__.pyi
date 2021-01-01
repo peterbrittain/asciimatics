@@ -1,0 +1,3 @@
+from typing import Any
+
+def escape(s: Any, quote: bool = ...): ...

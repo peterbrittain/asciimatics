@@ -1,0 +1,3 @@
+from typing import Any
+
+def newsuper(typ: Any = ..., type_or_obj: Any = ..., framedepth: int = ...): ...
