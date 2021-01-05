@@ -4,6 +4,7 @@ CHANGE HISTORY
 LATEST
 ------
 - Converted widgets to a sub-package.
+- Fixed issue with labels in a layout column preventing buttons from being pressed.
 
 1.12.0
 ------

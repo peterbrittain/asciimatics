@@ -3147,6 +3147,42 @@ class TestWidgets(unittest.TestCase):
         layout.enable()
         _assert_disabled([])
 
+    def test_button_labels(self):
+        """
+        Check buttons and labels interact safely
+        """
+        # Create a dummy screen.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=True)
+        scene = MagicMock(spec=Scene)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+
+        # Create the form we want to test.
+        self.clicked = False
+
+        def click():
+            self.clicked = True
+
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        layout.add_widget(Button("one", None, label="Buttons"))
+        layout.add_widget(Button("two", click))
+        form.fix()
+        form.register_scene(scene)
+        form.reset()
+
+        # Check that clicking just outside the button has no effect.
+        self.process_mouse(form, [(7, 1, MouseEvent.LEFT_CLICK)])
+        self.process_mouse(form, [(15, 1, MouseEvent.LEFT_CLICK)])
+        self.assertFalse(self.clicked)
+
+        # Check that clicking just inside the button works.
+        self.process_mouse(form, [(8, 1, MouseEvent.LEFT_CLICK)])
+        self.assertTrue(self.clicked)
+        self.clicked = False
+        self.process_mouse(form, [(14, 1, MouseEvent.LEFT_CLICK)])
+        self.assertTrue(self.clicked)
+
 
 if __name__ == '__main__':
     unittest.main()

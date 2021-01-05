@@ -38,9 +38,10 @@ class Button(Widget):
         super(Button, self).set_layout(x, y, offset, w, h)
         text_width = self.string_len(self._text)
         if self._add_box:
-            # Minimize widget to make a nice little button.
-            self._x += max(0, (self.width - text_width) // 2)
-            self._w = min(self._w, text_width)
+            # Minimize widget to make a nice little button.  Only centre it if there are no label offsets.
+            if offset == 0:
+                self._x += max(0, (self.width - text_width) // 2)
+            self._w = min(self._w, text_width) + offset
         else:
             # Maximize text to make for a consistent colouring when used in menus.
             self._text += " " * (self._w - text_width)
@@ -66,11 +67,9 @@ class Button(Widget):
             # Ignore any other key press.
             return event
         if isinstance(event, MouseEvent):
-            if event.buttons != 0:
-                if (self._x <= event.x < self._x + self._w and
-                        self._y <= event.y < self._y + self._h):
-                    self._on_click()
-                    return None
+            if event.buttons != 0 and self.is_mouse_over(event, include_label=False):
+                self._on_click()
+                return None
         # Ignore other events
         return event
 
