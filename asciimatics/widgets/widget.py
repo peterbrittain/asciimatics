@@ -197,7 +197,7 @@ class Widget(with_metaclass(ABCMeta, object)):
 
         :param event: The MouseEvent to check.
         :param include_label: Include space reserved for the label when checking.
-        :param width_modifier: Adjustement to width (e.g. for scroll bars).
+        :param width_modifier: Adjustment to width (e.g. for scroll bars).
         :returns: True if the mouse is over the active parts of the widget.
         """
         # Disabled widgets should not react to the mouse.

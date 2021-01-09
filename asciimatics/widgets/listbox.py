@@ -45,7 +45,7 @@ class ListBox(_BaseListBox):
 
         # Prepare to calculate new visible limits if needed.
         height = self._h
-        width = self._w
+        width = self._w - self._offset
 
         # Clear out the existing box content
         (colour, attr, background) = self._frame.palette["field"]
