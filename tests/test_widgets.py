@@ -3147,13 +3147,13 @@ class TestWidgets(unittest.TestCase):
         layout.enable()
         _assert_disabled([])
 
-    def test_button_labels(self):
+    def test_widget_labels(self):
         """
-        Check buttons and labels interact safely
+        Check various widgets and labels interact correctly.
         """
         # Create a dummy screen.
-        screen = MagicMock(spec=Screen, colours=8, unicode_aware=True)
-        scene = MagicMock(spec=Scene)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
@@ -3162,25 +3162,55 @@ class TestWidgets(unittest.TestCase):
         def click():
             self.clicked = True
 
-        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
-        layout = Layout([100], fill_frame=True)
+        form = Frame(canvas, canvas.height, canvas.width, has_border=True)
+        layout = Layout([80, 20], fill_frame=True)
         form.add_layout(layout)
         layout.add_widget(Button("one", None, label="Buttons"))
         layout.add_widget(Button("two", click))
+        listbox = ListBox(1, [("12345678901234567890", 1)], label="List")
+        layout.add_widget(listbox)
+        text = Text(label="Text")
+        layout.add_widget(text)
         form.fix()
         form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
+        # Check widgets are displayed correctly
+        for effect in scene.effects:
+            effect.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|Buttons < one >                       |\n" +
+            "|        < two >                       O\n" +
+            "|List    12345678901234567890          |\n" +
+            "|Text                                  |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # check specfic bug with Listbox overflow on selection
+        self.process_mouse(form, [(20, 3, MouseEvent.LEFT_CLICK)])
+        for effect in scene.effects:
+            effect.update(1)
+        self.assertEqual(canvas.get_from(28, 3), (ord("0"), 7, 1, 6))
+        self.assertEqual(canvas.get_from(29, 3), (ord(" "), 7, 1, 6))
+        self.assertEqual(canvas.get_from(30, 3), (ord(" "), 7, 1, 6))
+        self.assertEqual(canvas.get_from(31, 3), (ord(" "), 7, 2, 4))
+
         # Check that clicking just outside the button has no effect.
-        self.process_mouse(form, [(7, 1, MouseEvent.LEFT_CLICK)])
-        self.process_mouse(form, [(15, 1, MouseEvent.LEFT_CLICK)])
+        self.process_mouse(form, [(8, 2, MouseEvent.LEFT_CLICK)])
+        self.process_mouse(form, [(16, 2, MouseEvent.LEFT_CLICK)])
         self.assertFalse(self.clicked)
 
         # Check that clicking just inside the button works.
-        self.process_mouse(form, [(8, 1, MouseEvent.LEFT_CLICK)])
+        self.process_mouse(form, [(9, 2, MouseEvent.LEFT_CLICK)])
         self.assertTrue(self.clicked)
         self.clicked = False
-        self.process_mouse(form, [(14, 1, MouseEvent.LEFT_CLICK)])
+        self.process_mouse(form, [(15, 2, MouseEvent.LEFT_CLICK)])
         self.assertTrue(self.clicked)
 
 
