@@ -573,6 +573,11 @@ class TestScreen(unittest.TestCase):
             screen.draw_next_frame()
             self.assertTrue(test_effect.update_called)
 
+            # Now check that a full refresh works.
+            self.assertEqual(len(list(screen._buffer.deltas(0, 100))), 0)
+            screen.force_update(full_refresh=True)
+            self.assertGreater(len(list(screen._buffer.deltas(0, 100))), 0)
+
         Screen.wrapper(internal_checks, height=15)
 
     def test_catch_exceptions(self):
