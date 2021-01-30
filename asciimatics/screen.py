@@ -75,6 +75,8 @@ class _DoubleBuffer(object):
         """
         width = self._width if w is None else w
         height = self._height if h is None else h
+        width = max(0, min(self._width - x, width))
+        height = max(0, min(self._height - y, height))
         line = [(u" ", fg, attr, bg, 1) for _ in range(width)]
         if x == 0 and y == 0 and w is None and h is None:
             self._double_buffer = [line[:] for _ in range(height)]

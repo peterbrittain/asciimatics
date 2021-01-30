@@ -20,7 +20,7 @@ try:
 except ImportError:
     pass
 from asciimatics.scene import Scene
-from asciimatics.screen import Screen, Canvas, ManagedScreen
+from asciimatics.screen import Screen, Canvas, ManagedScreen, _DoubleBuffer
 from tests.mock_objects import MockEffect
 if sys.platform == "win32":
     import win32console
@@ -981,6 +981,24 @@ class TestScreen(unittest.TestCase):
         canvas.print_at("ab", -1, 0)
         canvas.print_at("cd", canvas.width - 1, 0)
         self.assert_line_equals(canvas, "b                                      c")
+
+    def test_double_buffer(self):
+        """
+        Check _DoubleBuffer works.
+        """
+        buffer = _DoubleBuffer(20, 10)
+
+        # Check clear works
+        self.assertEqual(buffer._double_buffer[0][0], (' ', 7, 0, 0, 1))
+        self.assertEqual(buffer._double_buffer[19][9], (' ', 7, 0, 0, 1))
+        buffer.clear(1, 0, 2)
+        self.assertEqual(buffer._double_buffer[0][0], (' ', 1, 0, 2, 1))
+        self.assertEqual(buffer._double_buffer[19][9], (' ', 1, 0, 2, 1))
+
+        # Check clear clips as needed.
+        buffer.clear(3, 1, 4, x=1, y=1, w=100, h=100)
+        self.assertEqual(buffer._double_buffer[0][0], (' ', 1, 0, 2, 1))
+        self.assertEqual(buffer._double_buffer[19][9], (' ', 3, 1, 4, 1))
 
     def test_context_manager(self):
         """
