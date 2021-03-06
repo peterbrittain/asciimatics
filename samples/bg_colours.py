@@ -13,6 +13,7 @@ def demo(screen):
     scenes = []
 
     for bg, name in [
+            (Screen.COLOUR_DEFAULT, "DEFAULT"),
             (Screen.COLOUR_RED, "RED"),
             (Screen.COLOUR_YELLOW, "YELLOW"),
             (Screen.COLOUR_GREEN, "GREEN"),
@@ -23,7 +24,7 @@ def demo(screen):
         effects = [
             Wipe(screen, bg=bg, stop_frame=screen.height * 2 + 30),
             Print(screen, FigletText(name, "epic"), screen.height // 2 - 4,
-                  colour=7 - bg,
+                  colour=bg if bg == Screen.COLOUR_DEFAULT else 7 - bg,
                   bg=bg,
                   start_frame=screen.height * 2),
             Print(screen,

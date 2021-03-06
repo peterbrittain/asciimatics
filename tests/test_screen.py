@@ -108,8 +108,8 @@ class TestScreen(unittest.TestCase):
             for x in range(screen.width):
                 for y in range(15):
                     char = randint(0, 255)
-                    fg = randint(0, Screen.COLOUR_WHITE)
-                    bg = randint(0, Screen.COLOUR_WHITE)
+                    fg = randint(Screen.COLOUR_DEFAULT, Screen.COLOUR_WHITE)
+                    bg = randint(Screen.COLOUR_DEFAULT, Screen.COLOUR_WHITE)
                     attr = randint(0, Screen.A_UNDERLINE)
                     screen.print_at(chr(char), x, y, fg, attr, bg)
                     char2, fg2, attr2, bg2 = screen.get_from(x, y)

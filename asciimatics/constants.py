@@ -26,6 +26,7 @@ A_REVERSE = 3
 A_UNDERLINE = 4
 
 # Text colours for use when printing to the Screen.
+COLOUR_DEFAULT = -1
 COLOUR_BLACK = 0
 COLOUR_RED = 1
 COLOUR_GREEN = 2

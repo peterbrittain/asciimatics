@@ -1167,6 +1167,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
     A_UNDERLINE = constants.A_UNDERLINE
 
     # Text colours for use when printing to the Screen.
+    COLOUR_DEFAULT = constants.COLOUR_DEFAULT
     COLOUR_BLACK = constants.COLOUR_BLACK
     COLOUR_RED = constants.COLOUR_RED
     COLOUR_GREEN = constants.COLOUR_GREEN
@@ -1913,6 +1914,9 @@ if sys.platform == "win32":
 
         # Foreground colour lookup table.
         _COLOURS = {
+            Screen.COLOUR_DEFAULT: (win32console.FOREGROUND_RED |
+                                    win32console.FOREGROUND_GREEN |
+                                    win32console.FOREGROUND_BLUE),
             Screen.COLOUR_BLACK: 0,
             Screen.COLOUR_RED: win32console.FOREGROUND_RED,
             Screen.COLOUR_GREEN: win32console.FOREGROUND_GREEN,
@@ -1930,6 +1934,7 @@ if sys.platform == "win32":
 
         # Background colour lookup table.
         _BG_COLOURS = {
+            Screen.COLOUR_DEFAULT: 0,
             Screen.COLOUR_BLACK: 0,
             Screen.COLOUR_RED: win32console.BACKGROUND_RED,
             Screen.COLOUR_GREEN: win32console.BACKGROUND_GREEN,
@@ -2328,6 +2333,9 @@ else:
             self._down_line = curses.tigetstr("ind").decode("utf-8")
             self._fg_color = curses.tigetstr("setaf")
             self._bg_color = curses.tigetstr("setab")
+            self._default_colours = curses.tigetstr("op")
+            if self._default_colours:
+                self._default_colours = self._default_colours.decode("utf-8")
             self._clear_line = curses.tigetstr("el").decode("utf-8")
             if curses.tigetflag("hs"):
                 self._start_title = curses.tigetstr("tsl").decode("utf-8")
@@ -2534,6 +2542,16 @@ else:
                 self._attr = attr
                 self._colour = None
                 self._bg = None
+
+            # next check for default colours - which reset both fg and bg.
+            if colour == Screen.COLOUR_DEFAULT or bg == Screen.COLOUR_DEFAULT:
+                if self._default_colours:
+                    self._safe_write(self._default_colours)
+                    self._colour = colour if colour == Screen.COLOUR_DEFAULT else None
+                    self._bg = bg if bg == Screen.COLOUR_DEFAULT else None
+                else:
+                    colour = Screen.COLOUR_WHITE if colour == Screen.COLOUR_DEFAULT else colour
+                    bg = Screen.COLOUR_BLACK if bg == Screen.COLOUR_DEFAULT else bg
 
             # Now swap colours if required.
             if colour != self._colour:

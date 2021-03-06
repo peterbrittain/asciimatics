@@ -101,6 +101,11 @@ When creating effects that use these extra colours, it is recommended that you a
 reduced colour mode, using just the 8 common colours.  For an example of how to do this, see the
 :py:obj:`.Rainbow` class.
 
+Finally, some terminals have the concept of a default colour.  These can often have special attributes
+that are otherwise impossible to set in a terminal - e.g. transparency.  If your terminal supports
+these you can use the ``COLOUR_DEFAULT`` setting to use them.  If not supported, asciimatics will treat
+them as a black background and white foreground.
+
 Attributes
 ^^^^^^^^^^
 Attributes are a way of modifying the displayed text in some basic ways that early hardware

@@ -4,6 +4,7 @@ CHANGE HISTORY
 LATEST
 ------
 - Added ability to detect job pause/resume and force full screen refresh.
+- Added ability to request terminal default colours using `Screen.COLOUR_DEFAULT`.
 - Converted widgets to a sub-package.
 - Fixed issue with labels in a layout column preventing buttons from being pressed.
 - Fixed issue with visual overrun on Listboxes when there is a label offset.
