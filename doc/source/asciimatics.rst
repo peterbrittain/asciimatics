@@ -1,6 +1,14 @@
 asciimatics package
 ===================
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   asciimatics.widgets
+
 Submodules
 ----------
 
@@ -8,119 +16,118 @@ asciimatics.constants module
 ----------------------------
 
 .. automodule:: asciimatics.constants
-    :members:
+   :members:
     :inherited-members:
-    :show-inheritance:
+   :show-inheritance:
 
 asciimatics.effects module
 --------------------------
 
 .. automodule:: asciimatics.effects
-    :members:
+   :members:
     :inherited-members:
-    :show-inheritance:
+   :show-inheritance:
 
 asciimatics.event module
 ------------------------
 
 .. automodule:: asciimatics.event
-    :members:
+   :members:
     :inherited-members:
-    :show-inheritance:
+   :show-inheritance:
 
 asciimatics.exceptions module
 -----------------------------
 
 .. automodule:: asciimatics.exceptions
-    :members:
+   :members:
     :inherited-members:
-    :show-inheritance:
+   :show-inheritance:
 
 asciimatics.parsers module
 --------------------------
 
 .. automodule:: asciimatics.parsers
-    :members:
+   :members:
     :inherited-members:
-    :show-inheritance:
+   :show-inheritance:
 
 asciimatics.particles module
 ----------------------------
 
 .. automodule:: asciimatics.particles
-    :members:
+   :members:
     :inherited-members:
-    :show-inheritance:
+   :show-inheritance:
 
 asciimatics.paths module
 ------------------------
 
 .. automodule:: asciimatics.paths
-    :members:
+   :members:
     :inherited-members:
-    :show-inheritance:
+   :show-inheritance:
 
 asciimatics.renderers module
 ----------------------------
 
 .. automodule:: asciimatics.renderers
-    :members:
+   :members:
     :inherited-members:
-    :show-inheritance:
+   :show-inheritance:
 
 asciimatics.scene module
 ------------------------
 
 .. automodule:: asciimatics.scene
-    :members:
+   :members:
     :inherited-members:
-    :show-inheritance:
+   :show-inheritance:
 
 asciimatics.screen module
 -------------------------
 
 .. automodule:: asciimatics.screen
-    :members:
+   :members:
     :inherited-members:
-    :show-inheritance:
+   :show-inheritance:
 
 asciimatics.sprites module
 --------------------------
 
 .. automodule:: asciimatics.sprites
-    :members:
+   :members:
     :inherited-members:
-    :show-inheritance:
+   :show-inheritance:
+
+asciimatics.strings module
+--------------------------
+
+.. automodule:: asciimatics.strings
+   :members:
+    :inherited-members:
+   :show-inheritance:
 
 asciimatics.utilities module
 ----------------------------
 
 .. automodule:: asciimatics.utilities
-    :members:
+   :members:
     :inherited-members:
-    :show-inheritance:
+   :show-inheritance:
 
 asciimatics.version module
 --------------------------
 
 .. automodule:: asciimatics.version
-    :members:
+   :members:
     :inherited-members:
-    :show-inheritance:
-
-asciimatics.widgets module
---------------------------
-
-.. automodule:: asciimatics.widgets
-    :members:
-    :inherited-members:
-    :show-inheritance:
-
+   :show-inheritance:
 
 Module contents
 ---------------
 
 .. automodule:: asciimatics
-    :members:
+   :members:
     :inherited-members:
-    :show-inheritance:
+   :show-inheritance:

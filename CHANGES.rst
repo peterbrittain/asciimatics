@@ -9,6 +9,7 @@ LATEST
 - Fixed issue with visual overrun on Listboxes when there is a label offset.
 - Fixed issue with TextBox hitting IndexError in double buffers due to lack of clipping.
 - Fixed issue with Text/TextBox start columns on reset.
+- Added troubleshooting on terminal colour handling.
 
 1.12.0
 ------

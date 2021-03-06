@@ -71,6 +71,20 @@ support additional colours and how to enable them see `this Wikipedia article
 In most cases, simply selecting a terminal type of ``xterm-256color`` will usually do the trick
 these days.
 
+My colours are wrong
+--------------------
+When picking colours you may find that your selection doesn't have the desired effect.  This is
+because terminals have a nasty habit of using different definitions of the standard colours.
+
+Asciimatics relies on the ANSI colour set for its standard settings.  As you can see
+`here <https://en.wikipedia.org/wiki/ANSI_escape_code#Colors>`_ each terminal has its own
+interpretation of the exact colour.  However, you can usually tweak that in your terminal
+settings.  For example, iTerm on Mac uses a dark grey for black, which you can change as
+shown below.
+
+.. image:: mac_settings.png
+    :alt: Screen shot of iTerm settings
+
 The color theme resets when I resize the terminal
 -------------------------------------------------
 There was a bug where asciimatics would not maintain its own colour themes on resize.  This
