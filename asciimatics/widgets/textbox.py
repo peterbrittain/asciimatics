@@ -112,6 +112,7 @@ class TextBox(Widget):
     def reset(self):
         # Reset to original data and move to end of the text.
         self._start_line = 0
+        self._start_column = 0
         self._line = len(self._value) - 1
         self._column = 0 if self._is_disabled else len(self._value[self._line])
         self._reflowed_text_cache = None

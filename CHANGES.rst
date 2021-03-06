@@ -8,6 +8,7 @@ LATEST
 - Fixed issue with labels in a layout column preventing buttons from being pressed.
 - Fixed issue with visual overrun on Listboxes when there is a label offset.
 - Fixed issue with TextBox hitting IndexError in double buffers due to lack of clipping.
+- Fixed issue with Text/TextBox start columns on reset.
 
 1.12.0
 ------

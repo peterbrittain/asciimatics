@@ -89,6 +89,7 @@ class Text(Widget):
 
     def reset(self):
         # Reset to original data and move to end of the text.
+        self._start_column = 0
         self._column = len(self._value)
 
     def process_event(self, event):
