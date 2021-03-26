@@ -17,7 +17,7 @@ class Button(Widget):
 
     __slots__ = ["_text", "_add_box", "_on_click", "_label"]
 
-    def __init__(self, text, on_click, label=None, add_box=True, **kwargs):
+    def __init__(self, text, on_click, label=None, add_box=True, name=None, **kwargs):
         """
         :param text: The text for the button.
         :param on_click: The function to invoke when the button is clicked.
@@ -25,11 +25,8 @@ class Button(Widget):
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
         """
-        name = kwargs.get("name", None)
-        if "name" in kwargs:
-            del kwargs["name"]
         super(Button, self).__init__(name, **kwargs)
-        # We nly ever draw the button with borders, so calculate that once now.
+        # We only ever draw the button with borders, so calculate that once now.
         self._text = "< {} >".format(text) if add_box else text
         self._add_box = add_box
         self._on_click = on_click

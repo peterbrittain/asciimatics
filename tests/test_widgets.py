@@ -3224,16 +3224,5 @@ class TestWidgets(unittest.TestCase):
         btn = Button("Run", _on_click, name="btn_run")
 
 
-    def test_button_name2(self):
-        """
-        Check Button name can be set as an attribute.
-        """
-        def _on_click():
-            pass
-
-        btn = Button("Run", _on_click)
-        btn.name="btn_run"
-
-
 if __name__ == '__main__':
     unittest.main()
