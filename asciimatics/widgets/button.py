@@ -25,7 +25,10 @@ class Button(Widget):
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
         """
-        super(Button, self).__init__(None, **kwargs)
+        name = kwargs.get("name", None)
+        if "name" in kwargs:
+            del kwargs["name"]
+        super(Button, self).__init__(name, **kwargs)
         # We nly ever draw the button with borders, so calculate that once now.
         self._text = "< {} >".format(text) if add_box else text
         self._add_box = add_box
