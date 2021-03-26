@@ -5,13 +5,13 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from datetime import date, time
 from time import sleep
-from unittest.mock import patch
+from mock import patch
 from builtins import ord
 from builtins import chr
 from builtins import str
 import unittest
 import sys
-from unittest.mock import MagicMock
+from mock.mock import MagicMock
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import NextScene, StopApplication, InvalidFields
 from asciimatics.scene import Scene
