@@ -22,6 +22,8 @@ class Button(Widget):
         :param text: The text for the button.
         :param on_click: The function to invoke when the button is clicked.
         :param label: An optional label for the widget.
+        :param add_box: Whether to wrap the text with chevrons.
+        :param name: The name of this widget.
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
         """
