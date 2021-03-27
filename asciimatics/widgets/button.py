@@ -86,7 +86,7 @@ class Button(Widget):
 
     @text.setter
     def text(self, new_text):
-        self._text_raw = str(new_text)
+        self._text_raw = new_text
         self._text = "< {} >".format(new_text) if self._add_box else new_text
 
     @property
