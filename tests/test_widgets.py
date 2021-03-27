@@ -3224,5 +3224,18 @@ class TestWidgets(unittest.TestCase):
         btn = Button("Run", _on_click, name="btn_run")
 
 
+    def test_button_text(self):
+        """
+        Check Button text can be set as an attribute.
+        """
+        def _on_click():
+            pass
+
+        btn = Button("Before", _on_click)
+        self.assertEqual(btn.text, "Before")
+        btn.text = "After"
+        self.assertEqual(btn.text, "After")
+
+
 if __name__ == '__main__':
     unittest.main()
