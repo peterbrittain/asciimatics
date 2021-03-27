@@ -15,7 +15,7 @@ class Button(Widget):
     on a form).
     """
 
-    __slots__ = ["_text", "_add_box", "_on_click", "_label"]
+    __slots__ = ["_text", "_text_raw", "_add_box", "_on_click", "_label"]
 
     def __init__(self, text, on_click, label=None, add_box=True, name=None, **kwargs):
         """
@@ -28,9 +28,8 @@ class Button(Widget):
         Also see the common keyword arguments in :py:obj:`.Widget`.
         """
         super(Button, self).__init__(name, **kwargs)
-        # We only ever draw the button with borders, so calculate that once now.
-        self._text = "< {} >".format(text) if add_box else text
         self._add_box = add_box
+        self.text = text
         self._on_click = on_click
         self._label = label
 
@@ -77,6 +76,18 @@ class Button(Widget):
 
     def required_height(self, offset, width):
         return 1
+
+    @property
+    def text(self):
+        """
+        The current text for this Button.
+        """
+        return self._text_raw
+
+    @text.setter
+    def text(self, new_text):
+        self._text_raw = str(new_text)
+        self._text = "< {} >".format(new_text) if self._add_box else new_text
 
     @property
     def value(self):
