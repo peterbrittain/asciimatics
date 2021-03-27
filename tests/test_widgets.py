@@ -234,6 +234,19 @@ class TestFrame5(Frame):
         self.changed = True
 
 
+class TestFrame6(Frame):
+    def __init__(self, screen):
+        super(TestFrame6, self).__init__(
+            screen, screen.height, screen.width, has_border=True, name="My Form")
+
+        # Simple full-page Widget
+        layout = Layout([1], fill_frame=True)
+        self.add_layout(layout)
+        self.lbl = Label("TstFrm6Lbl", name="tf6_lbl")
+        layout.add_widget(self.lbl)
+        self.fix()
+
+
 class TestWidgets(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
@@ -3235,6 +3248,31 @@ class TestWidgets(unittest.TestCase):
         self.assertEqual(btn.text, "Before")
         btn.text = "After"
         self.assertEqual(btn.text, "After")
+
+
+    def test_label_name1(self):
+        """
+        Check Label name can be set in the constructor.
+        """
+        lbl = Label("Winner", name="my_lbl")
+
+
+    def test_label_name2(self):
+        """
+        Check Label can be found by its containing Frame
+        """
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame6(canvas)
+        scene.add_effect(form)
+        scene.reset()
+
+        # Check that the Label is found by its name
+        # by confirming the label's value
+        l = form.find_widget("tf6_lbl")
+        self.assertEqual(l.text, "TstFrm6Lbl")
 
 
 if __name__ == '__main__':
