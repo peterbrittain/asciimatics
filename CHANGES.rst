@@ -3,6 +3,7 @@ CHANGE HISTORY
 
 LATEST
 ------
+- Added ability to accept a name attribute in the Button constructor.
 - Added ability to detect job pause/resume and force full screen refresh.
 - Added ability to request terminal default colours using `Screen.COLOUR_DEFAULT`.
 - Converted widgets to a sub-package.

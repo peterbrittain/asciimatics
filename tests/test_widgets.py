@@ -3214,5 +3214,15 @@ class TestWidgets(unittest.TestCase):
         self.assertTrue(self.clicked)
 
 
+    def test_button_name1(self):
+        """
+        Check Button name can be set in the constructor.
+        """
+        def _on_click():
+            pass
+
+        btn = Button("Run", _on_click, name="btn_run")
+
+
 if __name__ == '__main__':
     unittest.main()

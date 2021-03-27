@@ -17,16 +17,18 @@ class Button(Widget):
 
     __slots__ = ["_text", "_add_box", "_on_click", "_label"]
 
-    def __init__(self, text, on_click, label=None, add_box=True, **kwargs):
+    def __init__(self, text, on_click, label=None, add_box=True, name=None, **kwargs):
         """
         :param text: The text for the button.
         :param on_click: The function to invoke when the button is clicked.
         :param label: An optional label for the widget.
+        :param add_box: Whether to wrap the text with chevrons.
+        :param name: The name of this widget.
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
         """
-        super(Button, self).__init__(None, **kwargs)
-        # We nly ever draw the button with borders, so calculate that once now.
+        super(Button, self).__init__(name, **kwargs)
+        # We only ever draw the button with borders, so calculate that once now.
         self._text = "< {} >".format(text) if add_box else text
         self._add_box = add_box
         self._on_click = on_click
