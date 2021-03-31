@@ -15,16 +15,17 @@ class Label(Widget):
 
     __slots__ = ["_text", "_required_height", "_align"]
 
-    def __init__(self, label, height=1, align="<"):
+    def __init__(self, label, height=1, align="<", name=None):
         """
         :param label: The text to be displayed for the Label.
         :param height: Optional height for the label.  Defaults to 1 line.
         :param align: Optional alignment for the Label.  Defaults to left aligned.
             Options are "<" = left, ">" = right and "^" = centre
+        :param name: The name of this widget.
 
         """
         # Labels have no value and so should have no name for look-ups either.
-        super(Label, self).__init__(None, tab_stop=False)
+        super(Label, self).__init__(name, tab_stop=False)
 
         # Although this is a label, we don't want it to contribute to the layout
         # tab calculations, so leave internal `_label` value as None.
