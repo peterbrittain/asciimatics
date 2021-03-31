@@ -8,17 +8,20 @@ import sys
 
 
 class TabButtons(Layout):
-    def __init__(self, frame):
+    def __init__(self, frame, active_tab_idx):
         cols = [1, 1, 1, 1, 1]
         super().__init__(cols)
         self._frame = frame
         for i,_ in enumerate(cols):
             self.add_widget(Divider(), i)
-        self.add_widget(Button("Btn1", self._on_click_1), 0)
-        self.add_widget(Button("Btn2", self._on_click_2), 1)
-        self.add_widget(Button("Btn3", self._on_click_3), 2)
-        self.add_widget(Button("Btn4", self._on_click_4), 3)
-        self.add_widget(Button("Quit", self._on_click_Q), 4)
+        btns = [Button("Btn1", self._on_click_1),
+                Button("Btn2", self._on_click_2),
+                Button("Btn3", self._on_click_3),
+                Button("Btn4", self._on_click_4),
+                Button("Quit", self._on_click_Q)]
+        for i, btn in enumerate(btns):
+            self.add_widget(btn, i)
+        btns[active_tab_idx].disabled = True
 
     def _on_click_1(self):
         raise NextScene("Tab1")
@@ -47,7 +50,7 @@ class RootPage(Frame):
         self.add_layout(layout1)
         # add your widgets here
 
-        layout2 = TabButtons(self)
+        layout2 = TabButtons(self, 0)
         self.add_layout(layout2)
         self.fix()
 
@@ -63,7 +66,7 @@ class AlphaPage(Frame):
         self.add_layout(layout1)
         # add your widgets here
 
-        layout2 = TabButtons(self)
+        layout2 = TabButtons(self, 1)
         self.add_layout(layout2)
         self.fix()
 
@@ -79,7 +82,7 @@ class BravoPage(Frame):
         self.add_layout(layout1)
         # add your widgets here
 
-        layout2 = TabButtons(self)
+        layout2 = TabButtons(self, 2)
         self.add_layout(layout2)
         self.fix()
 
@@ -95,7 +98,7 @@ class CharliePage(Frame):
         self.add_layout(layout1)
         # add your widgets here
 
-        layout2 = TabButtons(self)
+        layout2 = TabButtons(self, 3)
         self.add_layout(layout2)
         self.fix()
 
