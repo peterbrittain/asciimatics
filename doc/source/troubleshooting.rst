@@ -194,13 +194,13 @@ simply nothing (i.e. it looks like the program has hung).  The reason for this i
 Terminal/Console is not a true native terminal/console and so the native interfaces used by
 asciimatics will not work.  There are 2 workarounds.
 
-1. PyCharm, both Professional and Community editions, offers an option to emulate console
+1. PyCharm, both Professional and Community editions, now offers an option to emulate console
    output directly in PyCharm. To enable this functionality, see *Run | Edit Configurations |
-   Configuration | Execution | Emulate terminal in output console*, otherwise you must start a
-   real console from the Terminal window e.g. using `start cmd /c "python <your file name>"`.
+   Configuration | Execution | Emulate terminal in output console*.
 
-2. The simplest is just to run asciimatics inside a real terminal or window - i.e. not inside
-   PyCharm/the IDE.
+2. Alternatively, you can just run asciimatics inside a real terminal or window - i.e. not inside
+   PyCharm/the IDE.  For example, you can force a real console from the Terminal window using
+   `start cmd /c "python <your file name>"`.
 
 .. _unicode-issues-ref:
 
