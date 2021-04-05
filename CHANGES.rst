@@ -3,6 +3,10 @@ CHANGE HISTORY
 
 LATEST
 ------
+- None
+
+1.13.0
+------
 - Added ability to change a `Button`'s text through a `.text` attribute.
 - Added ability to accept a name attribute in the `Button` and `Label` constructors.
 - Added ability to detect job pause/resume and force full screen refresh.
