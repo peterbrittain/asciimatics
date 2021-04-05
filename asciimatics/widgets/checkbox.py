@@ -81,6 +81,9 @@ class CheckBox(Widget):
 
     @property
     def value(self):
+        """
+        The current value for this Checkbox.
+        """
         return self._value
 
     @value.setter

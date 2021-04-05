@@ -120,6 +120,9 @@ class TimePicker(Widget):
 
     @property
     def value(self):
+        """
+        The current selected time.
+        """
         return self._value
 
     @value.setter

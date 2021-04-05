@@ -94,6 +94,9 @@ class RadioButtons(Widget):
 
     @property
     def value(self):
+        """
+        The current value for these RadioButtons.
+        """
         # The value is actually the value of the current selection.
         return self._options[self._selection][1]
 

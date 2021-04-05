@@ -40,4 +40,7 @@ class VerticalDivider(Widget):
 
     @property
     def value(self):
+        """
+        The current value for this VerticalDivider.
+        """
         return self._value

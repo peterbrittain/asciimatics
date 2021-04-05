@@ -68,4 +68,7 @@ class Label(Widget):
 
     @property
     def value(self):
+        """
+        The current value for this Label.
+        """
         return self._value

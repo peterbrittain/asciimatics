@@ -77,7 +77,7 @@ When picking colours you may find that your selection doesn't have the desired e
 because terminals have a nasty habit of using different definitions of the standard colours.
 
 Asciimatics relies on the ANSI colour set for its standard settings.  As you can see
-`here <https://en.wikipedia.org/wiki/ANSI_escape_code#Colors>`_ each terminal has its own
+`here <https://en.wikipedia.org/wiki/ANSI_escape_code#Colors>`__ each terminal has its own
 interpretation of the exact colour.  However, you can usually tweak that in your terminal
 settings.  For example, iTerm on Mac uses a dark grey for black, which you can change as
 shown below.
@@ -95,7 +95,7 @@ startup using the terminal's control sequences.  These will not be invoked by as
 on a resize event.  If you use such an application, you will need to invoke the control
 sequences yourself.
 
-For example, to re-apply a `pywal <https://github.com/dylanaraps/pywal>`_ color theme:
+For example, to re-apply a `pywal <https://github.com/dylanaraps/pywal>`__ color theme:
 
 .. code-block:: python
 

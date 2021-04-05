@@ -142,6 +142,9 @@ class DatePicker(Widget):
 
     @property
     def value(self):
+        """
+        The current selected date.
+        """
         return self._value
 
     @value.setter

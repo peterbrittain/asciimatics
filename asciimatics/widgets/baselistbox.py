@@ -183,6 +183,9 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
 
     @property
     def value(self):
+        """
+        The current value for this list box.
+        """
         return self._value
 
     @value.setter

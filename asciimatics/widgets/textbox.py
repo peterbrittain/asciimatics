@@ -284,6 +284,9 @@ class TextBox(Widget):
 
     @property
     def value(self):
+        """
+        The current value for this TextBox.
+        """
         if self._value is None:
             self._value = [""]
         return "\n".join([str(x) for x in self._value]) if self._as_string else self._value

@@ -165,6 +165,9 @@ class Text(Widget):
 
     @property
     def value(self):
+        """
+        The current value for this Text.
+        """
         return self._value
 
     @value.setter

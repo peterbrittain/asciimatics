@@ -51,4 +51,7 @@ class Divider(Widget):
 
     @property
     def value(self):
+        """
+        The current value for this Divider.
+        """
         return self._value

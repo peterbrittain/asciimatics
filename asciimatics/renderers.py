@@ -49,8 +49,7 @@ class Renderer(with_metaclass(ABCMeta, object)):
     @abstractproperty
     def max_width(self):
         """
-        :return: The max width of the rendered text (across all images if an
-            animated renderer).
+        :return: The max width of the rendered text (across all images if an animated renderer).
         """
 
     @abstractproperty
@@ -68,8 +67,7 @@ class Renderer(with_metaclass(ABCMeta, object)):
     @abstractproperty
     def max_height(self):
         """
-        :return: The max height of the rendered text (across all images if an
-            animated renderer).
+        :return: The max height of the rendered text (across all images if an animated renderer).
         """
 
     def __repr__(self):
@@ -179,8 +177,7 @@ class StaticRenderer(Renderer):
     @property
     def max_height(self):
         """
-        :return: The max height of the rendered text (across all images if an
-            animated renderer).
+        :return: The max height of the rendered text (across all images if an animated renderer).
         """
         if len(self._plain_images) <= 0:
             self._convert_images()
@@ -193,8 +190,7 @@ class StaticRenderer(Renderer):
     @property
     def max_width(self):
         """
-        :return: The max width of the rendered text (across all images if an
-            animated renderer).
+        :return: The max width of the rendered text (across all images if an animated renderer).
         """
         if len(self._plain_images) <= 0:
             self._convert_images()
