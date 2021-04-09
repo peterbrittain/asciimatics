@@ -13,6 +13,7 @@ from asciimatics.strings import ColouredText
 from asciimatics.widgets.widget import Widget
 from asciimatics.widgets.utilities import _find_min_start, _enforce_width, logger, _get_offset
 
+
 class TextBox(Widget):
     """
     A TextBox is a widget for multi-line text editing.

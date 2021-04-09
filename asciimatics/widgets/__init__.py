@@ -1,4 +1,5 @@
 """This is the module initialization for widgets"""
+# flake8: noqa
 from asciimatics.effects import Background
 from asciimatics.widgets.button import Button
 from asciimatics.widgets.checkbox import CheckBox

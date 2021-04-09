@@ -8,6 +8,7 @@ from builtins import str
 from asciimatics.widgets.widget import Widget
 from asciimatics.widgets.utilities import _split_text
 
+
 class Label(Widget):
     """
     A text label.

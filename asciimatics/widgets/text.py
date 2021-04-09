@@ -11,6 +11,7 @@ from asciimatics.screen import Screen
 from asciimatics.widgets.utilities import _find_min_start, _enforce_width, _get_offset
 from asciimatics.widgets.widget import Widget
 
+
 class Text(Widget):
     """
     A Text widget is a single line input field.
@@ -186,5 +187,4 @@ class Text(Widget):
             if callable(self._validator):
                 self._is_valid = self._validator(self._value)
             else:
-                self._is_valid = match(self._validator,
-                                          self._value) is not None
+                self._is_valid = match(self._validator, self._value) is not None

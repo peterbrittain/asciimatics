@@ -18,6 +18,7 @@ pylint:
   disable:
     # Py2/3 compatibility
     - redefined-builtin
+    - useless-object-inheritance
     # Need many attributes on widgets
     - too-many-arguments
     - too-many-locals

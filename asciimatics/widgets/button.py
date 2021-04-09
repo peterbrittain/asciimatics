@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.widgets.widget import Widget
 
+
 class Button(Widget):
     """
     A Button widget to be  displayed in a Frame.

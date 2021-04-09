@@ -12,6 +12,7 @@ from asciimatics.widgets.button import Button
 from asciimatics.widgets.frame import Frame
 from asciimatics.widgets.layout import Layout
 
+
 class PopupMenu(Frame):
     """
     A widget for displaying a menu.

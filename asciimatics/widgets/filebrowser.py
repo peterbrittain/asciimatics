@@ -11,6 +11,7 @@ from collections import namedtuple
 from asciimatics.utilities import readable_timestamp, readable_mem
 from asciimatics.widgets.multicolumnlistbox import MultiColumnListBox
 
+
 class FileBrowser(MultiColumnListBox):
     """
     A FileBrowser is a widget for finding a file on the local disk.
@@ -71,6 +72,7 @@ class FileBrowser(MultiColumnListBox):
         # 1) I don't really want to expose these methods, so am living with the protected access.
         # 2) I need to populate the list and then assign the values to ensure that we get the
         #    right selection on re-sizing.
+        # pylint: disable=protected-access
         new_widget._populate_list(self._root)
         new_widget._start_line = self._start_line
         new_widget._root = self._root

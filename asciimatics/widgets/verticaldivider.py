@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 from builtins import range
 from asciimatics.widgets.widget import Widget
 
+
 class VerticalDivider(Widget):
     """
     A vertical divider for separating columns.

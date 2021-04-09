@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 import re
 from builtins import str
 from future.utils import with_metaclass
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 from logging import getLogger
 import asciimatics.constants as constants
 from asciimatics.utilities import _DotDict
@@ -80,7 +80,7 @@ class Parser(with_metaclass(ABCMeta, object)):
 
 class ControlCodeParser(Parser):
     """
-    Parser to replace all control codes with a readable version - e.g. "^M" for \\r.
+    Parser to replace all control codes with a readable version - e.g. "^M" for carriage return.
     """
 
     def reset(self, text, colours=None):

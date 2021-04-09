@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.widgets.widget import Widget
 
+
 class CheckBox(Widget):
     """
     A CheckBox widget is used to ask for Boolean (i.e. yes/no) input.

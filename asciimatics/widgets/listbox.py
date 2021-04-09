@@ -10,6 +10,7 @@ from asciimatics.strings import ColouredText
 from asciimatics.widgets.utilities import _enforce_width
 from asciimatics.widgets.baselistbox import _BaseListBox
 
+
 class ListBox(_BaseListBox):
     """
     A ListBox is a widget that displays a list from which the user can select one option.

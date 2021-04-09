@@ -6,6 +6,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from asciimatics.widgets.widget import Widget
 
+
 class Divider(Widget):
     """
     A divider to break up a group of widgets.

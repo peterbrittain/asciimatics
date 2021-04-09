@@ -12,6 +12,7 @@ from asciimatics.strings import ColouredText
 from asciimatics.widgets.utilities import _enforce_width
 from asciimatics.widgets.baselistbox import _BaseListBox
 
+
 class MultiColumnListBox(_BaseListBox):
     """
     A MultiColumnListBox is a widget for displaying tabular data.
@@ -83,7 +84,7 @@ class MultiColumnListBox(_BaseListBox):
                 self._align.append(match.group(1) if match.group(1) else "<")
             if space_delimiter == ' ':
                 self._spacing.append(1 if i > 0 and self._align[i] == "<" and
-                                 self._align[i - 1] == ">" else 0)
+                                     self._align[i - 1] == ">" else 0)
             else:
                 self._spacing.append(1 if i > 0 else 0)
 

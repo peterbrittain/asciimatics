@@ -13,6 +13,7 @@ from asciimatics.widgets.layout import Layout
 from asciimatics.widgets.textbox import TextBox
 from asciimatics.widgets.utilities import _split_text
 
+
 class PopUpDialog(Frame):
     """
     A fixed implementation Frame that provides a standard message box dialog.

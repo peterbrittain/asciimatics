@@ -18,6 +18,11 @@ from asciimatics.screen import Screen
 # Logging
 logger = getLogger(__name__)
 
+#: Standard palettes for use with :py:meth:`~Frame.set_theme`.
+#: Each entry in THEMES contains a colour palette for use by the widgets within a Frame.
+#: Each colour palette is a dictionary mapping a colour key to a 3-tuple of 
+#: (foreground colour, attribute, background colour).
+#: The "default" theme defines all the required keys for a palette.
 THEMES = {
     "default": {
         "background": (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
@@ -110,6 +115,8 @@ THEMES = {
         }
     ),
 }
+
+
 def _enforce_width(text, width, unicode_aware=True):
     """
     Enforce a displayed piece of text to be a certain number of cells wide.  This takes into

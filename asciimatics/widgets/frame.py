@@ -14,6 +14,7 @@ from asciimatics.screen import Screen, Canvas
 from asciimatics.widgets.scrollbar import _ScrollBar
 from asciimatics.widgets.utilities import THEMES, logger
 
+
 class Frame(Effect):
     """
     A Frame is a special Effect for controlling and displaying Widgets.
@@ -164,12 +165,13 @@ class Frame(Effect):
                 else:
                     y = layout.fix(x, y, width, height)
 
-            # If we hit a variable height Layout - figure out the available
-            # space and reset everything to the new values.
+            # Can stop now if no fill required.
             if fill_layout is None:
                 break
-            else:
-                fill_height = max(1, start_y + height - y)
+
+            # We hit a variable height Layout - figure out the available space and reset everything
+            # to the new values.
+            fill_height = max(1, start_y + height - y)
 
         # Remember the resulting height of the underlying Layouts.
         self._max_height = y
@@ -349,7 +351,7 @@ class Frame(Effect):
 
         try:
             layout = self._layouts[self._focus]
-            return layout._columns[layout._live_col][layout._live_widget]
+            return layout.get_current_widget()
         except IndexError:
             # If the current indexing is invalid it's because no widget is selected.
             return None
@@ -402,6 +404,8 @@ class Frame(Effect):
         if self._name is not None:
             for effect in scene.effects:
                 if isinstance(effect, Frame):
+                    # Using protected access to our own class type on purpose.
+                    # pylint: disable=protected-access
                     logger.debug("Cloning: %s", effect._name)
                     if effect._name == self._name:
                         effect.set_theme(self._theme)
@@ -505,8 +509,7 @@ class Frame(Effect):
             start_y = self.canvas.start_line
             height = self.canvas.height
 
-        if ((x >= start_x) and (x < start_x + width) and
-                (y >= start_y) and (y + h < start_y + height)):
+        if ((start_x <= x < start_x + width) and (y >= start_y) and (y + h < start_y + height)):
             # Already OK - quit now.
             return
 
@@ -552,8 +555,9 @@ class Frame(Effect):
         """
         Find the nearest widget above or below the current widget with the focus.
 
-        This should only be called by the Frame when normal Layout navigation fails and so this needs to find the
-        nearest widget in the next available Layout.  It will not search the existing Layout for a closer match.
+        This should only be called by the Frame when normal Layout navigation fails and so this needs to find
+        the nearest widget in the next available Layout.  It will not search the existing Layout for a closer
+        match.
 
         :param direction: The direction to move through the Layouts.
         """
@@ -653,4 +657,3 @@ class Frame(Effect):
         # calculated when taking te focus) or if the Frame is modal or we handled the
         # event.
         return None if claimed_focus or self._is_modal or event is None else old_event
-

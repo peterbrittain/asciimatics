@@ -17,14 +17,6 @@ from asciimatics.screen import Screen
 from asciimatics.widgets.utilities import _split_text, logger
 
 
-#: Standard palettes for use with :py:meth:`~Frame.set_theme`.
-#: Each entry in THEMES contains a colour
-#: palette for use by the widgets within a Frame.
-#: Each colour palette is a dictionary mapping a colour key
-#: to a 3-tuple of (foreground colour, attribute, background colour).
-#: The "default" theme defines all the
-#: required keys for a palette.
-
 class Widget(with_metaclass(ABCMeta, object)):
     """
     A Widget is a re-usable component that can be used to create a simple GUI.

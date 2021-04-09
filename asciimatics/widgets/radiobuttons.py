@@ -8,6 +8,7 @@ from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.screen import Screen
 from asciimatics.widgets.widget import Widget
 
+
 class RadioButtons(Widget):
     """
     A RadioButtons widget is used to ask for one of a list of values to be selected by the user.

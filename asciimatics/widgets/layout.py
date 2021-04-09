@@ -14,6 +14,7 @@ from asciimatics.utilities import _DotDict
 from asciimatics.widgets.utilities import _euclidian_distance, logger
 from asciimatics.widgets.widget import Widget
 
+
 class Layout(object):
     """
     Widget layout handler.
@@ -242,11 +243,11 @@ class Layout(object):
 
     def get_nearest_widget(self, target_widget, direction):
         """
-        Find the nearest enabled widget to the specified target widget, bearing in mind the direction of travel.
+        Find the nearest enabled widget to the specified target widget, bearing in mind direction of travel.
 
-        Direction of travel is defined to be the movement from current Layout to next.  This is important for the
-        case where we wrap back to the beginning or end of the Layouts - and so should still only look for the
-        widgets nearest the top/bottom (depending on direction of travel).
+        Direction of travel is defined to be the movement from current Layout to next.  This is important
+        for the case where we wrap back to the beginning or end of the Layouts - and so should still only
+        look for the widgets nearest the top/bottom (depending on direction of travel).
 
         This function may return None if there is no match (e.g. all widgets are disabled).
 
@@ -260,7 +261,8 @@ class Layout(object):
             if direction < 0:
                 indexed_column = reversed(indexed_column)
             # Force this to be a list for python 2/3 compatibility.
-            live_widgets = [x for x in filter(lambda x: x[1].is_tab_stop and not x[1].disabled, indexed_column)]
+            live_widgets = [x for x in filter(
+                lambda x: x[1].is_tab_stop and not x[1].disabled, indexed_column)]
             try:
                 j, candidate = live_widgets[0]
                 new_distance = _euclidian_distance(target_widget, candidate)
@@ -296,8 +298,8 @@ class Layout(object):
             best_index = -1
             for index, widget in live_widgets:
                 self._live_col = current_col
-                # An exact match on line (i.e. same Y value) trumps any closest distance.  Break out now if we find
-                # a match that way.
+                # An exact match on line (i.e. same Y value) trumps any closest distance.  Break out now if
+                # we find a match that way.
                 if widget.get_location()[1] == current_widget.get_location()[1]:
                     self._live_col = current_col
                     self._live_widget = index
@@ -327,13 +329,16 @@ class Layout(object):
                 if widget.is_tab_stop and not widget.disabled:
                     return
                 self._live_widget += direction
+
+            # No need to do more if we are staying in the column.
             if stay_in_col:
                 break
-            else:
-                self._live_col += direction
-                self._live_widget = -1 if direction > 0 else len(self._columns[self._live_col])
-                if self._live_col == current_col:
-                    break
+
+            # If we got here move to the ne t column.
+            self._live_col += direction
+            self._live_widget = -1 if direction > 0 else len(self._columns[self._live_col])
+            if self._live_col == current_col:
+                break
 
         # We've exhausted our search - give up and stay where we were.
         self._live_widget = current_widget
@@ -547,4 +552,3 @@ class Layout(object):
         # Update focus if needed.
         if columns is None or self._live_col in columns:
             self._find_next_widget(1)
-

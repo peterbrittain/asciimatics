@@ -11,6 +11,7 @@ from asciimatics.exceptions import InvalidFields
 from asciimatics.screen import Screen
 from asciimatics.widgets.frame import Frame
 
+
 class _TempPopup(Frame):
     """
     An internal Frame for creating a temporary pop-up for a Widget in another Frame.

@@ -16,6 +16,7 @@ from asciimatics.widgets.listbox import ListBox
 from asciimatics.widgets.temppopup import _TempPopup
 from asciimatics.widgets.widget import Widget
 
+
 class _DatePickerPopup(_TempPopup):
     """
     An internal Frame for editing the currently selected date.
@@ -84,6 +85,7 @@ class _DatePickerPopup(_TempPopup):
                                                                 year=self._years.value)
         except ValueError:
             raise InvalidFields([self._days])
+
 
 class DatePicker(Widget):
     """

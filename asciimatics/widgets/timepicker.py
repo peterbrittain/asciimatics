@@ -15,6 +15,7 @@ from asciimatics.widgets.listbox import ListBox
 from asciimatics.widgets.temppopup import _TempPopup
 from asciimatics.widgets.widget import Widget
 
+
 class _TimePickerPopup(_TempPopup):
     """
     An internal Frame for editing the currently selected time.
@@ -58,6 +59,7 @@ class _TimePickerPopup(_TempPopup):
             self._parent.value = self._parent.value.replace(hour=self._hours.value,
                                                             minute=self._minutes.value,
                                                             second=self._seconds.value)
+
 
 class TimePicker(Widget):
     """

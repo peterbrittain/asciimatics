@@ -13,6 +13,7 @@ from asciimatics.screen import Screen
 from asciimatics.widgets.widget import Widget
 from asciimatics.widgets.scrollbar import _ScrollBar
 
+
 class _BaseListBox(with_metaclass(ABCMeta, Widget)):
     """
     An Internal class to contain common function between list box types.

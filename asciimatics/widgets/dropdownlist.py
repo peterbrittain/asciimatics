@@ -14,6 +14,7 @@ from asciimatics.widgets.text import Text
 from asciimatics.widgets.utilities import _enforce_width
 from asciimatics.widgets.widget import Widget
 
+
 class _DropdownPopup(_TempPopup):
     """
     An internal Frame for selecting an item from a drop-down list..
@@ -60,11 +61,13 @@ class _DropdownPopup(_TempPopup):
         self._list.value = parent.value
 
     def _link(self):
+        # pylint: disable=protected-access
         self._field.value = self._list.options[self._list._line][0]
 
     def _on_close(self, cancelled):
         if not cancelled:
             self._parent.value = self._list.value
+
 
 class DropdownList(Widget):
     """

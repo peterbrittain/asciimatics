@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 from builtins import range
 from builtins import object
 
+
 class _ScrollBar(object):
     """
     Internal object to provide vertical scroll bars for widgets.

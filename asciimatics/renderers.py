@@ -98,6 +98,7 @@ class StaticRenderer(Renderer):
         :param animation: A function to pick the image (from images) to be
                           rendered for any given frame.
         """
+        super(StaticRenderer, self).__init__()
         self._images = images if images is not None else []
         self._index = 0
         self._max_width = 0
