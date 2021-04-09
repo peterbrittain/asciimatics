@@ -7,8 +7,8 @@
     :target: https://ci.appveyor.com/project/peterbrittain/asciimatics
     :alt: Windows build status
 
-.. image:: https://api.codacy.com/project/badge/Grade/486232c340c644b9a676a66da946970d
-   :target: https://app.codacy.com/project/pab/asciimatics/dashboard
+.. image:: https://app.codacy.com/project/badge/Grade/c1fed1f2dc6a47a1bbe91f8851456beb
+   :target: https://www.codacy.com/gh/peterbrittain/asciimatics/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=peterbrittain/asciimatics&amp;utm_campaign=Badge_Grade
    :alt: Code Health
 
 .. image:: https://coveralls.io/repos/github/peterbrittain/asciimatics/badge.svg?branch=master
