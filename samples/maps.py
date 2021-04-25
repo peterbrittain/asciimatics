@@ -13,7 +13,8 @@ from ast import literal_eval
 from collections import OrderedDict
 from asciimatics.event import KeyboardEvent
 from asciimatics.renderers import ColourImageFile
-from asciimatics.widgets import Effect, Button, Text, Layout, Frame, Divider, PopUpDialog
+from asciimatics.effects import Effect
+from asciimatics.widgets import Button, Text, Layout, Frame, Divider, PopUpDialog
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, StopApplication, InvalidFields
@@ -159,7 +160,7 @@ class Map(Effect):
 
     def _get_satellite_tile(self, x_tile, y_tile, z_tile):
         """Load up a single satellite image tile."""
-        cache_file = "mapscache/{}.{}.{}.jpg".format(z_tile, x_tile, y_tile)
+        cache_file = "mapscache{}.{}.{}.jpg".format(z_tile, x_tile, y_tile)
         if cache_file not in self._tiles:
             if not os.path.isfile(cache_file):
                 url = _IMAGE_URL.format(z_tile, x_tile, y_tile, _KEY)
@@ -177,7 +178,7 @@ class Map(Effect):
 
     def _get_vector_tile(self, x_tile, y_tile, z_tile):
         """Load up a single vector tile."""
-        cache_file = "mapscache/{}.{}.{}.json".format(z_tile, x_tile, y_tile)
+        cache_file = "mapscache{}.{}.{}.json".format(z_tile, x_tile, y_tile)
         if cache_file not in self._tiles:
             if os.path.isfile(cache_file):
                 with open(cache_file, 'rb') as f:
