@@ -137,6 +137,10 @@ class Map(Effect):
         self._thread = threading.Thread(target=self._get_tiles)
         self._thread.daemon = True
         self._thread.start()
+        
+        # a separate directory to store cached files.
+        if not os.path.isdir('mapscache'):
+            os.mkdir('mapscache')
 
     def _scale_coords(self, x, y, extent, xo, yo):
         """Convert from tile coordinates to "pixels" - i.e. text characters."""
@@ -181,9 +185,6 @@ class Map(Effect):
 
     def _get_vector_tile(self, x_tile, y_tile, z_tile):
         """Load up a single vector tile."""
-        if not os.path.isdir('mapscache'):
-            os.mkdir('mapscache')
-            
         cache_file = "mapscache/{}.{}.{}.json".format(z_tile, x_tile, y_tile)
         if cache_file not in self._tiles:
             if os.path.isfile(cache_file):
