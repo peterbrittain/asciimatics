@@ -164,9 +164,6 @@ class Map(Effect):
 
     def _get_satellite_tile(self, x_tile, y_tile, z_tile):
         """Load up a single satellite image tile."""
-        if not os.path.isdir('mapscache'): 
-            return
-        
         cache_file = "mapscache/{}.{}.{}.jpg".format(z_tile, x_tile, y_tile)
         if cache_file not in self._tiles:
             if not os.path.isfile(cache_file):
