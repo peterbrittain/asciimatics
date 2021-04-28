@@ -13,7 +13,8 @@ from ast import literal_eval
 from collections import OrderedDict
 from asciimatics.event import KeyboardEvent
 from asciimatics.renderers import ColourImageFile
-from asciimatics.widgets import Effect, Button, Text, Layout, Frame, Divider, PopUpDialog
+from asciimatics.effects import Effect
+from asciimatics.widgets import Button, Text, Layout, Frame, Divider, PopUpDialog
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, StopApplication, InvalidFields
@@ -136,6 +137,10 @@ class Map(Effect):
         self._thread = threading.Thread(target=self._get_tiles)
         self._thread.daemon = True
         self._thread.start()
+        
+        # a separate directory to store cached files.
+        if not os.path.isdir('mapscache'):
+            os.mkdir('mapscache')
 
     def _scale_coords(self, x, y, extent, xo, yo):
         """Convert from tile coordinates to "pixels" - i.e. text characters."""
