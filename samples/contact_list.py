@@ -11,7 +11,7 @@ import sqlite3
 
 class ContactModel(object):
     def __init__(self):
-        # Create a database in RAM
+        # Create a database in RAM.
         self._db = sqlite3.connect(':memory:')
         self._db.row_factory = sqlite3.Row
 
