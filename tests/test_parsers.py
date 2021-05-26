@@ -231,8 +231,11 @@ class TestParsers(unittest.TestCase):
         self.assertEquals(next(tokens), (0, Parser.DISPLAY_TEXT, "a"))
         self.assertEquals(next(tokens), (1, Parser.DISPLAY_TEXT, "b"))
 
-        # Ignore unknown control char
-        self.assertEquals(next(tokens), (4, Parser.DISPLAY_TEXT, "c"))
+        # ANSI art uses control codes for special characters - check we just blank them.
+        self.assertEquals(next(tokens), (4, Parser.DISPLAY_TEXT, " "))
+
+        # Back to normal.
+        self.assertEquals(next(tokens), (5, Parser.DISPLAY_TEXT, "c"))
 
     def test_ansi_terminal_parser_tab(self):
         """
