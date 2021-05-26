@@ -20,7 +20,7 @@ import re
 
 from wcwidth.wcwidth import wcswidth
 
-from asciimatics.screen import Screen
+from asciimatics.screen import Screen, TemporaryCanvas
 from asciimatics.constants import COLOUR_REGEX
 
 
@@ -209,24 +209,21 @@ class DynamicRenderer(with_metaclass(ABCMeta, Renderer)):
     has a defined maximum size on construction.
     """
 
-    def __init__(self, height, width):
+    def __init__(self, height, width, clear=True):
         """
         :param height: The max height of the rendered image.
         :param width: The max width of the rendered image.
         """
         super(DynamicRenderer, self).__init__()
-        self._height = height
-        self._width = width
-        self._plain_image = []
-        self._colour_map = []
+        self._must_clear = clear
+        self._canvas = TemporaryCanvas(height, width)
 
     def _clear(self):
         """
         Clear the current image.
         """
-        self._plain_image = [" " * self._width for _ in range(self._height)]
-        self._colour_map = [[(None, 0, 0) for _ in range(self._width)]
-                            for _ in range(self._height)]
+        # self._canvas.clear_buffer(Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK)
+        self._canvas.clear_buffer(None, 0, 0)
 
     def _write(self, text, x, y, colour=Screen.COLOUR_WHITE,
                attr=Screen.A_NORMAL, bg=Screen.COLOUR_BLACK):
@@ -239,20 +236,21 @@ class DynamicRenderer(with_metaclass(ABCMeta, Renderer)):
         :param colour: The colour of the text to add.
         :param attr: The attribute of the image.
         :param bg: The background colour of the text to add.
+        
+        This is only kept for back compatibility.  Direct access to the canvas methods is
+        preferred.
         """
-        # Limit checks to ensure that we don't try to draw off the end of the arrays
-        if y >= self._height or x >= self._width:
-            return
+        self._canvas.print_at(text, x, y, colour, attr, bg) 
 
-        # Limit text to draw to visible line
-        if len(text) + x > self._width:
-            text = text[:self._width - x]
+    @property
+    def _plain_image(self):
+        # return ["".join([chr(self._canvas.get_from(x, y + self._canvas.start_line)[0]) for x in range(self._canvas.width)]) for y in range(self._canvas.height)]
+        return self._canvas._buffer.plain_image
 
-        # Now draw it!
-        self._plain_image[y] = text.join(
-            [self._plain_image[y][:x], self._plain_image[y][x + len(text):]])
-        for i, _ in enumerate(text):
-            self._colour_map[y][x + i] = (colour, attr, bg)
+    @property
+    def _colour_map(self):
+        # return [[self._canvas.get_from(x, y + self._canvas.start_line)[1:4] for x in range(self._canvas.width)] for y in range(self._canvas.height)]
+        return self._canvas._buffer.colour_map
 
     @abstractmethod
     def _render_now(self):
@@ -266,21 +264,21 @@ class DynamicRenderer(with_metaclass(ABCMeta, Renderer)):
     @property
     def images(self):
         # We can't return all, so just return the latest rendered image.
-        self._clear()
-        return [self._render_now()[0]]
+        return [self.rendered_text[0]]
 
     @property
     def rendered_text(self):
-        self._clear()
+        if self._must_clear:
+            self._clear()
         return self._render_now()
 
     @property
     def max_height(self):
-        return self._height
+        return self._canvas.height
 
     @property
     def max_width(self):
-        return self._width
+        return self._canvas.width
 
 
 class FigletText(StaticRenderer):
@@ -614,20 +612,20 @@ class BarChart(DynamicRenderer):
 
     def _render_now(self):
         # Dimensions for the chart.
-        int_h = self._height
-        int_w = self._width
+        int_h = self._canvas.height
+        int_w = self._canvas.width
         start_x = key_x = 0
         start_y = 0
         scale = int_w if self._scale is None else self._scale
 
         # Create  the box around the chart...
         if self._border:
-            self._write("+" + "-" * (self._width - 2) + "+", 0, 0)
-            for line in range(1, self._height):
+            self._write("+" + "-" * (self._canvas.width - 2) + "+", 0, 0)
+            for line in range(1, self._canvas.height):
                 self._write("|", 0, line)
-                self._write("|", self._width - 1, line)
+                self._write("|", self._canvas.width - 1, line)
             self._write(
-                "+" + "-" * (self._width - 2) + "+", 0, self._height - 1)
+                "+" + "-" * (self._canvas.width - 2) + "+", 0, self._canvas.height - 1)
             int_h -= 4
             int_w -= 6
             start_y += 2
@@ -799,8 +797,8 @@ class Fire(DynamicRenderer):
         self._intensity = intensity
         self._spot_heat = spot
         self._count = len([c for c in emitter if c not in " \n"])
-        line = [0 for _ in range(self._width)]
-        self._buffer = [copy.deepcopy(line) for _ in range(self._width * 2)]
+        line = [0 for _ in range(self._canvas.width)]
+        self._buffer = [copy.deepcopy(line) for _ in range(self._canvas.width * 2)]
         self._colours = self._COLOURS_256 if colours >= 256 else \
             self._COLOURS_16
         self._bg_too = bg
@@ -818,7 +816,7 @@ class Fire(DynamicRenderer):
         # First make the fire rise with convection
         for y in range(len(self._buffer) - 1):
             self._buffer[y] = self._buffer[y + 1]
-        self._buffer[len(self._buffer) - 1] = [0 for _ in range(self._width)]
+        self._buffer[len(self._buffer) - 1] = [0 for _ in range(self._canvas.width)]
 
         # Seed new hot spots
         x = self._x
@@ -833,25 +831,25 @@ class Fire(DynamicRenderer):
                 x += 1
 
         # Seed a few cooler spots
-        for _ in range(self._width // 2):
-            self._buffer[randint(0, self._height - 1)][
-                randint(0, self._width - 1)] -= 10
+        for _ in range(self._canvas.width // 2):
+            self._buffer[randint(0, self._canvas.height - 1)][
+                randint(0, self._canvas.width - 1)] -= 10
 
         # Simulate cooling effect of the resulting environment.
         for y in range(len(self._buffer)):
-            for x in range(self._width):
+            for x in range(self._canvas.width):
                 new_val = self._buffer[y][x]
                 if y < len(self._buffer) - 1:
                     new_val += self._buffer[y + 1][x]
                     if x > 0:
                         new_val += self._buffer[y][x - 1]
-                    if x < self._width - 1:
+                    if x < self._canvas.width - 1:
                         new_val += self._buffer[y][x + 1]
                 self._buffer[y][x] = new_val // 4
 
         # Now build the rendered text from the simulated flames.
         self._clear()
-        for x in range(self._width):
+        for x in range(self._canvas.width):
             for y in range(len(self._buffer)):
                 if self._buffer[y][x] > 0:
                     colour = self._colours[min(len(self._colours) - 1,
@@ -919,12 +917,12 @@ class Plasma(DynamicRenderer):
     def _render_now(self):
         # Internal function for creating a sine wave radiating out from a point
         def f(x1, y1, xp, yp, n):
-            return sin(sqrt((x1 - self._width * xp) ** 2 +
-                            4 * ((y1 - self._height * yp) ** 2)) * pi / n)
+            return sin(sqrt((x1 - self._canvas.width * xp) ** 2 +
+                            4 * ((y1 - self._canvas.height * yp) ** 2)) * pi / n)
 
         self._t += 1
-        for y in range(self._height - 1):
-            for x in range(self._width - 1):
+        for y in range(self._canvas.height - 1):
+            for x in range(self._canvas.width - 1):
                 value = abs(f(x + self._t / 3, y, 1 / 4, 1 / 3, 15) +
                             f(x, y, 1 / 8, 1 / 5, 11) +
                             f(x, y + self._t / 3, 1 / 2, 1 / 5, 13) +
@@ -1012,12 +1010,12 @@ class Kaleidoscope(DynamicRenderer):
         # Integer maths will result in gaps between characters if you rotate from the starting
         # point to desired end-point.  We therefore look for the reverse mapping from the final
         # character and trace-back instead.
-        for dx in range(self._width // 2):
-            for dy in range(self._height):
+        for dx in range(self._canvas.width // 2):
+            for dy in range(self._canvas.height):
                 # Figure out which segment of the circle we're in, so we know what affine
                 # transformations to apply.
-                ox = (dx - self._width / 4)
-                oy = dy - self._height / 2
+                ox = (dx - self._canvas.width / 4)
+                oy = dy - self._canvas.height / 2
                 segment = round(atan2(oy, ox) * self._symmetry / pi)
                 if segment % 2 == 0:
                     # Just a rotation required for even segments.

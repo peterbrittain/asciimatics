@@ -43,6 +43,10 @@ class Parser(with_metaclass(ABCMeta, object)):
     SHOW_CURSOR = 7
     #: Clear the screen.  No parameters.
     CLEAR_SCREEN = 8
+    #: Save the cursor position.  No parameters.
+    SAVE_CURSOR = 9
+    #: Restore the cursor position.  No parameters.
+    RESTORE_CURSOR = 10
 
     def __init__(self):
         """
@@ -161,13 +165,15 @@ class AnsiTerminalParser(Parser):
         :param colours: colour tuple to initialise the colour map.
         """
         super(AnsiTerminalParser, self).reset(text, colours)
-        state = _DotDict()
-        state.attributes = [x for x in self._attributes] if self._attributes else [None, None, None]
-        state.offset = 0
-        state.last_offset = 0
-        state.cursor = 0
-        state.text = self._raw_text
+        self._state = _DotDict()
+        self._state.attributes = [x for x in self._attributes] if self._attributes else [None, None, None]
+        self._state.offset = 0
+        self._state.last_offset = 0
+        self._state.cursor = 0
+        self._state.text = self._raw_text
 
+    def parse(self):
+        # TODO: fix hack
         def _handle_escape(st):
             match = self._colour_sequence.match(str(st.text))
             if match is None:
@@ -175,17 +181,22 @@ class AnsiTerminalParser(Parser):
                 match = self._os_cmd.match(str(st.text))
                 if match:
                     # OS command - just swallow it.
-                    return len(match.group(1))
-                elif st.text[1] == "M":
+                    return len(match.group(1)), None
+                elif len(st.text) > 1 and st.text[1] == "M":
                     # Reverse Index - i.e. move up/scroll
-                    self._result.append((st.last_offset, Parser.MOVE_RELATIVE, (0, -1)))
-                    return 2
+                    return 2, [(st.last_offset, Parser.MOVE_RELATIVE, (0, -1))]
 
                 # Unknown escape - guess how many characters to ignore - most likely just the next char...
                 logger.debug("Ignoring: %s", st.text[0:2])
-                return 2 if st.text[1] != "(" else 3
+                # TODO return 2, None if len(st.text) > 1 and st.text[1] != "(" else 3, None
+                if len(st.text) < 2:
+                    return -1, None
+                if st.text[1] in ("[", "]"):
+                    return -1, None
+                return (2, None) if st.text[1] != "(" else (3, None)
             else:
                 # CSI sequence - look for the various options...
+                results = []
                 if match.group(3) == "m":
                     # We have found a SGR escape sequence ( CSI ... m ).  These have zero or more
                     # embedded arguments, so create a simple FSM to process the parameter stream.
@@ -263,39 +274,39 @@ class AnsiTerminalParser(Parser):
                                 logger.debug("Ignoring parameter: %s", parameter)
                     new_attributes = tuple(st.attributes)
                     if last_attributes != new_attributes:
-                        self._result.append((st.last_offset, Parser.CHANGE_COLOURS, new_attributes))
+                        results.append((st.last_offset, Parser.CHANGE_COLOURS, new_attributes))
                 elif match.group(3) == "K":
                     # This is a line delete sequence.  Parameter defines which parts to delete.
                     param = match.group(2)
                     if param in ("", "0"):
                         # Delete to end of line
-                        self._result.append((state.last_offset, Parser.DELETE_LINE, 0))
+                        results.append((self._state.last_offset, Parser.DELETE_LINE, 0))
                     elif param == "1":
                         # Delete from start of line
-                        self._result.append((state.last_offset, Parser.DELETE_LINE, 1))
+                        results.append((self._state.last_offset, Parser.DELETE_LINE, 1))
                     elif param == "2":
                         # Delete whole line
-                        self._result.append((state.last_offset, Parser.DELETE_LINE, 2))
+                        results.append((self._state.last_offset, Parser.DELETE_LINE, 2))
                 elif match.group(3) == "P":
                     # This is a character delete sequence.  Parameter defines how many to delete.
                     param = 1 if match.group(2) == "" else int(match.group(2))
-                    self._result.append((state.last_offset, Parser.DELETE_CHARS, param))
+                    results.append((self._state.last_offset, Parser.DELETE_CHARS, param))
                 elif match.group(3) == "A":
                     # Move cursor up.  Parameter defines how far to move..
                     param = 1 if match.group(2) == "" else int(match.group(2))
-                    self._result.append((state.last_offset, Parser.MOVE_RELATIVE, (0, -param)))
+                    results.append((self._state.last_offset, Parser.MOVE_RELATIVE, (0, -param)))
                 elif match.group(3) == "B":
                     # Move cursor down.  Parameter defines how far to move..
                     param = 1 if match.group(2) == "" else int(match.group(2))
-                    self._result.append((state.last_offset, Parser.MOVE_RELATIVE, (0, param)))
+                    results.append((self._state.last_offset, Parser.MOVE_RELATIVE, (0, param)))
                 elif match.group(3) == "C":
                     # Move cursor forwards.  Parameter defines how far to move..
                     param = 1 if match.group(2) == "" else int(match.group(2))
-                    self._result.append((state.last_offset, Parser.MOVE_RELATIVE, (param, 0)))
+                    results.append((self._state.last_offset, Parser.MOVE_RELATIVE, (param, 0)))
                 elif match.group(3) == "D":
                     # Move cursor backwards.  Parameter defines how far to move..
                     param = 1 if match.group(2) == "" else int(match.group(2))
-                    self._result.append((state.last_offset, Parser.MOVE_RELATIVE, (-param, 0)))
+                    results.append((self._state.last_offset, Parser.MOVE_RELATIVE, (-param, 0)))
                 elif match.group(3) == "H":
                     # Move cursor to specified position.
                     x, y = 0, 0
@@ -303,38 +314,60 @@ class AnsiTerminalParser(Parser):
                     y = int(params[0]) - 1 if params[0] != "" else 0
                     if len(params) > 1:
                         x = int(params[1]) - 1 if params[1] != "" else 0
-                    self._result.append((state.last_offset, Parser.MOVE_ABSOLUTE, (x, y)))
+                    results.append((self._state.last_offset, Parser.MOVE_ABSOLUTE, (x, y)))
                 elif match.group(3) == "h" and match.group(2) == "?25":
                     # Various DEC private mode commands - look for cursor visibility, ignore others.
-                    self._result.append((state.last_offset, Parser.SHOW_CURSOR, True))
+                    results.append((self._state.last_offset, Parser.SHOW_CURSOR, True))
                 elif match.group(3) == "l" and match.group(2) == "?25":
                     # Various DEC private mode commands - look for cursor visibility, ignore others.
-                    self._result.append((state.last_offset, Parser.SHOW_CURSOR, False))
+                    results.append((self._state.last_offset, Parser.SHOW_CURSOR, False))
+                elif match.group(3) == "h" and match.group(2) == "?1049":
+                    # TODO fix this hack for alt screen.
+                    results.append((self._state.last_offset, Parser.CLEAR_SCREEN, None))
+                elif match.group(3) == "l" and match.group(2) == "?1049":
+                    # TODO fix this hack for alt screen.
+                    results.append((self._state.last_offset, Parser.CLEAR_SCREEN, None))
                 elif match.group(3) == "J" and match.group(2) == "2":
                     # Clear the screen.
-                    self._result.append((state.last_offset, Parser.CLEAR_SCREEN, None))
+                    results.append((self._state.last_offset, Parser.CLEAR_SCREEN, None))
+                elif match.group(3) == "s":
+                    # Save cursor pos
+                    results.append((self._state.last_offset, Parser.SAVE_CURSOR, None))
+                elif match.group(3) == "u":
+                    # Restore cursor pos
+                    results.append((self._state.last_offset, Parser.RESTORE_CURSOR, None))
                 else:
                     logger.debug("Ignoring control: %s", match.group(1))
-                return len(match.group(1))
+                return len(match.group(1)), results
 
-        while len(state.text) > 0:
-            char = ord(state.text[0])
+        while len(self._state.text) > 0:
+            char = ord(self._state.text[0])
             new_offset = 1
             if char > 31:
-                self._result.append((state.last_offset, Parser.DISPLAY_TEXT, state.text[0]))
-                state.last_offset = state.offset + 1
+                yield (self._state.last_offset, Parser.DISPLAY_TEXT, self._state.text[0])
+                self._state.last_offset = self._state.offset + 1
             elif char == 8:
                 # Back space
-                self._result.append((state.last_offset, Parser.MOVE_RELATIVE, (-1, 0)))
+                yield (self._state.last_offset, Parser.MOVE_RELATIVE, (-1, 0))
             elif char == 9:
                 # Tab
-                self._result.append((state.last_offset, Parser.NEXT_TAB, None))
+                yield (self._state.last_offset, Parser.NEXT_TAB, None)
             elif char == 13:
                 # Carriage return
-                self._result.append((state.last_offset, Parser.MOVE_ABSOLUTE, (0, None)))
+                yield (self._state.last_offset, Parser.MOVE_ABSOLUTE, (0, None))
             elif char == 27:
-                new_offset = _handle_escape(state)
+                new_offset, results = _handle_escape(self._state)
+                if new_offset == -1:
+                    break
+                if results is not None:
+                    for result in results:
+                        yield result
             else:
                 logger.debug("Ignoring character: %d", char)
-            state.offset += new_offset
-            state.text = state.text[new_offset:]
+                yield (self._state.last_offset, Parser.DISPLAY_TEXT, " ")
+                self._state.last_offset = self._state.offset + 1
+            self._state.offset += new_offset
+            self._state.text = self._state.text[new_offset:]
+
+    def append(self, text):
+        self._state.text += text
