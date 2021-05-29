@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 import re
 from builtins import str
 from future.utils import with_metaclass
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 from logging import getLogger
 import asciimatics.constants as constants
 from asciimatics.utilities import _DotDict
@@ -52,9 +52,7 @@ class Parser(with_metaclass(ABCMeta, object)):
         """
         Initialize the parser.
         """
-        self._raw_text = ""
-        self._attributes = None
-        self._result = []
+        self._state = None
 
     def reset(self, text, colours):
         """
@@ -63,12 +61,11 @@ class Parser(with_metaclass(ABCMeta, object)):
         :param text: raw text to process.
         :param colours: colour tuple to initialise the colour map.
         """
-        self._raw_text = text
-        self._attributes = colours
-        self._result = []
-        if colours:
-            self._result.append((0, Parser.CHANGE_COLOURS, colours))
+        self._state = _DotDict()
+        self._state.text = text
+        self._state.attributes = colours
 
+    @abstractmethod
     def parse(self):
         """
         Generator to return coloured text from raw text.
@@ -78,8 +75,14 @@ class Parser(with_metaclass(ABCMeta, object)):
 
         :returns: a 3-tuple of (start offset in raw text, command to execute, parameters)
         """
-        for element in self._result:
-            yield tuple(element)
+
+    def append(self, text):
+        """
+        Append more text to the current text being processed.
+
+        :param text: raw text to process.
+        """
+        self._state.text += text
 
 
 class ControlCodeParser(Parser):
@@ -87,19 +90,23 @@ class ControlCodeParser(Parser):
     Parser to replace all control codes with a readable version - e.g. "^M" for carriage return.
     """
 
-    def reset(self, text, colours=None):
+    def parse(self):
         """
-        Reset the parser to analyze the supplied raw text.
+        Generator to return coloured text from raw text.
 
-        :param text: raw text to process.
-        :param colours: colour tuple to initialise the colour map.
+        :returns: a 3-tuple of (start offset in raw text, command to execute, parameters)
         """
-        super(ControlCodeParser, self).reset(text, colours)
-        for i, letter in enumerate(text):
+        if self._state.attributes:
+            yield (0, Parser.CHANGE_COLOURS, self._attributes)
+        offset = 0
+        while len(self._state.text) > 0:
+            letter = self._state.text[0]
             if ord(letter) < 32:
-                self._result.append((i, Parser.DISPLAY_TEXT, "^" + chr(ord("@") + ord(letter))))
+                yield (offset, Parser.DISPLAY_TEXT, "^" + chr(ord("@") + ord(letter)))
             else:
-                self._result.append((i, Parser.DISPLAY_TEXT, letter))
+                yield (offset, Parser.DISPLAY_TEXT, letter)
+            offset += 1
+            self._state.text = self._state.text[1:]
 
 
 class AsciimaticsParser(Parser):
@@ -111,21 +118,20 @@ class AsciimaticsParser(Parser):
     # It should match ${n}, ${m,n} or ${m,n,o}
     _colour_sequence = re.compile(constants.COLOUR_REGEX)
 
-    def reset(self, text, colours):
+    def parse(self):
         """
-        Reset the parser to analyze the supplied raw text.
+        Generator to return coloured text from raw text.
 
-        :param text: raw text to process.
-        :param colours: colour tuple to initialise the colour map.
+        :returns: a 3-tuple of (start offset in raw text, command to execute, parameters)
         """
-        super(AsciimaticsParser, self).reset(text, colours)
+        if self._state.attributes:
+            yield (0, Parser.CHANGE_COLOURS, self._attributes)
         offset = last_offset = 0
-        text = self._raw_text
-        while len(text) > 0:
-            match = self._colour_sequence.match(str(text))
+        while len(self._state.text) > 0:
+            match = self._colour_sequence.match(str(self._state.text))
             if match is None:
-                self._result.append((last_offset, Parser.DISPLAY_TEXT, text[0]))
-                text = text[1:]
+                yield (last_offset, Parser.DISPLAY_TEXT, self._state.text[0])
+                self._state.text = self._state.text[1:]
                 offset += 1
                 last_offset = offset
             else:
@@ -143,9 +149,9 @@ class AsciimaticsParser(Parser):
                                   None)
                 else:
                     attributes = (int(match.group(7)), 0, None)
-                self._result.append((last_offset, Parser.CHANGE_COLOURS, attributes))
+                yield (last_offset, Parser.CHANGE_COLOURS, attributes)
                 offset += 3 + len(match.group(1))
-                text = match.group(8)
+                self._state.text = match.group(8)
 
 
 class AnsiTerminalParser(Parser):
@@ -165,15 +171,16 @@ class AnsiTerminalParser(Parser):
         :param colours: colour tuple to initialise the colour map.
         """
         super(AnsiTerminalParser, self).reset(text, colours)
-        self._state = _DotDict()
-        self._state.attributes = [x for x in self._attributes] if self._attributes else [None, None, None]
+        if self._state.attributes is None:
+            self._state.init_colours = False
+            self._state.attributes = [None, None, None]
+        else:
+            self._state.init_colours = True
         self._state.offset = 0
         self._state.last_offset = 0
         self._state.cursor = 0
-        self._state.text = self._raw_text
 
     def parse(self):
-        # TODO: fix hack
         def _handle_escape(st):
             match = self._colour_sequence.match(str(st.text))
             if match is None:
@@ -340,6 +347,9 @@ class AnsiTerminalParser(Parser):
                     logger.debug("Ignoring control: %s", match.group(1))
                 return len(match.group(1)), results
 
+        if self._state.init_colours:
+            self._state.init_colours = False
+            yield (0, Parser.CHANGE_COLOURS, self._state.attributes)
         while len(self._state.text) > 0:
             char = ord(self._state.text[0])
             new_offset = 1
@@ -368,6 +378,3 @@ class AnsiTerminalParser(Parser):
                 self._state.last_offset = self._state.offset + 1
             self._state.offset += new_offset
             self._state.text = self._state.text[new_offset:]
-
-    def append(self, text):
-        self._state.text += text
