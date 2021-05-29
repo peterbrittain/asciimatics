@@ -161,7 +161,7 @@ class AsciinemaPlayer(AbstractScreenPlayer):
 
     This only supports the version 2 file format.
     """
-    def __init__(self, filename, height=None, width=None):
+    def __init__(self, filename, height=None, width=None, speed=None):
         # Open the file and check it looks plausibly like a supported format.
         self._file = open(filename)
         header = json.loads(self._file.readline())
@@ -174,6 +174,7 @@ class AsciinemaPlayer(AbstractScreenPlayer):
 
         # Construct the full player now we have all the details.
         super(AsciinemaPlayer, self).__init__(height, width)
+        self._speed = speed
 
     def _render_now(self):
         self._counter += 0.05
@@ -185,9 +186,9 @@ class AsciinemaPlayer(AbstractScreenPlayer):
                 try:
                     self._next, _, self._buffer = json.loads(self._file.readline())
                     if self._next > self._counter:
-                        # TODO: option to speed up playback?
-                        # if self._next - self._counter > 0.2:
-                        #     self._counter = self._next - 0.2
+                        # Speed up playback if requested.
+                        if self._speed and self._next - self._counter > self._speed:
+                            self._counter = self._next - self._speed
                         break
                     self._play_content(self._buffer)
                 except json.decoder.JSONDecodeError:
@@ -196,7 +197,7 @@ class AsciinemaPlayer(AbstractScreenPlayer):
         return self._plain_image, self._colour_map
 
 def demo(screen, scene):
-    player = AsciinemaPlayer("test.rec")
+    player = AsciinemaPlayer("test.rec", speed=0.1)
     player2 = AnsiArtPlayer("fruit.ans", strip=True)
     screen.play(
         [

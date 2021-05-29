@@ -193,9 +193,9 @@ class AnsiTerminalParser(Parser):
                     # Reverse Index - i.e. move up/scroll
                     return 2, [(st.last_offset, Parser.MOVE_RELATIVE, (0, -1))]
 
-                # Unknown escape - guess how many characters to ignore - most likely just the next char...
+                # Unknown escape - guess how many characters to ignore - most likely just the next char
+                # unless we can see the start of a new sequence.
                 logger.debug("Ignoring: %s", st.text[0:2])
-                # TODO return 2, None if len(st.text) > 1 and st.text[1] != "(" else 3, None
                 if len(st.text) < 2:
                     return -1, None
                 if st.text[1] in ("[", "]"):
@@ -329,10 +329,12 @@ class AnsiTerminalParser(Parser):
                     # Various DEC private mode commands - look for cursor visibility, ignore others.
                     results.append((self._state.last_offset, Parser.SHOW_CURSOR, False))
                 elif match.group(3) == "h" and match.group(2) == "?1049":
-                    # TODO fix this hack for alt screen.
+                    # This should really create an alternate screen, but clearing is a close
+                    # approximation
                     results.append((self._state.last_offset, Parser.CLEAR_SCREEN, None))
                 elif match.group(3) == "l" and match.group(2) == "?1049":
-                    # TODO fix this hack for alt screen.
+                    # This should really return to the normal screen, but clearing is a close
+                    # approximation
                     results.append((self._state.last_offset, Parser.CLEAR_SCREEN, None))
                 elif match.group(3) == "J" and match.group(2) == "2":
                     # Clear the screen.
