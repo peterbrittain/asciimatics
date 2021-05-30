@@ -3,7 +3,7 @@ CHANGE HISTORY
 
 LATEST
 ------
-- None
+- Added AnsiArtPlayer and AsciinemaPlayer
 
 1.13.0
 ------

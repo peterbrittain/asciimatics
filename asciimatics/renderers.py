@@ -1174,6 +1174,8 @@ class AbstractScreenPlayer(DynamicRenderer):
 class AnsiArtPlayer(AbstractScreenPlayer):
     """
     Renderer to play ANSI art text files.
+
+    In order to tidy up files, this must be used as a context manager (i.e. using `with`).
     """
 
     def __init__(self, filename, height=25, width=80, strip=False, rate=2):
@@ -1188,6 +1190,13 @@ class AnsiArtPlayer(AbstractScreenPlayer):
         self._file = open(filename, encoding="cp437")
         self._strip = strip
         self._rate = rate
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self._file:
+            self._file.close()
 
     def _render_now(self):
         count = 0
@@ -1207,6 +1216,8 @@ class AsciinemaPlayer(AbstractScreenPlayer):
 
     This only supports the version 2 file format.  Use the max_delay setting to speed up human
     interactions (i.e. to reduce delays from typing).
+
+    In order to tidy up files, this must be used as a context manager (i.e. using `with`).
     """
 
     def __init__(self, filename, height=None, width=None, max_delay=None):
@@ -1229,6 +1240,13 @@ class AsciinemaPlayer(AbstractScreenPlayer):
         # Construct the full player now we have all the details.
         super(AsciinemaPlayer, self).__init__(height, width)
         self._max_delay = max_delay
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self._file:
+            self._file.close()
 
     def _render_now(self):
         self._counter += 0.05

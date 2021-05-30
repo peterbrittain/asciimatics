@@ -11,26 +11,26 @@ logging.basicConfig(filename="debug.log", level=logging.DEBUG)
 
 
 def demo(screen, scene):
-    player = AsciinemaPlayer("test.rec", max_delay=0.1)
-    player2 = AnsiArtPlayer("fruit.ans", strip=True)
-    screen.play(
-        [
-            Scene(
-                [
-                    Print(screen, player, 0, speed=1, transparent=False),
-                    Print(screen,
-                          SpeechBubble("Press space to see ansi art"),
-                          y=screen.height - 3, speed=0, transparent=False)
-                ], -1),
-            Scene(
-                [
-                    Print(screen, player2, 0, speed=1, transparent=False),
-                    Print(screen,
-                          SpeechBubble("Press space to see asciinema"),
-                          y=screen.height - 3, speed=0, transparent=False)
-                ], -1)
-        ],
-        stop_on_resize=True, start_scene=scene, allow_int=True)
+    with AsciinemaPlayer("test.rec", max_delay=0.1) as player, \
+            AnsiArtPlayer("fruit.ans", strip=True) as player2:
+        screen.play(
+            [
+                Scene(
+                    [
+                        Print(screen, player, 0, speed=1, transparent=False),
+                        Print(screen,
+                              SpeechBubble("Press space to see ansi art"),
+                              y=screen.height - 3, speed=0, transparent=False)
+                    ], -1),
+                Scene(
+                    [
+                        Print(screen, player2, 0, speed=1, transparent=False),
+                        Print(screen,
+                              SpeechBubble("Press space to see asciinema"),
+                              y=screen.height - 3, speed=0, transparent=False)
+                    ], -1)
+            ],
+            stop_on_resize=True, start_scene=scene, allow_int=True)
 
 
 last_scene = None

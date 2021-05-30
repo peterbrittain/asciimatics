@@ -9,7 +9,7 @@ import os
 import sys
 from asciimatics.renderers import StaticRenderer, FigletText, ImageFile, \
     ColourImageFile, SpeechBubble, Box, Rainbow, BarChart, Fire, Plasma, Kaleidoscope, \
-    RotatedDuplicate
+    RotatedDuplicate, AnsiArtPlayer, AsciinemaPlayer
 from asciimatics.screen import Screen
 if sys.platform != "win32":
     import curses
@@ -546,6 +546,57 @@ class TestRenderers(unittest.TestCase):
         renderer = RotatedDuplicate(7, 4, StaticRenderer(["ASCII"]))
         self.assertEqual(renderer.rendered_text[0], [' ', ' ASCII ', ' IICSA ', ' '])
 
+    def test_ansi_art(self):
+        """
+        Check that ansi art player works.
+        """
+        renderer = AnsiArtPlayer("test.ans", height=5, width=20)
+        self.assertEqual(
+            str(renderer),
+            "This is a test file \n" +
+            "with ansi codes...  \n" +
+            "                    \n" +
+            "                    \n" +
+            "                    ")
+        self.assertEqual(
+            str(renderer),
+            "This is a test file \n" +
+            "with ansi codes...  \n" +
+            "Check               \n" +
+            "here 2nd            \n" +
+            "                    ")
+
+    def test_asciinema(self):
+        """
+        Check that asciinema  player works.
+        """
+        renderer = AsciinemaPlayer("test.rec")
+        self.assertEqual(renderer.max_height, 18)
+        self.assertEqual(renderer.max_width, 134)
+
+        # Check can play the file to the end.
+        for _ in range(700):
+            a = str(renderer)
+        self.maxDiff = None
+        self.assertEqual(a,
+            "~/asciimatics/samples $ ls                                                                                                            \n" +
+            "256colour.py   colour_globe.gif  fireworks.py    images.py        mapscache     plasma.py       rendering.py  test2.rec               \n" +
+            "bars.py        contact_list.py   forms.log       interactive.py   noise.py      player.py       simple.py     tests.py                \n" +
+            "basics.py      credits.py        forms.py        julia.py         pacman.png    python.png      tab_demo.py   top.py                  \n" +
+            "bg_colours.py  experimental.py   globe.gif       kaleidoscope.py  pacman.py     quick_model.py  terminal.py   treeview.py             \n" +
+            "cogs.py        fire.py           grumpy_cat.jpg  maps.py          particles.py  ray_casting.py  test.rec      xmas.py                 \n" +
+            "~/asciimatics/samples $                                                                                                               \n" +
+            "exit                                                                                                                                  \n" +
+            "                                                                                                                                      \n" +
+            "                                                                                                                                      \n" +
+            "                                                                                                                                      \n" +
+            "                                                                                                                                      \n" +
+            "                                                                                                                                      \n" +
+            "                                                                                                                                      \n" +
+            "                                                                                                                                      \n" +
+            "                                                                                                                                      \n" +
+            "                                                                                                                                      \n" +
+            "                                                                                                                                      ")
 
 if __name__ == '__main__':
     unittest.main()
