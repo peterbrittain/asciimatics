@@ -4,24 +4,28 @@ import sys
 import logging
 from asciimatics.effects import Print
 from asciimatics.scene import Scene
-from asciimatics.screen import Screen, Canvas
+from asciimatics.screen import Screen
 from asciimatics.renderers import DynamicRenderer
 from asciimatics.exceptions import ResizeScreenError
 from asciimatics.parsers import AnsiTerminalParser, Parser
-from asciimatics.event import KeyboardEvent
 
 logging.basicConfig(filename="debug.log", level=logging.DEBUG)
 
+
 class AbstractScreenPlayer(DynamicRenderer):
     """
-    Renderer to play terminal recordings created by asciinema.
-
-    This only supports the version 2 file format.
+    Abstract renderer to play terminal text with support for ANSI control codes.
     """
-    def __init__(self, height=None, width=None):
+
+    def __init__(self, height, width):
+        """
+        :param height: required height of the renderer.
+        :param width: required width of the renderer.
+        """
         super(AbstractScreenPlayer, self).__init__(height, width, clear=False)
         self._parser = AnsiTerminalParser()
         self._current_colours = [Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK]
+        self._show_cursor = False
         self._cursor_x = 0
         self._cursor_y = 0
         self._save_cursor_x = 0
@@ -32,20 +36,17 @@ class AbstractScreenPlayer(DynamicRenderer):
         self._parser.reset("", self._current_colours)
         self._clear()
 
-    def _play_content(self, value):
+    def _play_content(self, text):
         """
-        Process any output from the TTY.
+        Process new raw text.
+
+        :param text: thebraw text to be processed.
         """
-        lines = value.split("\n")
+        lines = text.split("\n")
         for i, line in enumerate(lines):
             self._parser.append(line)
-            for offset, command, params in self._parser.parse():
-                if command > 1:
-                    logging.debug("command {} {}".format(command, params))
-                self._cursor_x = min(self._cursor_x, self._canvas.width)
-                self._cursor_x = max(self._cursor_x, 0)
-                self._cursor_y = min(self._cursor_y, self._canvas.start_line + self._canvas.height)
-                self._cursor_y = max(self._cursor_y, self._canvas.start_line)
+            for _, command, params in self._parser.parse():
+                # logging.debug("Command: {} {}".format(command, params))
                 if command == Parser.DISPLAY_TEXT:
                     # Just display the text...  allowing for line wrapping.
                     if self._cursor_x + len(params) >= self._canvas.width:
@@ -81,7 +82,8 @@ class AbstractScreenPlayer(DynamicRenderer):
                 elif command == Parser.DELETE_LINE:
                     # Delete some/all of the current line.
                     if params == 0:
-                        self._print_at(" " * (self._canvas.width - self._cursor_x), self._cursor_x, self._cursor_y)
+                        self._print_at(
+                            " " * (self._canvas.width - self._cursor_x), self._cursor_x, self._cursor_y)
                     elif params == 1:
                         self._print_at(" " * self._cursor_x, 0, self._cursor_y)
                     elif params == 2:
@@ -114,7 +116,7 @@ class AbstractScreenPlayer(DynamicRenderer):
                     self._canvas.clear_buffer(
                         self._current_colours[0], self._current_colours[1], self._current_colours[2])
                     self._cursor_x = 0
-                    self._cursor_y = 0
+                    self._cursor_y = self._canvas.start_line
             # Move to next line, scrolling buffer as needed.
             if i != len(lines) - 1:
                 self._cursor_x = 0
@@ -136,7 +138,15 @@ class AnsiArtPlayer(AbstractScreenPlayer):
     """
     Renderer to play ANSI art text files.
     """
+
     def __init__(self, filename, height=25, width=80, strip=False, rate=2):
+        """
+        :param filename: the file containingi the ANSI art.
+        :param height: required height of the renderer.
+        :param width: required width of the renderer.
+        :param strip: whether to strip CRLF from the file content.
+        :param rate: number of lines to render on each update.
+        """
         super(AnsiArtPlayer, self).__init__(height, width)
         self._file = open(filename, encoding="cp437")
         self._strip = strip
@@ -150,7 +160,6 @@ class AnsiArtPlayer(AbstractScreenPlayer):
             count += 1
             if self._strip:
                 line = line.rstrip("\r\n")
-            logging.debug("raw txt {}".format(line))
             self._play_content(line)
         return self._plain_image, self._colour_map
 
@@ -158,10 +167,18 @@ class AnsiArtPlayer(AbstractScreenPlayer):
 class AsciinemaPlayer(AbstractScreenPlayer):
     """
     Renderer to play terminal recordings created by asciinema.
-
-    This only supports the version 2 file format.
     """
-    def __init__(self, filename, height=None, width=None, speed=None):
+
+    def __init__(self, filename, height=None, width=None, max_delay=None):
+        """
+        This only supports the version 2 file format.i  Use the max_delay setting to speed up human
+        interactions (i.e. to reduce delays from typing).
+
+        :param filename: the file containingi the ANSI art.
+        :param height: required height of the renderer.
+        :param width: required width of the renderer.
+        :param max_delay: maximum time interval (in secs) to wait between frame updates.
+        """
         # Open the file and check it looks plausibly like a supported format.
         self._file = open(filename)
         header = json.loads(self._file.readline())
@@ -174,7 +191,7 @@ class AsciinemaPlayer(AbstractScreenPlayer):
 
         # Construct the full player now we have all the details.
         super(AsciinemaPlayer, self).__init__(height, width)
-        self._speed = speed
+        self._max_delay = max_delay
 
     def _render_now(self):
         self._counter += 0.05
@@ -187,8 +204,8 @@ class AsciinemaPlayer(AbstractScreenPlayer):
                     self._next, _, self._buffer = json.loads(self._file.readline())
                     if self._next > self._counter:
                         # Speed up playback if requested.
-                        if self._speed and self._next - self._counter > self._speed:
-                            self._counter = self._next - self._speed
+                        if self._max_delay and self._next - self._counter > self._max_delay:
+                            self._counter = self._next - self._max_delay
                         break
                     self._play_content(self._buffer)
                 except json.decoder.JSONDecodeError:
@@ -196,8 +213,9 @@ class AsciinemaPlayer(AbstractScreenPlayer):
 
         return self._plain_image, self._colour_map
 
+
 def demo(screen, scene):
-    player = AsciinemaPlayer("test.rec", speed=0.1)
+    player = AsciinemaPlayer("test.rec", max_delay=0.1)
     player2 = AnsiArtPlayer("fruit.ans", strip=True)
     screen.play(
         [
