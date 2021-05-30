@@ -550,7 +550,7 @@ class TestRenderers(unittest.TestCase):
         """
         Check that ansi art player works.
         """
-        renderer = AnsiArtPlayer("test.ans", height=5, width=20)
+        renderer = AnsiArtPlayer(os.path.join(os.path.dirname(__file__), "test.ans"), height=5, width=20)
         self.assertEqual(
             str(renderer),
             "This is a test file \n" +
@@ -570,7 +570,7 @@ class TestRenderers(unittest.TestCase):
         """
         Check that asciinema  player works.
         """
-        renderer = AsciinemaPlayer("test.rec")
+        renderer = AsciinemaPlayer(os.path.join(os.path.dirname(__file__), "test.rec"))
         self.assertEqual(renderer.max_height, 18)
         self.assertEqual(renderer.max_width, 134)
 
