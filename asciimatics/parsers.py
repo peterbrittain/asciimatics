@@ -125,7 +125,7 @@ class AsciimaticsParser(Parser):
         :returns: a 3-tuple of (start offset in raw text, command to execute, parameters)
         """
         if self._state.attributes:
-            yield (0, Parser.CHANGE_COLOURS, self._attributes)
+            yield (0, Parser.CHANGE_COLOURS, self._state.attributes)
         offset = last_offset = 0
         while len(self._state.text) > 0:
             match = self._colour_sequence.match(str(self._state.text))
