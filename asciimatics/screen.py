@@ -1110,6 +1110,10 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
 class TemporaryCanvas(_AbstractCanvas):
     """
     A TemporaryCanvas is an object that can only be used to draw to a buffer.
+
+    This class is desigend purely for use by dynamic renderers and so ignores some features of
+    a full Canvas - most notably the screen related fhnction (e.g. the screen buffer and related
+    properties).
     """
 
     def __init__(self, height, width):
@@ -1117,8 +1121,16 @@ class TemporaryCanvas(_AbstractCanvas):
         :param height: The height of the screen buffer to be used.
         :param width: The width of the screen buffer to be used.
         """
-        # TODO: fix hard coded values and logic for refresh?
+        # Colours and unicode rendering are up to the user.  Pick defaults that won't limit them.
         super(TemporaryCanvas, self).__init__(height, width, None, 256, True)
+
+    @property
+    def plain_image(self):
+        return self._buffer.plain_image
+
+    @property
+    def colour_map(self):
+        return self._buffer.colour_map
 
     def refresh(self):
         pass

@@ -246,13 +246,11 @@ class DynamicRenderer(with_metaclass(ABCMeta, Renderer)):
 
     @property
     def _plain_image(self):
-        # return ["".join([chr(self._canvas.get_from(x, y + self._canvas.start_line)[0]) for x in range(self._canvas.width)]) for y in range(self._canvas.height)]
-        return self._canvas._buffer.plain_image
+        return self._canvas.plain_image
 
     @property
     def _colour_map(self):
-        # return [[self._canvas.get_from(x, y + self._canvas.start_line)[1:4] for x in range(self._canvas.width)] for y in range(self._canvas.height)]
-        return self._canvas._buffer.colour_map
+        return self._canvas.colour_map
 
     @abstractmethod
     def _render_now(self):
