@@ -17,11 +17,13 @@ from math import sin, cos, pi, sqrt, atan2
 from pyfiglet import Figlet, DEFAULT_FONT
 from PIL import Image
 import re
+import json
 
 from wcwidth.wcwidth import wcswidth
 
-from asciimatics.screen import Screen
+from asciimatics.screen import Screen, TemporaryCanvas
 from asciimatics.constants import COLOUR_REGEX
+from asciimatics.parsers import AnsiTerminalParser, Parser
 
 
 #: Attribute conversion table for the ${c,a} form of attributes for
@@ -209,24 +211,21 @@ class DynamicRenderer(with_metaclass(ABCMeta, Renderer)):
     has a defined maximum size on construction.
     """
 
-    def __init__(self, height, width):
+    def __init__(self, height, width, clear=True):
         """
         :param height: The max height of the rendered image.
         :param width: The max width of the rendered image.
         """
         super(DynamicRenderer, self).__init__()
-        self._height = height
-        self._width = width
-        self._plain_image = []
-        self._colour_map = []
+        self._must_clear = clear
+        self._canvas = TemporaryCanvas(height, width)
 
     def _clear(self):
         """
         Clear the current image.
         """
-        self._plain_image = [" " * self._width for _ in range(self._height)]
-        self._colour_map = [[(None, 0, 0) for _ in range(self._width)]
-                            for _ in range(self._height)]
+        # self._canvas.clear_buffer(Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK)
+        self._canvas.clear_buffer(None, 0, 0)
 
     def _write(self, text, x, y, colour=Screen.COLOUR_WHITE,
                attr=Screen.A_NORMAL, bg=Screen.COLOUR_BLACK):
@@ -239,20 +238,19 @@ class DynamicRenderer(with_metaclass(ABCMeta, Renderer)):
         :param colour: The colour of the text to add.
         :param attr: The attribute of the image.
         :param bg: The background colour of the text to add.
+        
+        This is only kept for back compatibility.  Direct access to the canvas methods is
+        preferred.
         """
-        # Limit checks to ensure that we don't try to draw off the end of the arrays
-        if y >= self._height or x >= self._width:
-            return
+        self._canvas.print_at(text, x, y, colour, attr, bg) 
 
-        # Limit text to draw to visible line
-        if len(text) + x > self._width:
-            text = text[:self._width - x]
+    @property
+    def _plain_image(self):
+        return self._canvas.plain_image
 
-        # Now draw it!
-        self._plain_image[y] = text.join(
-            [self._plain_image[y][:x], self._plain_image[y][x + len(text):]])
-        for i, _ in enumerate(text):
-            self._colour_map[y][x + i] = (colour, attr, bg)
+    @property
+    def _colour_map(self):
+        return self._canvas.colour_map
 
     @abstractmethod
     def _render_now(self):
@@ -266,21 +264,21 @@ class DynamicRenderer(with_metaclass(ABCMeta, Renderer)):
     @property
     def images(self):
         # We can't return all, so just return the latest rendered image.
-        self._clear()
-        return [self._render_now()[0]]
+        return [self.rendered_text[0]]
 
     @property
     def rendered_text(self):
-        self._clear()
+        if self._must_clear:
+            self._clear()
         return self._render_now()
 
     @property
     def max_height(self):
-        return self._height
+        return self._canvas.height
 
     @property
     def max_width(self):
-        return self._width
+        return self._canvas.width
 
 
 class FigletText(StaticRenderer):
@@ -614,20 +612,20 @@ class BarChart(DynamicRenderer):
 
     def _render_now(self):
         # Dimensions for the chart.
-        int_h = self._height
-        int_w = self._width
+        int_h = self._canvas.height
+        int_w = self._canvas.width
         start_x = key_x = 0
         start_y = 0
         scale = int_w if self._scale is None else self._scale
 
         # Create  the box around the chart...
         if self._border:
-            self._write("+" + "-" * (self._width - 2) + "+", 0, 0)
-            for line in range(1, self._height):
+            self._write("+" + "-" * (self._canvas.width - 2) + "+", 0, 0)
+            for line in range(1, self._canvas.height):
                 self._write("|", 0, line)
-                self._write("|", self._width - 1, line)
+                self._write("|", self._canvas.width - 1, line)
             self._write(
-                "+" + "-" * (self._width - 2) + "+", 0, self._height - 1)
+                "+" + "-" * (self._canvas.width - 2) + "+", 0, self._canvas.height - 1)
             int_h -= 4
             int_w -= 6
             start_y += 2
@@ -799,8 +797,8 @@ class Fire(DynamicRenderer):
         self._intensity = intensity
         self._spot_heat = spot
         self._count = len([c for c in emitter if c not in " \n"])
-        line = [0 for _ in range(self._width)]
-        self._buffer = [copy.deepcopy(line) for _ in range(self._width * 2)]
+        line = [0 for _ in range(self._canvas.width)]
+        self._buffer = [copy.deepcopy(line) for _ in range(self._canvas.width * 2)]
         self._colours = self._COLOURS_256 if colours >= 256 else \
             self._COLOURS_16
         self._bg_too = bg
@@ -818,7 +816,7 @@ class Fire(DynamicRenderer):
         # First make the fire rise with convection
         for y in range(len(self._buffer) - 1):
             self._buffer[y] = self._buffer[y + 1]
-        self._buffer[len(self._buffer) - 1] = [0 for _ in range(self._width)]
+        self._buffer[len(self._buffer) - 1] = [0 for _ in range(self._canvas.width)]
 
         # Seed new hot spots
         x = self._x
@@ -833,25 +831,25 @@ class Fire(DynamicRenderer):
                 x += 1
 
         # Seed a few cooler spots
-        for _ in range(self._width // 2):
-            self._buffer[randint(0, self._height - 1)][
-                randint(0, self._width - 1)] -= 10
+        for _ in range(self._canvas.width // 2):
+            self._buffer[randint(0, self._canvas.height - 1)][
+                randint(0, self._canvas.width - 1)] -= 10
 
         # Simulate cooling effect of the resulting environment.
         for y in range(len(self._buffer)):
-            for x in range(self._width):
+            for x in range(self._canvas.width):
                 new_val = self._buffer[y][x]
                 if y < len(self._buffer) - 1:
                     new_val += self._buffer[y + 1][x]
                     if x > 0:
                         new_val += self._buffer[y][x - 1]
-                    if x < self._width - 1:
+                    if x < self._canvas.width - 1:
                         new_val += self._buffer[y][x + 1]
                 self._buffer[y][x] = new_val // 4
 
         # Now build the rendered text from the simulated flames.
         self._clear()
-        for x in range(self._width):
+        for x in range(self._canvas.width):
             for y in range(len(self._buffer)):
                 if self._buffer[y][x] > 0:
                     colour = self._colours[min(len(self._colours) - 1,
@@ -919,12 +917,12 @@ class Plasma(DynamicRenderer):
     def _render_now(self):
         # Internal function for creating a sine wave radiating out from a point
         def f(x1, y1, xp, yp, n):
-            return sin(sqrt((x1 - self._width * xp) ** 2 +
-                            4 * ((y1 - self._height * yp) ** 2)) * pi / n)
+            return sin(sqrt((x1 - self._canvas.width * xp) ** 2 +
+                            4 * ((y1 - self._canvas.height * yp) ** 2)) * pi / n)
 
         self._t += 1
-        for y in range(self._height - 1):
-            for x in range(self._width - 1):
+        for y in range(self._canvas.height - 1):
+            for x in range(self._canvas.width - 1):
                 value = abs(f(x + self._t / 3, y, 1 / 4, 1 / 3, 15) +
                             f(x, y, 1 / 8, 1 / 5, 11) +
                             f(x, y + self._t / 3, 1 / 2, 1 / 5, 13) +
@@ -1012,12 +1010,12 @@ class Kaleidoscope(DynamicRenderer):
         # Integer maths will result in gaps between characters if you rotate from the starting
         # point to desired end-point.  We therefore look for the reverse mapping from the final
         # character and trace-back instead.
-        for dx in range(self._width // 2):
-            for dy in range(self._height):
+        for dx in range(self._canvas.width // 2):
+            for dy in range(self._canvas.height):
                 # Figure out which segment of the circle we're in, so we know what affine
                 # transformations to apply.
-                ox = (dx - self._width / 4)
-                oy = dy - self._height / 2
+                ox = (dx - self._canvas.width / 4)
+                oy = dy - self._canvas.height / 2
                 segment = round(atan2(oy, ox) * self._symmetry / pi)
                 if segment % 2 == 0:
                     # Just a rotation required for even segments.
@@ -1045,5 +1043,228 @@ class Kaleidoscope(DynamicRenderer):
 
         # Now rotate the background cell for the next frame.
         self._rotation += pi / 180
+
+        return self._plain_image, self._colour_map
+
+
+class AbstractScreenPlayer(DynamicRenderer):
+    """
+    Abstract renderer to play terminal text with support for ANSI control codes.
+    """
+
+    def __init__(self, height, width):
+        """
+        :param height: required height of the renderer.
+        :param width: required width of the renderer.
+        """
+        super(AbstractScreenPlayer, self).__init__(height, width, clear=False)
+        self._parser = AnsiTerminalParser()
+        self._current_colours = [Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK]
+        self._show_cursor = False
+        self._cursor_x = 0
+        self._cursor_y = 0
+        self._save_cursor_x = 0
+        self._save_cursor_y = 0
+        self._counter = 0
+        self._next = 0
+        self._buffer = None
+        self._parser.reset("", self._current_colours)
+        self._clear()
+
+    def _play_content(self, text):
+        """
+        Process new raw text.
+
+        :param text: thebraw text to be processed.
+        """
+        lines = text.split("\n")
+        for i, line in enumerate(lines):
+            self._parser.append(line)
+            for _, command, params in self._parser.parse():
+                # logging.debug("Command: {} {}".format(command, params))
+                if command == Parser.DISPLAY_TEXT:
+                    # Just display the text...  allowing for line wrapping.
+                    if self._cursor_x + len(params) >= self._canvas.width:
+                        part_1 = params[:self._canvas.width - self._cursor_x]
+                        part_2 = params[self._canvas.width - self._cursor_x:]
+                        self._print_at(part_1, self._cursor_x, self._cursor_y)
+                        self._print_at(part_2, 0, self._cursor_y + 1)
+                        self._cursor_x = len(part_2)
+                        self._cursor_y += 1
+                        if self._cursor_y - self._canvas.start_line >= self._canvas.height:
+                            self._canvas.scroll()
+                    else:
+                        self._print_at(params, self._cursor_x, self._cursor_y)
+                        self._cursor_x += len(params)
+                elif command == Parser.CHANGE_COLOURS:
+                    # Change current text colours.
+                    self._current_colours = params
+                elif command == Parser.NEXT_TAB:
+                    # Move to next tab stop - hard-coded to default of 8 characters.
+                    self._cursor_x = (self._cursor_x // 8) * 8 + 8
+                elif command == Parser.MOVE_RELATIVE:
+                    # Move cursor relative to current position.
+                    self._cursor_x += params[0]
+                    self._cursor_y += params[1]
+                    if self._cursor_y < self._canvas.start_line:
+                        self._canvas.scroll(self._cursor_y - self._canvas.start_line)
+                elif command == Parser.MOVE_ABSOLUTE:
+                    # Move cursor relative to specified absolute position.
+                    if params[0] is not None:
+                        self._cursor_x = params[0]
+                    if params[1] is not None:
+                        self._cursor_y = params[1] + self._canvas.start_line
+                elif command == Parser.DELETE_LINE:
+                    # Delete some/all of the current line.
+                    if params == 0:
+                        self._print_at(
+                            " " * (self._canvas.width - self._cursor_x), self._cursor_x, self._cursor_y)
+                    elif params == 1:
+                        self._print_at(" " * self._cursor_x, 0, self._cursor_y)
+                    elif params == 2:
+                        self._print_at(" " * self._canvas.width, 0, self._cursor_y)
+                elif command == Parser.DELETE_CHARS:
+                    # Delete n characters under the cursor.
+                    for x in range(self._cursor_x, self._canvas.width):
+                        if x + params < self._canvas.width:
+                            cell = self._canvas.get_from(x + params, self._cursor_y)
+                        else:
+                            cell = (ord(" "),
+                                    self._current_colours[0],
+                                    self._current_colours[1],
+                                    self._current_colours[2])
+                        self._canvas.print_at(
+                            chr(cell[0]), x, self._cursor_y, colour=cell[1], attr=cell[2], bg=cell[3])
+                elif command == Parser.SHOW_CURSOR:
+                    # Show/hide the cursor.
+                    self._show_cursor = params
+                elif command == Parser.SAVE_CURSOR:
+                    # Save the cursor position.
+                    self._save_cursor_x = self._cursor_x
+                    self._save_cursor_y = self._cursor_y
+                elif command == Parser.RESTORE_CURSOR:
+                    # Restore the cursor position.
+                    self._cursor_x = self._save_cursor_x
+                    self._cursor_y = self._save_cursor_y
+                elif command == Parser.CLEAR_SCREEN:
+                    # Clear the screen.
+                    self._canvas.clear_buffer(
+                        self._current_colours[0], self._current_colours[1], self._current_colours[2])
+                    self._cursor_x = 0
+                    self._cursor_y = self._canvas.start_line
+            # Move to next line, scrolling buffer as needed.
+            if i != len(lines) - 1:
+                self._cursor_x = 0
+                self._cursor_y += 1
+                if self._cursor_y - self._canvas.start_line >= self._canvas.height:
+                    self._canvas.scroll()
+
+    def _print_at(self, text, x, y):
+        """
+        Helper function to simplify use of the renderer.
+        """
+        self._canvas.print_at(
+            text,
+            x, y,
+            colour=self._current_colours[0], attr=self._current_colours[1], bg=self._current_colours[2])
+
+
+class AnsiArtPlayer(AbstractScreenPlayer):
+    """
+    Renderer to play ANSI art text files.
+
+    In order to tidy up files, this must be used as a context manager (i.e. using `with`).
+    """
+
+    def __init__(self, filename, height=25, width=80, encoding="cp437", strip=False, rate=2):
+        """
+        :param filename: the file containingi the ANSI art.
+        :param height: required height of the renderer.
+        :param width: required width of the renderer.
+        :param encoding: text encoding ofnthe file.
+        :param strip: whether to strip CRLF from the file content.
+        :param rate: number of lines to render on each update.
+        """
+        super(AnsiArtPlayer, self).__init__(height, width)
+        self._file = open(filename, "rb")
+        self._strip = strip
+        self._rate = rate
+        self._encoding = encoding
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self._file:
+            self._file.close()
+
+    def _render_now(self):
+        count = 0
+        line = None
+        while count < self._rate and line != "":
+            line = self._file.readline().decode(self._encoding)
+            count += 1
+            if self._strip:
+                line = line.rstrip("\r\n")
+            self._play_content(line)
+        return self._plain_image, self._colour_map
+
+
+class AsciinemaPlayer(AbstractScreenPlayer):
+    """
+    Renderer to play terminal recordings created by asciinema.
+
+    This only supports the version 2 file format.  Use the max_delay setting to speed up human
+    interactions (i.e. to reduce delays from typing).
+
+    In order to tidy up files, this must be used as a context manager (i.e. using `with`).
+    """
+
+    def __init__(self, filename, height=None, width=None, max_delay=None):
+        """
+        :param filename: the file containingi the ANSI art.
+        :param height: required height of the renderer.
+        :param width: required width of the renderer.
+        :param max_delay: maximum time interval (in secs) to wait between frame updates.
+        """
+        # Open the file and check it looks plausibly like a supported format.
+        self._file = open(filename)
+        header = json.loads(self._file.readline())
+        if header["version"] != 2:
+            raise RuntimeError("Unsupported file format")
+
+        # Use file details if not overriden by constructor params.
+        height = height if height else header["height"]
+        width = width if width else header["width"]
+
+        # Construct the full player now we have all the details.
+        super(AsciinemaPlayer, self).__init__(height, width)
+        self._max_delay = max_delay
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self._file:
+            self._file.close()
+
+    def _render_now(self):
+        self._counter += 0.05
+        if self._counter >= self._next:
+            if self._buffer:
+                self._play_content(self._buffer)
+                self._buffer = None
+            while True:
+                try:
+                    self._next, _, self._buffer = json.loads(self._file.readline())
+                    if self._next > self._counter:
+                        # Speed up playback if requested.
+                        if self._max_delay and self._next - self._counter > self._max_delay:
+                            self._counter = self._next - self._max_delay
+                        break
+                    self._play_content(self._buffer)
+                except ValueError:
+                    # Python 3 raises a subclass of this error, so will also be caught.
+                    break
 
         return self._plain_image, self._colour_map

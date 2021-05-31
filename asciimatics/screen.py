@@ -204,6 +204,14 @@ class _DoubleBuffer(object):
         """
         return self._width
 
+    @property
+    def plain_image(self):
+        return ["".join(x[0] for x in self.slice(0, y, self.width)) for y in range(self.height)]
+
+    @property
+    def colour_map(self):
+        return [[x[1:4] for x in self.slice(0, y, self.width)] for y in range(self.height)]
+
 
 class _AbstractCanvas(with_metaclass(ABCMeta, object)):
     """
@@ -1097,6 +1105,38 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
             # Rely on the fact that we have the same dicts in both live_edges and new_edges, so
             # we just need to resort new_edges for the next iteration.
             edges = sorted(new_edges, key=lambda e: e.x)
+
+
+class TemporaryCanvas(_AbstractCanvas):
+    """
+    A TemporaryCanvas is an object that can only be used to draw to a buffer.
+
+    This class is desigend purely for use by dynamic renderers and so ignores some features of
+    a full Canvas - most notably the screen related fhnction (e.g. the screen buffer and related
+    properties).
+    """
+
+    def __init__(self, height, width):
+        """
+        :param height: The height of the screen buffer to be used.
+        :param width: The width of the screen buffer to be used.
+        """
+        # Colours and unicode rendering are up to the user.  Pick defaults that won't limit them.
+        super(TemporaryCanvas, self).__init__(height, width, None, 256, True)
+
+    @property
+    def plain_image(self):
+        return self._buffer.plain_image
+
+    @property
+    def colour_map(self):
+        return self._buffer.colour_map
+
+    def refresh(self):
+        pass
+
+    def _reset(self):
+        pass
 
 
 class Canvas(_AbstractCanvas):
