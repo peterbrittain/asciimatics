@@ -1178,18 +1178,20 @@ class AnsiArtPlayer(AbstractScreenPlayer):
     In order to tidy up files, this must be used as a context manager (i.e. using `with`).
     """
 
-    def __init__(self, filename, height=25, width=80, strip=False, rate=2):
+    def __init__(self, filename, height=25, width=80, encoding="cp437", strip=False, rate=2):
         """
         :param filename: the file containingi the ANSI art.
         :param height: required height of the renderer.
         :param width: required width of the renderer.
+        :param encoding: text encoding ofnthe file.
         :param strip: whether to strip CRLF from the file content.
         :param rate: number of lines to render on each update.
         """
         super(AnsiArtPlayer, self).__init__(height, width)
-        self._file = open(filename, encoding="cp437")
+        self._file = open(filename, "rb")
         self._strip = strip
         self._rate = rate
+        self._encoding = encoding
 
     def __enter__(self):
         return self
@@ -1202,7 +1204,7 @@ class AnsiArtPlayer(AbstractScreenPlayer):
         count = 0
         line = None
         while count < self._rate and line != "":
-            line = self._file.readline()
+            line = self._file.readline().decode(self._encoding)
             count += 1
             if self._strip:
                 line = line.rstrip("\r\n")
@@ -1263,7 +1265,8 @@ class AsciinemaPlayer(AbstractScreenPlayer):
                             self._counter = self._next - self._max_delay
                         break
                     self._play_content(self._buffer)
-                except json.decoder.JSONDecodeError:
+                except ValueError:
+                    # Python 3 raises a subclass of this error, so will also be caught.
                     break
 
         return self._plain_image, self._colour_map
