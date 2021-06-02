@@ -64,7 +64,7 @@ class Parser(with_metaclass(ABCMeta, object)):
         self._state = _DotDict()
         self._state.text = text
         # Force colours to be mutable (in case a tuple was passed in).
-        self._state.attributes = [x for x in colours]
+        self._state.attributes = [x for x in colours] if colours else None
 
     @abstractmethod
     def parse(self):
