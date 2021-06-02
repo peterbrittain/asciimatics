@@ -12,7 +12,7 @@ logging.basicConfig(filename="debug.log", level=logging.DEBUG)
 
 def demo(screen, scene):
     with AsciinemaPlayer("test.rec", max_delay=0.1) as player, \
-            AnsiArtPlayer("fruit.ans", strip=True) as player2:
+            AnsiArtPlayer("test.ans", rate=2) as player2:
         screen.play(
             [
                 Scene(
