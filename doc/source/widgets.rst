@@ -27,28 +27,30 @@ an example, see the contact_list.py sample provided - which will look a bit like
 
 Common keys
 ~~~~~~~~~~~
-When navigating around a Frame, you can use the following keys.
+When navigating around a Frame, you can normally use the following keys.
 
 ===================  ==============================================================================
 Key                  Action
 ===================  ==============================================================================
 Tab                  Move to the next Widget in the Frame
 Backtab (shift+tab)  Move to the previous Widget in the Frame
-Up arrow             Move to the Widget above the current focus in the same column.
-Down arrow           Move to the Widget below the current focus in the same column.
-Left arrow           Move to the last Widget in the column to the left of the column with the
-                     current input focus.
-Right arrow          Move to the first Widget in the column to the right of the column with the
-                     current input focus.
+Up arrow             Move to the nearest Widget above the current focus.
+Down arrow           Move to the nearest Widget below the current focus.
+Left arrow           Move to the nearest Widget to the left of the current focus.
+Right arrow          Move to the nearest Widget to the right of the current focus.
 Space or Return      Select the current Widget - e.g. click a Button, or pop-up a list of options.
 ===================  ==============================================================================
 
-Note that the cursor keys will not traverse between Layouts.  In addition, asciimatics will not
-allow you to navigate to a disabled widget.
+.. warning::
 
-Inside the standard text edit Widgets, the cursor key actions are overridden and instead they will
-allow you to for navigate around the editable text (or lists) as you would expect.  In addition you
-can also use the following extra keys.
+    Please note that asciimatics will not allow you to navigate to a disabled widget.  Instead
+    it will select the next enabled widget when traversing the Frame.
+
+However, some widgets (e.g. text editing widgets) have their own logic for handling the cursor
+key actions, which override the common navigation.  In such cases, tab/backtab will still navigate
+out of the Widgets.
+
+In addition you can also use the following extra keys inside text editing widgets.
 
 ===================  ==========================================================
 Key                  Action
@@ -57,9 +59,6 @@ Home/End             Move to the start/end of the current line.
 Delete               Delete the character under the cursor.
 Backspace            Delete the character before the cursor.
 ===================  ==========================================================
-
-Tab/backtab will still navigate out of text edit Widgets, but the rest of the keys (beyond those
-described above) will simply add to the text in the current line.
 
 Model/View Design
 -----------------
