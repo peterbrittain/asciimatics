@@ -40,13 +40,19 @@ matrix:
 install:
   - pip install -r requirements/dev.txt
 
-script:
-  if: os = windows
-    - noserun.bat
-  if: os = linux AND env(BUILD) = test
-    - noserun.sh
-  if: os = linux AND env(BUILD) = docs
-    - builddocs.sh
+stages:
+  - name: "Windows build"
+    if: os = windows
+    script:
+      - noserun.bat
+  - name: "Linux build"
+    if: os = linux AND env(BUILD) = test
+    script:
+      - noserun.sh
+  - name: "Docs"
+    if: os = linux AND env(BUILD) = docs
+    script:
+      - builddocs.sh
 
 after_success:
   - |
