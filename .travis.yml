@@ -43,18 +43,10 @@ install:
 script:
   if: os = windows
     - noserun.bat
-  if: os != windows
-    - |
-      set -ex
-      case "$BUILD" in
-        test)
-          nosetests --with-coverage --cover-package=asciimatics
-          ;;
-        docs)
-          cd doc && cp source/conf_orig.py source/conf.py && ./build.sh
-          ;;
-      esac
-      set +ex
+  if: os = linux AND env(BUILD) = test
+    - noserun.sh
+  if: os = linux AND env(BUILD) = docs
+    - builddocs.sh
 
 after_success:
   - |
