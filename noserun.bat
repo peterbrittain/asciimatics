@@ -1,2 +1,2 @@
-cmd /C nosetests --with-coverage --cover-package=asciimatics
+coverage run --source=asciimatics -m nose
 
