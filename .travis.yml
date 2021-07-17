@@ -14,23 +14,23 @@ matrix:
     - name: "2.7 Linux"
       env: BUILD=test FORCE_TTY=Y
       python: '2.7'
-      script: noserun.sh
+      script: ./noserun.sh
     - name: "3.5 Linux"
       env: BUILD=test FORCE_TTY=Y
       python: '3.5'
-      script: noserun.sh
+      script: ./noserun.sh
     - name: "3.6 Linux"
       env: BUILD=test FORCE_TTY=Y
       python: '3.6'
-      script: noserun.sh
+      script: ./noserun.sh
     - name: "3.7 Linux"
       env: BUILD=test FORCE_TTY=Y
       python: '3.7'
-      script: noserun.sh
+      script: ./noserun.sh
     - name: "pypy Linux"
       env: BUILD=test FORCE_TTY=Y
       python: 'pypy'
-      script: noserun.sh
+      script: ./noserun.sh
     - name: "3.8 Windows"
       os: windows
       language: shell       # 'language: python' is an error on Travis CI Windows
@@ -38,11 +38,11 @@ matrix:
          - choco install python --version 3.8.0
          - python -m pip install --upgrade pip
       env: PATH=/c/Python38:/c/Python38/Scripts:$PATH BUILD=test FORCE_TTY=Y
-      script: noserun.bat
+      script: ./noserun.bat
     - name: "Docs"
       env: BUILD=docs
       python: '3.6'
-      script: builddocs.sh
+      script: ./builddocs.sh
 
 install:
   - pip install -r requirements/dev.txt
