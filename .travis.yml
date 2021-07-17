@@ -37,6 +37,7 @@ matrix:
       before_install:
          - choco install python --version 3.8.0
          - python -m pip install --upgrade pip
+         - python -m pip install pywin32
       env: PATH=/c/Python38:/c/Python38/Scripts:$PATH BUILD=test FORCE_TTY=Y
       script: ./noserun.bat
     - name: "Docs"
