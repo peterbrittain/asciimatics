@@ -7,7 +7,6 @@ language: python
 env:
   global:
     COVERALLS_PARALLEL=true
-    NOSE=nosetests
 
 matrix:
   fast_finish: true
@@ -33,26 +32,29 @@ matrix:
       before_install:
          - choco install python --version 3.8.0
          - python -m pip install --upgrade pip
-      env: PATH=/c/Python38:/c/Python38/Scripts:$PATH BUILD=test FORCE_TTY=Y NOSE=noserun.bat
-
-    - env: BUILD=docs
+      env: PATH=/c/Python38:/c/Python38/Scripts:$PATH BUILD=test FORCE_TTY=Y
+    - name: "Docs"
+      env: BUILD=docs
       python: '3.6'
 
 install:
   - pip install -r requirements/dev.txt
 
 script:
-  - |
-    set -ex
-    case "$BUILD" in
-      test)
-        $NOSE --with-coverage --cover-package=asciimatics
-        ;;
-      docs)
-        cd doc && cp source/conf_orig.py source/conf.py && ./build.sh
-        ;;
-    esac
-    set +ex
+  if: os = windows
+    - noserun.bat
+  if: os != windows
+    - |
+      set -ex
+      case "$BUILD" in
+        test)
+          nosetests --with-coverage --cover-package=asciimatics
+          ;;
+        docs)
+          cd doc && cp source/conf_orig.py source/conf.py && ./build.sh
+          ;;
+      esac
+      set +ex
 
 after_success:
   - |
