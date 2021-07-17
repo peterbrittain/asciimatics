@@ -837,6 +837,8 @@ class TestScreen(unittest.TestCase):
         Check that wait_for_input delays as requested when no input.
         """
         def internal_checks(screen):
+            # Clear any outstanding events - sometimes windows has system events waiting.
+            screen.get_event()
             start = time.time()
             screen.wait_for_input(0.1)
             self.assertGreaterEqual(time.time() - start, 0.1)
