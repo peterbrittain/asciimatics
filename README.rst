@@ -1,6 +1,6 @@
 
-.. image:: https://travis-ci.org/peterbrittain/asciimatics.svg?branch=master
-    :target: https://travis-ci.org/peterbrittain/asciimatics
+.. image:: https://travis-ci.com/peterbrittain/asciimatics.svg?branch=master
+    :target: https://travis-ci.com/peterbrittain/asciimatics
     :alt: Linux build status
 
 .. image:: https://ci.appveyor.com/api/projects/status/n68nk47ku35pafru/branch/master?svg=true&passingText=Windows%20-%20passing
