@@ -33,7 +33,7 @@ matrix:
       before_install:
          - choco install python --version 3.8.0
          - python -m pip install --upgrade pip
-      env: PATH=/c/Python38:/c/Python38/Scripts:$PATH BUILD=test FORCE_TTY=Y NOSE="cmd.exe /C nosetests"
+      env: PATH=/c/Python38:/c/Python38/Scripts:$PATH BUILD=test FORCE_TTY=Y NOSE=noserun.bat
 
     - env: BUILD=docs
       python: '3.6'
