@@ -6,6 +6,7 @@ from math import sin, cos, pi, copysign, floor
 from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent
 from asciimatics.exceptions import ResizeScreenError, StopApplication
+from asciimatics.renderers import ColourImageFile
 from asciimatics.screen import Screen
 from asciimatics.scene import Scene
 from asciimatics.widgets import PopUpDialog
@@ -18,6 +19,8 @@ Use the following keys:
 - M to toggle the mini-map
 - X to quit
 - 1 or 2 to change rendering mode.
+
+Can you find grumpy cat?
 """
 LEVEL_MAP = """
 XXXXXXXXXXXXXXXX
@@ -33,6 +36,46 @@ X XXXXX   XXXXXX
 X              X
 XXXXXXXXXXXXXX X
 """.strip().split("\n")
+IMAGE_HEIGHT = 64
+
+
+class Sprite(object):
+    """
+    Dynamically sized sprite.
+    """
+
+    def __init__(self, model, x, y, images):
+        self._model = model
+        self.x, self.y = x, y
+        self._frames = None, None
+        self._images = images
+
+    def next_frame(self):
+        self._frames = self._images[0].rendered_text, self._images[1].rendered_text
+
+    def draw_stripe(self, height, x, image_x):
+        # Figure out which image to use and scale as needed.
+        image_x = int(image_x * IMAGE_HEIGHT / height)
+        y_start, y_end = 0, height
+        if height > self._model.screen.height:
+            y_start = (height - self._model.screen.height) // 2
+            y_end = y_start + self._model.screen.height + 1
+        image = self._frames[self._model.mode]
+
+        # Draw the stripe for the required region.
+        for sy in range(y_start, y_end):
+            try:
+                y = (self._model.screen.height - height) // 2 + sy
+                image_y = int(sy * IMAGE_HEIGHT / height)
+                char = image[0][image_y][image_x]
+                # Unicode images use . for background only pixels; ascii ones use space.
+                if char not in (" ", "."):
+                    fg, attr, bg = image[1][image_y][image_x]
+                    attr = 0 if attr is None else attr
+                    bg = 0 if bg is None else bg
+                    self._model.screen.print_at(char, x, y, fg, attr, bg)
+            except IndexError:
+                pass
 
 
 class GameState(object):
@@ -44,8 +87,31 @@ class GameState(object):
         self.player_angle = pi / 2
         self.x, self.y = 1.5, 1.5
         self.map = LEVEL_MAP
-        self.mode = 1
+        self.mode = 0
         self.show_mini_map = True
+        self.images = {}
+        self.sprites = []
+        self.screen = None
+
+    def load_image(self, screen, filename):
+        self.images[filename] = [None, None]
+        self.images[filename][0] = ColourImageFile(screen, filename, IMAGE_HEIGHT, uni=False)
+        self.images[filename][1] = ColourImageFile(screen, filename, IMAGE_HEIGHT, uni=True)
+
+    def update_screen(self, screen):
+        # Save off active screen.
+        self.screen = screen
+
+        # Images only need initializing once - they don't actually use the screen after construction.
+        if len(self.images) <= 0:
+            self.load_image(screen, "grumpy_cat.jpg")
+            self.load_image(screen, "colour_globe.gif")
+
+        # Demo uses static sprites, so can reset every time now we have images loaded.
+        self.sprites = [
+            Sprite(self, 3.5, 6.5, self.images["grumpy_cat.jpg"]),
+            Sprite(self, 14.5, 11.5, self.images["colour_globe.gif"])
+        ]
 
     @property
     def map_x(self):
@@ -144,20 +210,27 @@ class RayCaster(Effect):
     # Textures to emulate h distance.
     _TEXTURES = "@&#$AHhwai;:. "
 
-    # Controls for rendering - this is the relative size of the camera plane to the viewing vector.
-    FOV = 0.66
-
     def __init__(self, screen, game_state):
         super(RayCaster, self).__init__(screen)
+        # Controls for rendering.
+        #
+        # Ideally we'd just use a field of vision (FOV) to represent the screen aspect ratio.  However, this
+        # looks wrong for very wide screens.  So, limit to 4:1 aspect ratio, then calculate FOV.
+        self.width = min(screen.height * 4, screen.width)
+        self.FOV = self.width / screen.height / 4
+
+        # Remember game state for later.
         self._state = game_state
+
+        # Set up raycasting sizes and colours
         self._block_size = screen.height // 3
         if screen.colours >= 256:
             self._colours = [x for x in zip(range(255, 232, -1), [0] * 24, range(255, 232, -1))]
         else:
-            self._colours = [(Screen.COLOUR_WHITE, Screen.A_BOLD, 0) for _ in range(6)]
-            self._colours.extend([(Screen.COLOUR_WHITE, Screen.A_NORMAL, 0) for _ in range(9)])
-            self._colours.extend([(Screen.COLOUR_BLACK, Screen.A_BOLD, 0) for _ in range(9)])
-            self._colours.append((Screen.COLOUR_BLACK, Screen.A_NORMAL, 0))
+            self._colours = [(Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_WHITE) for _ in range(6)]
+            self._colours.extend([(Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_WHITE) for _ in range(9)])
+            self._colours.extend([(Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLACK) for _ in range(9)])
+            self._colours.append((Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_BLACK))
 
     def _update(self, _):
         # First draw the background - which is theoretically the floor and ceiling.
@@ -165,12 +238,14 @@ class RayCaster(Effect):
 
         # Now do the ray casting across the visible canvas.
         # Compensate for aspect ratio by treating 2 cells as a single pixel.
+        x_offset = (self._screen.width - self.width ) // 2
         last_side = None
-        for sx in range(0, self._screen.width, 2):
+        z_buffer = [999999 for _ in range(self.width + 1)]
+        camera_x = cos(self._state.player_angle + pi / 2) * self.FOV
+        camera_y = sin(self._state.player_angle + pi / 2) * self.FOV
+        for sx in range(0, self.width, 2):
             # Calculate the ray for this vertical slice.
-            camera_x = cos(self._state.player_angle + pi / 2) * self.FOV
-            camera_y = sin(self._state.player_angle + pi / 2) * self.FOV
-            camera_segment = 2 * sx / self._screen.width - 1
+            camera_segment = 2 * sx / self.width - 1
             ray_x = cos(self._state.player_angle) + camera_x * camera_segment
             ray_y = sin(self._state.player_angle) + camera_y * camera_segment
 
@@ -225,6 +300,7 @@ class RayCaster(Effect):
                     dist = (map_y - self._state.y + (1 - step_y) / 2) / ray_y
                 else:
                     dist = (map_x - self._state.x + (1 - step_x) / 2) / ray_x
+                z_buffer[sx], z_buffer[sx + 1] = dist, dist
                 wall = min(self._screen.height, int(self._screen.height / dist))
                 colour, attr, bg = self._colours[min(len(self._colours) - 1, int(3 * dist))]
                 text = self._TEXTURES[min(len(self._TEXTURES) - 1, int(2 * dist))]
@@ -232,19 +308,49 @@ class RayCaster(Effect):
                 # Now draw the wall segment
                 for sy in range(wall):
                     self._screen.print_at(
-                        text * 2, sx, (self._screen.height - wall) // 2 + sy,
-                        colour, attr, bg=0 if self._state.mode == 1 else bg)
+                        text * 2, x_offset + sx, (self._screen.height - wall) // 2 + sy,
+                        colour, attr, bg=0 if self._state.mode == 0 else bg)
 
                 # Draw a line when we change surfaces to help make it easier to see the 3d effect
                 if hit_side != last_side:
                     last_side = hit_side
                     for sy in range(wall):
-                        self._screen.print_at("|", sx, (self._screen.height - wall) // 2 + sy, 0, bg=0)
+                        self._screen.print_at("|", x_offset + sx, (self._screen.height - wall) // 2 + sy, 0, bg=0)
+
+        # Now draw sprites
+        ray_x = cos(self._state.player_angle)
+        ray_y = sin(self._state.player_angle)
+        for sprite in self._state.sprites:
+            # Translate sprite position to relative to camera
+            sprite_x = sprite.x - self._state.x
+            sprite_y = sprite.y - self._state.y
+            inv_det = 1.0 / (camera_x * ray_y - ray_x * camera_y)
+            transform_x = inv_det * (ray_y * sprite_x - ray_x * sprite_y);
+            transform_y = inv_det * (-camera_y * sprite_x + camera_x * sprite_y)
+
+            # Sprite location on camera plane.
+            sprite_screen_x = int((self.width / 2) * (1 + transform_x / transform_y));
+
+            # Calculate height (and width) of the sprite on screen
+            sprite_height = abs(int(self._screen.height / (transform_y)))
+
+            # Don't bother if behind the viewing plane (or too big to render).
+            if transform_y > 0:
+                # Update for animation
+                sprite.next_frame()
+
+                # Loop through every vertical stripe of the sprite on screen
+                start = max(0, sprite_screen_x - sprite_height)
+                end = min(self.width, sprite_screen_x + sprite_height)
+                for stripe in range(start, end):
+                    if stripe > 0 and stripe < self.width and transform_y < z_buffer[stripe]:
+                        texture_x = int(stripe - (-sprite_height + sprite_screen_x) * sprite_height / sprite_height)
+                        sprite.draw_stripe(sprite_height, x_offset + stripe, texture_x)
 
     @property
     def frame_update_count(self):
-        # No animation required.
-        return 0
+        # Animation required - every other frame should be OK for demo.
+        return 2
 
     @property
     def stop_frame(self):
@@ -265,14 +371,18 @@ class GameController(Scene):
     """
 
     def __init__(self, screen, game_state):
+        # Standard setup for every screen.
         self._screen = screen
         self._state = game_state
         self._mini_map = MiniMap(screen, self._state, self._screen.height // 4)
         effects = [
-            RayCaster(screen, self._state),
-            self._mini_map
+            RayCaster(screen, self._state)
         ]
         super(GameController, self).__init__(effects, -1)
+
+        # Add minimap if required.
+        if self._state.show_mini_map:
+            self.add_effect(self._mini_map)
 
     def process_event(self, event):
         # Allow standard event processing first
@@ -295,7 +405,7 @@ class GameController(Scene):
                 self._state.safe_update_x(-cos(self._state.player_angle) / 5)
                 self._state.safe_update_y(-sin(self._state.player_angle) / 5)
             elif c in (ord("1"), ord("2")):
-                self._state.mode = c - ord("0")
+                self._state.mode = c - ord("1")
             elif c in (ord("m"), ord("M")):
                 self._state.show_mini_map = not self._state.show_mini_map
                 if self._state.show_mini_map:
@@ -313,6 +423,7 @@ class GameController(Scene):
 
 
 def demo(screen, game_state):
+    game_state.update_screen(screen)
     screen.play([GameController(screen, game_state)], stop_on_resize=True)
 
 

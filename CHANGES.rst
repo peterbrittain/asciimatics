@@ -4,6 +4,7 @@ CHANGE HISTORY
 LATEST
 ------
 - Added AnsiArtPlayer and AsciinemaPlayer
+- Added dynamically sized, animated sprites to ray caster demo.
 
 1.13.0
 ------
