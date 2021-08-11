@@ -34,12 +34,16 @@ class _DropdownPopup(_TempPopup):
             start_line = location[1] - 1
             height = min(len(parent.options) + 4, parent.frame.screen.height - location[1] + 1)
             reverse = False
-
+        
+        if parent.fit:
+            width = min(max(map(lambda x:len(x[0]), parent.options)) + 4, parent.width)
+        else:
+            width = parent.width
         # Construct the Frame
         super(_DropdownPopup, self).__init__(parent.frame.screen,
                                              parent,
                                              location[0], start_line,
-                                             parent.width, height)
+                                             width, height)
 
         # Build the widget to display the time selection.
         layout = Layout([1], fill_frame=True)
@@ -74,9 +78,9 @@ class DropdownList(Widget):
     This widget allows you to pick an item from a temporary pop-up list.
     """
 
-    __slots__ = ["_label", "_on_change", "_child", "_options", "_line", "_value"]
+    __slots__ = ["_label", "_on_change", "_child", "_options", "_line", "_value", "_fit"]
 
-    def __init__(self, options, label=None, name=None, on_change=None, **kwargs):
+    def __init__(self, options, label=None, name=None, on_change=None, fit=None, **kwargs):
         """
         :param options: The options for each row in the widget.
         :param label: An optional label for the widget.
@@ -98,6 +102,7 @@ class DropdownList(Widget):
         self._options = options
         self._line = 0 if len(options) > 0 else None
         self._value = options[self._line][1] if self._line is not None else None
+        self._fit = True if fit else False
 
     @property
     def options(self):
@@ -105,6 +110,13 @@ class DropdownList(Widget):
         The set of allowed options for the drop-down list.
         """
         return self._options
+
+    @property
+    def fit(self):
+        """
+        Whether to fit to element width or not.
+        """
+        return self._fit
 
     @options.setter
     def options(self, new_value):
@@ -118,10 +130,13 @@ class DropdownList(Widget):
         # the clever stuff when it has the focus.
         text = "" if self._line is None else self._options[self._line][0]
         (colour, attr, background) = self._pick_colours("field", selected=self._has_focus)
+        if self._fit:
+            width = min(max(map(lambda x:len(x[0]), self._options)) + 1, self.width - 3)
+        else:
+            width = self.width - 3
         self._frame.canvas.print_at(
-            "[{:{}}]".format(
-                _enforce_width(text, self.width - 2, self._frame.canvas.unicode_aware),
-                self.width - 2),
+            "[ {:{}}]".format(
+                _enforce_width(text, width, self._frame.canvas.unicode_aware), width),
             self._x + self._offset,
             self._y,
             colour, attr, background)
