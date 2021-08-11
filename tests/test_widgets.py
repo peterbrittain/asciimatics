@@ -2412,11 +2412,11 @@ class TestWidgets(unittest.TestCase):
         self.assert_canvas_equals(
             canvas,
             "++------------------------------------++\n" +
-            "||Item 1                              ||\n" +
+            "|| Item 1                             ||\n" +
             "||------------------------------------|O\n" +
-            "||Item 1                              ||\n" +
-            "||Item 2                              ||\n" +
-            "||Item 3                              ||\n" +
+            "|| Item 1                             ||\n" +
+            "|| Item 2                             ||\n" +
+            "|| Item 3                             ||\n" +
             "|+------------------------------------+|\n" +
             "|                                      |\n" +
             "|                                      |\n" +
@@ -2446,11 +2446,11 @@ class TestWidgets(unittest.TestCase):
         self.assert_canvas_equals(
             canvas,
             "++------------------------------------++\n" +
-            "||Item 2                              ||\n" +
+            "|| Item 2                             ||\n" +
             "||------------------------------------|O\n" +
-            "||Item 1                              ||\n" +
-            "||Item 2                              ||\n" +
-            "||Item 3                              ||\n" +
+            "|| Item 1                             ||\n" +
+            "|| Item 2                             ||\n" +
+            "|| Item 3                             ||\n" +
             "|+------------------------------------+|\n" +
             "|                                      |\n" +
             "|                                      |\n" +
@@ -2515,14 +2515,14 @@ class TestWidgets(unittest.TestCase):
         self.assert_canvas_equals(
             canvas,
             "++------------------------------------++\n" +
-            "||Item 0                             O||\n" +
-            "||Item 1                             ||O\n" +
-            "||Item 2                             |||\n" +
-            "||Item 3                             |||\n" +
-            "||Item 4                             |||\n" +
-            "||Item 5                             |||\n" +
+            "|| Item 0                            O||\n" +
+            "|| Item 1                            ||O\n" +
+            "|| Item 2                            |||\n" +
+            "|| Item 3                            |||\n" +
+            "|| Item 4                            |||\n" +
+            "|| Item 5                            |||\n" +
             "||------------------------------------||\n" +
-            "||Item 0                              ||\n" +
+            "|| Item 0                             ||\n" +
             "++------------------------------------++\n")
 
         # Check that options can be read and set.
@@ -2569,14 +2569,14 @@ class TestWidgets(unittest.TestCase):
         self.assert_canvas_equals(
             canvas,
             "++--------+----------------------------+\n" +
-            "||Item 0 O|                            |\n" +
-            "||Item 1 ||                            O\n" +
-            "||Item 2 ||                            |\n" +
-            "||Item 3 ||                            |\n" +
-            "||Item 4 ||                            |\n" +
-            "||Item 5 ||                            |\n" +
+            "|| Item 0O|                            |\n" +
+            "|| Item 1||                            O\n" +
+            "|| Item 2||                            |\n" +
+            "|| Item 3||                            |\n" +
+            "|| Item 4||                            |\n" +
+            "|| Item 5||                            |\n" +
             "||--------|                            |\n" +
-            "||Item 0  |                            |\n" +
+            "|| Item 0 |                            |\n" +
             "++--------+----------------------------+\n")
 
     def test_divider(self):

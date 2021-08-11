@@ -53,7 +53,7 @@ class _DropdownPopup(_TempPopup):
         divider = Divider()
         divider.disabled = True
         self._list = ListBox(Widget.FILL_FRAME,
-                             parent.options,
+                             [(f" {i[0]}", i[1]) for i in parent.options],
                              add_scroll_bar=len(parent.options) > height - 4,
                              on_select=self.close, on_change=self._link)
         layout.add_widget(self._list if reverse else self._field, 0)
@@ -86,6 +86,7 @@ class DropdownList(Widget):
         :param label: An optional label for the widget.
         :param name: The name for the widget.
         :param on_change: Optional function to call when the selected time changes.
+        :param fit: Shrink width of dropdown to fit the width of options. Default False.
 
         The `options` are a list of tuples, where the first value is the string to be displayed
         to the user and the second is an interval value to identify the entry to the program.
@@ -111,17 +112,17 @@ class DropdownList(Widget):
         """
         return self._options
 
-    @property
-    def fit(self):
-        """
-        Whether to fit to element width or not.
-        """
-        return self._fit
-
     @options.setter
     def options(self, new_value):
         self._options = new_value
         self.value = self._value
+
+    @property
+    def fit(self):
+        """
+        Whether to shrink to largest element width or not.
+        """
+        return self._fit
 
     def update(self, frame_no):
         self._draw_label()
