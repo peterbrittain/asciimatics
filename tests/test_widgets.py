@@ -2395,7 +2395,7 @@ class TestWidgets(unittest.TestCase):
         self.assert_canvas_equals(
             canvas,
             "+--------------------------------------+\n" +
-            "|[Item 1                              ]|\n" +
+            "|[ Item 1                             ]|\n" +
             "|                                      O\n" +
             "|                                      |\n" +
             "|                                      |\n" +
@@ -2429,7 +2429,7 @@ class TestWidgets(unittest.TestCase):
         self.assert_canvas_equals(
             canvas,
             "+--------------------------------------+\n" +
-            "|[Item 1                              ]|\n" +
+            "|[ Item 1                             ]|\n" +
             "|                                      O\n" +
             "|                                      |\n" +
             "|                                      |\n" +
@@ -2463,7 +2463,7 @@ class TestWidgets(unittest.TestCase):
         self.assert_canvas_equals(
             canvas,
             "+--------------------------------------+\n" +
-            "|[Item 2                              ]|\n" +
+            "|[ Item 2                             ]|\n" +
             "|                                      O\n" +
             "|                                      |\n" +
             "|                                      |\n" +
@@ -2505,7 +2505,7 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
-            "|[Item 0                              ]|\n" +
+            "|[ Item 0                             ]|\n" +
             "+--------------------------------------+\n")
 
         # Check it opens as expected
@@ -2530,6 +2530,54 @@ class TestWidgets(unittest.TestCase):
         self.assertEqual(dd_list.options, [(["a", "b", "c", "d", "e", "f"], 0)])
         dd_list.options = []
         self.assertEqual(dd_list.options, [])
+        
+        # Check that the fit to option width option works
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = Frame(canvas, canvas.height, canvas.width)
+        layout = Layout([100], fill_frame=True)
+        form.add_layout(layout)
+        layout.add_widget(Divider(draw_line=False, height=7))
+        dd_list = DropdownList([("Item {}".format(i), i) for i in range(10)], fit=True)
+        layout.add_widget(dd_list)
+        form.fix()
+        form.register_scene(scene)
+        scene.add_effect(form)
+        scene.reset()
+
+        # Check that the Frame is rendered correctly.
+        for effect in scene.effects:
+            effect.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|                                      |\n" +
+            "|                                      O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|[ Item 0 ]                            |\n" +
+            "+--------------------------------------+\n")
+
+        # Check it opens as expected
+        self.process_mouse(scene, [(7, 8, MouseEvent.LEFT_CLICK)])
+        for effect in scene.effects:
+            effect.update(1)
+        self.assert_canvas_equals(
+            canvas,
+            "++--------+----------------------------+\n" +
+            "||Item 0 O|                            |\n" +
+            "||Item 1 ||                            O\n" +
+            "||Item 2 ||                            |\n" +
+            "||Item 3 ||                            |\n" +
+            "||Item 4 ||                            |\n" +
+            "||Item 5 ||                            |\n" +
+            "||--------|                            |\n" +
+            "||Item 0  |                            |\n" +
+            "++--------+----------------------------+\n")
 
     def test_divider(self):
         """
