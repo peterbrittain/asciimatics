@@ -53,7 +53,7 @@ class _DropdownPopup(_TempPopup):
         divider = Divider()
         divider.disabled = True
         self._list = ListBox(Widget.FILL_FRAME,
-                             [(f" {i[0]}", i[1]) for i in parent.options],
+                             [(" {}".format(i[0]), i[1]) for i in parent.options],
                              add_scroll_bar=len(parent.options) > height - 4,
                              on_select=self.close, on_change=self._link)
         layout.add_widget(self._list if reverse else self._field, 0)
