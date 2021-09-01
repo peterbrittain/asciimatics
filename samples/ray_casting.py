@@ -18,7 +18,7 @@ Use the following keys:
 - Cursor keys to move.
 - M to toggle the mini-map
 - X to quit
-- 1 or 2 to change rendering mode.
+- 1 to 4 to change rendering mode.
 
 Can you find grumpy cat?
 """
@@ -39,43 +39,58 @@ XXXXXXXXXXXXXX X
 IMAGE_HEIGHT = 64
 
 
+class Image(object):
+    """
+    Class to handle image stripe rendering.
+    """
+
+    def __init__(self, image):
+        self._image = image
+
+    def next_frame(self):
+        self._frame = self._image.rendered_text
+
+    def draw_stripe(self, screen, height, x, image_x):
+        # Clip required dimensions.
+        y_start, y_end = 0, height
+        if height > screen.height:
+            y_start = (height - screen.height) // 2
+            y_end = y_start + screen.height + 1
+
+        # Draw the stripe for the required region.
+        for sy in range(y_start, y_end):
+            try:
+                y = round((screen.height - height) / 2) + sy
+                image_y = round(sy * IMAGE_HEIGHT / height)
+                char = self._frame[0][image_y][image_x]
+                # Unicode images use . for background only pixels; ascii ones use space.
+                if char not in (" ", "."):
+                    fg, attr, bg = self._frame[1][image_y][image_x]
+                    attr = 0 if attr is None else attr
+                    bg = 0 if bg is None else bg
+                    screen.print_at(char, x, y, fg, attr, bg)
+            except IndexError:
+                pass
+
+
 class Sprite(object):
     """
     Dynamically sized sprite.
     """
 
-    def __init__(self, model, x, y, images):
-        self._model = model
+    def __init__(self, state, x, y, images):
+        self._state = state
         self.x, self.y = x, y
-        self._frames = None, None
         self._images = images
 
     def next_frame(self):
-        self._frames = self._images[0].rendered_text, self._images[1].rendered_text
+        for image in self._images:
+            image.next_frame()
 
     def draw_stripe(self, height, x, image_x):
-        # Figure out which image to use and scale as needed.
-        image_x = int(image_x * IMAGE_HEIGHT / height)
-        y_start, y_end = 0, height
-        if height > self._model.screen.height:
-            y_start = (height - self._model.screen.height) // 2
-            y_end = y_start + self._model.screen.height + 1
-        image = self._frames[self._model.mode]
-
-        # Draw the stripe for the required region.
-        for sy in range(y_start, y_end):
-            try:
-                y = (self._model.screen.height - height) // 2 + sy
-                image_y = int(sy * IMAGE_HEIGHT / height)
-                char = image[0][image_y][image_x]
-                # Unicode images use . for background only pixels; ascii ones use space.
-                if char not in (" ", "."):
-                    fg, attr, bg = image[1][image_y][image_x]
-                    attr = 0 if attr is None else attr
-                    bg = 0 if bg is None else bg
-                    self._model.screen.print_at(char, x, y, fg, attr, bg)
-            except IndexError:
-                pass
+        # Resize offset in image for the expected height of this stripe.
+        self._images[self._state.mode % 2].draw_stripe(
+            self._state.screen, height, x, int(image_x * IMAGE_HEIGHT / height))
 
 
 class GameState(object):
@@ -95,8 +110,8 @@ class GameState(object):
 
     def load_image(self, screen, filename):
         self.images[filename] = [None, None]
-        self.images[filename][0] = ColourImageFile(screen, filename, IMAGE_HEIGHT, uni=False)
-        self.images[filename][1] = ColourImageFile(screen, filename, IMAGE_HEIGHT, uni=True)
+        self.images[filename][0] = Image(ColourImageFile(screen, filename, IMAGE_HEIGHT, uni=False))
+        self.images[filename][1] = Image(ColourImageFile(screen, filename, IMAGE_HEIGHT, uni=True))
 
     def update_screen(self, screen):
         # Save off active screen.
@@ -106,11 +121,13 @@ class GameState(object):
         if len(self.images) <= 0:
             self.load_image(screen, "grumpy_cat.jpg")
             self.load_image(screen, "colour_globe.gif")
+            self.load_image(screen, "wall.png")
 
         # Demo uses static sprites, so can reset every time now we have images loaded.
         self.sprites = [
             Sprite(self, 3.5, 6.5, self.images["grumpy_cat.jpg"]),
-            Sprite(self, 14.5, 11.5, self.images["colour_globe.gif"])
+            Sprite(self, 14.5, 11.5, self.images["colour_globe.gif"]),
+            Sprite(self, 0, 0, self.images["wall.png"])
         ]
 
     @property
@@ -243,7 +260,7 @@ class RayCaster(Effect):
         z_buffer = [999999 for _ in range(self.width + 1)]
         camera_x = cos(self._state.player_angle + pi / 2) * self.FOV
         camera_y = sin(self._state.player_angle + pi / 2) * self.FOV
-        for sx in range(0, self.width, 2):
+        for sx in range(0, self.width, 2 - self._state.mode // 2):
             # Calculate the ray for this vertical slice.
             camera_segment = 2 * sx / self.width - 1
             ray_x = cos(self._state.player_angle) + camera_x * camera_segment
@@ -301,15 +318,39 @@ class RayCaster(Effect):
                 else:
                     dist = (map_x - self._state.x + (1 - step_x) / 2) / ray_x
                 z_buffer[sx], z_buffer[sx + 1] = dist, dist
-                wall = min(self._screen.height, int(self._screen.height / dist))
-                colour, attr, bg = self._colours[min(len(self._colours) - 1, int(3 * dist))]
-                text = self._TEXTURES[min(len(self._TEXTURES) - 1, int(2 * dist))]
 
-                # Now draw the wall segment
-                for sy in range(wall):
-                    self._screen.print_at(
-                        text * 2, x_offset + sx, (self._screen.height - wall) // 2 + sy,
-                        colour, attr, bg=0 if self._state.mode == 0 else bg)
+                # Are we drawing block colours or ray traced walls?
+                if self._state.mode < 2:
+                    # Simple block colours - get height and text attributes
+                    wall = min(self._screen.height, int(self._screen.height / dist))
+                    colour, attr, bg = self._colours[min(len(self._colours) - 1, int(3 * dist))]
+                    text = self._TEXTURES[min(len(self._TEXTURES) - 1, int(2 * dist))]
+
+                    # Now draw the wall segment
+                    for sy in range(wall):
+                        self._screen.print_at(
+                            text * 2, x_offset + sx, (self._screen.height - wall) // 2 + sy,
+                            colour, attr, bg=0 if self._state.mode == 0 else bg)
+                else:
+                    # Ray casting - get wall texture
+                    image = self._state.images["wall.png"][self._state.mode % 2]
+
+                    # Get texture height and stripe offset bearing in mind pixels are 1x2 aspect ratio.
+                    wall = int(self._screen.height / dist)
+                    if hit_side:
+                        wall_x = self._state.x + dist * ray_x;
+                    else:
+                        wall_x = self._state.y + dist * ray_y;
+                    wall_x -= int(wall_x);
+                    texture_x = int(wall_x * IMAGE_HEIGHT * 2);
+                    if (not hit_side) and ray_x > 0:
+                        texture_x = IMAGE_HEIGHT * 2 - texture_x - 1;
+                    if hit_side and ray_y < 0:
+                        texture_x = IMAGE_HEIGHT * 2 - texture_x - 1;
+
+                    # Now draw it
+                    image.next_frame()
+                    image.draw_stripe(self._screen, wall, x_offset + sx, texture_x)
 
                 # Draw a line when we change surfaces to help make it easier to see the 3d effect
                 if hit_side != last_side:
@@ -404,7 +445,7 @@ class GameController(Scene):
             elif c in (ord("s"), Screen.KEY_DOWN):
                 self._state.safe_update_x(-cos(self._state.player_angle) / 5)
                 self._state.safe_update_y(-sin(self._state.player_angle) / 5)
-            elif c in (ord("1"), ord("2")):
+            elif c in (ord("1"), ord("2"), ord("3"), ord("4")):
                 self._state.mode = c - ord("1")
             elif c in (ord("m"), ord("M")):
                 self._state.show_mini_map = not self._state.show_mini_map
