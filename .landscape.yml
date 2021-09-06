@@ -36,6 +36,8 @@ pylint:
     # Don't agree with these styles
     - no-else-return
     - len-as-condition
+    # Bug in pylint raising too many false positives
+    - unsubscriptable-object
 mccabe:
   run: false
 pep257:

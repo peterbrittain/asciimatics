@@ -238,7 +238,7 @@ class DynamicRenderer(with_metaclass(ABCMeta, Renderer)):
         :param colour: The colour of the text to add.
         :param attr: The attribute of the image.
         :param bg: The background colour of the text to add.
-        
+
         This is only kept for back compatibility.  Direct access to the canvas methods is
         preferred.
         """
@@ -1192,9 +1192,15 @@ class AnsiArtPlayer(AbstractScreenPlayer):
         self._encoding = encoding
 
     def __enter__(self):
+        """
+        Create context for use as a context manager.
+        """
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        """
+        Clear up the resources for this context.
+        """
         if self._file:
             self._file.close()
 
@@ -1242,9 +1248,15 @@ class AsciinemaPlayer(AbstractScreenPlayer):
         self._max_delay = max_delay
 
     def __enter__(self):
+        """
+        Create context for use as a context manager.
+        """
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        """
+        Clear up the resources for this context.
+        """
         if self._file:
             self._file.close()
 

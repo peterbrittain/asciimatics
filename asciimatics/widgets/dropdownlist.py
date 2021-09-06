@@ -34,9 +34,9 @@ class _DropdownPopup(_TempPopup):
             start_line = location[1] - 1
             height = min(len(parent.options) + 4, parent.frame.screen.height - location[1] + 1)
             reverse = False
-        
+
         if parent.fit:
-            width = min(max(map(lambda x:len(x[0]), parent.options)) + 4, parent.width)
+            width = min(max(map(lambda x: len(x[0]), parent.options)) + 4, parent.width)
         else:
             width = parent.width
         # Construct the Frame
@@ -132,7 +132,7 @@ class DropdownList(Widget):
         text = "" if self._line is None else self._options[self._line][0]
         (colour, attr, background) = self._pick_colours("field", selected=self._has_focus)
         if self._fit:
-            width = min(max(map(lambda x:len(x[0]), self._options)) + 1, self.width - 3)
+            width = min(max(map(lambda x: len(x[0]), self._options)) + 1, self.width - 3)
         else:
             width = self.width - 3
         self._frame.canvas.print_at(
