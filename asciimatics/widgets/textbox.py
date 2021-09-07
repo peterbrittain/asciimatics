@@ -23,7 +23,7 @@ class TextBox(Widget):
 
     __slots__ = ["_label", "_line", "_column", "_start_line", "_start_column", "_required_height",
                  "_as_string", "_line_wrap", "_on_change", "_reflowed_text_cache", "_parser",
-                 "_readonly"]
+                 "_readonly", "_hide_cursor", "_auto_scroll"]
 
     def __init__(self, height, label=None, name=None, as_string=False, line_wrap=False, parser=None,
                  on_change=None, readonly=False, **kwargs):
@@ -53,6 +53,8 @@ class TextBox(Widget):
         self._on_change = on_change
         self._reflowed_text_cache = None
         self._readonly = readonly
+        self._hide_cursor = False
+        self._auto_scroll = True
 
     def update(self, frame_no):
         self._draw_label()
@@ -102,7 +104,7 @@ class TextBox(Widget):
         # if we have the input focus.
         if self._has_focus:
             line = str(display_text[display_line][0])
-            logger.debug("Cursor: %d,%d", display_start_column, display_column)
+#            logger.debug("Cursor: %d,%d", display_start_column, display_column)
             text_width = self.string_len(line[display_start_column:display_column])
             self._draw_cursor(
                 " " if display_column >= len(line) else line[display_column],
@@ -114,9 +116,15 @@ class TextBox(Widget):
         # Reset to original data and move to end of the text.
         self._start_line = 0
         self._start_column = 0
-        self._line = len(self._value) - 1
+        if self._auto_scroll or self._line > len(self._value) - 1:
+            self._line = len(self._value) - 1
+
         self._column = 0 if self._is_disabled else len(self._value[self._line])
         self._reflowed_text_cache = None
+
+    def _draw_cursor(self, char, frame_no, x, y):
+        if not self._hide_cursor:
+            super()._draw_cursor(char, frame_no, x, y)
 
     def _change_line(self, delta):
         """
@@ -124,6 +132,16 @@ class TextBox(Widget):
 
         :param delta: The number of lines to move (-ve is up, +ve is down).
         """
+        if self._hide_cursor:
+            # Cursor is hidden, move entire box
+
+            if delta > 0:
+                # Moving down, force cursor to bottom of visible box
+                self._line = self._start_line + self._h - 1
+            else:
+                # Moving up, force cursor to top of visible box
+                self._line = self._start_line
+
         # Ensure new line is within limits
         self._line = min(max(0, self._line + delta), len(self._value) - 1)
 
@@ -282,6 +300,35 @@ class TextBox(Widget):
                 self._reflowed_text_cache = [(x, i, 0) for i, x in enumerate(self._value)]
 
         return self._reflowed_text_cache
+
+    @property
+    def hide_cursor(self):
+        """
+        Set to True to stop the cursor from showing. If the cursor is hidden,
+        scrolling will move the entire TextBox instead of just the cursor.
+        
+        Defaults to False.
+        """
+        return self._hide_cursor
+
+    @hide_cursor.setter
+    def hide_cursor(self, new_value):
+        self._hide_cursor = new_value
+
+    @property
+    def auto_scroll(self):
+        """
+        When set to True the TextBox will scroll to the bottom when created or
+        next text is added. When set to False, the current scroll position
+        will remain even if the contents are changed.
+
+        Defaults to True.
+        """
+        return self._auto_scroll
+
+    @auto_scroll.setter
+    def auto_scroll(self, new_value):
+        self._auto_scroll = new_value
 
     @property
     def value(self):

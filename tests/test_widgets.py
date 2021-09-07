@@ -250,6 +250,7 @@ class TestFrame6(Frame):
 class TestWidgets(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
+        self.epoch_date = str(date.fromtimestamp(0))
 
     def assert_canvas_equals(self, canvas, expected):
         """
@@ -1932,9 +1933,9 @@ class TestWidgets(unittest.TestCase):
         self.assert_canvas_equals(
             canvas,
             "/                     Size Last modified\n" +
-            "|-- A Directory          0    1970-01-01\n" +
-            "|-- A File               0    1970-01-01\n" +
-            "|-- A Lnk                0    1970-01-01\n" +
+            f"|-- A Directory          0    {self.epoch_date}\n" +
+            f"|-- A File               0    {self.epoch_date}\n" +
+            f"|-- A Lnk                0    {self.epoch_date}\n" +
             "                                        \n" +
             "                                        \n" +
             "                                        \n" +
@@ -2022,11 +2023,11 @@ class TestWidgets(unittest.TestCase):
         self.assert_canvas_equals(
             canvas,
             "/                     Size Last modified\n" +
-            "|-+ A Directory         9K    1970-01-01\n" +
-            "|-+ Lnk Directo...      9K    1970-01-01\n" +
-            "|-- A File              9K    1970-01-01\n" +
-            "|-- A Lnk -> A Tgt      9K    1970-01-01\n" +
-            "|-- oööÖ.txt            9K    1970-01-01\n" +
+            f"|-+ A Directory         9K    {self.epoch_date}\n" +
+            f"|-+ Lnk Directo...      9K    {self.epoch_date}\n" +
+            f"|-- A File              9K    {self.epoch_date}\n" +
+            f"|-- A Lnk -> A Tgt      9K    {self.epoch_date}\n" +
+            f"|-- oööÖ.txt            9K    {self.epoch_date}\n" +
             "                                        \n" +
             "                                        \n" +
             "                                        \n" +
@@ -2055,11 +2056,11 @@ class TestWidgets(unittest.TestCase):
             canvas,
             "/A Directory          Size Last modified\n" +
             "|-+ ..                                  \n" +
-            "|-+ A Directory         9K    1970-01-01\n" +
-            "|-+ Lnk Directo...      9K    1970-01-01\n" +
-            "|-- A File              9K    1970-01-01\n" +
-            "|-- A Lnk -> A Tgt      9K    1970-01-01\n" +
-            "|-- oööÖ.txt            9K    1970-01-01\n" +
+            f"|-+ A Directory         9K    {self.epoch_date}\n" +
+            f"|-+ Lnk Directo...      9K    {self.epoch_date}\n" +
+            f"|-- A File              9K    {self.epoch_date}\n" +
+            f"|-- A Lnk -> A Tgt      9K    {self.epoch_date}\n" +
+            f"|-- oööÖ.txt            9K    {self.epoch_date}\n" +
             "                                        \n" +
             "                                        \n" +
             "                                        \n")
@@ -2115,8 +2116,8 @@ class TestWidgets(unittest.TestCase):
         self.assert_canvas_equals(
             canvas,
             "/                     Size Last modified\n" +
-            "|-+ A Directory         9K    1970-01-01\n" +
-            "|-- hello.bmp           9K    1970-01-01\n" +
+            f"|-+ A Directory         9K    {self.epoch_date}\n" +
+            f"|-- hello.bmp           9K    {self.epoch_date}\n" +
             "                                        \n" +
             "                                        \n" +
             "                                        \n" +
