@@ -536,7 +536,8 @@ By passing in a parser that understands extra control codes or the need to highl
 characters differently, you can control colours on a letter by letter basis.  Out of the box,
 asciimatics provides 2 parsers, which can handle the ${c,a,b} format used by its Renderers, or
 the ANSI standard terminal escape codes (used by many Linux terminals).  Simply use the relevant
-parser and pass in values containing the associated control codes to change colours where needed.
+parser (:py:obj:`~.AsciimaticsParser` or :py:obj:`~.AnsiTerminalParser`) and pass in values containing
+the associated control codes to change colours where needed.
 
 Check out the latest code in forms.py and top.py for examples of how this works.
 

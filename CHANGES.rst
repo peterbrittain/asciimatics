@@ -6,6 +6,7 @@ LATEST
 - Added AnsiArtPlayer and AsciinemaPlayer
 - Added dynamically sized, animated sprites to ray caster demo.
 - Added fit parameter to DropdownList.
+- Added support for default colours to AnsiTerminalParser
 
 1.13.0
 ------

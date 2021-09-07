@@ -272,6 +272,12 @@ class AnsiTerminalParser(Parser):
                                 # Set background colour - next parameter is either 5 (index) or 2 (RGB color)
                                 in_set_mode = True
                                 attribute_index = 2
+                            elif parameter == 39:
+                                # Default foreground colour
+                                st.attributes[0] = -1
+                            elif parameter == 49:
+                                # Default background colour
+                                st.attributes[2] = -1
                             elif parameter in range(90, 98):
                                 # Bright foreground colours
                                 st.attributes[0] = parameter - 82

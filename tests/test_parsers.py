@@ -86,6 +86,25 @@ class TestParsers(unittest.TestCase):
         with self.assertRaises(StopIteration):
             next(tokens)
 
+    def test_ansi_terminal_parser_def_colours(self):
+        """
+        Check AnsiTerminalParser default colours work as expected.
+        """
+        parser = AnsiTerminalParser()
+        parser.reset("a\x1B[39mb\x1B[49mc", None)
+        tokens = parser.parse()
+
+        # Normal text
+        self.assertEquals(next(tokens), (0, Parser.DISPLAY_TEXT, "a"))
+
+        # Default foreground colour
+        self.assertEquals(next(tokens), (1, Parser.CHANGE_COLOURS, (constants.COLOUR_DEFAULT, None, None)))
+        self.assertEquals(next(tokens), (1, Parser.DISPLAY_TEXT, "b"))
+
+        # Default background colour
+        self.assertEquals(next(tokens), (7, Parser.CHANGE_COLOURS, (constants.COLOUR_DEFAULT, None, constants.COLOUR_DEFAULT)))
+        self.assertEquals(next(tokens), (7, Parser.DISPLAY_TEXT, "c"))
+
     def test_ansi_terminal_parser_palette(self):
         """
         Check AnsiTerminalParser colour palettes work as expected.
