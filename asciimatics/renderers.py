@@ -24,6 +24,7 @@ from wcwidth.wcwidth import wcswidth
 from asciimatics.screen import Screen, TemporaryCanvas
 from asciimatics.constants import COLOUR_REGEX
 from asciimatics.parsers import AnsiTerminalParser, Parser
+from asciimatics.utilities import BorderLines
 
 
 #: Attribute conversion table for the ${c,a} form of attributes for
@@ -551,7 +552,7 @@ class Rainbow(StaticRenderer):
             self._images.append(new_image)
 
 
-class BarChart(DynamicRenderer):
+class _BarChartBase(DynamicRenderer):
     """
     Renderer to create a bar chart using the specified functions as inputs for
     each entry.  Can be used to chart distributions or for more graphical
@@ -597,7 +598,7 @@ class BarChart(DynamicRenderer):
         :param border: Whether to draw a border around the chart.
         :param keys: Optional keys for each bar.
         """
-        super(BarChart, self).__init__(height, width)
+        super(_BarChartBase, self).__init__(height, width)
         self._functions = functions
         self._char = char
         self._colours = [colour] if isinstance(colour, int) else colour
@@ -608,7 +609,16 @@ class BarChart(DynamicRenderer):
         self._intervals = intervals
         self._labels = labels
         self._border = border
+        self._border_lines = BorderLines(self._canvas.unicode_aware) if border else None
         self._keys = keys
+
+    @property
+    def border_lines(self):
+        """If border=True this object will have a reference to a
+        :class:`BorderLines` instance. The style of the border can be changed
+        through it.
+        """
+        return self._border_lines
 
     def _render_now(self):
         # Dimensions for the chart.
@@ -620,12 +630,12 @@ class BarChart(DynamicRenderer):
 
         # Create  the box around the chart...
         if self._border:
-            self._write("+" + "-" * (self._canvas.width - 2) + "+", 0, 0)
+            self._write(self._border_lines.top_line(self._canvas.width), 0, 0)
             for line in range(1, self._canvas.height):
-                self._write("|", 0, line)
-                self._write("|", self._canvas.width - 1, line)
-            self._write(
-                "+" + "-" * (self._canvas.width - 2) + "+", 0, self._canvas.height - 1)
+                self._write(self._border_lines.vertical, 0, line)
+                self._write(self._border_lines.vertical, self._canvas.width - 1, line)
+            self._write(self._border_lines.bottom_line(self._canvas.width),
+                0, self._canvas.height - 1)
             int_h -= 4
             int_w -= 6
             start_y += 2
@@ -727,6 +737,23 @@ class BarChart(DynamicRenderer):
                         self._char * bar_len, start_x, y + line, colour, bg=bg)
 
         return self._plain_image, self._colour_map
+
+
+class BarChart(_BarChartBase):
+    """
+    Renderer to create a horizontal bar chart using the specified functions as
+    inputs for each entry.  Can be used to chart distributions or for more
+    graphical effect - e.g. to imitate a sound equalizer or a progress
+    indicator.
+    """
+    def __init__(self, height, width, functions, char="#",
+                 colour=Screen.COLOUR_GREEN, bg=Screen.COLOUR_BLACK,
+                 gradient=None, scale=None, axes=_BarChartBase.Y_AXIS, 
+                 intervals=None, labels=False, border=True, keys=None):
+        super(BarChart, self).__init__(height, width, functions, char=char,
+                 colour=colour, bg=bg, gradient=gradient, scale=scale,
+                 axes=axes, intervals=intervals, labels=labels, border=border,
+                 keys=keys)
 
 
 class Fire(DynamicRenderer):

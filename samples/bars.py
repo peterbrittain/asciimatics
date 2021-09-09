@@ -5,6 +5,7 @@ from asciimatics.renderers import BarChart, FigletText
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError
+from asciimatics.utilities import BorderLines
 import sys
 import math
 import time
@@ -27,22 +28,23 @@ def demo(screen):
                   y=screen.height//2-3),
         ]
     else:
-        effects = [
-            Print(screen,
-                  BarChart(10, 40, [fn, fn],
-                           char="=",
-                           gradient=[(20, Screen.COLOUR_GREEN),
-                                     (30, Screen.COLOUR_YELLOW),
-                                     (40, Screen.COLOUR_RED)]),
-                  x=13, y=1, transparent=False, speed=2),
-            Print(screen,
-                  BarChart(
-                      13, 60,
+        chart1 = BarChart(10, 40, [fn, fn], char="=", 
+                    gradient=[(20, Screen.COLOUR_GREEN),
+                              (30, Screen.COLOUR_YELLOW),
+                              (40, Screen.COLOUR_RED)],
+                    keys=['a', 'b'])
+        chart1.border_lines.set_type(BorderLines.DOUBLE_LINE)
+
+        chart2 = BarChart(13, 60,
                       [wv(1), wv(2), wv(3), wv(4), wv(5), wv(7), wv(8), wv(9)],
                       colour=Screen.COLOUR_GREEN,
                       axes=BarChart.BOTH,
-                      scale=2.0),
-                  x=68, y=1, transparent=False, speed=2),
+                      scale=2.0)
+        chart2.border_lines.set_type(BorderLines.ASCII_LINE)
+
+        effects = [
+            Print(screen, chart1, x=13, y=1, transparent=False, speed=2),
+            Print(screen, chart2, x=68, y=1, transparent=False, speed=2),
             Print(screen,
                   BarChart(
                       7, 60, [lambda: time.time() * 10 % 101],
