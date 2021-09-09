@@ -15,6 +15,85 @@ from asciimatics.widgets.scrollbar import _ScrollBar
 from asciimatics.widgets.utilities import THEMES, logger
 
 
+class _BorderManager:
+    def __init__(self, frame, has_border, can_scroll):
+        self._frame = frame
+        self.has_border = has_border
+        self._scroll_bar = None
+        if can_scroll:
+            scroll_y = 2
+            scroll_height = frame._canvas.height - 4
+            if not has_border:
+                scroll_height = frame._canvas.height - 2
+                scroll_y = 1
+
+            self._scroll_bar = _ScrollBar(frame._canvas, frame.palette, 
+                frame._canvas.width - 1, scroll_y, scroll_height,
+                frame._get_pos, frame._set_pos, absolute=True) 
+
+        self.tl    = u"┌" if frame._canvas.unicode_aware else "+"
+        self.tr    = u"┐" if frame._canvas.unicode_aware else "+"
+        self.bl    = u"└" if frame._canvas.unicode_aware else "+"
+        self.br    = u"┘" if frame._canvas.unicode_aware else "+"
+        self.horiz = u"─" if frame._canvas.unicode_aware else "-"
+        self.vert  = u"│" if frame._canvas.unicode_aware else "|"
+
+        # Optimization for non-unicode displays to avoid slow unicode calls.
+        self.string_len = wcswidth if frame._canvas.unicode_aware else len
+
+    @property
+    def can_scroll(self):
+        return self._scroll_bar is not None
+
+    def get_rectangle(self):
+        if self.has_border:
+            x = y = 1
+            h = self._frame._canvas.height - 2
+            w = self._frame._canvas.width - 2
+        else:
+            x = y = 0
+            h = self._frame._canvas.height
+            w = self._frame._canvas.width
+
+            if self.can_scroll:
+                w -= 1
+
+        return x, y, h, w
+
+    def draw_border(self):
+        frame = self._frame
+
+        if self.has_border:
+            # Draw the basic border first.
+            (colour, attr, bg) = frame.palette["borders"]
+            for dy in range(frame._canvas.height):
+                y = frame._canvas.start_line + dy
+                if dy == 0:
+                    frame._canvas.print_at(
+                        self.tl + (self.horiz * (frame._canvas.width - 2)) + self.tr,
+                        0, y, colour, attr, bg)
+                elif dy == frame._canvas.height - 1:
+                    frame._canvas.print_at(
+                        self.bl + (self.horiz * (frame._canvas.width - 2)) + self.br,
+                        0, y, colour, attr, bg)
+                else:
+                    frame._canvas.print_at(self.vert, 0, y, colour, attr, bg)
+                    frame._canvas.print_at(self.vert, frame._canvas.width - 1, y,
+                                          colour, attr, bg)
+
+            # Now the title
+            (colour, attr, bg) = frame.palette["title"]
+            title_width = self.string_len(frame._title)
+            frame._canvas.print_at(
+                frame._title,
+                (frame._canvas.width - title_width) // 2,
+                frame._canvas.start_line,
+                colour, attr, bg)
+
+        if self.can_scroll and frame._canvas.height > 5:
+            self._scroll_bar.update()
+
+
 class Frame(Effect):
     """
     A Frame is a special Effect for controlling and displaying Widgets.
@@ -61,11 +140,6 @@ class Frame(Effect):
         self._canvas = Canvas(screen, height, width, x, y)
         self._data = None
         self._on_load = on_load
-        self._has_border = has_border
-        self._can_scroll = can_scroll
-        self._scroll_bar = _ScrollBar(
-            self._canvas, self.palette, self._canvas.width - 1, 2, self._canvas.height - 4,
-            self._get_pos, self._set_pos, absolute=True) if can_scroll else None
         self._hover_focus = hover_focus
         self._initial_data = data if data else {}
         self._title = None
@@ -74,6 +148,7 @@ class Frame(Effect):
         self._reduce_cpu = reduce_cpu
         self._is_modal = is_modal
         self._has_focus = False
+        self._border_mgr = _BorderManager(self, has_border, can_scroll)
 
         # A unique name is needed for cloning.  Try our best to get one!
         self._name = title if name is None else name
@@ -85,9 +160,6 @@ class Frame(Effect):
         # Now set up any passed data - use the public property to trigger any
         # necessary updates.
         self.data = deepcopy(self._initial_data)
-
-        # Optimization for non-unicode displays to avoid slow unicode calls.
-        self.string_len = wcswidth if self._canvas.unicode_aware else len
 
         # Ensure that we have the default palette in place
         self._theme = None
@@ -140,14 +212,8 @@ class Frame(Effect):
         fill_height = y = 0
         for _ in range(2):
             # Pick starting point/height - varies for borders.
-            if self._has_border:
-                x = y = start_y = 1
-                height = self._canvas.height - 2
-                width = self._canvas.width - 2
-            else:
-                x = y = start_y = 0
-                height = self._canvas.height
-                width = self._canvas.width
+            x, y, height, width = self._border_mgr.get_rectangle()
+            start_y = y
 
             # Process each Layout in the Frame - getting required height for
             # each.
@@ -213,44 +279,7 @@ class Frame(Effect):
             effect.update(frame_no)
 
         # Draw any border if needed.
-        if self._has_border:
-            # Decide on box chars to use.
-            tl = u"┌" if self._canvas.unicode_aware else "+"
-            tr = u"┐" if self._canvas.unicode_aware else "+"
-            bl = u"└" if self._canvas.unicode_aware else "+"
-            br = u"┘" if self._canvas.unicode_aware else "+"
-            horiz = u"─" if self._canvas.unicode_aware else "-"
-            vert = u"│" if self._canvas.unicode_aware else "|"
-
-            # Draw the basic border first.
-            (colour, attr, bg) = self.palette["borders"]
-            for dy in range(self._canvas.height):
-                y = self._canvas.start_line + dy
-                if dy == 0:
-                    self._canvas.print_at(
-                        tl + (horiz * (self._canvas.width - 2)) + tr,
-                        0, y, colour, attr, bg)
-                elif dy == self._canvas.height - 1:
-                    self._canvas.print_at(
-                        bl + (horiz * (self._canvas.width - 2)) + br,
-                        0, y, colour, attr, bg)
-                else:
-                    self._canvas.print_at(vert, 0, y, colour, attr, bg)
-                    self._canvas.print_at(vert, self._canvas.width - 1, y,
-                                          colour, attr, bg)
-
-            # Now the title
-            (colour, attr, bg) = self.palette["title"]
-            title_width = self.string_len(self._title)
-            self._canvas.print_at(
-                self._title,
-                (self._canvas.width - title_width) // 2,
-                self._canvas.start_line,
-                colour, attr, bg)
-
-            # And now the scroll bar
-            if self._can_scroll and self._canvas.height > 5:
-                self._scroll_bar.update()
+        self._border_mgr.draw_border()
 
         # Now push it all to screen.
         self._canvas.refresh()
@@ -280,8 +309,8 @@ class Frame(Effect):
         if theme in THEMES:
             self._theme = theme
             self.palette = THEMES[theme]
-            if self._scroll_bar:
-                self._scroll_bar.palette = self.palette
+            if self._border_mgr.can_scroll:
+                self._border_mgr._scroll_bar.palette = self.palette
 
     @property
     def title(self):
@@ -498,26 +527,26 @@ class Frame(Effect):
         :param y: The y location to make visible.
         :param h: The height of the location to make visible.
         """
-        if self._has_border:
+        if self._border_mgr.has_border:
             start_x = 1
-            width = self.canvas.width - 2
-            start_y = self.canvas.start_line + 1
-            height = self.canvas.height - 2
+            width = self._canvas.width - 2
+            start_y = self._canvas.start_line + 1
+            height = self._canvas.height - 2
         else:
             start_x = 0
-            width = self.canvas.width
-            start_y = self.canvas.start_line
-            height = self.canvas.height
+            width = self._canvas.width
+            start_y = self._canvas.start_line
+            height = self._canvas.height
 
         if ((start_x <= x < start_x + width) and (y >= start_y) and (y + h < start_y + height)):
             # Already OK - quit now.
             return
 
         if y < start_y:
-            self.canvas.scroll_to(y - 1 if self._has_border else y)
+            self._canvas.scroll_to(y - 1 if self._border_mgr.has_border else y)
         else:
-            line = y + h - self.canvas.height + (1 if self._has_border else 0)
-            self.canvas.scroll_to(max(0, line))
+            line = y + h - self._canvas.height + (1 if self._border_mgr.has_border else 0)
+            self._canvas.scroll_to(max(0, line))
 
     def rebase_event(self, event):
         """
@@ -649,8 +678,8 @@ class Frame(Effect):
                         return None
 
                 # If no joy, check whether the scroll bar was clicked.
-                if self._has_border and self._can_scroll:
-                    if self._scroll_bar.process_event(event):
+                if self._border_mgr.can_scroll:
+                    if self._border_mgr._scroll_bar.process_event(event):
                         return None
 
         # Don't allow events to bubble down if this window owns the Screen (as already
