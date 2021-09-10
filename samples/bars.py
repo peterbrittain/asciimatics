@@ -35,8 +35,8 @@ def demo(screen):
                     keys=['a', 'b'])
         chart1.border_lines.set_type(BorderLines.DOUBLE_LINE)
 
-        chart2 = BarChart(13, 60,
-                      [wv(1), wv(2), wv(3), wv(4), wv(5), wv(7), wv(8), wv(9)],
+        chart2 = BarChart(11, 60,
+                      [wv(1), wv(2), wv(3), wv(4), wv(5), wv(6),],
                       colour=Screen.COLOUR_GREEN,
                       axes=BarChart.BOTH,
                       scale=2.0)
@@ -47,7 +47,7 @@ def demo(screen):
             Print(screen, chart2, x=68, y=1, transparent=False, speed=2),
             Print(screen,
                   BarChart(
-                      7, 60, [lambda: time.time() * 10 % 101],
+                      9, 60, [lambda: time.time() * 10 % 101],
                       gradient=[
                           (33, Screen.COLOUR_RED, Screen.COLOUR_RED),
                           (66, Screen.COLOUR_YELLOW, Screen.COLOUR_YELLOW),
@@ -62,11 +62,11 @@ def demo(screen):
                       scale=100.0,
                       labels=True,
                       axes=BarChart.X_AXIS),
-                  x=68, y=16, transparent=False, speed=2),
+                  x=68, y=14, transparent=False, speed=2),
             Print(screen,
                   BarChart(
                       10, 60,
-                      [wv(1), wv(2), wv(3), wv(4), wv(5), wv(7), wv(8), wv(9)],
+                      [wv(1), wv(2), wv(3), wv(4), wv(5), wv(6), wv(7), wv(8)],
                       colour=[c for c in range(1, 8)],
                       bg=[c for c in range(1, 8)],
                       scale=2.0,
