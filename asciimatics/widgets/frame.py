@@ -39,7 +39,7 @@ class _BorderManager:
 
             self.scroll_bar = _ScrollBar(
                 frame.canvas, frame.palette, frame.canvas.width - 1, scroll_y, scroll_height, 
-                frame.scroll_position, frame.scroll_position, absolute=True
+                frame.get_scroll_pos, frame.set_scroll_pos, absolute=True
             )
 
         self.tl = u"┌" if frame.canvas.unicode_aware else "+"
@@ -64,11 +64,16 @@ class _BorderManager:
         :returns: Tuple containing, x, y, height and width of bounding box
         """
         if self.has_border:
-            x = y = 1
+#            x = y = 1
+            x = 1
+            y = self._frame.canvas.start_line + 1
+
             h = self._frame.canvas.height - 2
             w = self._frame.canvas.width - 2
         else:
-            x = y = 0
+#            x = y = 0
+            x = 0
+            y = self._frame.canvas.start_line
             h = self._frame.canvas.height
             w = self._frame.canvas.width
 
@@ -183,21 +188,7 @@ class Frame(Effect):
         self._theme = None
         self.set_theme("default")
 
-    @property
-    def scroll_position(self):
-        """
-        Get current position for scroll bar.
-        """
-        return self._get_pos()
-
-    @scroll_position.setter
-    def scroll_position(self, pos):
-        """
-        Set current position for scroll bar
-        """
-        self._set_pos(pos)
-
-    def _get_pos(self):
+    def get_scroll_pos(self):
         """
         Get current position for scroll bar.
         """
@@ -205,7 +196,7 @@ class Frame(Effect):
             return 0
         return self._canvas.start_line / (self._max_height - self._canvas.height + 1)
 
-    def _set_pos(self, pos):
+    def set_scroll_pos(self, pos):
         """
         Set current position for scroll bar.
         """
@@ -560,6 +551,28 @@ class Frame(Effect):
         :param h: The height of the location to make visible.
         """
         start_x, start_y, height, width = self._border_mgr.get_rectangle()
+        #if self.has_border:
+        #    x = y = 1
+        #    h = self._frame.canvas.height - 2
+        #    w = self._frame.canvas.width - 2
+        #else:
+        #    x = y = 0
+        #    h = self._frame.canvas.height
+        #    w = self._frame.canvas.width
+
+        #    if self.can_scroll:
+        #        w -= 1
+
+        #if self._border_mgr.has_border:
+        #    start_x = 1
+        #    width = self._canvas.width - 2
+        #    start_y = self._canvas.start_line + 1
+        #    height = self._canvas.height - 2
+        #else:
+        #    start_x = 0
+        #    width = self._canvas.width
+        #    start_y = self._canvas.start_line
+        #    height = self._canvas.height
 
         if ((start_x <= x < start_x + width) and (y >= start_y) and (y + h < start_y + height)):
             # Already OK - quit now.
