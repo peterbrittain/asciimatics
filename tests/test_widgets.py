@@ -25,12 +25,13 @@ from asciimatics.strings import ColouredText
 
 
 class TestFrame(Frame):
-    def __init__(self, screen, has_border=True, reduce_cpu=False, label_height=1):
+    def __init__(self, screen, has_border=True, can_scroll=True, reduce_cpu=False, label_height=1):
         super(TestFrame, self).__init__(screen,
                                         screen.height,
                                         screen.width,
                                         name="Test Form",
                                         has_border=has_border,
+                                        can_scroll=can_scroll,
                                         hover_focus=True,
                                         reduce_cpu=reduce_cpu)
         layout = Layout([1, 18, 1])
@@ -184,7 +185,7 @@ class TestFrame3(Frame):
 class TestFrame4(Frame):
     def __init__(self, screen, file_filter=None):
         super(TestFrame4, self).__init__(
-            screen, screen.height, screen.width, has_border=False, name="My Form")
+            screen, screen.height, screen.width, has_border=False, can_scroll=False, name="My Form")
 
         # State tracking for callbacks
         self.selected = None
@@ -430,7 +431,7 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
-        form = TestFrame(canvas, has_border=False)
+        form = TestFrame(canvas, has_border=False, can_scroll=False)
         form.reset()
 
         # Check initial rendering
@@ -463,6 +464,30 @@ class TestWidgets(unittest.TestCase):
             "              [ ] Field 3               \n" +
             "                                        \n" +
             "  ------------------------------------  \n")
+
+    def test_no_border_can_scroll(self):
+        """
+        Check that a Frame with scroll bar but without border renders
+        """
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = TestFrame(canvas, has_border=False, can_scroll=True)
+        form.reset()
+
+        # Check initial rendering
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            " Group 1:                               \n" +
+            " My First                              O\n" +
+            " Box:                                  |\n" +
+            "                                       |\n" +
+            "                                       |\n" +
+            "                                       |\n" +
+            " Text1:                                |\n" +
+            " Text2:                                |\n" +
+            " Text3:                                |\n" +
+            "                                        \n")
 
     def test_form_input(self):
         """
@@ -1015,7 +1040,7 @@ class TestWidgets(unittest.TestCase):
         canvas = Canvas(screen, 2, 40, 0, 0)
 
         # Create the form we want to test.
-        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False, can_scroll=False)
         layout = Layout([100], fill_frame=True)
         form.add_layout(layout)
         layout.add_widget(Text("Test"))
@@ -1073,7 +1098,8 @@ class TestWidgets(unittest.TestCase):
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
-        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False, 
+            can_scroll=False)
         layout = Layout([100], fill_frame=True)
         mc_list = MultiColumnListBox(
             Widget.FILL_FRAME,
@@ -1201,7 +1227,8 @@ class TestWidgets(unittest.TestCase):
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
-        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False,
+            can_scroll=False)
         layout = Layout([100], fill_frame=True)
         mc_list = MultiColumnListBox(
             Widget.FILL_FRAME,
@@ -1247,7 +1274,8 @@ class TestWidgets(unittest.TestCase):
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
-        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False,
+            can_scroll=False)
         layout = Layout([100], fill_frame=True)
         simple_list = ListBox(
             3,
@@ -1322,7 +1350,8 @@ class TestWidgets(unittest.TestCase):
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
-        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False,
+            can_scroll=False)
         layout = Layout([100], fill_frame=True)
         mc_list = MultiColumnListBox(
             3,
@@ -1366,7 +1395,8 @@ class TestWidgets(unittest.TestCase):
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
-        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False,
+            can_scroll=False)
         layout = Layout([100], fill_frame=True)
         form.add_layout(layout)
         text_box = TextBox(1, as_string=True)
@@ -1403,7 +1433,8 @@ class TestWidgets(unittest.TestCase):
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
-        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False,
+            can_scroll=False)
         layout = Layout([100], fill_frame=True)
         form.add_layout(layout)
         text_box = TextBox(5, as_string=True, line_wrap=True)
@@ -1562,7 +1593,8 @@ class TestWidgets(unittest.TestCase):
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
-        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False,
+            can_scroll=False)
         layout = Layout([100], fill_frame=True)
         mc_list = MultiColumnListBox(
             4,
@@ -2631,7 +2663,8 @@ class TestWidgets(unittest.TestCase):
         canvas = Canvas(screen, 2, 40, 0, 0)
 
         # Create the form we want to test.
-        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False,
+            can_scroll=False)
         layout = Layout([100], fill_frame=True)
         form.add_layout(layout)
         text = Text("Password", hide_char="*")
@@ -2662,7 +2695,8 @@ class TestWidgets(unittest.TestCase):
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
-        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False,
+            can_scroll=False)
         layout = Layout([100], fill_frame=True)
         form.add_layout(layout)
         text = Text()
@@ -3029,7 +3063,8 @@ class TestWidgets(unittest.TestCase):
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
-        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False,
+            can_scroll=False)
         layout = Layout([100], fill_frame=True)
         form.add_layout(layout)
         text_box = TextBox(3, as_string=True, parser=AsciimaticsParser())
@@ -3071,7 +3106,8 @@ class TestWidgets(unittest.TestCase):
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
-        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False,
+            can_scroll=False)
         layout = Layout([100], fill_frame=True)
         form.add_layout(layout)
         listbox = ListBox(2, [])
@@ -3091,7 +3127,8 @@ class TestWidgets(unittest.TestCase):
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
-        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False,
+            can_scroll=False)
         layout = Layout([100], fill_frame=True)
         form.add_layout(layout)
         listbox = ListBox(2, [], parser=AsciimaticsParser())
@@ -3122,7 +3159,8 @@ class TestWidgets(unittest.TestCase):
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
-        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False,
+            can_scroll=False)
         layout = Layout([100], fill_frame=True)
         form.add_layout(layout)
         text_box = TextBox(3, as_string=True, readonly=True)
@@ -3169,7 +3207,8 @@ class TestWidgets(unittest.TestCase):
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
-        form = Frame(canvas, canvas.height, canvas.width, has_border=False)
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False,
+            can_scroll=False)
         layout = Layout([1,1], fill_frame=True)
         form.add_layout(layout)
         for col in range(2):

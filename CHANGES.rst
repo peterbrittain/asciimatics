@@ -7,6 +7,7 @@ LATEST
 - Added dynamically sized, animated sprites to ray caster demo.
 - Added fit parameter to DropdownList.
 - Added support for default colours to AnsiTerminalParser
+- BREAKING VISUAL CHANGE: Frame now supports scroll bars without borders, to have no border and no scroll bar you now need Frame(has_border=False, can_scroll=False)
 
 1.13.0
 ------
