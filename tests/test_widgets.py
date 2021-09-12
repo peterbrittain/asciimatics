@@ -1040,8 +1040,7 @@ class TestWidgets(unittest.TestCase):
         canvas = Canvas(screen, 2, 40, 0, 0)
 
         # Create the form we want to test.
-        form = Frame(canvas, canvas.height, canvas.width, has_border=False,
-            can_scroll=False)
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False, can_scroll=False)
         layout = Layout([100], fill_frame=True)
         form.add_layout(layout)
         layout.add_widget(Text("Test"))

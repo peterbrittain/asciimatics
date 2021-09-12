@@ -5,6 +5,7 @@ coveralls
 git+https://github.com/peterbrittain/appveyor-artifacts.git
 mock
 nose
+prospector
 sphinx
 # Try to resolve dependency clashes on 2.7 systems
 urllib3==1.22
