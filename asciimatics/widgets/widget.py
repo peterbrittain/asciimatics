@@ -197,6 +197,11 @@ class Widget(with_metaclass(ABCMeta, object)):
         if self._is_disabled:
             return False
 
+        # Check this part 9f the canvas is visible - can't be clicked if not visible.
+        if (event.y < self._frame.canvas.start_line or
+                event.y >= self._frame.canvas.start_line + self._frame.canvas.height):
+            return
+
         # Check for any overlap
         if self._y <= event.y < self._y + self._h:
             if ((include_label and self._x <= event.x < self._x + self._w - width_modifier) or

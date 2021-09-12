@@ -1,82 +1,61 @@
 #!/usr/bin/env python3
 
-from asciimatics.widgets import (Frame, TextBox, Layout, Label, Divider, Text, 
-    Button, PopUpDialog, PopupMenu)
-
+from asciimatics.widgets import Frame, Text, TextBox, Layout, Label, Button, PopUpDialog, Widget
 from asciimatics.effects import Background
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
-from asciimatics.exceptions import (ResizeScreenError, NextScene, 
-    StopApplication, InvalidFields)
-from asciimatics.parsers import AsciimaticsParser
-import logging
-
-# Initial data for the form
-form_data1 = {
-    "BOX1": [str(x) for x in range(1, 15)],
-}
-
-form_data2 = {
-    "BOX2": [str(x) for x in range(16, 30)],
-}
-
-form_data3 = {
-    "BOX3": [str(x) for x in range(31, 45)],
-}
-
-logging.basicConfig(filename="frame_borders.log", level=logging.DEBUG)
+from asciimatics.exceptions import ResizeScreenError, StopApplication
 
 
 class TopFrame(Frame):
     def __init__(self, screen):
         super(TopFrame, self).__init__(screen,
-                                        int(screen.height // 4),
-                                        screen.width,
-                                        y=0,
-                                        data=form_data1,
-                                        has_border=True,
-                                        can_scroll=True,
-                                        name="Top Form")
+                                       int(screen.height // 3) - 1,
+                                       screen.width // 2,
+                                       y=0,
+                                       has_border=True,
+                                       can_scroll=True,
+                                       name="Top Form")
         layout = Layout([1, 18, 1])
         self.add_layout(layout)
-        layout.add_widget(TextBox(5, label="Box 1:", name="BOX1"), 1)
+        layout.add_widget(Label("Scrolling, with border"), 1)
+        for i in range(screen.height // 2):
+            layout.add_widget(Text(label=f"Text {i}:"), 1)
         self.fix()
 
 
 class MidFrame(Frame):
     def __init__(self, screen):
         super(MidFrame, self).__init__(screen,
-                                        int(screen.height // 4),
-                                        screen.width,
-                                        y=int(screen.height // 4),
-                                        data=form_data2,
-                                        has_border=False,
-                                        can_scroll=True,
-                                        name="Mid Form")
+                                       int(screen.height // 3) - 1,
+                                       screen.width // 2,
+                                       y=int(screen.height // 3),
+                                       has_border=False,
+                                       can_scroll=True,
+                                       name="Mid Form")
         layout = Layout([1, 18, 1])
         self.add_layout(layout)
-        layout.add_widget(TextBox(5, label="Box 2:", name="BOX2"), 1)
+        layout.add_widget(Label("Scrolling, no border"), 1)
+        for i in range(screen.height // 2):
+            layout.add_widget(Text(label=f"Text {i}:"), 1)
         self.fix()
 
 
 class BottomFrame(Frame):
     def __init__(self, screen):
         super(BottomFrame, self).__init__(screen,
-                                        int(screen.height // 2),
-                                        screen.width,
-                                        y=int(screen.height // 2),
-                                        data=form_data3,
-                                        has_border=False,
-                                        can_scroll=False,
-                                        name="Bottom Form")
+                                          int(screen.height // 3),
+                                          screen.width // 2,
+                                          y=int(screen.height * 2 // 3),
+                                          has_border=False,
+                                          can_scroll=False,
+                                          name="Bottom Form")
         layout = Layout([1, 18, 1])
         self.add_layout(layout)
-        layout.add_widget(TextBox(5, label="Box 3:", name="BOX3"), 1)
-        layout.add_widget(Divider(height=3), 1)
-
-        layout2 = Layout([1, 1, 1])
-        self.add_layout(layout2)
-        layout2.add_widget(Button("Quit", self._quit), 0)
+        layout.add_widget(Label("No scrolling, no border"), 1)
+        layout.add_widget(TextBox(Widget.FILL_FRAME, label="Box 3:", name="BOX3"), 1)
+        layout.add_widget(Text(label="Text 3:", name="TEXT3"), 1)
+        layout.add_widget(Button("Quit", self._quit, label="To exit:"), 1)
         self.fix()
 
     def _quit(self):

@@ -625,7 +625,7 @@ class Frame(Effect):
         claimed_focus = False
         if isinstance(event, MouseEvent) and event.buttons > 0:
             if (0 <= event.x < self._canvas.width and
-                    0 <= event.y < self._canvas.height):
+                    self._canvas.start_line <= event.y < self._canvas.start_line + self._canvas.height):
                 self._scene.remove_effect(self)
                 self._scene.add_effect(self, reset=False)
                 if not self._has_focus and self._focus < len(self._layouts):
@@ -653,7 +653,7 @@ class Frame(Effect):
                 return None
             else:
                 # Don't allow events to bubble down if this window owns the Screen - as already
-                # calculated when taking te focus - or is modal.
+                # calculated when taking the focus - or is modal.
                 return None if claimed_focus or self._is_modal else old_event
 
         # Give the current widget in focus first chance to process the event.
@@ -695,6 +695,6 @@ class Frame(Effect):
                         return None
 
         # Don't allow events to bubble down if this window owns the Screen (as already
-        # calculated when taking te focus) or if the Frame is modal or we handled the
+        # calculated when taking the focus) or if the Frame is modal or we handled the
         # event.
         return None if claimed_focus or self._is_modal or event is None else old_event
