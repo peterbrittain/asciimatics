@@ -64,14 +64,12 @@ class _BorderManager:
         :returns: Tuple containing, x, y, height and width of bounding box
         """
         if self.has_border:
-#            x = y = 1
             x = 1
             y = self._frame.canvas.start_line + 1
 
             h = self._frame.canvas.height - 2
             w = self._frame.canvas.width - 2
         else:
-#            x = y = 0
             x = 0
             y = self._frame.canvas.start_line
             h = self._frame.canvas.height
@@ -551,28 +549,6 @@ class Frame(Effect):
         :param h: The height of the location to make visible.
         """
         start_x, start_y, height, width = self._border_mgr.get_rectangle()
-        #if self.has_border:
-        #    x = y = 1
-        #    h = self._frame.canvas.height - 2
-        #    w = self._frame.canvas.width - 2
-        #else:
-        #    x = y = 0
-        #    h = self._frame.canvas.height
-        #    w = self._frame.canvas.width
-
-        #    if self.can_scroll:
-        #        w -= 1
-
-        #if self._border_mgr.has_border:
-        #    start_x = 1
-        #    width = self._canvas.width - 2
-        #    start_y = self._canvas.start_line + 1
-        #    height = self._canvas.height - 2
-        #else:
-        #    start_x = 0
-        #    width = self._canvas.width
-        #    start_y = self._canvas.start_line
-        #    height = self._canvas.height
 
         if ((start_x <= x < start_x + width) and (y >= start_y) and (y + h < start_y + height)):
             # Already OK - quit now.
