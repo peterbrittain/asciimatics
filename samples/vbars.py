@@ -1,18 +1,25 @@
 #!/usr/bin/env python3
 
 from asciimatics.effects import Print
-from asciimatics.renderers import VerticalBarChart, FigletText
+
+#from asciimatics.renderers import VerticalBarChart, FigletText
+from asciimatics.renderers import VBarChart as VerticalBarChart
+from asciimatics.renderers import FigletText
+
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError
-from asciimatics.utilities import BorderLines
+from asciimatics.utilities import BoxTool
 import sys
 import math
 import time
 from random import randint
 
+import logging
+logging.basicConfig(filename="vbars.log", level=logging.DEBUG)
 
 def fn():
+    return 10
     return randint(0, 10)
 
 
@@ -34,23 +41,27 @@ def demo(screen):
                               (9, Screen.COLOUR_RED)],
                     border=False, gap=1)
 
-        chart2 = VerticalBarChart(11, 16,
+        chart2 = VerticalBarChart(11, 14,
                       [wv(1), wv(2), wv(3), wv(4), wv(5), wv(6), wv(7), wv(8)],
                       char="*", colour=Screen.COLOUR_GREEN,
-                      axes=VerticalBarChart.BOTH,
-                      scale=2.0, keys=[chr(x) for x in range(65, 73)])
-        chart2.border_lines.set_type(BorderLines.DOUBLE_LINE)
+                      axes=VerticalBarChart.X_AXIS | VerticalBarChart.Y_AXIS,
+                      scale=2.0, x_label='ABCDEFGH', x_grid=1)
+        chart2.border_lines.set_style(BoxTool.DOUBLE_LINE)
 
         # Grey-scale gradient from 10-100 fg==bg so it looks like a block
         gradual = [(10 * (i + 1), 234 + 2*i, 234 + 2*i) for i in range(11)]
-        chart3 = VerticalBarChart(15, 70, [lambda: time.time() * 10 % 101],
+        y_labels = ['' for _ in range(10)]
+        y_labels[0] = '100.0'
+        y_labels[-1] = '0.0'
+        chart3 = VerticalBarChart(14, 20, [lambda: time.time() * 10 % 101],
                       gradient=[
                           (33, Screen.COLOUR_RED, Screen.COLOUR_RED),
                           (66, Screen.COLOUR_YELLOW, Screen.COLOUR_YELLOW),
                           (100, Screen.COLOUR_WHITE, Screen.COLOUR_WHITE),
                       ] if screen.colours < 256 else gradual,
-                      char="^", scale=100.0, labels=True, 
-                      axes=VerticalBarChart.Y_AXIS)
+                      char="^", scale=100.0, 
+                      axes=VerticalBarChart.Y_AXIS | VerticalBarChart.Y_AXIS_RIGHT,
+                      y_labels=y_labels, y_labels_rhs=y_labels)
 
 #        chart4 = VerticalBarChart(10, 60,
 #                      [wv(1), wv(2), wv(3), wv(4), wv(5), wv(7), wv(8), wv(9)],

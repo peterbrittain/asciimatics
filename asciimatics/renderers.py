@@ -24,7 +24,10 @@ from wcwidth.wcwidth import wcswidth
 from asciimatics.screen import Screen, TemporaryCanvas
 from asciimatics.constants import COLOUR_REGEX
 from asciimatics.parsers import AnsiTerminalParser, Parser
-from asciimatics.utilities import BorderLines
+from asciimatics.utilities import BoxTool
+
+from logging import getLogger
+logger = getLogger(__name__)
 
 
 #: Attribute conversion table for the ${c,a} form of attributes for
@@ -552,7 +555,7 @@ class Rainbow(StaticRenderer):
             self._images.append(new_image)
 
 
-class _BarChartBase(DynamicRenderer):
+class BarChart(DynamicRenderer):
     """
     Renderer to create a bar chart using the specified functions as inputs for
     each entry.  Can be used to chart distributions or for more graphical
@@ -598,7 +601,7 @@ class _BarChartBase(DynamicRenderer):
         :param border: Whether to draw a border around the chart.
         :param keys: Optional keys for each bar.
         """
-        super(_BarChartBase, self).__init__(height, width)
+        super(BarChart, self).__init__(height, width)
         self._functions = functions
         self._char = char
         self._colours = [colour] if isinstance(colour, int) else colour
@@ -609,21 +612,343 @@ class _BarChartBase(DynamicRenderer):
         self._intervals = intervals
         self._labels = labels
         self._border = border
-        self._border_lines = BorderLines(self._canvas.unicode_aware) if border else None
         self._keys = keys
 
-        self._axes_lines = BorderLines(self._canvas.unicode_aware)
+    def _render_now(self):
+        # Dimensions for the chart.
+        int_h = self._canvas.height
+        int_w = self._canvas.width
+        start_x = key_x = 0
+        start_y = 0
+        scale = int_w if self._scale is None else self._scale
+
+        # Create  the box around the chart...
+        if self._border:
+            self._write("+" + "-" * (self._canvas.width - 2) + "+", 0, 0)
+            for line in range(1, self._canvas.height):
+                self._write("|", 0, line)
+                self._write("|", self._canvas.width - 1, line)
+            self._write(
+                "+" + "-" * (self._canvas.width - 2) + "+", 0, self._canvas.height - 1)
+            int_h -= 4
+            int_w -= 6
+            start_y += 2
+            start_x += 3
+
+        # Make room for the keys if supplied.
+        if self._keys:
+            width = max([len(x) for x in self._keys])
+            key_x = start_x
+            int_w -= width + 1
+            start_x += width + 1
+
+        # Now add the axes - resizing chart space as required...
+        if (self._axes & BarChart.X_AXIS) > 0:
+            int_h -= 1
+
+        if (self._axes & BarChart.Y_AXIS) > 0:
+            int_w -= 2
+            start_x += 1
+
+        if self._labels:
+            int_h -= 1
+
+        if (self._axes & BarChart.X_AXIS) > 0:
+            self._write("-" * int_w, start_x, start_y + int_h)
+        if (self._axes & BarChart.Y_AXIS) > 0:
+            for line in range(int_h):
+                self._write("|", start_x - 1, start_y + line)
+        if self._axes == BarChart.BOTH:
+            self._write("+", start_x - 1, start_y + int_h)
+        if self._labels:
+            self._write("0", start_x, start_y + int_h + 1)
+            text = str(scale)
+            self._write(text, start_x + int_w - len(text), start_y + int_h + 1)
+
+        # Now add any interval markers if required...
+        if self._intervals is not None:
+            i = self._intervals
+            while i < scale:
+                x = start_x + int(i * int_w / scale) - 1
+                for line in range(int_h):
+                    self._write(":", x, start_y + line)
+                self._write("+", x, start_y + int_h)
+                if self._labels:
+                    val = str(i)
+                    self._write(val, x - (len(val) // 2), start_y + int_h + 1)
+                i += self._intervals
+
+        # Allow double-width bars if there's space.
+        bar_size = 2 if int_h >= (3 * len(self._functions)) - 1 else 1
+        gap = 0 if len(self._functions) <= 1 else (int_h - (bar_size * len(
+            self._functions))) / (len(self._functions) - 1)
+
+        # Now add the bars...
+        for i, fn in enumerate(self._functions):
+            bar_len = int(fn() * int_w / scale)
+            y = start_y + (i * bar_size) + int(i * gap)
+
+            # First draw the key if supplied
+            if self._keys:
+                self._write(self._keys[i], key_x, y)
+
+            # Now draw the bar
+            colour = self._colours[i % len(self._colours)]
+            bg = self._bgs[i % len(self._bgs)]
+            if self._gradient:
+                # Colour gradient required - break down into chunks for each
+                # color.
+                last = 0
+                size = 0
+                for gradient in self._gradient:
+                    if len(gradient) < 3:
+                        threshold, colour = gradient
+                        bg = Screen.COLOUR_BLACK
+                    else:
+                        threshold, colour, bg = gradient
+                    value = int(threshold * int_w / scale)
+                    if value - last > 0:
+                        # Size to fit the available space
+                        size = value if bar_len >= value else bar_len
+                        if size > int_w:
+                            size = int_w
+                        for line in range(bar_size):
+                            self._write(
+                                self._char * (size - last),
+                                start_x + last,
+                                y + line,
+                                colour,
+                                bg=bg)
+
+                    # Stop if we reached the end of the line or the chart
+                    if bar_len < value or size >= int_w:
+                        break
+                    last = value
+            else:
+                # Solid colour - just write the whole block out.
+                for line in range(bar_size):
+                    self._write(
+                        self._char * bar_len, start_x, y + line, colour, bg=bg)
+
+        return self._plain_image, self._colour_map
+
+
+class _BarChartBase(DynamicRenderer):
+    """
+    Renderer to create a bar chart using the specified functions as inputs for
+    each entry.  Can be used to chart distributions or for more graphical
+    effect - e.g. to imitate a sound equalizer or a progress indicator.
+    """
+
+    #: Constant to indicate no axes should be rendered.
+    NO_AXES = 0
+
+    #: Constant to indicate just the x axis should be rendered.
+    X_AXIS = 1
+
+    #: Constant to indicate just the y axis should be rendered.
+    Y_AXIS = 2
+
+    #: Constant to indicate a right side y axis should be rendered
+    Y_AXIS_RIGHT = 4
+
+    def __init__(self, height, width, functions, char="#",
+                 colour=Screen.COLOUR_GREEN, bg=Screen.COLOUR_BLACK,
+                 gradient=None, scale=None, axes=NO_AXES, x_grid=0, y_grid=0,
+                 y_labels=[], y_labels_rhs=[], border=True, x_label=''):
+        """
+        :param height: Height of image including boundaries and axes.
+        :param width: Width of image including boundaries and axes.
+        :param functions: List of functions to chart.
+        :param char: Character to use for the bar.
+        :param colour: Default colour to use for the bars.  This can be a
+            single value or list of values (to cycle around for each bar).
+        :param bg: Default background colour to use for the bars.  This can be a
+            single value or list of values (to cycle around for each bar).
+        :param gradient: Colour gradient for use on all bars.  This is a list of
+            tuple pairs specifying a threshold and a colour, or triplets to
+            include a background colour too.
+        :param scale: Maximum value for the bars.  This is used to scale the
+            function values to the maximum space available.  Any value over this
+            will be truncated when drawn.  Defaults to the number of available
+            characters in the chart. If not given, the calculated space for
+            the graph (inside the borders and axes) is used.
+        :param axes: Which axes to draw. Include multiple through bit-wise OR
+        :param x_grid: Specifies how often to draw an x-grid behind the bars,
+            1 being every row, 2 every other, etc. Defaults to 0, turning the
+            grid off.
+        :param y_grid: Specifies how often to draw a y-grid behind the bars,
+            1 being every column, 2 every other, etc. Defaults to 0, turning the
+            grid off.
+        :param y_labels: list of labels to show on the y-axis, left hand side.
+            Each item is a row label, starting with the top of the graph
+        :param y_labels_rhs: list of labels to show on the y-axis, right hand 
+            side.  Each item is a row label, starting with the top of the graph
+        :param x_label: String to display below the x-axis
+        """
+        super(_BarChartBase, self).__init__(height, width)
+        self._functions = functions
+        self._char = char
+        self._colours = [colour] if isinstance(colour, int) else colour
+        self._bgs = [bg] if isinstance(bg, int) else bg
+        self._gradient = gradient
+        self._scale = scale
+        self._axes = axes
+        self._x_grid = x_grid
+        self._y_grid = y_grid
+        self._x_label = x_label
+        self._border = border
+
+        # Box drawing tool for border, allows user to change the border line
+        # style 
+        self._border_lines = BoxTool(self._canvas.unicode_aware, BoxTool.MIXED_LINE) if border else None
+
+        # Pad labels on y-axes
+        self._y_labels_lhs = None
+        if y_labels:
+            width = max([len(label) for label in y_labels])
+            self._y_labels_lhs = [f"{label:>{width}}" for label in y_labels]
+
+        self._y_labels_rhs = None
+        if y_labels_rhs:
+            width = max([len(label) for label in y_labels_rhs])
+            self._y_labels_rhs = [f"{label:<{width}}" for label in y_labels_rhs]
+
+        # Cache for the parts of the chart that don't change
+        self._chart_container = []
 
     @property
     def border_lines(self):
         """If border=True this object will have a reference to a
-        :class:`~asciimatics.utilities.BorderLines` instance. The style of the border can 
-        be changed through it.
+        :class:`~asciimatics.utilities.BoxTool` instance. The style of the 
+        border can be changed through it.
         """
         return self._border_lines
 
+    def _calculate_chart_boundaries(self):
+        self._grid_height = self._graph_height = self._canvas.height
+        self._grid_width = self._graph_width = self._canvas.width
+        self._graph_x = self._graph_y = 0
 
-class BarChart(_BarChartBase):
+        if self._border:
+            self._graph_height -= 4
+            self._graph_width -= 4
+            self._grid_height -= 4
+            self._grid_width -= 4
+            self._graph_x += 2
+            self._graph_y += 2
+
+        if self._axes & self.X_AXIS:
+            self._graph_height -= 1
+
+        if self._x_label:
+            self._graph_height -= 1
+
+        if self._axes & self.Y_AXIS:
+            self._graph_width -= 1
+            self._graph_x += 1
+
+        if self._axes & self.Y_AXIS_RIGHT:
+            self._graph_width -= 1
+
+        if self._y_labels_lhs:
+            self._graph_width -= len(self._y_labels_lhs[0])
+            self._graph_x -= len(self._y_labels_lhs[0])
+
+        if self._y_labels_rhs:
+            self._graph_width -= len(self._y_labels_rhs[0])
+            self._graph_x -= len(self._y_labels_rhs[0])
+
+        if self._graph_height < 0 or self._graph_width < 0:
+            raise ValueError(('Your graph configuration is too small. '
+                'Graph width and height includes borders and labels. '
+                f'Resulting graph drawing area was width={self._graph_width}'
+                f' height={self._graph_height}'))
+                
+
+    def _build_chart_container(self):
+        ### Draw the container for the graph, includes borders, labels,
+        # keys, etc
+        grid_lines = [self._grid_width * ' ' for _ in range(self._grid_height)]
+
+        if self._axes != self.NO_AXES:
+            box = BoxTool(self._canvas.unicode_aware)
+            axes = BoxTool.NO_BORDERS
+            if self._axes & self.X_AXIS:
+                axes |= BoxTool.BOTTOM_BORDER
+            if self._axes & self.Y_AXIS:
+                axes |= BoxTool.LEFT_BORDER
+            if self._axes & self.Y_AXIS_RIGHT:
+                axes |= BoxTool.RIGHT_BORDER
+
+            logger.debug('### Building box %s', self._graph_height)
+            grid_lines = box.grid(self._grid_width, self._grid_height,
+                self._y_grid, self._x_grid, axes)
+
+        draw_lines = []
+
+        # Draw top border scan line
+        if self._border:
+            draw_lines.append(self._border_lines.box_top(self._canvas.width))
+            draw_lines.append(self._border_lines.box_line(self._canvas.width))
+
+        # Scan lines in graphing area, adding labels, borders and grids
+        for i, line in enumerate(grid_lines):
+            parts = []
+            if self._border:
+                parts.append(self._border_lines.v + " ")
+
+            if self._y_labels_lhs:
+                parts.append(self._y_labels_lhs[i])
+
+            parts.append(line)
+
+            if self._y_labels_rhs:
+                parts.append(self._y_labels_rhs[i])
+
+            line = ''.join(parts).ljust(self._canvas.width)
+
+            if self._border:
+                line = line[:-1] + self._border_lines.v
+
+            draw_lines.append(line)
+
+        # Label for X-Axis
+        if self._x_label:
+            # Build blank line, then over-write with x-label at right spot
+            parts = [' ' for _ in range(self._canvas.width)]
+            start = 0
+            if self._border:
+                start = 2
+                parts[0] = self._border_lines.v
+                parts[-1] = self._border_lines.v
+
+            if self._y_labels_lhs:
+                start += len(self._y_labels_lhs[0])
+
+            if self._axes & self.Y_AXIS:
+                start += 1
+
+            for i, c in enumerate(self._x_label):
+                parts[i + start] = c
+
+            draw_lines.append(''.join(parts))
+
+        # Bottom border scan line
+        if self._border:
+            draw_lines.append(self._border_lines.box_line(self._canvas.width))
+            draw_lines.append(self._border_lines.box_bottom(self._canvas.width))
+
+        self._chart_container = draw_lines
+
+    def _render_chart_container(self):
+        # Scan lines are built, loop through them and output them to the
+        # screen
+        for pos, line in enumerate(self._chart_container):
+            self._write(line, 0, pos)
+
+
+class NewBarChart(_BarChartBase):
     """
     Renderer to create a horizontal bar chart using the specified functions as
     inputs for each entry.  Can be used to chart distributions or for more
@@ -783,6 +1108,32 @@ class VerticalBarChart(_BarChartBase):
         # Dimensions for the chart.
         graph_height = self._canvas.height
         graph_width = self._canvas.width
+
+        if self._border:
+            graph_height -= 4
+            graph_width -= 6
+
+        if self._keys:
+            graph_height -= 1
+
+        # Maximum value on graph, either the height (top bar), or the value
+        # passed in as scale
+        max_value = graph_height if self._scale is None else self._scale
+
+        label_width = 0
+        if self._labels:
+            # Find width of longest label
+            label_width = len(str(max_value))
+            if self._label_precision:
+                label_width += 1 + self.label_precision
+
+            graph_width -= label_width
+
+
+        # --- Draw the graph itself
+
+
+
         start_x = key_x = 0
         start_y = 0
 
@@ -905,6 +1256,91 @@ class VerticalBarChart(_BarChartBase):
                         draw_bg = bg
 
                     self._write(self._char * bar_width, x, y, draw_colour, 
+                        bg=draw_bg)
+
+                x += bar_width + self._gap
+
+            y -= 1
+
+        return self._plain_image, self._colour_map
+
+
+class VBarChart(_BarChartBase):
+    """
+    Renderer to create a vertical bar chart using the specified functions as
+    inputs for each entry.  
+    """
+    def __init__(self, height, width, functions, char="#",
+                 colour=Screen.COLOUR_GREEN, bg=Screen.COLOUR_BLACK,
+                 gradient=None, scale=None, axes=_BarChartBase.X_AXIS, 
+                 x_grid=0, y_grid=0, y_labels=[], y_labels_rhs=[], border=True, 
+                 x_label='', gap=0):
+
+        super(VBarChart, self).__init__(height, width, functions, 
+                char=char, colour=colour, bg=bg, gradient=gradient, scale=scale,
+                axes=axes, x_grid=x_grid, y_grid=y_grid, y_labels=y_labels,
+                y_labels_rhs=y_labels_rhs, border=border, x_label=x_label)
+        self._gap = gap
+
+    def _render_now(self):
+        if not self._chart_container:
+            self._calculate_chart_boundaries()
+
+            # Maximum value on graph, either the scale, or if not scale then the
+            # longest possible bar
+            self._max_value = self._graph_height if self._scale is None else self._scale
+            self._build_chart_container()
+
+            for i, line in enumerate(self._chart_container):
+                logger.debug('%3d %3d ***%s***', i, len(line), line)
+
+            logger.debug('h=%s gph_h=%s gr_h=%s gy=%s', self._canvas.height,
+                self._graph_height, self._grid_height, self._graph_y)
+
+        self._render_chart_container()
+
+        # --- Render the graph part
+
+        # Size bars based on available space
+        total_gap_space = self._gap * (len(self._functions) + 1)
+        total_bar_space = self._graph_width - total_gap_space
+        bar_width = total_bar_space // len(self._functions) 
+
+        # Write bars
+        values = [fn() for fn in self._functions]
+        y = self._graph_y + self._graph_height - 1
+
+        for pos in range(1, self._graph_height + 1):
+            colour = self._colours[(pos - 1) % len(self._colours)]
+            bg = self._bgs[(pos - 1) % len(self._bgs)]
+            x = self._graph_x + self._gap
+
+            for index, value in enumerate(values):
+                if value / self._max_value >= pos / self._graph_height:
+                    if self._gradient:
+                        # First gradient is the base colour
+                        draw_colour = self._gradient[0][1]
+                        draw_bg = Screen.COLOUR_BLACK
+                        if len(self._gradient[0]) > 2:
+                            draw_bg = self._gradient[0][2]
+
+                        # Loop through gradients to see if the colour should
+                        # be incremented to next value
+                        pos_value = self._max_value * (pos / self._graph_height)
+                        for gradient in self._gradient[1:]:
+                            if pos_value >= gradient[0]:
+                                draw_colour = gradient[1]
+                                draw_bg = Screen.COLOUR_BLACK
+                                if len(gradient) > 2:
+                                    draw_bg = gradient[2]
+                            else:
+                                break
+                    else:
+                        draw_colour = colour
+                        draw_bg = bg
+
+                    #self._write(self._char * bar_width, x, y, draw_colour, 
+                    self._write(str(pos)[0] * bar_width, x, y, draw_colour, 
                         bg=draw_bg)
 
                 x += bar_width + self._gap
