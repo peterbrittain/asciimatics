@@ -306,7 +306,7 @@ class TextBox(Widget):
         """
         Set to True to stop the cursor from showing. If the cursor is hidden,
         scrolling will move the entire TextBox instead of just the cursor.
-        
+
         Defaults to False.
         """
         return self._hide_cursor
