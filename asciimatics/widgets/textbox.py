@@ -124,7 +124,7 @@ class TextBox(Widget):
 
     def _draw_cursor(self, char, frame_no, x, y):
         if not self._hide_cursor:
-            super()._draw_cursor(char, frame_no, x, y)
+            super(TextBox, self)._draw_cursor(char, frame_no, x, y)
 
     def _change_line(self, delta):
         """
