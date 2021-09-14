@@ -88,90 +88,49 @@ def _credits(screen):
     ]
     scenes.append(Scene(effects, (screen.height + 24) * 3))
 
+    colours = [Screen.COLOUR_RED, Screen.COLOUR_GREEN,]
+    contributors = [
+        "Cory Benfield",
+        "Bryce Guinta",
+        "Aman Orazaev",
+        "Daniel Kerr",
+        "Dylan Janeke",
+        "ianadeem",
+        "Scott Mudge",
+        "Luke Murphy",
+        "mronkain",
+        "Dougal Sutherland",
+        "Kirtan Sakariya",
+        "Jesse Lieberg",
+        "Erik Doffagne",
+        "Noah Ginsburg",
+        "Davidy22",
+        "Christopher Trudeau",
+    ]
+
     effects = [
         Scroll(screen, 3),
         Mirage(
             screen,
             FigletText("With help from:"),
             screen.height,
-            Screen.COLOUR_GREEN),
-        Mirage(
-            screen,
-            FigletText("Cory Benfield"),
-            screen.height + 8,
-            Screen.COLOUR_GREEN),
-        Mirage(
-            screen,
-            FigletText("Bryce Guinta"),
-            screen.height + 16,
-            Screen.COLOUR_GREEN),
-        Mirage(
-            screen,
-            FigletText("Aman Orazaev"),
-            screen.height + 24,
-            Screen.COLOUR_GREEN),
-        Mirage(
-            screen,
-            FigletText("Daniel Kerr"),
-            screen.height + 32,
-            Screen.COLOUR_GREEN),
-        Mirage(
-            screen,
-            FigletText("Dylan Janeke"),
-            screen.height + 40,
-            Screen.COLOUR_GREEN),
-        Mirage(
-            screen,
-            FigletText("ianadeem"),
-            screen.height + 48,
-            Screen.COLOUR_GREEN),
-        Mirage(
-            screen,
-            FigletText("Scott Mudge"),
-            screen.height + 56,
-            Screen.COLOUR_GREEN),
-        Mirage(
-            screen,
-            FigletText("Luke Murphy"),
-            screen.height + 64,
-            Screen.COLOUR_GREEN),
-        Mirage(
-            screen,
-            FigletText("mronkain"),
-            screen.height + 72,
-            Screen.COLOUR_GREEN),
-        Mirage(
-            screen,
-            FigletText("Dougal Sutherland"),
-            screen.height + 80,
-            Screen.COLOUR_GREEN),
-        Mirage(
-            screen,
-            FigletText("Kirtan Sakariya"),
-            screen.height + 88,
-            Screen.COLOUR_GREEN),
-        Mirage(
-            screen,
-            FigletText("Jesse Lieberg"),
-            screen.height + 96,
-            Screen.COLOUR_GREEN),
-        Mirage(
-            screen,
-            FigletText("Erik Doffagne"),
-            screen.height + 104,
-            Screen.COLOUR_GREEN),
-        Mirage(
-            screen,
-            FigletText("Noah Ginsburg"),
-            screen.height + 112,
-            Screen.COLOUR_GREEN),
-        Mirage(
-            screen,
-            FigletText("Davidy22"),
-            screen.height + 120,
-            Screen.COLOUR_GREEN)
+            Screen.COLOUR_GREEN,
+        )
     ]
-    scenes.append(Scene(effects, (screen.height + 128) * 3))
+
+    pos = 8
+    for i, name in enumerate(contributors):
+        effects.append(
+            Mirage(
+                screen,
+                FigletText(name),
+                screen.height + pos,
+                colours[i % len(colours)],
+            )
+        )
+
+        pos += 8
+    scenes.append(Scene(effects, (screen.height + pos) * 3))
 
     effects = [
         Cycle(
