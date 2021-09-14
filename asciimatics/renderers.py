@@ -781,9 +781,13 @@ class _BarChartBase(DynamicRenderer):
             1 being every column, 2 every other, etc. Defaults to 0, turning the
             grid off.
         :param y_labels: list of labels to show on the y-axis, left hand side.
-            Each item is a row label, starting with the top of the graph
+            Each item is a row label, starting with the top of the graph.  If 
+            there is an X-Axis, this list should be one larger than the height
+            of the graphing area: the bottom most y-label is on the X-Axis
         :param y_labels_rhs: list of labels to show on the y-axis, right hand 
             side.  Each item is a row label, starting with the top of the graph
+            If there is an X-Axis, this list should be one larger than the height
+            of the graphing area: the bottom most y-label is on the X-Axis
         :param x_label: String to display below the x-axis
         """
         super(_BarChartBase, self).__init__(height, width)
@@ -826,6 +830,10 @@ class _BarChartBase(DynamicRenderer):
         return self._border_lines
 
     def _calculate_chart_boundaries(self):
+        # graph_height/width -- where bars are drawn
+        # grid_height/width -- area including axes
+        # graph_x/y -- top left coordinates of graph
+
         self._grid_height = self._graph_height = self._canvas.height
         self._grid_width = self._graph_width = self._canvas.width
         self._graph_x = self._graph_y = 0
@@ -843,6 +851,7 @@ class _BarChartBase(DynamicRenderer):
 
         if self._x_label:
             self._graph_height -= 1
+            self._grid_height -= 1    # label not included in grid
 
         if self._axes & self.Y_AXIS:
             self._graph_width -= 1
@@ -852,19 +861,20 @@ class _BarChartBase(DynamicRenderer):
             self._graph_width -= 1
 
         if self._y_labels_lhs:
-            self._graph_width -= len(self._y_labels_lhs[0])
-            self._graph_x -= len(self._y_labels_lhs[0])
+            width = len(self._y_labels_lhs[0])
+            self._graph_width -= width
+            self._grid_width -= width
+            self._graph_x += width
 
         if self._y_labels_rhs:
-            self._graph_width -= len(self._y_labels_rhs[0])
-            self._graph_x -= len(self._y_labels_rhs[0])
+            width = len(self._y_labels_rhs[0])
+            self._graph_width -= width
+            self._grid_width -= width
 
-        if self._graph_height < 0 or self._graph_width < 0:
-            raise ValueError(('Your graph configuration is too small. '
-                'Graph width and height includes borders and labels. '
-                f'Resulting graph drawing area was width={self._graph_width}'
-                f' height={self._graph_height}'))
-                
+        if self._graph_height <= 0 or self._graph_width <= 0:
+            raise ValueError('Your graph configuration is too small. Graph width and height ' \
+                + 'includes borders and labels. Resulting graph drawing area was ' \
+                + 'width=%s height=%s' % (self._graph_height, self._graph_width))
 
     def _build_chart_container(self):
         ### Draw the container for the graph, includes borders, labels,
@@ -881,7 +891,7 @@ class _BarChartBase(DynamicRenderer):
             if self._axes & self.Y_AXIS_RIGHT:
                 axes |= BoxTool.RIGHT_BORDER
 
-            logger.debug('### Building box %s', self._graph_height)
+            logger.debug('### Building box %s', self._grid_height)
             grid_lines = box.grid(self._grid_width, self._grid_height,
                 self._y_grid, self._x_grid, axes)
 
@@ -1294,8 +1304,9 @@ class VBarChart(_BarChartBase):
             for i, line in enumerate(self._chart_container):
                 logger.debug('%3d %3d ***%s***', i, len(line), line)
 
-            logger.debug('h=%s gph_h=%s gr_h=%s gy=%s', self._canvas.height,
-                self._graph_height, self._grid_height, self._graph_y)
+            logger.debug('h=%s gph_h=%s gr_h=%s gy=%s start_y=%s start_x=%s', self._canvas.height,
+                self._graph_height, self._grid_height, self._graph_y,
+                self._graph_y + self._graph_height, self._graph_x)
 
         self._render_chart_container()
 
@@ -1305,18 +1316,24 @@ class VBarChart(_BarChartBase):
         total_gap_space = self._gap * (len(self._functions) + 1)
         total_bar_space = self._graph_width - total_gap_space
         bar_width = total_bar_space // len(self._functions) 
+        if bar_width == 0:
+            raise ValueError("Not enough space to graph bars. " +
+                "%s bars + %s space for gaps is > your graph width of %s" % (
+                len(self._functions), total_gap_space, self._graph_width))
 
         # Write bars
         values = [fn() for fn in self._functions]
         y = self._graph_y + self._graph_height - 1
+        scale_factor = self._max_value / self._graph_height
 
         for pos in range(1, self._graph_height + 1):
-            colour = self._colours[(pos - 1) % len(self._colours)]
-            bg = self._bgs[(pos - 1) % len(self._bgs)]
             x = self._graph_x + self._gap
+            threshold = pos * scale_factor - (scale_factor / 2)
 
             for index, value in enumerate(values):
-                if value / self._max_value >= pos / self._graph_height:
+                colour = self._colours[index % len(self._colours)]
+                bg = self._bgs[index % len(self._bgs)]
+                if value >= threshold:
                     if self._gradient:
                         # First gradient is the base colour
                         draw_colour = self._gradient[0][1]
@@ -1339,8 +1356,8 @@ class VBarChart(_BarChartBase):
                         draw_colour = colour
                         draw_bg = bg
 
-                    #self._write(self._char * bar_width, x, y, draw_colour, 
-                    self._write(str(pos)[0] * bar_width, x, y, draw_colour, 
+                    self._write(self._char * bar_width, x, y, draw_colour, 
+                    #self._write(str(pos)[0] * bar_width, x, y, draw_colour, # show value debug
                         bg=draw_bg)
 
                 x += bar_width + self._gap
