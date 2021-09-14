@@ -102,10 +102,11 @@ class TextBox(Widget):
 
         # Since we switch off the standard cursor, we need to emulate our own
         # if we have the input focus.
-        if self._has_focus:
+        if self._has_focus and not self._hide_cursor:
             line = str(display_text[display_line][0])
-#            logger.debug("Cursor: %d,%d", display_start_column, display_column)
+            logger.debug("Cursor: %d,%d", display_start_column, display_column)
             text_width = self.string_len(line[display_start_column:display_column])
+
             self._draw_cursor(
                 " " if display_column >= len(line) else line[display_column],
                 frame_no,
@@ -122,26 +123,12 @@ class TextBox(Widget):
         self._column = 0 if self._is_disabled else len(self._value[self._line])
         self._reflowed_text_cache = None
 
-    def _draw_cursor(self, char, frame_no, x, y):
-        if not self._hide_cursor:
-            super(TextBox, self)._draw_cursor(char, frame_no, x, y)
-
     def _change_line(self, delta):
         """
         Move the cursor up/down the specified number of lines.
 
         :param delta: The number of lines to move (-ve is up, +ve is down).
         """
-        if self._hide_cursor:
-            # Cursor is hidden, move entire box
-
-            if delta > 0:
-                # Moving down, force cursor to bottom of visible box
-                self._line = self._start_line + self._h - 1
-            else:
-                # Moving up, force cursor to top of visible box
-                self._line = self._start_line
-
         # Ensure new line is within limits
         self._line = min(max(0, self._line + delta), len(self._value) - 1)
 
@@ -304,10 +291,7 @@ class TextBox(Widget):
     @property
     def hide_cursor(self):
         """
-        Set to True to stop the cursor from showing. If the cursor is hidden,
-        scrolling will move the entire TextBox instead of just the cursor.
-
-        Defaults to False.
+        Set to True to stop the cursor from showing.  Defaults to False.
         """
         return self._hide_cursor
 
@@ -381,4 +365,7 @@ class TextBox(Widget):
     @property
     def frame_update_count(self):
         # Force refresh for cursor if needed.
-        return 5 if self._has_focus and not self._frame.reduce_cpu else 0
+        if self._has_focus and not self._frame.reduce_cpu and not self._hide_cursor:
+            return 5
+
+        return 0
