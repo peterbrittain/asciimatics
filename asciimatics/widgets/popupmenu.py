@@ -43,7 +43,7 @@ class PopupMenu(Frame):
 
         # Construct the Frame
         super(PopupMenu, self).__init__(
-            screen, h, w, x=x, y=y, has_border=False, is_modal=True, hover_focus=True)
+            screen, h, w, x=x, y=y, has_border=False, can_scroll=False, is_modal=True, hover_focus=True)
 
         # Build the widget to display the time selection.
         layout = Layout([1], fill_frame=True)
