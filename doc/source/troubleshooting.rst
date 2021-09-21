@@ -202,6 +202,17 @@ asciimatics will not work.  There are 2 workarounds.
    PyCharm/the IDE.  For example, you can force a real console from the Terminal window using
    `start cmd /c "python <your file name>"`.
 
+It runs differently/does not work inside PyCharm
+-------------------------------------------------
+While PyCharm's terminal support is constantly improving, it is not perfect and so there are
+still cases where the imperfections cause glitches in asciimatics applications.  This is most
+common on Windows (e.g. unexpected keys detected on resizing), but it is not just a Windows
+issue.
+
+If you hit such glitches, the first thing to do is check whether you can also see them on a
+native terminal/console window of your operating system.  If you can't reproduce on the native
+terminal/console, you need to raise the bug with JetBrains.
+
 .. _unicode-issues-ref:
 
 Unicode characters are not working
