@@ -21,7 +21,7 @@ import json
 
 from wcwidth.wcwidth import wcswidth
 
-from asciimatics.screen import Screen, TemporaryCanvas
+from asciimatics.screen import Screen, TemporaryCanvas, _DoubleBuffer
 from asciimatics.constants import COLOUR_REGEX
 from asciimatics.parsers import AnsiTerminalParser, Parser
 
@@ -224,8 +224,8 @@ class DynamicRenderer(with_metaclass(ABCMeta, Renderer)):
         """
         Clear the current image.
         """
-        # self._canvas.clear_buffer(Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK)
-        self._canvas.clear_buffer(None, 0, 0)
+        self._canvas.clear_buffer(Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK)
+        # self._canvas.clear_buffer(None, 0, 0)
 
     def _write(self, text, x, y, colour=Screen.COLOUR_WHITE,
                attr=Screen.A_NORMAL, bg=Screen.COLOUR_BLACK):
@@ -861,7 +861,7 @@ class Fire(DynamicRenderer):
                         char = self._CHARS[min(len(self._CHARS) - 1,
                                            self._buffer[y][x])]
                         bg = 0
-                    self._write(char, x, y, colour[0], colour[1], bg)
+                    self._canvas.fast_poke(char, x, y, colour[0], colour[1], bg)
 
         return self._plain_image, self._colour_map
 
@@ -915,22 +915,29 @@ class Plasma(DynamicRenderer):
         self._t = 0
 
     def _render_now(self):
-        # Internal function for creating a sine wave radiating out from a point
-        def f(x1, y1, xp, yp, n):
-            return sin(sqrt((x1 - self._canvas.width * xp) ** 2 +
-                            4 * ((y1 - self._canvas.height * yp) ** 2)) * pi / n)
-
         self._t += 1
-        for y in range(self._canvas.height - 1):
-            for x in range(self._canvas.width - 1):
-                value = abs(f(x + self._t / 3, y, 1 / 4, 1 / 3, 15) +
-                            f(x, y, 1 / 8, 1 / 5, 11) +
-                            f(x, y + self._t / 3, 1 / 2, 1 / 5, 13) +
-                            f(x, y, 3 / 4, 4 / 5, 13)) / 4.0
-                fg, attr = self._palette[
-                    int(round(value * (len(self._palette) - 1)))]
-                char = self._greyscale[int((len(self._greyscale) - 1) * value)]
-                self._write(char, x, y, fg, attr, 0)
+        height, width = self._canvas.height, self._canvas.width
+        palette = self._palette
+        greyscale = self._greyscale
+        canvas = self._canvas
+        len_palette = len(palette) - 1
+        len_greyscale = len(greyscale) - 1
+        step = 2 if height * width > 8000 else 1
+        for y in range(height):
+            for x in range(0, width - 1, step):
+                value = abs(sin(sqrt((x + self._t / 3 - width / 4) ** 2 +
+                            4 * ((y - height / 3) ** 2)) * pi / 15) +
+                            sin(sqrt((x - width / 8) ** 2 +
+                            4 * ((y - height / 5) ** 2)) * pi / 11) +
+                            sin(sqrt((x - width / 2) ** 2 +
+                            4 * ((y + self._t / 3 - height / 5) ** 2)) * pi / 13) +
+                            sin(sqrt((x - width * 3 / 4) ** 2 +
+                            4 * ((y - height * 4 / 5) ** 2)) * pi / 13)) / 4
+                fg, attr = palette[int(value * len_palette)]
+                char = greyscale[int(len_greyscale * value)]
+                canvas.fast_poke(char, x, y, fg, attr, 0)
+                if step == 2:
+                    canvas.fast_poke(char, x + 1, y, fg, attr, 0)
 
         return self._plain_image, self._colour_map
 

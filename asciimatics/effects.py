@@ -341,12 +341,16 @@ class Print(Effect):
                                       bg=self._bg)
         elif self._speed == 0 or frame_no % self._speed == 0:
             image, colours = self._renderer.rendered_text
-            for (i, line) in enumerate(image):
-                self._screen.paint(line, self._x, self._y + i, self._colour,
-                                   attr=self._attr,
-                                   bg=self._bg,
-                                   transparent=self._transparent,
-                                   colour_map=colours[i])
+            if self._transparent:
+                for (i, line) in enumerate(image):
+                    self._screen.paint(line, self._x, self._y + i, self._colour,
+                                       attr=self._attr,
+                                       bg=self._bg,
+                                       transparent=self._transparent,
+                                       colour_map=colours[i])
+            else:
+                # TODO: f8x me!
+                self._screen.block_transfer(self._renderer._canvas._buffer, self._x, self._y)
 
     @property
     def stop_frame(self):
@@ -1039,8 +1043,8 @@ class RandomNoise(Effect):
                                        x + offset, y,
                                        colour_map=[colours[iy][ix]])
                 else:
-                    if random() < 0.2:
-                        self._screen.print_at(chr(randint(33, 126)), x, y)
+                    if random() < 0.1:
+                        self._screen.fast_poke(chr(randint(33, 126)), x, y, 7, 0, 0)
 
         # Tune the signal
         self._strength += self._step
@@ -1094,18 +1098,19 @@ class Julia(Effect):
         c = complex(self._c[0], self._c[1])
         sx = self._centre[0] - (self._size[0] / 2.0)
         sy = self._centre[1] - (self._size[1] / 2.0)
+        step = 2 if self._height * self._width > 20000 else 1
         for y in range(self._height):
-            for x in range(self._width):
+            for x in range(0, self._width + 1 - step, step):
                 z = complex(sx + self._size[0] * (x / self._width),
                             sy + self._size[1] * (y / self._height))
                 n = len(self._256_palette)
                 while abs(z) < 10 and n >= 1:
                     z = z ** 2 + c
                     n -= 1
-                colour = \
-                    self._256_palette[
-                        n - 1] if self._screen.colours >= 256 else 7
-                self._screen.print_at(self._greyscale[n - 1], x, y, colour)
+                colour = self._256_palette[n - 1] if self._screen.colours >= 256 else 7
+                self._screen.fast_poke(self._greyscale[n - 1], x, y, colour, 0, 0)
+                if step == 2:
+                    self._screen.fast_poke(self._greyscale[n - 1], x + 1, y, colour, 0, 0)
 
         # Zoom
         self._size = [i * self._scale for i in self._size]

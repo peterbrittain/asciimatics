@@ -60,15 +60,15 @@ class Image(object):
         # Draw the stripe for the required region.
         for sy in range(y_start, y_end):
             try:
-                y = round((screen.height - height) / 2) + sy
-                image_y = round(sy * IMAGE_HEIGHT / height)
+                y = int((screen.height - height) / 2) + sy
+                image_y = int(sy * IMAGE_HEIGHT / height)
                 char = self._frame[0][image_y][image_x]
                 # Unicode images use . for background only pixels; ascii ones use space.
                 if char not in (" ", "."):
                     fg, attr, bg = self._frame[1][image_y][image_x]
                     attr = 0 if attr is None else attr
                     bg = 0 if bg is None else bg
-                    screen.print_at(char, x, y, fg, attr, bg)
+                    screen.fast_poke(char, x, y, fg, attr, bg)
             except IndexError:
                 pass
 
@@ -391,7 +391,7 @@ class RayCaster(Effect):
     @property
     def frame_update_count(self):
         # Animation required - every other frame should be OK for demo.
-        return 2
+        return 1
 
     @property
     def stop_frame(self):
@@ -465,7 +465,7 @@ class GameController(Scene):
 
 def demo(screen, game_state):
     game_state.update_screen(screen)
-    screen.play([GameController(screen, game_state)], stop_on_resize=True)
+    screen.play([GameController(screen, game_state)], stop_on_resize=True, allow_int=True)
 
 
 if __name__ == "__main__":

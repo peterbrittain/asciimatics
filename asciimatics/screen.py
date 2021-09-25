@@ -120,8 +120,8 @@ class _DoubleBuffer(object):
             for x in range(self._width):
                 old_cell = self._screen_buffer[y][x]
                 new_cell = self._double_buffer[y][x]
-                if old_cell != new_cell:
-                    yield y, x
+                if old_cell != new_cell and new_cell[4] > 0:
+                    yield y, x, new_cell
 
     def scroll(self, lines):
         """
@@ -676,6 +676,10 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         :param y: The Y origin for where to place it in the Screen
         """
         self._buffer.block_transfer(buffer, x, y)
+
+    def fast_poke(self, c, x, y, colour, attr, bg):
+        #TODO: Fix me!
+        self._buffer.set(x, y, (c, colour, attr, bg, 1))
 
     @property
     def start_line(self):
@@ -1461,11 +1465,12 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
 
         # Now draw any deltas to the scrolled screen.  Note that CJK character sets sometimes
         # use double-width characters, so don't try to draw the next 2nd char (of 0 width).
-        for y, x in self._buffer.deltas(0, self.height):
-            new_cell = self._buffer.get(x, y)
-            if new_cell[4] > 0:
+        last_colour = (None, None, None)
+        for y, x, new_cell in self._buffer.deltas(0, self.height):
+            if (new_cell[1], new_cell[2], new_cell[3]) != last_colour:
                 self._change_colours(new_cell[1], new_cell[2], new_cell[3])
-                self._print_at(new_cell[0], x, y, new_cell[4])
+                last_colour = (new_cell[1], new_cell[2], new_cell[3])
+            self._print_at(new_cell[0], x, y, new_cell[4])
 
         # Resynch for next refresh.
         self._buffer.sync()
@@ -1613,10 +1618,10 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                 if b - a < 0.05:
                     # Just in case time has jumped (e.g. time change), ensure we only delay for 0.05s
                     pause = min(0.05, a + 0.05 - b)
-                    if allow_int:
-                        self.wait_for_input(pause)
-                    else:
-                        time.sleep(pause)
+                    # if allow_int:
+                    #     self.wait_for_input(pause)
+                    # else:
+                    #     time.sleep(pause)
         except StopApplication:
             # Time to stop  - just exit the function.
             return
@@ -1668,6 +1673,9 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
             old_scene=start_scene, screen=self)
 
         # Reset other internal state for the animation
+        self._last_frames = 0
+        self._frames = 0
+        self._a = time.time()
         self._frame = 0
         self._idle_frame_count = 0
         self._forced_update = False
@@ -1716,7 +1724,14 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                     if effect.frame_update_count > 0:
                         self._idle_frame_count = min(self._idle_frame_count,
                                                      effect.frame_update_count)
-                self.refresh()
+            if time.time() - self._a < 1:
+                self._frames += 1
+            else:
+                self._last_frames = self._frames
+                self._frames = 0
+                self._a = time.time()
+            self.print_at("{}  ".format(self._last_frames), 0, 0, 2)
+            self.refresh()
 
             if 0 < scene.duration <= self._frame:
                 raise NextScene()
@@ -2410,6 +2425,9 @@ else:
             # We'll actually break out into low-level output, so flush any
             # high level buffers now.
             self._screen.refresh()
+
+            #TODO: fix me
+            # sys.stdout = open(1, "w", buffering=100000)
 
         def close(self, restore=True):
             """
