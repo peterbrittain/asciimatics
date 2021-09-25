@@ -3362,6 +3362,109 @@ class TestWidgets(unittest.TestCase):
         l = form.find_widget("tf6_lbl")
         self.assertEqual(l.text, "TstFrm6Lbl")
 
+    def test_textbox_hide_cursor(self):
+        """
+        Check hide cursor works as expected.
+        """
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = Frame(canvas, canvas.height, canvas.width)
+        layout = Layout([100])
+        form.add_layout(layout)
+        textbox = TextBox(4, label="TB")
+        layout.add_widget(textbox)
+        form.fix()
+        form.register_scene(scene)
+        scene.add_effect(form)
+        scene.reset()
+
+        # Check we default to showing the cursor.
+        self.assertFalse(textbox.hide_cursor)
+
+        # Check that the cursor is hidden when set off.
+        for effect in scene.effects:
+            effect.update(0)
+        self.assertEqual(canvas.get_from(4, 1),
+                         (32, Screen.COLOUR_WHITE, Screen.A_REVERSE, Screen.COLOUR_CYAN))
+        textbox.hide_cursor = True
+        for effect in scene.effects:
+            effect.update(1)
+        self.assertEqual(canvas.get_from(4, 1),
+                         (32, Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_CYAN))
+
+    def test_textbox_autoscroll(self):
+        """
+        Check autoscroll works as expected.
+        """
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = Frame(canvas, canvas.height, canvas.width)
+        layout = Layout([100])
+        form.add_layout(layout)
+        textbox = TextBox(4, label="TB")
+        textbox.value = ["Hello", "World", "Full", "Box"]
+        layout.add_widget(textbox)
+        form.fix()
+        form.register_scene(scene)
+        scene.add_effect(form)
+        scene.reset()
+
+        # Check that the frame is rendered correctly.
+        for effect in scene.effects:
+            effect.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|TB Hello                              |\n" +
+            "|   World                              O\n" +
+            "|   Full                               |\n" +
+            "|   Box                                |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check that switching off autoscroll will not move line
+        textbox.auto_scroll = False
+        textbox.value = ["Hello", "World", "Full", "Box", "New"]
+        for effect in scene.effects:
+            effect.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|TB Hello                              |\n" +
+            "|   World                              O\n" +
+            "|   Full                               |\n" +
+            "|   Box                                |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check that turning it back on scrolls to bottom.
+        textbox.auto_scroll = True
+        textbox.value = ["Hello", "World", "Full", "Box", "New"]
+        for effect in scene.effects:
+            effect.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|TB World                              |\n" +
+            "|   Full                               O\n" +
+            "|   Box                                |\n" +
+            "|   New                                |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
 
 if __name__ == '__main__':
     unittest.main()
