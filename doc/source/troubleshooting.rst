@@ -146,6 +146,27 @@ types.  Windows should work without any changes.  Other systems may need to use 
 as above to mix modes to add status line support as described `here
 <https://gist.github.com/KevinGoodsell/744284>`_.
 
+Why can't I detect all key combinations?
+----------------------------------------
+Asciimatics is designed to run in terminals.  These date back decades and so have many
+restrictions that were perfectly reasonable back then, but seem incomprehensible these days.
+The biggest one by a long way is that they can't detect exactly what the user types, even
+though computers have been able to detect exactly which key is being pressed (and when it
+is released) for a very long time.
+
+The fundamental reason for this limitation is that there is no standard for the terminal
+emulators to tell the application more than a limited set of keys (typically lower and upper
+case characters, a random smattering of special keys and then some basic control/shift modifiers).
+While some terminals do try to do a little better, the coverage is patchy and inconsistent.
+
+Until this improves the only way to get this sort of information is to run a system-wide
+keyboard hook, using something the the `keyboard` package on pypi.  Unfortunately, this
+requires that you run as root and will not work on remote terminal sessions (e.g. over
+an SSH connection).
+
+For more details, you can read https://invisible-island.net/ncurses/ncurses.faq.html#modified_keys
+or https://blog.robertelder.org/detect-keyup-event-linux-terminal/.
+
 .. _ctrl-s-issues-ref:
 
 Ctrl+S does not work
