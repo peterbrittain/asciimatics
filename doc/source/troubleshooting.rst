@@ -146,6 +146,27 @@ types.  Windows should work without any changes.  Other systems may need to use 
 as above to mix modes to add status line support as described `here
 <https://gist.github.com/KevinGoodsell/744284>`_.
 
+Why can't I detect all key combinations?
+----------------------------------------
+Asciimatics is designed to run in terminals.  These date back decades and so have many
+restrictions that were perfectly reasonable back then, but seem incomprehensible these days.
+The biggest one by a long way is that they can't detect exactly what the user types, even
+though computers have been able to detect exactly which key is being pressed (and when it
+is released) for a very long time.
+
+The fundamental reason for this limitation is that there is no standard for the terminal
+emulators to tell the application more than a limited set of keys (typically lower and upper
+case characters, a random smattering of special keys and then some basic control/shift modifiers).
+While some terminals do try to do a little better, the coverage is patchy and inconsistent.
+
+Until this improves the only way to get this sort of information is to run a system-wide
+keyboard hook, using something the the `keyboard` package on pypi.  Unfortunately, this
+requires that you run as root and will not work on remote terminal sessions (e.g. over
+an SSH connection).
+
+For more details, you can read https://invisible-island.net/ncurses/ncurses.faq.html#modified_keys
+or https://blog.robertelder.org/detect-keyup-event-linux-terminal/.
+
 .. _ctrl-s-issues-ref:
 
 Ctrl+S does not work
@@ -201,6 +222,17 @@ asciimatics will not work.  There are 2 workarounds.
 2. Alternatively, you can just run asciimatics inside a real terminal or window - i.e. not inside
    PyCharm/the IDE.  For example, you can force a real console from the Terminal window using
    `start cmd /c "python <your file name>"`.
+
+It runs differently/does not work inside PyCharm
+-------------------------------------------------
+While PyCharm's terminal support is constantly improving, it is not perfect and so there are
+still cases where the imperfections cause glitches in asciimatics applications.  This is most
+common on Windows (e.g. unexpected keys detected on resizing), but it is not just a Windows
+issue.
+
+If you hit such glitches, the first thing to do is check whether you can also see them on a
+native terminal/console window of your operating system.  If you can't reproduce on the native
+terminal/console, you need to raise the bug with JetBrains.
 
 .. _unicode-issues-ref:
 

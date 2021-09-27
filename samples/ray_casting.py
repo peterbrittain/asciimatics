@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 
 # -*- coding: utf-8 -*-
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
 import sys
 from math import sin, cos, pi, copysign, floor
 from asciimatics.effects import Effect
@@ -60,8 +64,8 @@ class Image(object):
         # Draw the stripe for the required region.
         for sy in range(y_start, y_end):
             try:
-                y = round((screen.height - height) / 2) + sy
-                image_y = round(sy * IMAGE_HEIGHT / height)
+                y = int((screen.height - height) / 2) + sy
+                image_y = int(sy * IMAGE_HEIGHT / height)
                 char = self._frame[0][image_y][image_x]
                 # Unicode images use . for background only pixels; ascii ones use space.
                 if char not in (" ", "."):
@@ -255,7 +259,7 @@ class RayCaster(Effect):
 
         # Now do the ray casting across the visible canvas.
         # Compensate for aspect ratio by treating 2 cells as a single pixel.
-        x_offset = (self._screen.width - self.width ) // 2
+        x_offset = int((self._screen.width - self.width ) // 2)
         last_side = None
         z_buffer = [999999 for _ in range(self.width + 1)]
         camera_x = cos(self._state.player_angle + pi / 2) * self.FOV
