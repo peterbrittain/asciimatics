@@ -559,18 +559,7 @@ class Rainbow(StaticRenderer):
 
 # --- Bar Chart Renders
 
-class BarChart(DynamicRenderer): 
-    """
-    Renderer to create a horizontal bar chart using the specified functions as 
-    inputs for each entry.  Can be used to chart distributions or for more graphical
-    effect - e.g. to imitate a sound equalizer or a progress indicator.
-
-    This is the original bar chart renderer and has been kept to ensure
-    backwards compatibility. See also an alternative implementation:
-    :class:`HorizontalBarChart` and its vertical companion
-    :class:`VerticalBarChart`.
-    """
-
+class _BarChartBase(DynamicRenderer): 
     #: Constant to indicate no axes should be rendered.
     NONE = 0
 
@@ -583,9 +572,8 @@ class BarChart(DynamicRenderer):
     #: Constant to indicate both axes should be rendered.
     BOTH = 3
 
-    def __init__(self, height, width, functions, char="#",
-                 colour=Screen.COLOUR_GREEN, bg=Screen.COLOUR_BLACK,
-                 gradient=None, scale=None, axes=Y_AXIS, intervals=None,
+    def __init__(self, height, width, functions, char="#", colour=Screen.COLOUR_GREEN, 
+                 bg=Screen.COLOUR_BLACK, gradient=None, scale=None, axes=Y_AXIS, intervals=None,
                  labels=False, border=True, keys=None, gap=None):
         """
         :param height: The max height of the rendered image.
@@ -611,7 +599,7 @@ class BarChart(DynamicRenderer):
         :param keys: Optional keys for each bar.
         :param gap: distance between bars. A value of None will auto-calculate (default).
         """
-        super(BarChart, self).__init__(height, width)
+        super(_BarChartBase, self).__init__(height, width)
         self._functions = functions
         self._char = char
         self._colours = [colour] if isinstance(colour, int) else colour
@@ -661,7 +649,8 @@ class BarChart(DynamicRenderer):
         """
         return self._axes_lines
 
-    def _render_now(self):
+    def _setup_chart(self):
+        """Draws any borders and returns initial height, width, and starting X and Y."""
         # Dimensions for the chart.
         int_h = self._canvas.height
         int_w = self._canvas.width
@@ -681,6 +670,18 @@ class BarChart(DynamicRenderer):
             int_w -= 6
             start_y += 2
             start_x += 3
+
+        return int_h, int_w, start_x, start_y
+
+
+class BarChart(_BarChartBase): 
+    """
+    Renderer to create a horizontal bar chart using the specified functions as inputs for each
+    entry.  Can be used to chart distributions or for more graphical effect - e.g. to imitate a
+    sound equalizer or a progress indicator.
+    """
+    def _render_now(self):
+        int_h, int_w, start_x, start_y = self._setup_chart()
 
         # Make room for the keys if supplied.
         if self._keys:
@@ -779,128 +780,14 @@ class BarChart(DynamicRenderer):
         return self._plain_image, self._colour_map
 
 
-class VBarChart(DynamicRenderer): 
+class VBarChart(_BarChartBase): 
     """
-    Renderer to create a vertical bar chart using the specified functions as 
-    inputs for each entry.  Can be used to chart distributions or for more graphical
-    effect - e.g. to imitate a sound equalizer or a progress indicator.
-
-    This is the original bar chart renderer and has been kept to ensure
-    backwards compatibility. See also an alternative implementation:
-    :class:`HorizontalBarChart` and its vertical companion
-    :class:`VerticalBarChart`.
+    Renderer to create a vertical bar chart using the specified functions as inputs for each
+    entry.  Can be used to chart distributions or for more graphical effect - e.g. to imitate a
+    sound equalizer or a progress indicator.
     """
-
-    #: Constant to indicate no axes should be rendered (for backwards compatibility)
-    NONE = 0
-
-    #: Constant to indicate the x axis should be rendered.
-    X_AXIS = 1
-
-    #: Constant to indicate the y axis should be rendered.
-    Y_AXIS = 2
-
-    #: Constant to indicate both x-axis and y-axis left should be rendered.
-    BOTH = X_AXIS | Y_AXIS
-
-    def __init__(self, height, width, functions, char="#",
-                 colour=Screen.COLOUR_GREEN, bg=Screen.COLOUR_BLACK,
-                 gradient=None, scale=None, axes=X_AXIS, intervals=None,
-                 labels=False, border=True, keys=None, gap=None):
-        """
-        :param height: The max height of the rendered image.
-        :param width: The max width of the rendered image.
-        :param functions: List of functions to chart.
-        :param char: Character to use for the bar.
-        :param colour: Default colour to use for the bars.  This can be a
-            single value or list of values (to cycle around for each bar).
-        :param bg: Default background colour to use for the bars.  This can be a
-            single value or list of values (to cycle around for each bar).
-        :param gradient: Colour gradient for use on all bars.  This is a list of
-            tuple pairs specifying a threshold and a colour, or triplets to
-            include a background colour too.
-        :param scale: Maximum value for the bars.  This is used to scale the
-            function values to the maximum space available.  Any value over this
-            will be truncated when drawn.  Defaults to the number of available
-            characters in the chart.
-        :param axes: Which axes to draw.
-        :param intervals: Units for interval markers on the main axis.
-            Defaults to none.
-        :param labels: Whether to label the main axis.
-        :param border: Whether to draw a border around the chart.
-        :param keys: Optional keys for each bar.
-        :param gap: distance between bars. A value of None will auto-calculate (default).
-        """
-        super(VBarChart, self).__init__(height, width)
-        self._functions = functions
-        self._char = char
-        self._colours = [colour] if isinstance(colour, int) else colour
-        self._bgs = [bg] if isinstance(bg, int) else bg
-        self._scale = scale
-        self._axes = axes
-        self._intervals = intervals
-        self._labels = labels
-        self._border = border
-        self._keys = keys
-        self._gap = gap
-
-        # Box drawing tool for border, allows user to change the border line style 
-        self._border_lines = BoxTool(self._canvas.unicode_aware, BoxTool.MIXED_LINE) if border \
-            else None
-
-        # Box drawing tool for axes
-        self._axes_lines = BoxTool(self._canvas.unicode_aware, BoxTool.SINGLE_LINE)
-
-        # Normalize the gradient so that it is 3-tuple wide (bg is optional, if not there, set it)
-        self._gradient = None
-        if gradient:
-            self._gradient = []
-            for item in gradient:
-                if len(item) == 2:
-                    self._gradient.append( (item[0], item[1], Screen.COLOUR_BLACK) )
-                elif len(item) == 3:
-                    self._gradient.append(item)
-                else:
-                    raise ValueError("Gradients must be 2-tuple or 3-tuple in size")
-
-    @property
-    def border_lines(self):
-        """If border=True this object will have a reference to a
-        :class:`~asciimatics.utilities.BoxTool` instance. The style of the border can be changed
-        through it.  Defaults to a double line using a UNICODE box if supported, otherwise ASCII
-        characters.
-        """
-        return self._border_lines
-
-    @property
-    def axes_lines(self):
-        """If axes are drawn, this object will have a reference to a
-        :class:`~asciimatics.utilities.BoxTool` instance. The style of the axes can be changed
-        through it. Defaults to a single line using a UNICODE box if supported, otherwise ASCII
-        characters.
-        """
-        return self._axes_lines
-
     def _render_now(self):
-        # Dimensions for the chart.
-        int_h = self._canvas.height
-        int_w = self._canvas.width
-        start_x = key_x = 0
-        start_y = 0
-
-        # Create  the box around the chart...
-        if self._border:
-            draw = self._border_lines.box_top(self._canvas.width)
-            self._write(draw, 0, 0)
-            for line in range(1, self._canvas.height):
-                self._write(self._border_lines.v, 0, line)
-                self._write(self._border_lines.v, self._canvas.width - 1, line)
-            draw = self._border_lines.box_bottom(self._canvas.width)
-            self._write(draw, 0, self._canvas.height - 1)
-            int_h -= 4
-            int_w -= 6
-            start_y += 2
-            start_x += 3
+        int_h, int_w, start_x, start_y = self._setup_chart()
 
         # Make room for the keys if supplied.
         if self._keys:
