@@ -832,7 +832,7 @@ class VBarChart(_BarChartBase):
             for line in range(int_h):
                 self._write(self._axes_lines.v, start_x - 1, start_y + line)
 
-        # Draw labels and interval markers
+        # Draw labels
         if self._labels:
             y = start_y + int_h - 1
 
@@ -842,11 +842,21 @@ class VBarChart(_BarChartBase):
                 if label != '':
                     self._write(label, x, y)
 
-                    if self._intervals and count != 0 and count != len(labels) - 1:
-                        self._write(self._axes_lines.v_right, start_x - 1, y)
-                        self._write(self._axes_lines.h_inside * int_w, start_x, y)
-
                 y -= 1
+
+        # Draw interval markers
+        if self._intervals:
+            num_intervals = int(scale / self._intervals)
+            skip = int_h // num_intervals
+
+            value = self._intervals
+            y = start_y + int_h - 1
+            while value < scale:
+                y -= skip
+                self._write(self._axes_lines.v_right, start_x - 1, y)
+                self._write(self._axes_lines.h_inside * int_w, start_x, y)
+
+                value += self._intervals
 
         # Size bars based on available space
         bar_width = int_w
