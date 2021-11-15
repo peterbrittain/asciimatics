@@ -154,7 +154,7 @@ class BoxTool:
             self.h = "-"
             self.h_inside = "-"
             self.v = "|"
-            self.v_inside = "|"
+            self.v_inside = ":"
             self.v_left = "+"
             self.v_right = "+"
             self.h_up = u"+"
