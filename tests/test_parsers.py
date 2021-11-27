@@ -243,7 +243,7 @@ class TestParsers(unittest.TestCase):
         Check AnsiTerminalParser handles unsupported encodings gracefully.
         """
         parser = AnsiTerminalParser()
-        parser.reset("a\x1BZb\x07c", None)
+        parser.reset("a\x1BZb\x01c", None)
         tokens = parser.parse()
 
         # Ignore unknown escape and next letter
@@ -283,4 +283,14 @@ class TestParsers(unittest.TestCase):
         tokens = parser.parse()
         self.assertEquals(next(tokens), (0, Parser.DISPLAY_TEXT, "a"))
         self.assertEquals(next(tokens), (1, Parser.DISPLAY_TEXT, "b"))
+
+    def test_ansi_terminal_parser_bell(self):
+        """
+        Check AnsiTerminalParser handles bell.
+        """
+        parser = AnsiTerminalParser()
+        parser.reset("\x07", None)
+        tokens = parser.parse()
+        with self.assertRaises(StopIteration):
+            next(tokens)
 
