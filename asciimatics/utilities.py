@@ -52,7 +52,7 @@ class _DotDict(dict):
     __delattr__ = dict.__delitem__
 
 
-class BoxTool:
+class BoxTool(object):
     """Tool for building boxes out of characters. Supports a variety of line
     styles from `asciimatics.constants`:
 
