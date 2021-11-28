@@ -6,7 +6,8 @@ from __future__ import unicode_literals
 from datetime import datetime
 import time
 import unittest
-from asciimatics.utilities import readable_mem, readable_timestamp
+from asciimatics.constants import ASCII_LINE, SINGLE_LINE, DOUBLE_LINE
+from asciimatics.utilities import readable_mem, readable_timestamp, BoxTool
 
 
 class TestUtilities(unittest.TestCase):
@@ -34,3 +35,40 @@ class TestUtilities(unittest.TestCase):
         self.assertEquals("1999-01-02", readable_timestamp(
             time.mktime(datetime.now().replace(year=1999, month=1, day=2).timetuple())))
 
+
+    def test_boxtool(self):
+        # SINGLE_LINE
+        tool = BoxTool(True)
+        self.assertEquals("┌───┐", tool.box_top(5))
+        self.assertEquals("└───┘", tool.box_bottom(5))
+        self.assertEquals("│   │", tool.box_line(5))
+
+        self.assertEquals(
+            tool.box(5, 3),
+            "┌───┐\n" +
+            "│   │\n" +
+            "└───┘\n")
+
+        # DOUBLE_LINE
+        tool.style = DOUBLE_LINE
+        self.assertEquals("╔═══╗", tool.box_top(5))
+        self.assertEquals("╚═══╝", tool.box_bottom(5))
+        self.assertEquals("║   ║", tool.box_line(5))
+
+        self.assertEquals(
+            tool.box(5, 3),
+            "╔═══╗\n" +
+            "║   ║\n" +
+            "╚═══╝\n")
+
+        # ASCII_LINE
+        tool = BoxTool(False)
+        self.assertEquals("+---+", tool.box_top(5))
+        self.assertEquals("+---+", tool.box_bottom(5))
+        self.assertEquals("|   |", tool.box_line(5))
+
+        self.assertEquals(
+            tool.box(5, 3),
+            "+---+\n" +
+            "|   |\n" +
+            "+---+\n")
