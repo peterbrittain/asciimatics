@@ -1,4 +1,4 @@
-
+# -*- coding: utf-8 -*-
 """
 This module is just a collection of simple helper functions.
 """
