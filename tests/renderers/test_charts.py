@@ -413,6 +413,7 @@ class TestVBarChart(unittest.TestCase):
         #        GG0
         #        GGG 
         #
+        unittest.util._MAX_LENGTH = 160
         self.assertEqual(
             renderer.rendered_text, 
             (
