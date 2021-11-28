@@ -365,6 +365,9 @@ class AnsiTerminalParser(Parser):
             if char > 31:
                 yield (self._state.last_offset, Parser.DISPLAY_TEXT, self._state.text[0])
                 self._state.last_offset = self._state.offset + 1
+            elif char == 7:
+                # Bell - ignore
+                pass
             elif char == 8:
                 # Back space
                 yield (self._state.last_offset, Parser.MOVE_RELATIVE, (-1, 0))
