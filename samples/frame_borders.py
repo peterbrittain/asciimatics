@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from asciimatics.constants import DOUBLE_LINE
 from asciimatics.widgets import Frame, Text, TextBox, Layout, Label, Button, PopUpDialog, Widget
 from asciimatics.effects import Background
 from asciimatics.scene import Scene
@@ -17,7 +18,7 @@ class TopFrame(Frame):
                                        has_border=True,
                                        can_scroll=True,
                                        name="Top Form")
-        self.border_box.set_style(BoxTool.DOUBLE_LINE)
+        self.border_box.style = DOUBLE_LINE
         layout = Layout([1, 18, 1])
         self.add_layout(layout)
         layout.add_widget(Label("Scrolling, with border"), 1)

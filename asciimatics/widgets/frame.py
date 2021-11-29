@@ -425,10 +425,11 @@ class Frame(Effect):
     @property
     def border_box(self):
         """
-        Instance of :class:`~asciimatics.utilities.BoxTool` that specifies the
-        characters used to draw the border to this frame. You can change the
-        border character style by calling the :func:`set_style()` method on
-        this object.
+        Instance of :class:`~asciimatics.utilities.BoxTool` that specifies the characters used to
+        draw the border to this frame. You can change the border character style by modifying the
+        :attr:`style` property on this object. Allowed styles are defined in
+        :mod:`~asciimatics.constants`.
+
         """
         return self._border_mgr.box
 

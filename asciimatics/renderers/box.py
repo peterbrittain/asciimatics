@@ -14,21 +14,17 @@ class Box(StaticRenderer):
     Renders a simple box using ASCII characters.  This does not render in
     extended box drawing characters as that requires non-ASCII characters in
     Windows and direct access to curses in Linux.
-
-    :param width: width of box
-    :param height: height of box
-    :param uni: True to use UNICODE character set, defaults to False
-    :param style: desired line style, based on line style definitions in
-        :mod:`~asciimatics.constants`: `ASCII_LINE`, `SINGLE_LINE`,
-        `DOUBLE_LINE`. `uni` parameter takes precedence and the style will be
-        ignored if `uni==False`
     """
 
     def __init__(self, width, height, uni=False, style=SINGLE_LINE):
         """
-        :param width: The desired width of the box.
-        :param height: The desired height of the box.
-        :param uni: Whether to use unicode box characters or not.
+        :param width: width of box
+        :param height: height of box
+        :param uni: True to use UNICODE character set, defaults to False
+        :param style: desired line style, based on line style definitions in
+            :mod:`~asciimatics.constants`: `ASCII_LINE`, `SINGLE_LINE`,
+            `DOUBLE_LINE`. `uni` parameter takes precedence and the style will be
+            ignored if `uni==False`
         """
         super(Box, self).__init__()
         self._images = [BoxTool(uni, style).box(width, height)]

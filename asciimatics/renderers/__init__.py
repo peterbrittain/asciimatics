@@ -10,11 +10,11 @@ from asciimatics.renderers.figlettext import FigletText
 from asciimatics.renderers.fire import Fire
 from asciimatics.renderers.images import ImageFile, ColourImageFile
 from asciimatics.renderers.players import AbstractScreenPlayer, AnsiArtPlayer, AsciinemaPlayer
-from asciimatics.renderers.kscope import Kaleidoscope
+from asciimatics.renderers.kaleidoscope import Kaleidoscope
 from asciimatics.renderers.plasma import Plasma
 from asciimatics.renderers.rainbow import Rainbow
 from asciimatics.renderers.rotatedduplicate import RotatedDuplicate
-from asciimatics.renderers.scale import Scale, VScale
+from asciimatics.renderers.scales import Scale, VScale
 from asciimatics.renderers.speechbubble import SpeechBubble
 
 __all__ = [ "Renderer", "StaticRenderer", "DynamicRenderer", "Box", "BarChart", "VBarChart",

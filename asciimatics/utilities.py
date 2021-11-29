@@ -60,7 +60,13 @@ class BoxTool(object):
     * ``SINGLE_LINE`` -- Unicode based single lined box (1)
     * ``DOUBLE_LINE`` -- Unicode based double lined box (2)
 
-    Individual characters of a box can be accessed directly through attributes:
+    Individual characters of a box can be accessed directly through attributes. Most attribute
+    names are based on the Extended-ASCII characters used for the UNICODE version of the shape.
+    The names describe the directions the piece point in (not the part of the box). For example,
+    "up_left" is a corner piece that has a part that points up and a part that points left -- the
+    character usually used for the bottom right hand corner of a box.
+
+    Attribute values are:
 
     * ``up_left`` -- corner piece facing up and left
     * ``up_right`` -- corner piece facing up and right
@@ -84,6 +90,8 @@ class BoxTool(object):
             ``SINGLE_LINE``, and ``DOUBLE_LINE``. Defaults to ``SINGLE_LINE``.
         """
         self.unicode_aware = unicode_aware
+
+        # Call property to get side-effect of setting values
         self.style = style
 
     @property
@@ -130,15 +138,15 @@ class BoxTool(object):
         else:
             self.down_left = "+"
             self.down_right = "+"
-            self.up_right = u"+"
-            self.up_left = u"+"
+            self.up_right = "+"
+            self.up_left = "+"
             self.h = "-"
             self.h_inside = "-"
             self.v = "|"
             self.v_inside = ":"
             self.v_left = "+"
             self.v_right = "+"
-            self.h_up = u"+"
+            self.h_up = "+"
             self.h_down = "+"
             self.cross = "+"
 
