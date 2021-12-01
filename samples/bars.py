@@ -42,6 +42,7 @@ def demo(screen):
         hchart2 = BarChart(10, 25, [wv(1), wv(3), wv(5), wv(7), wv(9)],
                       colour=Screen.COLOUR_GREEN, axes=BarChart.BOTH, scale=2.0)
         hchart2.line_style = ASCII_LINE
+        hchart2.axes_style = ASCII_LINE
         hchart3 = BarChart(10, 40, [wv(1), wv(2), wv(3), wv(4), wv(5), wv(7), wv(8), wv(9)],
                       colour=[c for c in range(1, 8)], bg=[c for c in range(1, 8)],
                       scale=2.0, axes=BarChart.X_AXIS, intervals=0.5, labels=True, border=False)
@@ -69,6 +70,7 @@ def demo(screen):
         vchart2 = VBarChart(12, 14, [wv(1), wv(3), wv(5), wv(7), wv(9)],
                       colour=Screen.COLOUR_GREEN, axes=BarChart.BOTH, scale=2.0, gap=0)
         vchart2.line_style = ASCII_LINE
+        vchart2.axes_style = ASCII_LINE
         vchart3 = VBarChart(12, 39, [wv(1), wv(2), wv(3), wv(4), wv(5), wv(7), wv(8), wv(9)],
                       colour=[c for c in range(1, 8)], bg=[c for c in range(1, 8)], gap=0,
                       scale=2.0, axes=BarChart.Y_AXIS, intervals=0.5, labels=True, border=False)

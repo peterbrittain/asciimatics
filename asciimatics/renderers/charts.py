@@ -71,7 +71,7 @@ class _BarChartBase(DynamicRenderer):
 
     @property
     def line_style(self):
-        """Returns the current drawing style of the border and axes. Possible values are defined in
+        """Returns the current drawing style of the border. Possible values are defined in
         :mod:`~asciimatics.constants`:
 
         * `ASCII_LINE` -- ASCII safe characters
@@ -79,9 +79,6 @@ class _BarChartBase(DynamicRenderer):
         * `DOUBLE_LINE` -- UNICODE based double line
 
         Note that your canvas must support UNICODE style characters to use them
-
-        Single and double-line styles use a single-line axes. The ASCII style uses ASCII for the
-        border and the axes.
         """
         return self._border_lines.style
 
@@ -90,10 +87,21 @@ class _BarChartBase(DynamicRenderer):
         if self._border_lines:
             self._border_lines.style = style
 
-            if style == DOUBLE_LINE:
-                self._axes_lines.style = SINGLE_LINE
-            else:
-                self._axes_lines.style = style
+    @property
+    def axes_style(self):
+        """Returns the current drawing style of the axes. Possible values are defined in
+        :mod:`~asciimatics.constants`:
+
+        * `ASCII_LINE` -- ASCII safe characters
+        * `SINGLE_LINE` -- UNICODE based single line
+
+        Note that your canvas must support UNICODE style characters to use them
+        """
+        return self._axes_lines.style
+
+    @axes_style.setter
+    def axes_style(self, style):
+        self._axes_lines.style = style
 
     def _setup_chart(self):
         """Draws any borders and returns initial height, width, and starting X and Y."""

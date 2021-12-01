@@ -41,6 +41,7 @@ class TestBarChart(unittest.TestCase):
             "└───────────────┘")
 
         renderer.line_style = ASCII_LINE
+        renderer.axes_style = ASCII_LINE
         self.assertEqual(str(renderer), 
             "+---------------+\n"
             "|               |\n"
