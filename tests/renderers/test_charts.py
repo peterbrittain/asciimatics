@@ -30,7 +30,7 @@ class TestBarChart(unittest.TestCase):
 
     def test_styles(self):
         renderer = BarChart(7, 17, [fn(10), fn(5)])
-        renderer.line_style = SINGLE_LINE
+        renderer.border_style = SINGLE_LINE
         self.assertEqual(str(renderer), 
             "┌───────────────┐\n"
             "│               │\n"
@@ -40,7 +40,7 @@ class TestBarChart(unittest.TestCase):
             "│               │\n"
             "└───────────────┘")
 
-        renderer.line_style = ASCII_LINE
+        renderer.border_style = ASCII_LINE
         renderer.axes_style = ASCII_LINE
         self.assertEqual(str(renderer), 
             "+---------------+\n"

@@ -11,9 +11,6 @@ from asciimatics.renderers.base import DynamicRenderer
 from asciimatics.screen import Screen
 from asciimatics.utilities import BoxTool
 
-#import logging
-#logging.basicConfig(filename="debug.log", level=logging.DEBUG)
-#logger = logging.getLogger(__name__)
 
 class _BarChartBase(DynamicRenderer):
     #: Constant to indicate no axes should be rendered.
@@ -70,7 +67,7 @@ class _BarChartBase(DynamicRenderer):
         pass
 
     @property
-    def line_style(self):
+    def border_style(self):
         """Returns the current drawing style of the border. Possible values are defined in
         :mod:`~asciimatics.constants`:
 
@@ -82,8 +79,8 @@ class _BarChartBase(DynamicRenderer):
         """
         return self._border_lines.style
 
-    @line_style.setter
-    def line_style(self, style):
+    @border_style.setter
+    def border_style(self, style):
         if self._border_lines:
             self._border_lines.style = style
 
@@ -358,10 +355,10 @@ class VBarChart(_BarChartBase):
 
         # Calculate labels and intervals, adjust width based on widest label
         if self._labels:
-            labels = ['' for x in range(int_h)]
+            labels = [('', False) for x in range(int_h)]
 
-            labels[0] = '0'
-            labels[-1] = str(scale)
+            labels[0] = ('0', False)
+            labels[-1] = (str(scale), False)
 
             if self._intervals:
                 next_interval = self._intervals
@@ -369,11 +366,11 @@ class VBarChart(_BarChartBase):
                 for i in range(0, len(labels)):
                     value = (i + 1) * scale / int_h
                     if value >= next_interval:
-                        labels[i] = str(next_interval)
+                        labels[i] = (str(next_interval), True)
                         next_interval += self._intervals
 
             # Change size based on
-            widest_label = max([len(x) for x in labels])
+            widest_label = max([len(x[0]) for x in labels])
             int_w -= widest_label + 1
             start_x += widest_label + 1
 
@@ -385,31 +382,16 @@ class VBarChart(_BarChartBase):
         if self._axes & VBarChart.BOTH == BarChart.BOTH:
             self._write(self._axes_lines.up_right, start_x - 1, start_y + int_h)
 
-        # Draw labels
+        # Draw labels and intervals
         if self._labels:
             y = start_y + int_h - 1
-
-            for label in labels:
+            for label, interval in labels:
                 x = start_x - len(label) - 1
-
                 if label != '':
                     self._write(label, x, y)
-
-                y -= 1
-
-        # Draw interval markers
-        if self._intervals:
-            next_interval = self._intervals
-            y = start_y + int_h - 1
-
-            for i in range(int_h):
-                value = (i + 1) * scale / int_h
-                if value >= next_interval:
-                    self._write(self._axes_lines.v_right, start_x - 1, y)
-                    self._write(self._axes_lines.h_inside * int_w, start_x, y)
-
-                    next_interval += self._intervals
-
+                    if interval:
+                        self._write(self._axes_lines.v_right, start_x - 1, y)
+                        self._write(self._axes_lines.h_inside * int_w, start_x, y)
                 y -= 1
 
         # Size bars based on available space

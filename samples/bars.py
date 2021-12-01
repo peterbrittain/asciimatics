@@ -41,7 +41,7 @@ def demo(screen):
                   )
         hchart2 = BarChart(10, 25, [wv(1), wv(3), wv(5), wv(7), wv(9)],
                       colour=Screen.COLOUR_GREEN, axes=BarChart.BOTH, scale=2.0)
-        hchart2.line_style = ASCII_LINE
+        hchart2.border_style = ASCII_LINE
         hchart2.axes_style = ASCII_LINE
         hchart3 = BarChart(10, 40, [wv(1), wv(2), wv(3), wv(4), wv(5), wv(7), wv(8), wv(9)],
                       colour=[c for c in range(1, 8)], bg=[c for c in range(1, 8)],
@@ -58,23 +58,23 @@ def demo(screen):
                           (100, 252, 252)
                       ],
                       char=">", scale=100.0, labels=True, axes=BarChart.X_AXIS)
-        hchart4.line_style = SINGLE_LINE
+        hchart4.border_style = SINGLE_LINE
 
         # Vertical Charts
-        vchart1 = VBarChart(11, 22, [fn2, fn2], char="═",
+        vchart1 = VBarChart(12, 21, [fn2, fn2], char="═",
                            gradient=[(3, Screen.COLOUR_GREEN),
                                      (4, Screen.COLOUR_YELLOW),
                                      (5, Screen.COLOUR_RED)],
                             keys=["one", "two"],
                   )
-        vchart2 = VBarChart(12, 14, [wv(1), wv(3), wv(5), wv(7), wv(9)],
+        vchart2 = VBarChart(12, 17, [wv(1), wv(3), wv(5), wv(7), wv(9)],
                       colour=Screen.COLOUR_GREEN, axes=BarChart.BOTH, scale=2.0, gap=0)
-        vchart2.line_style = ASCII_LINE
+        vchart2.border_style = ASCII_LINE
         vchart2.axes_style = ASCII_LINE
         vchart3 = VBarChart(12, 39, [wv(1), wv(2), wv(3), wv(4), wv(5), wv(7), wv(8), wv(9)],
                       colour=[c for c in range(1, 8)], bg=[c for c in range(1, 8)], gap=0,
                       scale=2.0, axes=BarChart.Y_AXIS, intervals=0.5, labels=True, border=False)
-        vchart4 = VBarChart(12, 20, [lambda: time.time() * 10 % 101],
+        vchart4 = VBarChart(12, 16, [lambda: time.time() * 10 % 101],
                       gradient=[
                           (33, Screen.COLOUR_RED, Screen.COLOUR_RED),
                           (66, Screen.COLOUR_YELLOW, Screen.COLOUR_YELLOW),
@@ -86,7 +86,7 @@ def demo(screen):
                           (100, 252, 252)
                       ],
                       char=">", scale=100.0, labels=True, axes=VBarChart.Y_AXIS)
-        vchart4.line_style = SINGLE_LINE
+        vchart4.border_style = SINGLE_LINE
 
         effects = [
             Print(screen, hchart1, x=1, y=1, transparent=False, speed=2),
@@ -94,10 +94,10 @@ def demo(screen):
             Print(screen, hchart3, x=52, y=1, transparent=False, speed=2),
             Print(screen, hchart4, x=96, y=2, transparent=False, speed=2),
 
-            Print(screen, vchart1, x=1, y=13, transparent=False, speed=2),
-            Print(screen, vchart2, x=30, y=12, transparent=False, speed=2),
+            Print(screen, vchart1, x=2, y=12, transparent=False, speed=2),
+            Print(screen, vchart2, x=29, y=12, transparent=False, speed=2),
             Print(screen, vchart3, x=52, y=12, transparent=False, speed=2),
-            Print(screen, vchart4, x=101, y=12, transparent=False, speed=2),
+            Print(screen, vchart4, x=103, y=12, transparent=False, speed=2),
         ]
 
     scenes.append(Scene(effects, -1))
