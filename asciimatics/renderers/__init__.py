@@ -3,7 +3,6 @@ This module provides `Renderers` to create complex animation effects.  For more 
 http://asciimatics.readthedocs.io/en/latest/rendering.html
 """
 from asciimatics.renderers.base import Renderer, StaticRenderer, DynamicRenderer
-
 from asciimatics.renderers.box import Box
 from asciimatics.renderers.charts import BarChart, VBarChart
 from asciimatics.renderers.figlettext import FigletText
@@ -17,7 +16,7 @@ from asciimatics.renderers.rotatedduplicate import RotatedDuplicate
 from asciimatics.renderers.scales import Scale, VScale
 from asciimatics.renderers.speechbubble import SpeechBubble
 
-__all__ = [ "Renderer", "StaticRenderer", "DynamicRenderer", "Box", "BarChart", "VBarChart",
-    "FigletText", "Fire", "ImageFile", "ColourImageFile", "AbstractScreenPlayer", "AnsiArtPlayer",
-    "AsciinemaPlayer", "Kaleidoscope", "Plasma", "Rainbow", "RotatedDuplicate", "Scale",
-    "VScale", "SpeechBubble"]
+__all__ = ["Renderer", "StaticRenderer", "DynamicRenderer", "Box", "BarChart", "VBarChart",
+           "FigletText", "Fire", "ImageFile", "ColourImageFile", "AbstractScreenPlayer", "AnsiArtPlayer",
+           "AsciinemaPlayer", "Kaleidoscope", "Plasma", "Rainbow", "RotatedDuplicate", "Scale",
+           "VScale", "SpeechBubble"]

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"This module implements a kaeldioscope effect renderer."
+"""
+This module implements a kaeldioscope effect renderer.
+"""
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
@@ -8,6 +10,7 @@ from builtins import range
 from math import sin, cos, pi, atan2
 
 from asciimatics.renderers.base import DynamicRenderer
+
 
 class Kaleidoscope(DynamicRenderer):
     """

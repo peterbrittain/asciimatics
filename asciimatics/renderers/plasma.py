@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"This module implements a plasma effect renderer."
+"""
+This module implements a plasma effect renderer.
+"""
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
@@ -9,6 +11,7 @@ from math import sin, pi, sqrt
 
 from asciimatics.renderers.base import DynamicRenderer
 from asciimatics.screen import Screen
+
 
 class Plasma(DynamicRenderer):
     """

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"This module implements an ASCII box renderer."
+"""
+This module implements an ASCII box renderer.
+"""
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
@@ -8,6 +10,7 @@ from __future__ import unicode_literals
 from asciimatics.constants import SINGLE_LINE
 from asciimatics.renderers.base import StaticRenderer
 from asciimatics.utilities import BoxTool
+
 
 class Box(StaticRenderer):
     """

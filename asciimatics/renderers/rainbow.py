@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
-"This module implements a rainbow effect renderer."
+"""
+This module implements a rainbow effect renderer.
+"""
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
 from asciimatics.renderers.base import StaticRenderer
+
 
 class Rainbow(StaticRenderer):
     """

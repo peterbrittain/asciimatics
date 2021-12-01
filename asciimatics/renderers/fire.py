@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"This module implements a fire effect renderer."
+"""
+This module implements a fire effect renderer.
+"""
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
@@ -10,6 +12,7 @@ from random import randint, random
 
 from asciimatics.renderers.base import DynamicRenderer
 from asciimatics.screen import Screen
+
 
 class Fire(DynamicRenderer):
     """

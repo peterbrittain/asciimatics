@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"This module implements bar chart renderers."
+"""
+This module implements bar chart renderers.
+"""
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
@@ -56,7 +58,7 @@ class _BarChartBase(DynamicRenderer):
             self._gradient = []
             for item in gradient:
                 if len(item) == 2:
-                    self._gradient.append( (item[0], item[1], Screen.COLOUR_BLACK) )
+                    self._gradient.append((item[0], item[1], Screen.COLOUR_BLACK))
                 elif len(item) == 3:
                     self._gradient.append(item)
                 else:
@@ -68,7 +70,8 @@ class _BarChartBase(DynamicRenderer):
 
     @property
     def border_style(self):
-        """Returns the current drawing style of the border. Possible values are defined in
+        """
+        The current drawing style of the border. Possible values are defined in
         :mod:`~asciimatics.constants`:
 
         * `ASCII_LINE` -- ASCII safe characters
@@ -86,7 +89,8 @@ class _BarChartBase(DynamicRenderer):
 
     @property
     def axes_style(self):
-        """Returns the current drawing style of the axes. Possible values are defined in
+        """
+        The current drawing style of the axes. Possible values are defined in
         :mod:`~asciimatics.constants`:
 
         * `ASCII_LINE` -- ASCII safe characters
@@ -101,7 +105,9 @@ class _BarChartBase(DynamicRenderer):
         self._axes_lines.style = style
 
     def _setup_chart(self):
-        """Draws any borders and returns initial height, width, and starting X and Y."""
+        """
+        Draws any borders and returns initial height, width, and starting X and Y.
+        """
         # Dimensions for the chart.
         int_h = self._canvas.height
         int_w = self._canvas.width
@@ -131,6 +137,7 @@ class BarChart(_BarChartBase):
     entry.  Can be used to chart distributions or for more graphical effect - e.g. to imitate a
     sound equalizer or a progress indicator.
     """
+
     def __init__(self, height, width, functions, char="#", colour=Screen.COLOUR_GREEN,
                  bg=Screen.COLOUR_BLACK, gradient=None, scale=None, axes=_BarChartBase.Y_AXIS,
                  intervals=None, labels=False, border=True, keys=None, gap=None):
@@ -167,8 +174,9 @@ class BarChart(_BarChartBase):
             * A Y_AXIS uses a width of 1
         """
         # Have to have a call to super as the defaults for the class are different than the parent
-        super(BarChart, self).__init__(height, width, functions, char, colour, bg, gradient,
-            scale, axes, intervals, labels, border, keys, gap)
+        super(BarChart, self).__init__(
+            height, width, functions, char, colour, bg, gradient, scale, axes, intervals, labels, border,
+            keys, gap)
 
     def _render_now(self):
         int_h, int_w, start_x, start_y = self._setup_chart()
@@ -193,7 +201,6 @@ class BarChart(_BarChartBase):
 
         # Use given scale or whatever space is left in the grid
         scale = int_w if self._scale is None else self._scale
-        #logger.debug('*** int_h=%s int_w=%s scale=%s', int_h, int_w, scale)
 
         if self._axes & BarChart.X_AXIS:
             self._write(self._axes_lines.h * int_w, start_x, start_y + int_h)
@@ -248,8 +255,7 @@ class BarChart(_BarChartBase):
             colour = self._colours[i % len(self._colours)]
             bg = self._bgs[i % len(self._bgs)]
             if self._gradient:
-                # Colour gradient required - break down into chunks for each
-                # color.
+                # Colour gradient required - break down into chunks for each colour.
                 last = 0
                 size = 0
                 for threshold, colour, bg in self._gradient:
@@ -261,11 +267,7 @@ class BarChart(_BarChartBase):
                             size = int_w
                         for line in range(bar_size):
                             self._write(
-                                self._char * (size - last),
-                                start_x + last,
-                                y + line,
-                                colour,
-                                bg=bg)
+                                self._char * (size - last), start_x + last, y + line, colour, bg=bg)
 
                     # Stop if we reached the end of the line or the chart
                     if bar_len < value or size >= int_w:
@@ -274,8 +276,7 @@ class BarChart(_BarChartBase):
             else:
                 # Solid colour - just write the whole block out.
                 for line in range(bar_size):
-                    self._write(
-                        self._char * bar_len, start_x, y + line, colour, bg=bg)
+                    self._write(self._char * bar_len, start_x, y + line, colour, bg=bg)
 
         return self._plain_image, self._colour_map
 
@@ -324,15 +325,9 @@ class VBarChart(_BarChartBase):
             * An X_AXIS uses a height of 1
             * A Y_AXIS uses a width of 1
         """
-        super(VBarChart, self).__init__(height, width, functions, char, colour, bg, gradient,
-            scale, axes, intervals, labels, border, keys, gap)
-
-        self._precision = 0
-        if self._intervals:
-            point = str(self._intervals).find('.')
-            if point != -1:
-                # Interval is a float with a decimal point
-                self._precision = len(str(self._intervals)[point + 1:])
+        super(VBarChart, self).__init__(
+            height, width, functions, char, colour, bg, gradient, scale, axes, intervals, labels, border,
+            keys, gap)
 
     def _render_now(self):
         int_h, int_w, start_x, start_y = self._setup_chart()
@@ -351,18 +346,14 @@ class VBarChart(_BarChartBase):
 
         # Use given scale or whatever space is left in the grid
         scale = int_h if self._scale is None else self._scale
-        #logger.debug('*** int_h=%s int_w=%s scale=%s', int_h, int_w, scale)
 
         # Calculate labels and intervals, adjust width based on widest label
         if self._labels:
             labels = [('', False) for x in range(int_h)]
-
             labels[0] = ('0', False)
             labels[-1] = (str(scale), False)
-
             if self._intervals:
                 next_interval = self._intervals
-
                 for i in range(0, len(labels)):
                     value = (i + 1) * scale / int_h
                     if value >= next_interval:
@@ -412,9 +403,9 @@ class VBarChart(_BarChartBase):
                 bar_width = total_bar_space // len(self._functions)
 
         if bar_width <= 0:
-            raise ValueError("Not enough space to graph bars. " +
-                "%s bars + %s space for gaps is > your graph width of %s" % (
-                len(self._functions), total_gap_space, int_w))
+            raise ValueError(
+                "Not enough space. %s bars + %s space for gaps is > your graph width of %s" % 
+                (len(self._functions), total_gap_space, int_w))
 
         # Write keys
         if self._keys:
@@ -429,7 +420,6 @@ class VBarChart(_BarChartBase):
 
         # Write bars
         values = [fn() for fn in self._functions]
-        y = start_y + int_h - 1
         scale_factor = scale / int_h
 
         for pos in range(1, int_h + 1):
@@ -458,13 +448,8 @@ class VBarChart(_BarChartBase):
                         draw_colour = colour
                         draw_bg = bg
 
-                    # Uncomment for debug: show value instead of drawing char
-                    #self._char = str(pos)[-1]
-
-                    self._write(self._char * bar_width, x, y, draw_colour, bg=draw_bg)
+                    self._write(self._char * bar_width, x, start_y + int_h - pos, draw_colour, bg=draw_bg)
 
                 x += bar_width + gap
-
-            y -= 1
 
         return self._plain_image, self._colour_map

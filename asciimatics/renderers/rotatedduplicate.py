@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"This module implements a renderer that renders another renderer but rotated."
+"""
+This module implements a renderer that renders another renderer but rotated.
+"""
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
@@ -7,6 +9,7 @@ from __future__ import unicode_literals
 from builtins import range
 
 from asciimatics.renderers.base import StaticRenderer
+
 
 class RotatedDuplicate(StaticRenderer):
     """

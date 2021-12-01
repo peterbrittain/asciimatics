@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"This module implements renderers that produce content based on image files."
+"""
+This module implements renderers that produce content based on image files.
+"""
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
@@ -10,6 +12,7 @@ from PIL import Image
 
 from asciimatics.renderers.base import StaticRenderer
 from asciimatics.screen import Screen
+
 
 class _ImageSequence(object):
     """

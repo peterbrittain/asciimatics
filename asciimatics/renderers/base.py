@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This module provides `Renderers` to create complex animation effects.  For more details see
-http://asciimatics.readthedocs.io/en/latest/rendering.html
+This module provides common code for all Renderers.
 """
 from __future__ import division
 from __future__ import absolute_import
@@ -16,10 +15,6 @@ from wcwidth.wcwidth import wcswidth
 
 from asciimatics.screen import Screen, TemporaryCanvas
 from asciimatics.constants import COLOUR_REGEX
-
-#import logging
-#logging.basicConfig(filename="debug.log", level=logging.DEBUG)
-#logger = logging.getLogger(__name__)
 
 #: Attribute conversion table for the ${c,a} form of attributes for
 #: :py:obj:`~.Screen.paint`.
