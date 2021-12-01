@@ -11,6 +11,7 @@ from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import Highlander, InvalidFields
 from asciimatics.screen import Screen, Canvas
+from asciimatics.utilities import BoxTool
 from asciimatics.widgets.scrollbar import _ScrollBar
 from asciimatics.widgets.utilities import THEMES, logger
 
@@ -30,6 +31,7 @@ class _BorderManager:
         self._frame = frame
         self.has_border = has_border
         self.scroll_bar = None
+        self.box = BoxTool(frame.canvas.unicode_aware)
         if can_scroll:
             scroll_y = 2
             scroll_height = frame.canvas.height - 4
@@ -41,13 +43,6 @@ class _BorderManager:
                 frame.canvas, frame.palette, frame.canvas.width - 1, scroll_y, scroll_height, 
                 frame.get_scroll_pos, frame.set_scroll_pos, absolute=True
             )
-
-        self.tl = u"┌" if frame.canvas.unicode_aware else "+"
-        self.tr = u"┐" if frame.canvas.unicode_aware else "+"
-        self.bl = u"└" if frame.canvas.unicode_aware else "+"
-        self.br = u"┘" if frame.canvas.unicode_aware else "+"
-        self.horiz = u"─" if frame.canvas.unicode_aware else "-"
-        self.vert = u"│" if frame.canvas.unicode_aware else "|"
 
         # Optimization for non-unicode displays to avoid slow unicode calls.
         self.string_len = wcswidth if frame._canvas.unicode_aware else len
@@ -94,22 +89,22 @@ class _BorderManager:
                 y = frame.canvas.start_line + dy
                 if dy == 0:
                     frame.canvas.print_at(
-                        self.tl + (self.horiz * (frame.canvas.width - 2)) + self.tr, 0, y, colour, 
-                        attr, bg)
+                        self.box.box_top(frame.canvas.width), 0, y, colour, attr, bg
+                    )
                 elif dy == frame.canvas.height - 1:
                     frame.canvas.print_at(
-                        self.bl + (self.horiz * (frame.canvas.width - 2)) + self.br, 0, y, colour, 
-                        attr, bg)
+                        self.box.box_bottom(frame.canvas.width), 0, y, colour, attr, bg
+                    )
                 else:
-                    frame.canvas.print_at(self.vert, 0, y, colour, attr, bg)
-                    frame.canvas.print_at(self.vert, frame.canvas.width - 1, y, colour, attr, bg)
+                    frame.canvas.print_at(self.box.v, 0, y, colour, attr, bg)
+                    frame.canvas.print_at(self.box.v, frame.canvas.width - 1, y, colour, attr, bg)
 
             # Now the title
             (colour, attr, bg) = frame.palette["title"]
             title_width = self.string_len(frame.title)
             frame.canvas.print_at(
-                frame.title, (frame.canvas.width - title_width) // 2, 
-                frame.canvas.start_line, colour, attr, bg
+                frame.title, (frame.canvas.width - title_width) // 2, frame.canvas.start_line, 
+                colour, attr, bg
             )
 
         if self.can_scroll and frame.canvas.height > 5:
@@ -426,6 +421,17 @@ class Frame(Effect):
         Whether this Frame should try to optimize refreshes to reduce CPU.
         """
         return self._reduce_cpu
+
+    @property
+    def border_box(self):
+        """
+        Instance of :class:`~asciimatics.utilities.BoxTool` that specifies the characters used to
+        draw the border to this frame. You can change the border character style by modifying the
+        :attr:`style` property on this object. Allowed styles are defined in
+        :mod:`~asciimatics.constants`.
+
+        """
+        return self._border_mgr.box
 
     def find_widget(self, name):
         """
