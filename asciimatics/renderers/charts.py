@@ -364,13 +364,10 @@ class VBarChart(_BarChartBase):
             labels[-1] = str(scale)
 
             if self._intervals:
-                value = 0
                 next_interval = self._intervals
-                delta = scale / int_h
 
                 for i in range(0, len(labels)):
-                    value += delta
-                    value = round(value, self._precision)
+                    value = (i + 1) * scale / int_h
                     if value >= next_interval:
                         labels[i] = str(next_interval)
                         next_interval += self._intervals
@@ -402,14 +399,11 @@ class VBarChart(_BarChartBase):
 
         # Draw interval markers
         if self._intervals:
-            value = 0
             next_interval = self._intervals
-            delta = scale / int_h
             y = start_y + int_h - 1
 
-            for _ in range(int_h):
-                value += delta
-                value = round(value, self._precision)
+            for i in range(int_h):
+                value = (i + 1) * scale / int_h
                 if value >= next_interval:
                     self._write(self._axes_lines.v_right, start_x - 1, y)
                     self._write(self._axes_lines.h_inside * int_w, start_x, y)
