@@ -144,9 +144,9 @@ def _credits(screen):
             screen.height // 2 + 3,
             stop_frame=100),
         Stars(screen, (screen.width + screen.height) // 2, stop_frame=100),
-        DropScreen(screen, 100, start_frame=100)
+        DropScreen(screen, 200, start_frame=100)
     ]
-    scenes.append(Scene(effects, 200))
+    scenes.append(Scene(effects, 300))
 
     effects = [
         Print(screen,

@@ -556,6 +556,7 @@ class DropEmitter(ParticleEmitter):
         super(DropEmitter, self).__init__(
             screen, 0, 0, 20, self._next_particle, life_time, life_time)
         self._particles = None
+        self._full_count = 0
 
     def _next_particle(self):
         # Find all particles on the Screen when we create our first particle.
@@ -568,19 +569,16 @@ class DropEmitter(ParticleEmitter):
                         self._particles.insert(
                             randint(0, len(self._particles)),
                             (x, y, ch, fg, attr, bg))
+                        self._full_count += 1
 
         # Stop now if there were no more particles to move.
         if len(self._particles) == 0:
             return None
 
         # We got here, so there must still be some screen estate to move.
-        x, y, ch, fg, attr, bg = self._particles.pop()
-        return Particle(chr(ch), x, y,
-                        0.0,
-                        0.0,
-                        [(fg, attr, bg)],
-                        self._life_time,
-                        self._move)
+        if randint(0, len(self._particles)) < self._full_count * 0.1:
+            x, y, ch, fg, attr, bg = self._particles.pop()
+            return Particle(chr(ch), x, y, 0.0, 0.0, [(fg, attr, bg)], self._life_time, self._move)
 
     @staticmethod
     def _move(particle):
@@ -597,16 +595,18 @@ class ShotEmitter(ParticleEmitter):
     a given location.
     """
 
-    def __init__(self, screen, x, y, life_time):
+    def __init__(self, screen, x, y, diameter, life_time):
         """
         :param screen: The Screen being used for this particle system.
         :param x: The x position of the origin of the explosion.
         :param y: The y position of the origin of the explosion.
+        :param diameter: The diameter of the explosion.
         :param life_time: The life time of this particle system.
         """
         super(ShotEmitter, self).__init__(
             screen, x, y, 50, self._next_particle, life_time, life_time)
         self._particles = None
+        self._diameter = diameter
 
     def _next_particle(self):
         # Find all particles on the Screen when we create our first particle
@@ -618,8 +618,9 @@ class ShotEmitter(ParticleEmitter):
                     ch, fg, attr, bg = self._screen.get_from(x, y)
                     if ch != 32:
                         self._particles.append((x, y, ch, fg, attr, bg))
-            self._particles = sorted(
-                self._particles, key=self._sort, reverse=True)
+            if self._diameter: 
+                self._particles = filter(self._filter, self._particles)
+            self._particles = sorted(self._particles, key=self._sort, reverse=True)
 
         # Stop now if there were no more particles to move.
         if len(self._particles) == 0:
@@ -627,9 +628,7 @@ class ShotEmitter(ParticleEmitter):
 
         # We got here, so there must still be some screen estate to move.
         x, y, ch, fg, attr, bg = self._particles.pop()
-        r = min(10,
-                max(0.001,
-                    sqrt(((x - self._x) ** 2) + ((y - self._y) ** 2))))
+        r = min(10, max(0.001, sqrt(((x - self._x) ** 2) + ((y - self._y) ** 2))))
         return Particle(chr(ch), x, y,
                         (x - self._x) * 40.0 / r ** 2,
                         (y - self._y) * 20.0 / r ** 2,
@@ -642,9 +641,16 @@ class ShotEmitter(ParticleEmitter):
         dy = data[1] - self._y
         return (dx * dx / 4.0) + (dy * dy)
 
+    def _filter(self, data):
+        dx = data[0] - self._x
+        dy = data[1] - self._y
+        return dx ** 2 / 4.0 + dy ** 2 < self._diameter ** 2 / 4.0
+
     @staticmethod
     def _move(particle):
         result = int(particle.x), int(particle.y)
+        if (particle.dx, particle.dy) == (0, 0):
+            particle.dx, particle.dy = 100, 100
         particle.x += particle.dx
         particle.y += particle.dy
         return result
@@ -826,10 +832,20 @@ class ShootScreen(ParticleEffect):
     Shoot the screen out like a massive gunshot.
     """
 
+    def __init__(self, screen, x, y, life_time, diameter=None, **kwargs):
+        """
+        See :py:obj:`.ParticleEffect` for details of the parameters.
+
+        In addition, it is possible to set the diameter of this effect using the extra keyword parameter.
+        """
+        # Need to set the field first because the underlying constructor calls reset.
+        self._diameter = diameter
+        super(ShootScreen, self).__init__(screen, x, y, life_time, **kwargs)
+
     def reset(self):
         self._active_systems = []
         self._active_systems.append(
-            ShotEmitter(self._screen, self._x, self._y, self._life_time))
+            ShotEmitter(self._screen, self._x, self._y, self._diameter, self._life_time))
 
 
 class Rain(ParticleEffect):

@@ -10,6 +10,8 @@ LATEST
 - Added VBarChart renderer.
 - BREAKING VISUAL CHANGE: Frame now supports scroll bars without borders, to have no border and no scroll bar you now need Frame(has_border=False, can_scroll=False)
 - Added TextBox.hide_cursor and TextBox.auto_scroll properties
+- Added optional diameter parameter to ShootScreen.
+- Improved DropEmitter effect - will now typically take a little longer to clear the screen.
 
 1.13.0
 ------
