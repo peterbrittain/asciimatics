@@ -6,6 +6,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import range
 from copy import copy, deepcopy
+from logging import getLogger
 from wcwidth import wcswidth
 from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent, MouseEvent
@@ -13,7 +14,10 @@ from asciimatics.exceptions import Highlander, InvalidFields
 from asciimatics.screen import Screen, Canvas
 from asciimatics.utilities import BoxTool
 from asciimatics.widgets.scrollbar import _ScrollBar
-from asciimatics.widgets.utilities import THEMES, logger
+from asciimatics.widgets.utilities import THEMES
+
+# Logging
+logger = getLogger(__name__)
 
 
 class _BorderManager:
@@ -664,6 +668,7 @@ class Frame(Effect):
 
         # Give the current widget in focus first chance to process the event.
         event = self._layouts[self._focus].process_event(event, self._hover_focus)
+        logger.debug("Current widget left event: %s", event)
 
         # If the underlying widgets did not process the event, try processing
         # it now.

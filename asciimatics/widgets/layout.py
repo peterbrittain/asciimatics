@@ -6,13 +6,17 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import range
 from builtins import object
+from logging import getLogger
 from wcwidth import wcswidth
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import Highlander, InvalidFields
 from asciimatics.screen import Screen
 from asciimatics.utilities import _DotDict
-from asciimatics.widgets.utilities import _euclidian_distance, logger
+from asciimatics.widgets.utilities import _euclidian_distance
 from asciimatics.widgets.widget import Widget
+
+# Logging
+logger = getLogger(__name__)
 
 
 class Layout(object):
@@ -130,6 +134,7 @@ class Layout(object):
         :raises IndexError: if a force option specifies a bad column or widget, or if the whole
             Layout is readonly.
         """
+        logger.debug("Focus: %s", self)
         self._has_focus = True
         if force_widget is not None and force_column is not None:
             self._live_col = force_column
@@ -148,6 +153,7 @@ class Layout(object):
         """
         Call this to take the input focus from this Layout.
         """
+        logger.debug("Blur: %s", self)
         self._has_focus = False
         try:
             self._columns[self._live_col][self._live_widget].blur()
@@ -352,15 +358,16 @@ class Layout(object):
         :returns: None if the Effect processed the event, else the original event.
         """
         # Check whether this Layout is read-only - i.e. has no active focus.
+        logger.debug("Layout event: %s %s", self, event)
         if self._live_col < 0 or self._live_widget < 0:
             # Might just be that we've unset the focus - so check we can't find a focus.
             self._find_next_widget(1)
             if self._live_col < 0 or self._live_widget < 0:
                 return event
 
-        # Give the active widget the first refusal for this event.
-        event = self._columns[
-            self._live_col][self._live_widget].process_event(event)
+        # Give the active widget the first refusal for this event if we already have focus.
+        if self._has_focus:
+            event = self._columns[self._live_col][self._live_widget].process_event(event)
 
         # Check for any movement keys if the widget refused them.
         if event is not None:

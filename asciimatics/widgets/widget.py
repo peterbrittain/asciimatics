@@ -12,9 +12,13 @@ from builtins import object
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 from future.utils import with_metaclass
+from logging import getLogger
 from wcwidth import wcswidth
 from asciimatics.screen import Screen
-from asciimatics.widgets.utilities import _split_text, logger
+from asciimatics.widgets.utilities import _split_text
+
+# Logging
+logger = getLogger(__name__)
 
 
 class Widget(with_metaclass(ABCMeta, object)):
@@ -197,7 +201,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         if self._is_disabled:
             return False
 
-        # Check this part 9f the canvas is visible - can't be clicked if not visible.
+        # Check this part of the canvas is visible - can't be clicked if not visible.
         if (event.y < self._frame.canvas.start_line or
                 event.y >= self._frame.canvas.start_line + self._frame.canvas.height):
             return

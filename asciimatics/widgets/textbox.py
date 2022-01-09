@@ -7,11 +7,15 @@ from __future__ import unicode_literals
 from builtins import chr
 from builtins import str
 from copy import copy
+from logging import getLogger
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.screen import Screen
 from asciimatics.strings import ColouredText
 from asciimatics.widgets.widget import Widget
-from asciimatics.widgets.utilities import _find_min_start, _enforce_width, logger, _get_offset
+from asciimatics.widgets.utilities import _find_min_start, _enforce_width, _get_offset
+
+# Logging
+logger = getLogger(__name__)
 
 
 class TextBox(Widget):
