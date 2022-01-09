@@ -10,7 +10,7 @@ from builtins import str
 from datetime import date, datetime
 from logging import getLogger
 
-from asciimatics.constants import ASCII_LINE, SINGLE_LINE, DOUBLE_LINE
+from asciimatics.constants import SINGLE_LINE, DOUBLE_LINE
 
 
 # Diagnostic logging
@@ -53,8 +53,10 @@ class _DotDict(dict):
 
 
 class BoxTool(object):
-    """Tool for building boxes out of characters. Supports a variety of line
-    styles from `asciimatics.constants`:
+    """
+    Tool for building boxes out of characters.
+
+    Supports a variety of line styles from `asciimatics.constants`:
 
     * ``ASCII_LINE`` -- ASCII safe characters (0)
     * ``SINGLE_LINE`` -- Unicode based single lined box (1)
@@ -81,9 +83,9 @@ class BoxTool(object):
     * ``h_down`` -- horizontal line with a mid joiner facing down
     * ``cross`` -- intersection between vertical and horizontal
     """
-    def __init__(self, unicode_aware, style=SINGLE_LINE):
-        """**Initialization:**
 
+    def __init__(self, unicode_aware, style=SINGLE_LINE):
+        """
         :param unicode_aware: boolean indicating if the terminal is Unicode
             aware. If False, will force the use of the ASCII style
         :param style: line style specifier. Supports ``ASCII_LINE``,
@@ -96,7 +98,8 @@ class BoxTool(object):
 
     @property
     def style(self):
-        """The line drawing style used to draw boxes. Possible styles are set
+        """
+        The line drawing style used to draw boxes. Possible styles are set
         in :mod:`asciimatics.constants`.
 
         :param style: One of ``ASCII_LINE``, ``SINGLE_LINE``, or ``DOUBLE_LINE``
@@ -152,21 +155,24 @@ class BoxTool(object):
 
     # --- Empty box methods
     def box_top(self, width):
-        """Returns a string containing the top border of a box
+        """
+        Returns a string containing the top border of a box
 
         :param width: width of box, including corners
         """
         return self.down_right + (width - 2) * self.h + self.down_left
 
     def box_bottom(self, width):
-        """Returns a string containing the bottom border of a box
+        """
+        Returns a string containing the bottom border of a box
 
         :param width: width of box, including corners
         """
         return self.up_right + (width - 2) * self.h + self.up_left
 
     def box_line(self, width):
-        """Returns a string with a vertical bar on each end, padded with
+        """
+        Returns a string with a vertical bar on each end, padded with
         spaces in between for the given width.
 
         :param width: width of box including sides
@@ -174,8 +180,9 @@ class BoxTool(object):
         return self.v + (width - 2) * ' ' + self.v
 
     def box(self, width, height):
-        """Returns a string containing a box with the given width and
-        height"""
+        """
+        Returns a string containing a box with the given width and height.
+        """
         lines = [self.box_top(width)]
         for _ in range(height - 2):
             lines.append(self.box_line(width))
