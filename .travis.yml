@@ -35,7 +35,7 @@ matrix:
       os: windows
       language: shell       # 'language: python' is an error on Travis CI Windows
       before_install:
-         - choco install python --version 3.8.0
+         - choco install python --version 3.8.9
          - python -m pip install --upgrade pip
          - python -m pip install pywin32
       env: PATH=/c/Python38:/c/Python38/Scripts:$PATH BUILD=test FORCE_TTY=Y

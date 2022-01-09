@@ -19,6 +19,7 @@ pylint:
     # Py2/3 compatibility
     - redefined-builtin
     - useless-object-inheritance
+    - super-with-arguments
     # Need many attributes on widgets
     - too-many-arguments
     - too-many-locals

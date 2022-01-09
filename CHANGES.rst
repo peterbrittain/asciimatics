@@ -12,6 +12,7 @@ LATEST
 - Added TextBox.hide_cursor and TextBox.auto_scroll properties
 - Added optional diameter parameter to ShootScreen.
 - Improved DropEmitter effect - will now typically take a little longer to clear the screen.
+- Fixed bug in widget focus (layouts shouldn't pass event on if they don't have focus).
 
 1.13.0
 ------
