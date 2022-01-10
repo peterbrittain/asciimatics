@@ -1030,10 +1030,14 @@ class TestWidgets(unittest.TestCase):
         Check that the _on_focus & _on_blur callbacks work as expected.
         """
         def _on_focus():
-            self._did_focus = True
+            self._did_focus += 1
 
         def _on_blur():
-            self._did_blur = True
+            self._did_blur += 1
+
+        # Reset state for test
+        self._did_blur = 0
+        self._did_focus = 0
 
         # Create a dummy screen
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
@@ -1042,28 +1046,37 @@ class TestWidgets(unittest.TestCase):
 
         # Create the form we want to test.
         form = Frame(canvas, canvas.height, canvas.width, has_border=False, can_scroll=False)
-        layout = Layout([100], fill_frame=True)
+        layout = Layout([100])
         form.add_layout(layout)
         layout.add_widget(Text("Test"))
-        layout.add_widget(Text("Test2", on_blur=_on_blur, on_focus=_on_focus))
+        layout2 = Layout([100], fill_frame=True)
+        form.add_layout(layout2)
+        layout2.add_widget(Text("Test2", on_blur=_on_blur, on_focus=_on_focus))
         form.fix()
         form.register_scene(scene)
         form.reset()
 
-        # Reset state for test
-        self._did_blur = False
-        self._did_focus = False
+        # Check state after reset
+        self.assertEqual(self._did_blur, 1)
+        self.assertEqual(self._did_focus, 0)
 
         # Tab round to move the focus - check it has called the right function.
         self.process_keys(form, [Screen.KEY_TAB])
-        self.assertEqual(self._did_blur, False)
-        self.assertEqual(self._did_focus, True)
+        self.assertEqual(self._did_blur, 1)
+        self.assertEqual(self._did_focus, 1)
 
-        # Reset the state and Now move the focus away with the mouse.
-        self._did_focus = False
+        # Now move the focus away with the mouse.
         self.process_mouse(form, [(0, 0, MouseEvent.LEFT_CLICK)])
-        self.assertEqual(self._did_blur, True)
-        self.assertEqual(self._did_focus, False)
+        self.assertEqual(self._did_blur, 2)
+        self.assertEqual(self._did_focus, 1)
+
+        # Now check cursor keys call the right function.
+        self.process_keys(form, [Screen.KEY_DOWN])
+        self.assertEqual(self._did_blur, 2)
+        self.assertEqual(self._did_focus, 2)
+        self.process_keys(form, [Screen.KEY_UP])
+        self.assertEqual(self._did_blur, 3)
+        self.assertEqual(self._did_focus, 2)
 
     def test_load_callback(self):
         """

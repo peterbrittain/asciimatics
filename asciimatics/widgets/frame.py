@@ -638,8 +638,7 @@ class Frame(Effect):
                     self._canvas.start_line <= event.y < self._canvas.start_line + self._canvas.height):
                 self._scene.remove_effect(self)
                 self._scene.add_effect(self, reset=False)
-                if not self._has_focus and self._focus < len(self._layouts):
-                    self._layouts[self._focus].focus()
+                # No need to set focus - mouse event processing later will do that.
                 self._has_focus = claimed_focus = True
             else:
                 if self._has_focus and self._focus < len(self._layouts):
@@ -678,13 +677,13 @@ class Frame(Effect):
                     # Move on to next widget.
                     self._layouts[self._focus].blur()
                     self._find_next_tab_stop(1)
-                    self._layouts[self._focus].focus(force_first=True)
+                    # Find next tab stop will have already set the new focus.
                     old_event = None
                 elif event.key_code == Screen.KEY_BACK_TAB:
                     # Move on to previous widget.
                     self._layouts[self._focus].blur()
                     self._find_next_tab_stop(-1)
-                    self._layouts[self._focus].focus(force_last=True)
+                    # Find next tab stop will have already set the new focus.
                     old_event = None
                 if event.key_code == Screen.KEY_DOWN:
                     # Move on to nearest vertical widget in the next Layout

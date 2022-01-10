@@ -135,6 +135,8 @@ class Layout(object):
             Layout is readonly.
         """
         logger.debug("Focus: %s", self)
+        had_focus = self._has_focus
+        col, wid = self._live_col, self._live_widget
         self._has_focus = True
         if force_widget is not None and force_column is not None:
             self._live_col = force_column
@@ -147,19 +149,21 @@ class Layout(object):
             self._live_col = len(self._columns) - 1
             self._live_widget = len(self._columns[self._live_col])
             self._find_next_widget(-1)
-        self._columns[self._live_col][self._live_widget].focus()
+        if (col, wid) != (self._live_col, self._live_widget) or not had_focus:
+            self._columns[self._live_col][self._live_widget].focus()
 
     def blur(self):
         """
         Call this to take the input focus from this Layout.
         """
         logger.debug("Blur: %s", self)
-        self._has_focus = False
-        try:
-            self._columns[self._live_col][self._live_widget].blur()
-        except IndexError:
-            # don't worry if there are no active widgets in the Layout
-            pass
+        if self._has_focus:
+            self._has_focus = False
+            try:
+                self._columns[self._live_col][self._live_widget].blur()
+            except IndexError:
+                # don't worry if there are no active widgets in the Layout
+                pass
 
     def fix(self, start_x, start_y, max_width, max_height):
         """
@@ -349,6 +353,19 @@ class Layout(object):
         # We've exhausted our search - give up and stay where we were.
         self._live_widget = current_widget
 
+    def _update_focus(self, column, widget, set_focus=True):
+        """
+        Helper function to move focus if new state matches the passed in state.
+
+        :param column: Old index of column with focus.
+        :param widget: Old index of widget with focus.
+        :param set_focus: Whether to set a new focus or not.
+        """
+        if (column, widget) != (self._live_col, self._live_widget):
+            self._columns[column][widget].blur()
+            if set_focus:
+                self._columns[self._live_col][self._live_widget].focus()
+
     def process_event(self, event, hover_focus):
         """
         Process any input event.
@@ -373,61 +390,56 @@ class Layout(object):
         if event is not None:
             if isinstance(event, KeyboardEvent):
                 if event.key_code == Screen.KEY_TAB:
-                    # Move on to next widget, unless it is the last in the
-                    # Layout.
-                    self._columns[self._live_col][self._live_widget].blur()
+                    # Move on to next widget, unless it is the last in the Layout.
+                    col, wid = self._live_col, self._live_widget
                     self._find_next_widget(1)
                     if self._live_col >= len(self._columns):
                         self._live_col = 0
                         self._live_widget = -1
                         self._find_next_widget(1)
+                        self._update_focus(col, wid, set_focus=False)
                         return event
 
                     # If we got here, we still should have the focus.
-                    self._columns[self._live_col][self._live_widget].focus()
+                    self._update_focus(col, wid)
                     event = None
                 elif event.key_code == Screen.KEY_BACK_TAB:
-                    # Move on to previous widget, unless it is the first in the
-                    # Layout.
-                    self._columns[self._live_col][self._live_widget].blur()
+                    # Move on to previous widget, unless it is the first in the Layout.
+                    col, wid = self._live_col, self._live_widget
                     self._find_next_widget(-1)
                     if self._live_col < 0:
                         self._live_col = len(self._columns) - 1
                         self._live_widget = len(self._columns[self._live_col])
                         self._find_next_widget(-1)
+                        self._update_focus(col, wid, set_focus=False)
                         return event
 
                     # If we got here, we still should have the focus.
-                    self._columns[self._live_col][self._live_widget].focus()
+                    self._update_focus(col, wid)
                     event = None
                 elif event.key_code == Screen.KEY_DOWN:
-                    # Move on to next widget in this column
-                    wid = self._live_widget
-                    self._columns[self._live_col][self._live_widget].blur()
+                    # Move on to nearest widget below our current focus.
+                    col, wid = self._live_col, self._live_widget
                     self._find_next_widget(1, stay_in_col=True)
-                    self._columns[self._live_col][self._live_widget].focus()
-                    # Don't swallow the event if it had no effect.
+                    self._update_focus(col, wid)
                     event = event if wid == self._live_widget else None
                 elif event.key_code == Screen.KEY_UP:
-                    # Move on to previous widget, unless it is the first in the
-                    # Layout.
-                    wid = self._live_widget
-                    self._columns[self._live_col][self._live_widget].blur()
+                    # Move on to nearest widget above our current focus.
+                    col, wid = self._live_col, self._live_widget
                     self._find_next_widget(-1, stay_in_col=True)
-                    self._columns[self._live_col][self._live_widget].focus()
-                    # Don't swallow the event if it had no effect.
+                    self._update_focus(col, wid)
                     event = event if wid == self._live_widget else None
                 elif event.key_code == Screen.KEY_LEFT:
-                    # Move on to last widget in the previous column
-                    self._columns[self._live_col][self._live_widget].blur()
+                    # Move on to nearest widget to the left.
+                    col, wid = self._live_col, self._live_widget
                     self._find_nearest_horizontal_widget(-1)
-                    self._columns[self._live_col][self._live_widget].focus()
+                    self._update_focus(col, wid)
                     event = None
                 elif event.key_code == Screen.KEY_RIGHT:
-                    # Move on to first widget in the next column.
-                    self._columns[self._live_col][self._live_widget].blur()
+                    # Move on to nearest widget to the right.
+                    col, wid = self._live_col, self._live_widget
                     self._find_nearest_horizontal_widget(1)
-                    self._columns[self._live_col][self._live_widget].focus()
+                    self._update_focus(col, wid)
                     event = None
             elif isinstance(event, MouseEvent):
                 logger.debug("Check layout: %d, %d", event.x, event.y)
