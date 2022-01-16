@@ -741,6 +741,12 @@ class TestScreen(unittest.TestCase):
             self.assertEqual(ch.key_code, ord(u"├"))
             self.assertIsNone(screen.get_event())
 
+            # Check that unicode input colliding with curses KEY_MAP also works (code: 263)
+            self._inject_key(screen, ord(u"ć"))
+            ch = screen.get_event()
+            self.assertEqual(ch.key_code, ord(u"ć"))
+            self.assertIsNone(screen.get_event())
+
         Screen.wrapper(internal_checks, height=15, unicode_aware=True)
 
     def test_mouse_input(self):

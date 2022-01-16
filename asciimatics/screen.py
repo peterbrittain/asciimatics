@@ -2550,6 +2550,11 @@ else:
 
                     # Handle a genuine key press.
                     logger.debug("Returning key: %x", key)
+
+                    if self._bytes_to_return:
+                        # UTF-8 character - resetting _bytes_to_return
+                        self._bytes_to_return = b""
+                        return KeyboardEvent(key)
                     if key in self._KEY_MAP:
                         return KeyboardEvent(self._KEY_MAP[key])
                     elif key != -1:
