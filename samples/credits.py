@@ -106,6 +106,7 @@ def _credits(screen):
         "Noah Ginsburg",
         "Davidy22",
         "Christopher Trudeau",
+        "Beniamin Kalinowski"
     ]
 
     effects = [

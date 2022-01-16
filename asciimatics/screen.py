@@ -2508,7 +2508,6 @@ else:
             """
             # Spin through notifications until we find something we want.
             key = 0
-            is_utf_char = False
             while key != -1:
                 # Get the next key
                 key = self._screen.getch()
@@ -2540,7 +2539,6 @@ else:
                             self._bytes_to_read = bin(key)[2:].index("0") - 1
                             logger.debug("Byte stream: %d bytes left",
                                          self._bytes_to_read)
-                            is_utf_char = True
                             continue
                         elif self._bytes_to_read > 0:
                             self._bytes_to_return += struct.pack(b"B", key)
@@ -2552,9 +2550,12 @@ else:
 
                     # Handle a genuine key press.
                     logger.debug("Returning key: %x", key)
-                    if is_utf_char:
+
+                    if self._bytes_to_return:
+                        # UTF-8 character - resetting _bytes_to_return
+                        self._bytes_to_return = b""
                         return KeyboardEvent(key)
-                    elif key in self._KEY_MAP:
+                    if key in self._KEY_MAP:
                         return KeyboardEvent(self._KEY_MAP[key])
                     elif key != -1:
                         return KeyboardEvent(key)
