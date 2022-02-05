@@ -321,7 +321,7 @@ class VBarChart(_BarChartBase):
             * Borders use 4 characters height and 6 characters width
             * Keys use a height of 1
             * Labels vertical bar chart use the width of the widest label plus 1 (label values
-            depend on the scale of the chart)
+              depend on the scale of the chart)
             * An X_AXIS uses a height of 1
             * A Y_AXIS uses a width of 1
         """

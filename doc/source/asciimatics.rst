@@ -7,6 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
+   asciimatics.renderers
    asciimatics.widgets
 
 Submodules
@@ -64,14 +65,6 @@ asciimatics.paths module
 ------------------------
 
 .. automodule:: asciimatics.paths
-   :members:
-   :inherited-members:
-   :show-inheritance:
-
-asciimatics.renderers module
-----------------------------
-
-.. automodule:: asciimatics.renderers
    :members:
    :inherited-members:
    :show-inheritance:
