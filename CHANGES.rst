@@ -13,6 +13,7 @@ LATEST
 - Added optional diameter parameter to ShootScreen.
 - Improved DropEmitter effect - will now typically take a little longer to clear the screen.
 - Fixed bug in widget focus - eliminated duplicate events and some cases that failed to move focus
+- Fixed bug in clear_widgets() - also reset any focus in the layout.
 
 1.13.0
 ------

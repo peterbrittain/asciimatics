@@ -3028,9 +3028,11 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "+--------------------------------------+\n")
 
-        # Check removing widgets clears Frame.
+        # Check removing widgets clears Frame and safely resets focus.
+        self.process_mouse(form, [(0, 0, 0)])
         layout.clear_widgets()
         form.fix()
+        self.process_mouse(form, [(0, 0, 0)])
         scene.reset()
         for effect in scene.effects:
             effect.update(1)
@@ -3048,8 +3050,10 @@ class TestWidgets(unittest.TestCase):
             "+--------------------------------------+\n")
 
         # Check adding another widget now adds it back into the Frame.
+        self.process_mouse(form, [(0, 0, 0)])
         layout.add_widget(Text("Another One"))
         form.fix()
+        self.process_mouse(form, [(0, 0, 0)])
         scene.reset()
         for effect in scene.effects:
             effect.update(2)

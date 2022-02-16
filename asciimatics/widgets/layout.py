@@ -117,6 +117,8 @@ class Layout(object):
         force the Frame to recalculate the resulting new overall layout.
         """
         self._columns = [[] for _ in self._columns]
+        self._live_col = 0
+        self._live_widget = -1
 
     def focus(self, force_first=False, force_last=False, force_column=None,
               force_widget=None):
