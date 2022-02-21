@@ -151,6 +151,8 @@ class Layout(object):
             self._live_col = len(self._columns) - 1
             self._live_widget = len(self._columns[self._live_col])
             self._find_next_widget(-1)
+        if self._live_widget == -1:
+            raise IndexError("No live widgets")
         if (col, wid) != (self._live_col, self._live_widget) or not had_focus:
             self._columns[self._live_col][self._live_widget].focus()
 

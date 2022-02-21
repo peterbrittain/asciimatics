@@ -601,14 +601,20 @@ class Frame(Effect):
                 self._focus = len(self._layouts) - 1
             if self._focus >= len(self._layouts):
                 self._focus = 0
+            logger.debug("Trying tab to layout {}".format(self._focus))
             try:
                 if direction > 0:
                     self._layouts[self._focus].focus(force_first=True)
                 else:
                     self._layouts[self._focus].focus(force_last=True)
-                break
+                return
             except IndexError:
                 self._focus += direction
+        # If we get here, we need to reset the layout focus
+        if direction > 0:
+            self._layouts[self._focus].focus(force_first=True)
+        else:
+            self._layouts[self._focus].focus(force_last=True)
 
     def _switch_to_nearest_vertical_widget(self, direction):
         """

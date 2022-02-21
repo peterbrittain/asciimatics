@@ -14,6 +14,7 @@ LATEST
 - Improved DropEmitter effect - will now typically take a little longer to clear the screen.
 - Fixed bug in widget focus - eliminated duplicate events and some cases that failed to move focus
 - Fixed bug in clear_widgets() - also reset any focus in the layout.
+- Fixed bug: layout could still be a tab stop with no active widgets.
 
 1.13.0
 ------
