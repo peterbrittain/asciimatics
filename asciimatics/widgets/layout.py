@@ -108,6 +108,8 @@ class Layout(object):
         if widget.name in self._frame.data:
             widget.value = self._frame.data[widget.name]
 
+        return widget
+
     def clear_widgets(self):
         """
         Clear all widgets from this Layout.
