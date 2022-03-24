@@ -37,8 +37,11 @@ class TestFrame(Frame):
         layout = Layout([1, 18, 1])
         self.add_layout(layout)
         self._reset_button = Button("Reset", self._reset)
-        self.label = Label("Group 1:", height=label_height)
-        layout.add_widget(self.label, 1)
+
+        # Test that layout.add_widget returns the widget
+        self.label = layout.add_widget(
+            Label("Group 1:", height=label_height), 1)
+
         layout.add_widget(TextBox(5,
                                   label="My First Box:",
                                   name="TA",
