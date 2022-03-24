@@ -1,7 +1,7 @@
 
-.. image:: https://travis-ci.com/peterbrittain/asciimatics.svg?branch=master
-    :target: https://travis-ci.com/peterbrittain/asciimatics
-    :alt: Linux build status
+.. image:: https://app.travis-ci.com/peterbrittain/asciimatics.svg?branch=master
+    :target: https://app.travis-ci.com/peterbrittain/asciimatics
+    :alt: Build status
 
 .. image:: https://app.codacy.com/project/badge/Grade/c1fed1f2dc6a47a1bbe91f8851456beb
    :target: https://www.codacy.com/gh/peterbrittain/asciimatics/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=peterbrittain/asciimatics&amp;utm_campaign=Badge_Grade
