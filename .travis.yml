@@ -46,6 +46,8 @@ matrix:
       script: ./builddocs.sh
 
 install:
+  - pip list
+  - pip install -U setuptools
   - pip install -r requirements/dev.txt
 
 after_success:
