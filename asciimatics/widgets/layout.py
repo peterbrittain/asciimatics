@@ -108,6 +108,10 @@ class Layout(object):
         if widget.name in self._frame.data:
             widget.value = self._frame.data[widget.name]
 
+        # Send widget back so you can do a nested declaration in the
+        # add_widget call, e.g.:
+        #
+        # widget = layout.add_widget(Text("thing"), 1)
         return widget
 
     def clear_widgets(self):
