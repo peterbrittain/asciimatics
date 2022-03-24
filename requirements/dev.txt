@@ -2,7 +2,6 @@
 # Tie down version to ensure Image dithering is consistent in UTs
 Pillow == 6.2.2
 coveralls
-git+https://github.com/peterbrittain/appveyor-artifacts.git
 mock
 nose
 sphinx
