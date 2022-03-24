@@ -96,6 +96,8 @@ class Layout(object):
 
         :param widget: The widget to be added.
         :param column: The column within the widget for this widget.  Defaults to zero.
+
+        :returns: The passed in widget (so you can store a reference if needed).
         """
         # Make sure that the Layout is fully initialised before we try to add any widgets.
         if self._frame is None:
@@ -108,10 +110,6 @@ class Layout(object):
         if widget.name in self._frame.data:
             widget.value = self._frame.data[widget.name]
 
-        # Send widget back so you can do a nested declaration in the
-        # add_widget call, e.g.:
-        #
-        # widget = layout.add_widget(Text("thing"), 1)
         return widget
 
     def clear_widgets(self):
