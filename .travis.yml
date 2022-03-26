@@ -26,6 +26,7 @@ matrix:
     - name: "3.7 Linux"
       env: BUILD=test FORCE_TTY=Y
       python: '3.7'
+      before_install: python -m pip install pip==22.0.4
       script: ./noserun.sh
     - name: "pypy Linux"
       env: BUILD=test FORCE_TTY=Y
