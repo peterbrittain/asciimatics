@@ -46,9 +46,7 @@ matrix:
       script: ./builddocs.sh
 
 install:
-  - pip list
-  - pip install -U setuptools --use-deprecated=backtrack-on-build-failures
-  - pip install -r requirements/dev.txt
+  - pip install -r requirements/dev.txt --use-deprecated=backtrack-on-build-failures
 
 after_success:
   - |
