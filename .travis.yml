@@ -26,7 +26,6 @@ matrix:
     - name: "3.7 Linux"
       env: BUILD=test FORCE_TTY=Y
       python: '3.7'
-      before_install: python -m pip install pip==21.3.1
       script: ./noserun.sh
     - name: "pypy Linux"
       env: BUILD=test FORCE_TTY=Y
@@ -48,7 +47,7 @@ matrix:
 
 install:
   - pip list
-  - pip install -U setuptools
+  - pip install -U setuptools --use-deprecated=backtrack-on-build-failures
   - pip install -r requirements/dev.txt
 
 after_success:
