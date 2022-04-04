@@ -27,6 +27,9 @@ matrix:
       env: BUILD=test FORCE_TTY=Y
       python: '3.7'
       script: ./noserun.sh
+      before_install: 
+        - python -m pip install pip==21.3.1
+        - pip install setuptools --upgrade
     - name: "pypy Linux"
       env: BUILD=test FORCE_TTY=Y
       python: 'pypy'
@@ -46,7 +49,7 @@ matrix:
       script: ./builddocs.sh
 
 install:
-  - pip install -r requirements/dev.txt --use-deprecated=backtrack-on-build-failures
+  - pip install -r requirements/dev.txt
 
 after_success:
   - |
