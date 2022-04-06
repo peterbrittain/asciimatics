@@ -25,11 +25,8 @@ matrix:
       script: ./noserun.sh
     - name: "3.7 Linux"
       env: BUILD=test FORCE_TTY=Y
-      python: '3.7'
+      python: '3.7.13'
       script: ./noserun.sh
-      before_install: 
-        - python -m pip install pip==21.3.1
-        - pip install setuptools --upgrade
     - name: "pypy Linux"
       env: BUILD=test FORCE_TTY=Y
       python: 'pypy'
@@ -49,6 +46,8 @@ matrix:
       script: ./builddocs.sh
 
 install:
+  - pip list
+  - pip install -U setuptools
   - pip install -r requirements/dev.txt
 
 after_success:
