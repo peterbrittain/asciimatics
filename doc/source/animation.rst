@@ -198,7 +198,7 @@ For example, here is how you can run inside an asyncio event loop.
     screen.set_scenes([Scene(effects, 500)])
 
     # Schedule the first call to display_date()
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
     end_time = loop.time() + 5.0
     loop.call_soon(update_screen, end_time, loop, screen)
 
