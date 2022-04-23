@@ -58,8 +58,9 @@ list).
 Installation
 ------------
 
-Asciimatics supports Python versions 2 & 3.  For the precise list of tested versions,
-refer to `pypi <https://pypi.python.org/pypi/asciimatics>`_.
+Asciimatics supports Python version 3.  For the precise list of tested versions,
+refer to `pypi <https://pypi.python.org/pypi/asciimatics>`_.  The last version of asciimatics
+to support Python 2 is v1.14.
 
 To install asciimatics, simply install with `pip` as follows:
 
@@ -145,7 +146,7 @@ More examples
 -------------
 
 More examples of what you can do are available in the project samples directory, hosted on GitHub.
-See https://github.com/peterbrittain/asciimatics/tree/v1.13/samples.
+See https://github.com/peterbrittain/asciimatics/tree/v1.14/samples.
 
 To view them, simply download these files and then simply run them directly with `python`.
 Alternatively, you can browse recordings of many of the samples in the gallery at
