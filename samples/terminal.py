@@ -3,7 +3,7 @@ from asciimatics.widgets import Frame, Layout, Widget
 from asciimatics.effects import Background
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen, Canvas
-from asciimatics.exceptions import ResizeScreenError
+from asciimatics.exceptions import ResizeScreenError, StopApplication
 from asciimatics.parsers import AnsiTerminalParser, Parser
 from asciimatics.event import KeyboardEvent
 import sys
@@ -82,6 +82,9 @@ class Terminal(Widget):
         """
         Draw the current terminal content to screen.
         """
+        if self._shell.poll() is not None:
+            raise StopApplication("Process ended")
+
         # Don't allow background thread to update values mid screen refresh.
         with self._lock:
             # Push current terminal output to screen.
