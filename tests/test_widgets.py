@@ -296,7 +296,9 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
+        scene = Scene([], -1)
         form = TestFrame(canvas)
+        scene.add_effect(form)
 
         # Should be empty on construction
         self.assertEqual(form.data, {})
@@ -323,7 +325,9 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
+        scene = Scene([], -1)
         form = TestFrame(canvas)
+        scene.add_effect(form)
         form.reset()
 
         # Check initial rendering
@@ -379,7 +383,9 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=True)
         canvas = Canvas(screen, 10, 40, 0, 0)
+        scene = Scene([], -1)
         form = TestFrame(canvas)
+        scene.add_effect(form)
         form.reset()
 
         # Check initial rendering
@@ -435,7 +441,9 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
+        scene = Scene([], -1)
         form = TestFrame(canvas, has_border=False, can_scroll=False)
+        scene.add_effect(form)
         form.reset()
 
         # Check initial rendering
@@ -475,7 +483,9 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
+        scene = Scene([], -1)
         form = TestFrame(canvas, has_border=False, can_scroll=True)
+        scene.add_effect(form)
         form.reset()
 
         # Check initial rendering
@@ -499,7 +509,9 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
+        scene = Scene([], -1)
         form = TestFrame(canvas)
+        scene.add_effect(form)
         form.reset()
         self.process_keys(form,
                           ["ABC\nDEF", "GHI", "jkl", "MN", " ", " ", "", " "],
@@ -531,7 +543,9 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
+        scene = Scene([], -1)
         form = TestFrame(canvas)
+        scene.add_effect(form)
         form.reset()
 
         # Check basic movement keys
@@ -603,7 +617,9 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
+        scene = Scene([], -1)
         form = TestFrame(canvas)
+        scene.add_effect(form)
         form.reset()
 
         # Check basic movement keys
@@ -646,7 +662,9 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
+        scene = Scene([], -1)
         form = TestFrame(canvas)
+        scene.add_effect(form)
         form.reset()
 
         # Check that save still works with no validation.
@@ -676,7 +694,9 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
+        scene = Scene([], -1)
         form = TestFrame(canvas)
+        scene.add_effect(form)
         form.reset()
 
         # Check basic selection keys
@@ -703,7 +723,9 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
+        scene = Scene([], -1)
         form = TestFrame(canvas)
+        scene.add_effect(form)
         form.reset()
 
         # Check basic selection keys - including limit checking
@@ -742,10 +764,10 @@ class TestWidgets(unittest.TestCase):
         Check mouse input works as expected.
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
         canvas = Canvas(screen, 10, 40, 0, 0)
+        scene = Scene([], -1)
         form = TestFrame(canvas)
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check focus moves when clicked on a text or textbox
@@ -790,7 +812,9 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
+        scene = Scene([], -1)
         form = TestFrame(canvas)
+        scene.add_effect(form)
         form.reset()
 
         # If the Frame loses the focus it must not return a focussed widget.
@@ -808,7 +832,9 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
+        scene = Scene([], -1)
         form = TestFrame(canvas)
+        scene.add_effect(form)
         form.reset()
 
         # A Frame with a valid focus should return the widget in focus.
@@ -824,7 +850,9 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
+        scene = Scene([], -1)
         form = TestFrame(canvas)
+        scene.add_effect(form)
         form.reset()
 
         # Check default focus at start is first visible widget
@@ -899,11 +927,11 @@ class TestWidgets(unittest.TestCase):
         Check ListBox widget works as expected.
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
         canvas = Canvas(screen, 10, 40, 0, 0)
+        scene = Scene([], -1)
         form = TestFrame2(
             canvas, [("One", 1), ("Two is now quite a bit longer than before", 2)])
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check we have a default value for our list.
@@ -988,10 +1016,10 @@ class TestWidgets(unittest.TestCase):
         Check Frame titles work as expected.
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
         canvas = Canvas(screen, 10, 40, 0, 0)
+        scene = Scene([], -1)
         form = TestFrame2(canvas, [("One", 1), ("Two", 2)])
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check that the title is rendered correctly.
@@ -1044,11 +1072,12 @@ class TestWidgets(unittest.TestCase):
 
         # Create a dummy screen
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 2, 40, 0, 0)
 
         # Create the form we want to test.
         form = Frame(canvas, canvas.height, canvas.width, has_border=False, can_scroll=False)
+        scene.add_effect(form)
         layout = Layout([100])
         form.add_layout(layout)
         layout.add_widget(Text("Test"))
@@ -1056,7 +1085,6 @@ class TestWidgets(unittest.TestCase):
         form.add_layout(layout2)
         layout2.add_widget(Text("Test2", on_blur=_on_blur, on_focus=_on_focus))
         form.fix()
-        form.register_scene(scene)
         form.reset()
 
         # Check state after reset
@@ -1111,7 +1139,7 @@ class TestWidgets(unittest.TestCase):
         """
         # Create a dummy screen.
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
@@ -1133,7 +1161,7 @@ class TestWidgets(unittest.TestCase):
         form.add_layout(layout)
         layout.add_widget(mc_list)
         form.fix()
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check we have a default value for our list.
@@ -1240,7 +1268,7 @@ class TestWidgets(unittest.TestCase):
         """
         # Create a dummy screen.
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
@@ -1263,7 +1291,7 @@ class TestWidgets(unittest.TestCase):
         form.add_layout(layout)
         layout.add_widget(mc_list)
         form.fix()
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check that the widget is rendered correctly.
@@ -1287,7 +1315,7 @@ class TestWidgets(unittest.TestCase):
         """
         # Create a dummy screen.
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
@@ -1307,7 +1335,7 @@ class TestWidgets(unittest.TestCase):
         form.add_layout(layout)
         layout.add_widget(simple_list)
         form.fix()
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check that the widget is rendered correctly with the scrollbar
@@ -1363,7 +1391,7 @@ class TestWidgets(unittest.TestCase):
         """
         # Create a dummy screen.
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
@@ -1384,7 +1412,7 @@ class TestWidgets(unittest.TestCase):
         form.add_layout(layout)
         layout.add_widget(mc_list)
         form.fix()
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check that the widget is rendered correctly with the scrollbar
@@ -1408,7 +1436,7 @@ class TestWidgets(unittest.TestCase):
         """
         # Create a dummy screen.
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
@@ -1423,7 +1451,7 @@ class TestWidgets(unittest.TestCase):
         text_box2 = TextBox(1, as_string=True)
         layout2.add_widget(text_box2)
         form.fix()
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check that input cannot get focus on disabled layout.
@@ -1440,7 +1468,7 @@ class TestWidgets(unittest.TestCase):
         """
         # Create a dummy screen.
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
@@ -1452,7 +1480,7 @@ class TestWidgets(unittest.TestCase):
         text_box.disabled = True
         layout.add_widget(text_box)
         form.fix()
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check that input has no effect on the programmed value.
@@ -1478,7 +1506,7 @@ class TestWidgets(unittest.TestCase):
         """
         # Create a dummy screen.
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
@@ -1489,7 +1517,7 @@ class TestWidgets(unittest.TestCase):
         text_box = TextBox(5, as_string=True, line_wrap=True)
         layout.add_widget(text_box)
         form.fix()
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # start with some text that will wrap and check display works.
@@ -1546,10 +1574,10 @@ class TestWidgets(unittest.TestCase):
             raise NextScene(str(selection))
 
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = PopUpDialog(canvas, "Message", ["Yes", "No"], test_on_click)
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check that the pop-up is rendered correctly.
@@ -1583,10 +1611,10 @@ class TestWidgets(unittest.TestCase):
             raise NextScene(str(selection))
 
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = PopUpDialog(canvas, "Message", [], test_on_click)
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check that the pop-up is rendered correctly.
@@ -1611,10 +1639,10 @@ class TestWidgets(unittest.TestCase):
         # Apologies to anyone who actually speaks this language!  I just need some double-width
         # glyphs so have re-used the ones from the original bug report.
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=True)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = PopUpDialog(canvas, u"你確定嗎？ 你確定嗎？ 你確定嗎？", [u"是", u"否"])
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check that the pop-up is rendered correctly.
@@ -1638,7 +1666,7 @@ class TestWidgets(unittest.TestCase):
         """
         # Create a dummy screen.
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=True)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
@@ -1660,7 +1688,7 @@ class TestWidgets(unittest.TestCase):
         layout.add_widget(text)
         layout.add_widget(text_box)
         form.fix()
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Set some interesting values...
@@ -1705,13 +1733,13 @@ class TestWidgets(unittest.TestCase):
             raise NextScene(str(selection))
 
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
         for y in range(10):
             canvas.print_at("X" * 40, 0, y)
         form = PopUpDialog(
             canvas, "Message", ["Yes", "No"], test_on_click, has_shadow=True)
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check that the pop-up is rendered correctly.
@@ -1737,14 +1765,14 @@ class TestWidgets(unittest.TestCase):
             raise NextScene(str(selection))
 
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
-        scene2 = Scene([], 10)
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Check that pop-up dialogs get copied to the new Scene
+        scene = Scene([], -1)
+        scene2 = Scene([], 10)
         form = PopUpDialog(
             canvas, "Message", ["Yes", "No"], test_on_click, has_shadow=True)
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.clone(canvas, scene2)
         self.assertEqual(len(scene2.effects), 1)
         self.assertEqual(scene2.effects[0]._text, "Message")
@@ -1753,9 +1781,8 @@ class TestWidgets(unittest.TestCase):
         # Check that normal Frame data gets copied to the new Scene.
         frame = TestFrame(canvas)
         frame2 = TestFrame(canvas)
+        scene = Scene([frame], 10)
         scene2 = Scene([frame2], 10)
-        frame.register_scene(scene)
-        frame2.register_scene(scene)
         frame.data = {"TA": ["something"]}
         frame2.data = {}
 
@@ -1770,7 +1797,9 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
+        scene = Scene([], -1)
         form = TestFrame(canvas)
+        scene.add_effect(form)
         form.reset()
 
         # With no special CPU consideration, and a cursor to animate, there
@@ -1792,7 +1821,9 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
+        scene = Scene([], -1)
         form = TestFrame(canvas, reduce_cpu=True)
+        scene.add_effect(form)
         form.reset()
 
         # In this mode, it shouldn't matter where we are on the Frame - all
@@ -1819,9 +1850,9 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         form = TestFrame3(canvas)
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check all keyboard events get swallowed
@@ -1936,7 +1967,6 @@ class TestWidgets(unittest.TestCase):
         layout.add_widget(Label("Middle", align="^"))
         layout.add_widget(Label("Right", align=">"))
         form.fix()
-        form.register_scene(scene)
         scene.add_effect(form)
         scene.reset()
 
@@ -1973,7 +2003,6 @@ class TestWidgets(unittest.TestCase):
         label.custom_colour = "disabled"
         layout.add_widget(label)
         form.fix()
-        form.register_scene(scene)
         scene.add_effect(form)
         scene.reset()
 
@@ -2002,10 +2031,10 @@ class TestWidgets(unittest.TestCase):
 
         # Now set up the Frame ready for testing
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = TestFrame4(canvas)
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check that the Frame is rendered correctly.
@@ -2036,10 +2065,10 @@ class TestWidgets(unittest.TestCase):
 
         # Now set up the Frame ready for testing
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = TestFrame4(canvas)
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check that the Frame is rendered correctly.
@@ -2086,10 +2115,10 @@ class TestWidgets(unittest.TestCase):
 
         # Now set up the Frame ready for testing
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = TestFrame4(canvas)
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check we have a default value for our list.
@@ -2179,10 +2208,10 @@ class TestWidgets(unittest.TestCase):
 
         # Now set up the Frame ready for testing
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = TestFrame4(canvas, file_filter=r".*\.bmp$")
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check we have a default value for our list.
@@ -2435,10 +2464,10 @@ class TestWidgets(unittest.TestCase):
         Check Background widget works as expected.
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = Background(canvas, bg=7)
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check that the widget is rendered correctly.
@@ -2466,7 +2495,6 @@ class TestWidgets(unittest.TestCase):
         form.add_layout(layout)
         layout.add_widget(DropdownList([("Item 1", 1), ("Item 2", 3), ("Item 3", 5)]))
         form.fix()
-        form.register_scene(scene)
         scene.add_effect(form)
         scene.reset()
 
@@ -2569,7 +2597,6 @@ class TestWidgets(unittest.TestCase):
         dd_list = DropdownList([("Item {}".format(i), i) for i in range(10)])
         layout.add_widget(dd_list)
         form.fix()
-        form.register_scene(scene)
         scene.add_effect(form)
         scene.reset()
 
@@ -2623,7 +2650,6 @@ class TestWidgets(unittest.TestCase):
         dd_list = DropdownList([("Item {}".format(i), i) for i in range(10)], fit=True)
         layout.add_widget(dd_list)
         form.fix()
-        form.register_scene(scene)
         scene.add_effect(form)
         scene.reset()
 
@@ -2674,7 +2700,7 @@ class TestWidgets(unittest.TestCase):
         divider = Divider(draw_line=False, height=7)
         layout.add_widget(divider)
         form.fix()
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check events are ignored
@@ -2708,7 +2734,7 @@ class TestWidgets(unittest.TestCase):
         """
         # Create a dummy screen.
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 2, 40, 0, 0)
 
         # Create the form we want to test.
@@ -2719,7 +2745,7 @@ class TestWidgets(unittest.TestCase):
         text = Text("Password", hide_char="*")
         layout.add_widget(text)
         form.fix()
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check that input still saves off values as expected
@@ -2740,7 +2766,7 @@ class TestWidgets(unittest.TestCase):
         """
         # Create a dummy screen.
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
@@ -2751,7 +2777,7 @@ class TestWidgets(unittest.TestCase):
         text = Text()
         layout.add_widget(text)
         form.fix()
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check that input is put at the end of the new text
@@ -2788,7 +2814,6 @@ class TestWidgets(unittest.TestCase):
                               ("Third", lambda: click(4))
                           ],
                           0, 0)
-        popup.register_scene(scene)
         scene.add_effect(popup)
         scene.reset()
 
@@ -2823,7 +2848,6 @@ class TestWidgets(unittest.TestCase):
                               ("Third", lambda: click(4))
                           ],
                           39, 9)
-        popup.register_scene(scene)
         scene.add_effect(popup)
         scene.reset()
 
@@ -2852,7 +2876,6 @@ class TestWidgets(unittest.TestCase):
         self.clicked = 0
         canvas.reset()
         popup = PopupMenu(canvas, [("A", lambda: click(1)), ("B", lambda: click(2))], 39, 9)
-        popup.register_scene(scene)
         scene.add_effect(popup)
         scene.reset()
         self.process_mouse(scene, [(10, 9, MouseEvent.LEFT_CLICK)])
@@ -2863,7 +2886,6 @@ class TestWidgets(unittest.TestCase):
         self.clicked = 0
         canvas.reset()
         popup = PopupMenu(canvas, [("A", lambda: click(1)), ("B", lambda: click(2))], 39, 9)
-        popup.register_scene(scene)
         scene.add_effect(popup)
         scene.reset()
         self.process_mouse(scene, [(39, 1, MouseEvent.LEFT_CLICK)])
@@ -2874,7 +2896,6 @@ class TestWidgets(unittest.TestCase):
         self.clicked = 0
         canvas.reset()
         popup = PopupMenu(canvas, [("A", lambda: click(1)), ("B", lambda: click(2))], 39, 9)
-        popup.register_scene(scene)
         scene.add_effect(popup)
         scene.reset()
         self.process_keys(popup, [Screen.KEY_ESCAPE])
@@ -2911,7 +2932,6 @@ class TestWidgets(unittest.TestCase):
         layout.add_widget(divider, 3)
         layout.add_widget(Label("END"), 4)
         form.fix()
-        form.register_scene(scene)
         scene.add_effect(form)
         scene.reset()
 
@@ -2961,7 +2981,6 @@ class TestWidgets(unittest.TestCase):
         layout.add_widget(text)
         layout.add_widget(listbox)
         form.fix()
-        form.register_scene(scene)
         scene.add_effect(form)
         scene.reset()
 
@@ -3022,7 +3041,6 @@ class TestWidgets(unittest.TestCase):
         text = Text(label="Text", name="max_len_text", max_length=4)
         layout.add_widget(text)
         form.fix()
-        form.register_scene(scene)
         scene.add_effect(form)
         scene.reset()
 
@@ -3043,7 +3061,6 @@ class TestWidgets(unittest.TestCase):
         form.add_layout(layout)
         layout.add_widget(Text("Test"))
         form.fix()
-        form.register_scene(scene)
         scene.add_effect(form)
         scene.reset()
 
@@ -3112,12 +3129,12 @@ class TestWidgets(unittest.TestCase):
         """
         # Create a dummy screen.
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=True)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
-        form = Frame(canvas, canvas.height, canvas.width, has_border=False,
-            can_scroll=False)
+        form = Frame(canvas, canvas.height, canvas.width, has_border=False, can_scroll=False)
+        scene.add_effect(form)
         layout = Layout([100], fill_frame=True)
         form.add_layout(layout)
         text_box = TextBox(3, as_string=True, parser=AsciimaticsParser())
@@ -3132,14 +3149,13 @@ class TestWidgets(unittest.TestCase):
             parser=AnsiTerminalParser())
         layout.add_widget(mc_list)
         form.fix()
-        form.register_scene(scene)
         form.reset()
 
         # Check that the Asciimatics colour parsing worked.
         text_box.value = "A${1}B"
         form.update(0)
-        self.assertEqual(canvas.get_from(0, 0), (ord("A"), 7, 2, 4))
-        self.assertEqual(canvas.get_from(1, 0), (ord("B"), 1, 0, 4))
+        self.assertEqual(canvas.get_from(0, 0), (ord("A"), 7, 1, 6))
+        self.assertEqual(canvas.get_from(1, 0), (ord("B"), 1, 0, 6))
         self.assertEqual(canvas.get_from(0, 3), (ord("P"), 3, 1, 4))
         self.assertEqual(canvas.get_from(0, 4), (ord("Q"), 9, 2, 4))
 
@@ -3155,7 +3171,7 @@ class TestWidgets(unittest.TestCase):
         """
         # Create a dummy screen.
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=True)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
@@ -3176,7 +3192,7 @@ class TestWidgets(unittest.TestCase):
         """
         # Create a dummy screen.
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=True)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
@@ -3208,7 +3224,7 @@ class TestWidgets(unittest.TestCase):
         """
         # Create a dummy screen.
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
@@ -3221,7 +3237,7 @@ class TestWidgets(unittest.TestCase):
         text = Text(readonly=True)
         layout.add_widget(text)
         form.fix()
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         # Check that entering text has no effect.
@@ -3256,7 +3272,7 @@ class TestWidgets(unittest.TestCase):
         """
         # Create a dummy screen.
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        scene = MagicMock(spec=Scene)
+        scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
 
         # Create the form we want to test.
@@ -3269,7 +3285,7 @@ class TestWidgets(unittest.TestCase):
             layout.add_widget(Text(), col)
             layout.add_widget(Button("OK", None), col)
         form.fix()
-        form.register_scene(scene)
+        scene.add_effect(form)
         form.reset()
 
         def _assert_disabled(cols):
@@ -3325,7 +3341,6 @@ class TestWidgets(unittest.TestCase):
         text = Text(label="Text")
         layout.add_widget(text)
         form.fix()
-        form.register_scene(scene)
         scene.add_effect(form)
         form.reset()
 
@@ -3428,7 +3443,6 @@ class TestWidgets(unittest.TestCase):
         textbox = TextBox(4, label="TB")
         layout.add_widget(textbox)
         form.fix()
-        form.register_scene(scene)
         scene.add_effect(form)
         scene.reset()
 
@@ -3461,7 +3475,6 @@ class TestWidgets(unittest.TestCase):
         textbox.value = ["Hello", "World", "Full", "Box"]
         layout.add_widget(textbox)
         form.fix()
-        form.register_scene(scene)
         scene.add_effect(form)
         scene.reset()
 

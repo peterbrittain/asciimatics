@@ -536,6 +536,17 @@ class Frame(Effect):
         if len(invalid) > 0:
             raise InvalidFields(invalid)
 
+    def blur(self):
+        """
+        Blur this Frame.
+        """
+        # If the frame has no focus, it's a NOOP.
+        if not self._has_focus:
+            return
+        self._layouts[self._focus].blur()
+        self._has_focus = False
+        logger.debug("Blurred frame: %s", self)
+
     def switch_focus(self, layout, column, widget):
         """
         Switch focus to the specified widget.
@@ -626,7 +637,13 @@ class Frame(Effect):
 
         :param direction: The direction to move through the Layouts.
         """
+        # If no current widget, just find next one
         current_widget = self._layouts[self._focus].get_current_widget()
+        if current_widget is None:
+            self._find_next_tab_stop(direction)
+            return
+
+        # Otherwise, find the nearest option
         focus = self._focus
         focus += direction
         while self._focus != focus:
@@ -645,22 +662,31 @@ class Frame(Effect):
         old_event = event
         event = self.rebase_event(event)
 
-        # Claim the input focus if a mouse clicked on this Frame.
         claimed_focus = False
         if isinstance(event, MouseEvent) and event.buttons > 0:
+            # TODO: Should have Desktop Manager handling this - wait for v2.0
+            # Claim focus if mouse click is inside the Frame.
             if (0 <= event.x < self._canvas.width and
                     self._canvas.start_line <= event.y < self._canvas.start_line + self._canvas.height):
                 self._scene.remove_effect(self)
                 self._scene.add_effect(self, reset=False)
-                # No need to set focus - mouse event processing later will do that.
+                if not self._has_focus and self._focus < len(self._layouts):
+                    self._layouts[self._focus].focus()
                 self._has_focus = claimed_focus = True
+                logger.debug("Blurring: %s", self._scene.effects)
+                for effect in self._scene.effects:
+                    if effect is not self:
+                        try:
+                            effect.blur()
+                        except AttributeError:
+                            pass
             else:
-                if self._has_focus and self._focus < len(self._layouts):
-                    self._layouts[self._focus].blur()
-                self._has_focus = False
+                return old_event
         elif isinstance(event, KeyboardEvent):
             # TODO: Should have Desktop Manager handling this - wait for v2.0
-            # By this stage, if we're processing keys, we have the focus.
+            # By this stage, if we're processing keys and topmost, we have the focus.
+            if self._scene.effects[-1] is not self:
+                return old_event 
             if not self._has_focus and self._focus < len(self._layouts):
                 self._layouts[self._focus].focus()
             self._has_focus = True

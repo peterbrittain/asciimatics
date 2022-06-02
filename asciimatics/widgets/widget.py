@@ -182,6 +182,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         Call this to give this Widget the input focus.
         """
+        logger.debug("Widget focus: %s", self)
         self._has_focus = True
         self._frame.move_to(self._x, self._y, self._h)
         if self._on_focus is not None:
@@ -218,6 +219,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         """
         Call this to take the input focus from this Widget.
         """
+        logger.debug("Widget blur: %s", self)
         self._has_focus = False
         if self._on_blur is not None:
             self._on_blur()
