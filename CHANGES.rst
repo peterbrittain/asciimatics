@@ -3,7 +3,7 @@ CHANGE HISTORY
 
 LATEST
 ------
-- TBD
+- Fixed bug where moving focus between Frames resulted in no current focus.
 
 1.14.0
 ------
