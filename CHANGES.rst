@@ -4,6 +4,7 @@ CHANGE HISTORY
 LATEST
 ------
 - Fixed bug where moving focus between Frames resulted in no current focus.
+- Fixed internal state of RadioButton values to be consistent with selection.
 
 1.14.0
 ------

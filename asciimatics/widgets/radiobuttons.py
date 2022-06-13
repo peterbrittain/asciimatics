@@ -105,13 +105,12 @@ class RadioButtons(Widget):
     def value(self, new_value):
         # Only trigger the notification after we've changed the value.
         old_value = self._value
-        self._value = new_value
         for i, (_, value) in enumerate(self._options):
             if new_value == value:
                 self._selection = i
                 break
         else:
             self._selection = 0
-        self._value = new_value if new_value else None
+        self._value = self._options[self._selection][1]
         if old_value != self._value and self._on_change:
             self._on_change()
