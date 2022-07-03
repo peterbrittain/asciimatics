@@ -82,7 +82,7 @@ class NextScene(Exception):
 class InvalidFields(Exception):
     """
     When saving data from a Frame, you can ask the Frame to validate the data
-    before saving.  This is the exception that gets thrwn if any invalid datd
+    before saving.  This is the exception that gets thrwn if any invalid data
     is found.
     """
 

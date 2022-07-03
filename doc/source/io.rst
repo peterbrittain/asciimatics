@@ -94,7 +94,7 @@ These should always work for you as background and foreground colours (even on W
 systems you can also use the attributes (see later) to double the number of foreground colours.
 
 If you have a display capable of handling more than these (e.g. 256 colour xterm) you can use the
-indexes of the colours for that display directly instead.  For a full list of the colour indeces,
+indexes of the colours for that display directly instead.  For a full list of the colour indices,
 look `here <https://askubuntu.com/a/821163/1014276>`__.
 
 When creating effects that use these extra colours, it is recommended that you also support a
@@ -235,7 +235,7 @@ In a little more detail, you can read the Screen size (at the time of creation) 
 this by calling the :py:meth:`.has_resized` method.  In addition, you can tell the Screen to throw
 an exception if this happens while you are playing a Scene by specifying ``stop_on_resize=True``.
 
-Once you have detetected that the screen size has changed using one of the options above, you can
+Once you have detected that the screen size has changed using one of the options above, you can
 either decide to carry on with the current Screen or throw it away and create a new one (by simply
 creating a new Screen object). If you do the latter, you will typically need to recreate your
 associated Scenes and Effects to run inside the new boundaries.  See the bars.py demo as a sample
