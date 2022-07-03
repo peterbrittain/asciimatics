@@ -211,7 +211,7 @@ class AsciinemaPlayer(AbstractScreenPlayer):
         if header["version"] != 2:
             raise RuntimeError("Unsupported file format")
 
-        # Use file details if not overriden by constructor params.
+        # Use file details if not overridden by constructor params.
         height = height if height else header["height"]
         width = width if width else header["width"]
 

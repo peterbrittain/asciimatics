@@ -272,7 +272,7 @@ class TextBox(Widget):
         The text as should be formatted on the screen.
 
         This is an array of tuples of the form (text, value line, value column offset) where
-        the line and column offsets are indeces into the value (not displayed glyph coordinates).
+        the line and column offsets are indices into the value (not displayed glyph coordinates).
         """
         if self._reflowed_text_cache is None:
             if self._line_wrap:

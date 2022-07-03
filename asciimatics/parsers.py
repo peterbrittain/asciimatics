@@ -231,7 +231,7 @@ class AnsiTerminalParser(Parser):
                                 break
                             in_set_mode = False
                         elif in_index_mode:
-                            # We are processing a 5;n sequence for colour indeces
+                            # We are processing a 5;n sequence for colour indices
                             st.attributes[attribute_index] = parameter
                             in_index_mode = False
                         elif in_rgb_mode:
