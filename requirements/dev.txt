@@ -1,6 +1,6 @@
 -r base.txt
 # Tie down version to ensure Image dithering is consistent in UTs
-Pillow == 6.2.2
+Pillow == 9.3.0
 coveralls
 mock
 nose
