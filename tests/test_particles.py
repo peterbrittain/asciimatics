@@ -1,3 +1,4 @@
+import random
 import unittest
 from mock.mock import MagicMock
 from asciimatics.particles import ShootScreen, DropScreen, Explosion, Rain, \
@@ -6,6 +7,9 @@ from asciimatics.screen import Screen, Canvas
 
 
 class TestParticles(unittest.TestCase):
+    def setUp(self):
+        random.seed(42)
+
     def check_effect(self, canvas, effect, assert_fn,
                      is_blank=True, iterations=40, warm_up=0):
         """
