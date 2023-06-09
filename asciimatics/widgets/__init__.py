@@ -15,6 +15,7 @@ from asciimatics.widgets.multicolumnlistbox import MultiColumnListBox
 from asciimatics.widgets.popupdialog import PopUpDialog
 from asciimatics.widgets.popupmenu import PopupMenu
 from asciimatics.widgets.radiobuttons import RadioButtons
+from asciimatics.widgets.readbox import ReadBox
 from asciimatics.widgets.textbox import TextBox
 from asciimatics.widgets.text import Text
 from asciimatics.widgets.timepicker import TimePicker
