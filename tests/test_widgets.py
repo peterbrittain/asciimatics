@@ -256,16 +256,20 @@ class TestWidgets(unittest.TestCase):
         self.maxDiff = None
         self.epoch_date = str(date.fromtimestamp(0))
 
-    def assert_canvas_equals(self, canvas, expected):
-        """
-        Assert output to canvas is as expected.
-        """
+    def _canvas_to_string(self, canvas):
         output = ""
         for y in range(canvas.height):
             for x in range(canvas.width):
                 char, _, _, _ = canvas.get_from(x, y)
                 output += chr(char)
             output += "\n"
+        return output
+
+    def assert_canvas_equals(self, canvas, expected):
+        """
+        Assert output to canvas is as expected.
+        """
+        output = self._canvas_to_string(canvas)
         self.assertEqual(output, expected)
 
     @staticmethod
@@ -3530,6 +3534,62 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "+--------------------------------------+\n")
 
+    def test_layout_gutters(self):
+        """
+        Validate that the gutters parameter works for Layouts
+        """
+        # Now set up the Frame ready for testing
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = Frame(canvas, canvas.height, canvas.width)
+        layout = Layout([18, 4, 18], gutter=3)
+        form.add_layout(layout)
+
+        #       0
+        text = "ABCDEFGHIJKLMNOP"
+
+        box1 = TextBox(1)
+        box1.value = [text]
+        layout.add_widget(box1, 0)
+
+        box2 = TextBox(1)
+        box2.value = [text]
+        layout.add_widget(box2, 1)
+
+        box3 = TextBox(1)
+        box3.value = [text]
+        layout.add_widget(box3, 2)
+
+        form.fix()
+        scene.add_effect(form)
+        scene.reset()
+
+        # Check that the frame is rendered correctly.
+        for effect in scene.effects:
+            effect.update(0)
+
+        print("**********")
+        output = ""
+        for y in range(canvas.height):
+            for x in range(canvas.width):
+                char, _, _, _ = canvas.get_from(x, y)
+                output += chr(char)
+            output += "\n"
+        print(output)
+        print("**********")
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|DEFGHIJKLMNOP    OP    DEFGHIJKLMNOP  |\n" +
+            "|                                      O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
 
 if __name__ == '__main__':
     unittest.main()
