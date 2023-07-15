@@ -32,7 +32,7 @@ class MultiColumnListBox(_BaseListBox):
         :param label: An optional label for the widget.
         :param name: The name for the ListBox.
         :param add_scroll_bar: Whether to add optional scrollbar for large lists.
-        :param parser: Optional parser to colour text.
+        :param parser: Optional parser to colour options and titles text.
         :param on_change: Optional function to call when selection changes.
         :param on_select: Optional function to call when the user actually selects an entry from
         :param space_delimiter: Optional parameter to define the delimiter between columns.
@@ -65,6 +65,8 @@ class MultiColumnListBox(_BaseListBox):
         The options list may be None and then can be set later using the `options` property on
         this widget.
         """
+        if titles is not None and parser is not None:
+            titles = [ColouredText(x, parser) for x in titles]
         super(MultiColumnListBox, self).__init__(
             height, options, titles=titles, label=label, name=name, parser=parser,
             on_change=on_change, on_select=on_select)

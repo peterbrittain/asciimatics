@@ -3,6 +3,7 @@ CHANGE HISTORY
 
 LATEST
 ------
+- Added support for ColouredText titles in MultiColumnLIstBox.
 - Fixed bug where moving focus between Frames resulted in no current focus.
 - Fixed internal state of RadioButton values to be consistent with selection.
 

@@ -3145,7 +3145,7 @@ class TestWidgets(unittest.TestCase):
             Widget.FILL_FRAME,
             [3, "100%"],
             [(["1", "\x1B[32m2"], 1)],
-            titles=["A", "B"],
+            titles=["A", "\x1B[31mB"],
             parser=AnsiTerminalParser())
         layout.add_widget(mc_list)
         form.fix()
@@ -3161,7 +3161,7 @@ class TestWidgets(unittest.TestCase):
 
         # Check that the Ansi terminal colour parsing worked.
         self.assertEqual(canvas.get_from(0, 5), (ord("A"), 7, 1, 4))
-        self.assertEqual(canvas.get_from(3, 5), (ord("B"), 7, 1, 4))
+        self.assertEqual(canvas.get_from(3, 5), (ord("B"), 1, 1, 4))
         self.assertEqual(canvas.get_from(0, 6), (ord("1"), 3, 1, 4))
         self.assertEqual(canvas.get_from(3, 6), (ord("2"), 2, 1, 4))
     
