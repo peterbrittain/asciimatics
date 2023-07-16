@@ -3569,15 +3569,6 @@ class TestWidgets(unittest.TestCase):
         for effect in scene.effects:
             effect.update(0)
 
-        print("**********")
-        output = ""
-        for y in range(canvas.height):
-            for x in range(canvas.width):
-                char, _, _, _ = canvas.get_from(x, y)
-                output += chr(char)
-            output += "\n"
-        print(output)
-        print("**********")
         self.assert_canvas_equals(
             canvas,
             "+--------------------------------------+\n" +
