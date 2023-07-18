@@ -11,21 +11,17 @@ env:
 matrix:
   fast_finish: true
   include:
-    - name: "2.7 Linux"
+    - name: "3.9 Linux"
       env: BUILD=test FORCE_TTY=Y
-      python: '2.7'
+      python: '3.9'
       script: ./noserun.sh
-    - name: "3.5 Linux"
+    - name: "3.10 Linux"
       env: BUILD=test FORCE_TTY=Y
-      python: '3.5'
+      python: '3.10'
       script: ./noserun.sh
-    - name: "3.6 Linux"
+    - name: "3.11 Linux"
       env: BUILD=test FORCE_TTY=Y
-      python: '3.6'
-      script: ./noserun.sh
-    - name: "3.7 Linux"
-      env: BUILD=test FORCE_TTY=Y
-      python: '3.7.13'
+      python: '3.11'
       script: ./noserun.sh
     - name: "pypy Linux"
       env: BUILD=test FORCE_TTY=Y
