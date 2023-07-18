@@ -418,6 +418,11 @@ second has two 50% width columns and the third consists of 3 columns of relative
 The last actually contains some Widgets in the second column (though this is just for illustration
 purposes as we'd expect most Layouts to have some Widgets in them).
 
+To get spacing between columns, you can just use a small empty column between your active content.
+This size will be proportional to the other columns and so will change as the screen is resized.
+If you want to avoid this resizing, you can use the `gutter` option on the `Layout`, which will
+always provide an exact character count between columns for all screen sizes.
+
 Filling the space
 ~~~~~~~~~~~~~~~~~
 Once you've got the basic rows and columns for your UI sorted, you may want to use some strategic

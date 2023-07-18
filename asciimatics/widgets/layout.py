@@ -37,13 +37,14 @@ class Layout(object):
     """
 
     __slots__ = ["_column_sizes", "_columns", "_frame", "_has_focus", "_live_col", "_live_widget",
-                 "_fill_frame"]
+                 "_fill_frame", "_gutter"]
 
-    def __init__(self, columns, fill_frame=False):
+    def __init__(self, columns, fill_frame=False, gutter=0):
         """
         :param columns: A list of numbers specifying the width of each column in this layout.
         :param fill_frame: Whether this Layout should attempt to fill the rest of the Frame.
             Defaults to False.
+        :param gutter: gutter space between columns specified in characters, defaults to 0
 
         The Layout will automatically normalize the units used for the columns, e.g. converting
         [2, 6, 2] to [20%, 60%, 20%] of the available canvas.
@@ -56,6 +57,7 @@ class Layout(object):
         self._live_col = 0
         self._live_widget = -1
         self._fill_frame = fill_frame
+        self._gutter = gutter
 
     @property
     def fill_frame(self):
@@ -183,8 +185,9 @@ class Layout(object):
         :param max_height: Max height to allow this layout.
         :returns: The next line to be used for any further Layouts.
         """
+        total_gutter = self._gutter * (len(self._columns) - 1)
         x = start_x
-        width = max_width
+        width = max_width - total_gutter
         y = w = 0
         max_y = start_y
         string_len = wcswidth if self._frame.canvas.unicode_aware else len
@@ -232,9 +235,9 @@ class Layout(object):
             # Note space used by this column.
             dimensions[i].height = y
 
-            # Update tracking variables fpr the next column.
+            # Update tracking variables for the next column.
             max_y = max(max_y, y)
-            x += w
+            x += w + self._gutter
 
         # Finally check whether the Layout is allowed to expand.
         if self.fill_frame:
