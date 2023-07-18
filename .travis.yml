@@ -52,7 +52,7 @@ after_success:
     set -ex
     case "$BUILD" in
       test)
-        coveralls
+        coveralls -v
         ;;
     esac
     set +ex
