@@ -40,7 +40,7 @@ second.  Each iteration of the loop produces a new frame (no relation to the
 widget class `Frame`) and increments the frame counter.
 
 This counter is passed as the `frame_no` parameter on 
-:py:meth:`~.Effect.update` to every `Effect` amd so  an be used to time the
+:py:meth:`~.Effect.update` to every `Effect` and so can be used to time the
 animation.  For example, if you only want the Effect to do something every
 half a second, you could wait for `frame_no` to increase by 10 before doing
 the next update.

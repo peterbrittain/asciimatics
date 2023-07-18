@@ -711,7 +711,7 @@ Asciimatics uses exceptions to tell the animation engine to move to a new Scene 
    the function that called into the Screen.
 2. :py:obj:`.NextScene` - This exception tells the animation engine to move to a new Scene.  The
    precise Scene is determined by the name passed into the exception.  If none is specified, the
-   engine will simply roundi robin to the next available Scene.
+   engine will simply round robin to the next available Scene.
 
 Note that the above logic requires each Scene to be given a unique name on construction.  For
 example:
@@ -745,7 +745,7 @@ need to do is:
 3. Use that saved reference to the model to handle updates as needed inside your view's callbacks or methods.
 
 For a concrete example of how to do this check out the contact list sample and look at how it defines and uses
-the ``ContactModel``.  Alternatively, the quick_model sample shows how the same forms would work witha simple
+the ``ContactModel``.  Alternatively, the quick_model sample shows how the same forms would work with a simple
 list of dictionaries instead.
 
 Dynamic scenes

@@ -23,7 +23,7 @@ Linux
 ^^^^^
 Although asciimatics is a pure python implementation, it depends on Pillow (a fork of the Python
 Imaging Library).  This package depends on some native libraries that must be installed first.
-For details of what libararies you need, see `the Pillow documentation
+For details of what libraries you need, see `the Pillow documentation
 <http://pillow.readthedocs.io/en/latest/installation.html#external-libraries>`__.
 
 For a list of possible solutions, see the `answer on Stackoverflow
@@ -42,7 +42,7 @@ differences are handled by curses, which picks the right definition based on you
 environment variable.  If you have the wrong terminal definition, you may find that curses
 believes some fundamental services are unavailable to your application.  In particular, if
 you use ``xterm-color``, you are using a definition of xterm that dates back to 1996 and will
-see errors like this, where the critical point is thet a curses function returned an unexpected
+see errors like this, where the critical point is that a curses function returned an unexpected
 error (the "ERR" result).
 
 .. code-block:: bash
