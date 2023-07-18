@@ -3,6 +3,7 @@
 sudo: false
 
 language: python
+dist: jammy
 
 env:
   global:
