@@ -39,7 +39,7 @@ matrix:
       script: ./noserun.bat
     - name: "Docs"
       env: BUILD=docs
-      python: '3.6'
+      python: '3.11'
       script: ./builddocs.sh
 
 install:

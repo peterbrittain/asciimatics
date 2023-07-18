@@ -3,7 +3,6 @@
 Pillow == 6.2.2
 coveralls
 mock
-nose
 sphinx
 # Try to resolve dependency clashes on 2.7 systems
 urllib3==1.26.5
