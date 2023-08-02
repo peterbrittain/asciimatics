@@ -6,7 +6,7 @@ from random import randint
 import os
 import sys
 from asciimatics.effects import Print, Cycle, BannerText, Mirage, Scroll, \
-    Stars, Matrix, Snow, Wipe, Clock, Cog, RandomNoise, Julia
+    Stars, Matrix, Snow, Wipe, Clock, Cog, RandomNoise, Julia, Sprite
 from asciimatics.paths import Path
 from asciimatics.renderers import FigletText, StaticRenderer
 from asciimatics.scene import Scene
@@ -402,6 +402,34 @@ class TestEffects(unittest.TestCase):
         self.assertEqual(effect.stop_frame, 0)
 
         # Static paths should pay no attention to events.
+        event = object()
+        self.assertEqual(event, effect.process_event(event))
+
+    def test_sprite_speed(self):
+        """
+        Check that Sprites speed parameter .
+        """
+        # Check that sprite only redraws on specified rate.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        path = Path()
+        path.jump_to(10, 5)
+        effect = Sprite(
+            screen,
+            renderer_dict={
+                "default": StaticRenderer(images=["X"])
+            },
+            path=path)
+        effect.reset()
+        effect.update(0)
+        screen.paint.assert_called_with('X', 10, 5, 7, colour_map=[(None, None, None)])
+        screen.paint.reset_mock()
+        effect.update(1)
+        screen.paint.assert_not_called()
+
+        # Check there is no stop frame by default.
+        self.assertEqual(effect.stop_frame, 0)
+
+        # This effect should ignore events.
         event = object()
         self.assertEqual(event, effect.process_event(event))
 
