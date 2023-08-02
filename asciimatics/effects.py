@@ -646,7 +646,6 @@ class Sprite(Effect):
         self._dir_y = None
         self._old_direction = None
         self._speed = speed
-        self._frame_no = 0
         self.reset()
 
     def reset(self):
@@ -688,7 +687,6 @@ class Sprite(Effect):
             return True
 
     def _update(self, frame_no):
-        self._frame_no = frame_no
         if self._speed == 0 or frame_no % self._speed == 0:
             # Blank out the old sprite if moved.
             if (self._clear and
