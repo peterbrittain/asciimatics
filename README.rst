@@ -4,7 +4,7 @@
     :alt: Build status
 
 .. image:: https://app.codacy.com/project/badge/Grade/c1fed1f2dc6a47a1bbe91f8851456beb
-   :target: https://www.codacy.com/gh/peterbrittain/asciimatics/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=peterbrittain/asciimatics&amp;utm_campaign=Badge_Grade
+   :target: https://app.codacy.com/gh/peterbrittain/asciimatics/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade
    :alt: Code Health
 
 .. image:: https://coveralls.io/repos/github/peterbrittain/asciimatics/badge.svg?branch=master
