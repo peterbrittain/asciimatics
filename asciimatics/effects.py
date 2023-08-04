@@ -307,7 +307,7 @@ class Print(Effect):
         :param clear: Whether to clear the text before stopping.
         :param transparent: Whether to print spaces (and so be able to overlay other Effects).
             If False, this will redraw all characters and so replace any Effect underneath it.
-        :param speed: The refresh rate in frames between refreshes.
+        :param speed: The refresh rate in frames between updates.
 
         Note that a speed of 1 will force the Screen to redraw the Effect every frame update, while a value
         of 0 will redraw on demand - i.e. will redraw every time that an update is required by another Effect.
@@ -619,7 +619,7 @@ class Sprite(Effect):
     """
 
     def __init__(self, screen, renderer_dict, path, colour=Screen.COLOUR_WHITE,
-                 clear=True, **kwargs):
+                 clear=True, speed=2, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param renderer_dict: A dictionary of Renderers to use for displaying
@@ -627,6 +627,10 @@ class Sprite(Effect):
         :param path: The Path for the Sprite to follow.
         :param colour: The colour to use to render the Sprite.
         :param clear: Whether to clear out old images or leave a trail.
+        :param speed: The refresh rate in frames between updates.
+
+        Note that a speed of 1 will force the Screen to redraw the Effect every frame update, while a value
+        of 0 will redraw on demand - i.e. will redraw every time that an update is required by another Effect.
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
@@ -644,6 +648,7 @@ class Sprite(Effect):
         self._dir_x = None
         self._dir_y = None
         self._old_direction = None
+        self._speed = speed
         self.reset()
 
     def reset(self):
@@ -685,7 +690,7 @@ class Sprite(Effect):
             return True
 
     def _update(self, frame_no):
-        if frame_no % 2 == 0:
+        if self._speed == 0 or frame_no % self._speed == 0:
             # Blank out the old sprite if moved.
             if (self._clear and
                     self._old_x is not None and self._old_y is not None):

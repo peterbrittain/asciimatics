@@ -2326,7 +2326,7 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "|                                      |\n" +
             "+--------------------------------------+\n")
-        self.assertEquals(form.date_widget.value, date(2017, 6, 15))
+        self.assertEqual(form.date_widget.value, date(2017, 6, 15))
 
         # Check the mouse works too - pass mouse events to top-level effect
         self.process_mouse(scene.effects[-1], [(10, 1, MouseEvent.LEFT_CLICK)])
@@ -2428,7 +2428,7 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "|                                      |\n" +
             "+--------------------------------------+\n")
-        self.assertEquals(form.time_widget.value, time(11, 1, 58))
+        self.assertEqual(form.time_widget.value, time(11, 1, 58))
 
         # Check the mouse works too - pass mouse events to top-level effect
         self.process_mouse(scene.effects[-1], [(7, 2, MouseEvent.LEFT_CLICK)])
@@ -2479,11 +2479,11 @@ class TestWidgets(unittest.TestCase):
         for y in range(canvas.height):
             for x in range(canvas.width):
                 char, _, _, bg = canvas.get_from(x, y)
-                self.assertEquals(char, ord(" "))
-                self.assertEquals(bg, 7)
+                self.assertEqual(char, ord(" "))
+                self.assertEqual(bg, 7)
 
         # Check properties
-        self.assertEquals(form.stop_frame, 0)
+        self.assertEqual(form.stop_frame, 0)
         self.assertGreater(form.frame_update_count, 1000)
 
     def test_dropdown_list(self):
@@ -2730,7 +2730,7 @@ class TestWidgets(unittest.TestCase):
         self.assertIsNone(form.find_widget("ABLAH"))
 
         # Can find a defined widget
-        self.assertEquals(form.find_widget("date"), form.date_widget)
+        self.assertEqual(form.find_widget("date"), form.date_widget)
 
     def test_password(self):
         """
@@ -2839,8 +2839,8 @@ class TestWidgets(unittest.TestCase):
 
         # Check it handles a selection as expected
         self.process_mouse(scene, [(0, 1, MouseEvent.LEFT_CLICK)])
-        self.assertEquals(len(scene.effects), 0)
-        self.assertEquals(self.clicked, 2)
+        self.assertEqual(len(scene.effects), 0)
+        self.assertEqual(self.clicked, 2)
 
         # Check choice of location at bottom right
         self.clicked = 0
@@ -2873,8 +2873,8 @@ class TestWidgets(unittest.TestCase):
 
         # Check it handles a selection as expected
         self.process_mouse(scene, [(39, 7, MouseEvent.LEFT_CLICK)])
-        self.assertEquals(len(scene.effects), 0)
-        self.assertEquals(self.clicked, 1)
+        self.assertEqual(len(scene.effects), 0)
+        self.assertEqual(self.clicked, 1)
 
         # Check clicking outside menu dismisses it - wrong X location.
         self.clicked = 0
@@ -2883,8 +2883,8 @@ class TestWidgets(unittest.TestCase):
         scene.add_effect(popup)
         scene.reset()
         self.process_mouse(scene, [(10, 9, MouseEvent.LEFT_CLICK)])
-        self.assertEquals(len(scene.effects), 0)
-        self.assertEquals(self.clicked, 0)
+        self.assertEqual(len(scene.effects), 0)
+        self.assertEqual(self.clicked, 0)
 
         # Check clicking outside menu dismisses it - wrong Y location.
         self.clicked = 0
@@ -2893,8 +2893,8 @@ class TestWidgets(unittest.TestCase):
         scene.add_effect(popup)
         scene.reset()
         self.process_mouse(scene, [(39, 1, MouseEvent.LEFT_CLICK)])
-        self.assertEquals(len(scene.effects), 0)
-        self.assertEquals(self.clicked, 0)
+        self.assertEqual(len(scene.effects), 0)
+        self.assertEqual(self.clicked, 0)
 
         # Check clicking outside menu dismisses it.
         self.clicked = 0
@@ -2903,8 +2903,8 @@ class TestWidgets(unittest.TestCase):
         scene.add_effect(popup)
         scene.reset()
         self.process_keys(popup, [Screen.KEY_ESCAPE])
-        self.assertEquals(len(scene.effects), 0)
-        self.assertEquals(self.clicked, 0)
+        self.assertEqual(len(scene.effects), 0)
+        self.assertEqual(self.clicked, 0)
 
     def test_find_min_start(self):
         """
@@ -3188,7 +3188,7 @@ class TestWidgets(unittest.TestCase):
         listbox.options = options
         layout.add_widget(listbox)
 
-        self.assertEquals(listbox.options, options)
+        self.assertEqual(listbox.options, options)
 
     def test_list_box_color_options(self):
         """
@@ -3211,16 +3211,16 @@ class TestWidgets(unittest.TestCase):
 
         color_options = listbox.options
         self.assertIsInstance(color_options[0][0], ColouredText)
-        self.assertEquals(color_options[0][0].raw_text, options[0][0])
+        self.assertEqual(color_options[0][0].raw_text, options[0][0])
 
         self.assertIsInstance(color_options[1][0], ColouredText)
-        self.assertEquals(color_options[1][0].raw_text, options[1][0])
+        self.assertEqual(color_options[1][0].raw_text, options[1][0])
 
         self.assertIsInstance(color_options[2][0], ColouredText)
-        self.assertEquals(color_options[2][0].raw_text, options[2][0])
+        self.assertEqual(color_options[2][0].raw_text, options[2][0])
 
         self.assertIsInstance(color_options[3][0], ColouredText)
-        self.assertEquals(color_options[3][0].raw_text, options[3][0])
+        self.assertEqual(color_options[3][0].raw_text, options[3][0])
 
     def test_readonly(self):
         """
