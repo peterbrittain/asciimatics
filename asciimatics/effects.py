@@ -307,7 +307,7 @@ class Print(Effect):
         :param clear: Whether to clear the text before stopping.
         :param transparent: Whether to print spaces (and so be able to overlay other Effects).
             If False, this will redraw all characters and so replace any Effect underneath it.
-        :param speed: The refresh rate in frames between refreshes.
+        :param speed: The refresh rate in frames between updates.
 
         Note that a speed of 1 will force the Screen to redraw the Effect every frame update, while a value
         of 0 will redraw on demand - i.e. will redraw every time that an update is required by another Effect.
@@ -627,7 +627,10 @@ class Sprite(Effect):
         :param path: The Path for the Sprite to follow.
         :param colour: The colour to use to render the Sprite.
         :param clear: Whether to clear out old images or leave a trail.
-        :param speed: The refresh rate in frames between refreshes.
+        :param speed: The refresh rate in frames between updates.
+
+        Note that a speed of 1 will force the Screen to redraw the Effect every frame update, while a value
+        of 0 will redraw on demand - i.e. will redraw every time that an update is required by another Effect.
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
