@@ -2,7 +2,6 @@
 # Tie down version to ensure Image dithering is consistent in UTs
 Pillow == 6.2.2
 coveralls
-mock
 sphinx
 # Try to resolve dependency clashes on 2.7 systems
 urllib3==1.26.5

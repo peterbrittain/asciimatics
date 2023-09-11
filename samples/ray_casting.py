@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 
 # -*- coding: utf-8 -*-
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 import sys
 from math import sin, cos, pi, copysign, floor
 from asciimatics.effects import Effect
@@ -43,7 +39,7 @@ XXXXXXXXXXXXXX X
 IMAGE_HEIGHT = 64
 
 
-class Image(object):
+class Image():
     """
     Class to handle image stripe rendering.
     """
@@ -77,7 +73,7 @@ class Image(object):
                 pass
 
 
-class Sprite(object):
+class Sprite():
     """
     Dynamically sized sprite.
     """
@@ -97,7 +93,7 @@ class Sprite(object):
             self._state.screen, height, x, int(image_x * IMAGE_HEIGHT / height))
 
 
-class GameState(object):
+class GameState():
     """
     Persistent state for this application.
     """

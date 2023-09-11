@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
 """This module defines a dropdown list widget"""
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.screen import Screen
 from asciimatics.widgets.divider import Divider
@@ -40,7 +35,7 @@ class _DropdownPopup(_TempPopup):
         else:
             width = parent.width
         # Construct the Frame
-        super(_DropdownPopup, self).__init__(parent.frame.screen,
+        super().__init__(parent.frame.screen,
                                              parent,
                                              location[0], start_line,
                                              width, height)
@@ -53,7 +48,7 @@ class _DropdownPopup(_TempPopup):
         divider = Divider()
         divider.disabled = True
         self._list = ListBox(Widget.FILL_FRAME,
-                             [(" {}".format(i[0]), i[1]) for i in parent.options],
+                             [(f" {i[0]}", i[1]) for i in parent.options],
                              add_scroll_bar=len(parent.options) > height - 4,
                              on_select=self.close, on_change=self._link)
         layout.add_widget(self._list if reverse else self._field, 0)
@@ -96,7 +91,7 @@ class DropdownList(Widget):
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
         """
-        super(DropdownList, self).__init__(name, **kwargs)
+        super().__init__(name, **kwargs)
         self._label = label
         self._on_change = on_change
         self._child = None

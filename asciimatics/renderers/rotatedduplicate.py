@@ -1,12 +1,6 @@
-# -*- coding: utf-8 -*-
 """
 This module implements a renderer that renders another renderer but rotated.
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import range
 
 from asciimatics.renderers.base import StaticRenderer
 
@@ -23,7 +17,7 @@ class RotatedDuplicate(StaticRenderer):
         :param height: The maximum height of the rendered text.
         :param renderer: The renderer to wrap.
         """
-        super(RotatedDuplicate, self).__init__()
+        super().__init__()
         for image in renderer.images:
             mx = (width - max([len(x) for x in image])) // 2
             my = height // 2 - len(image)

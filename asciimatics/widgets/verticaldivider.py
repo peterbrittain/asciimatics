@@ -1,10 +1,4 @@
-# -*- coding: utf-8 -*-
 """This module implements a vertical division between widgets"""
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import range
 from asciimatics.widgets.widget import Widget
 
 
@@ -21,7 +15,7 @@ class VerticalDivider(Widget):
         """
         :param height: The required height for this divider.
         """
-        super(VerticalDivider, self).__init__(None, tab_stop=False)
+        super().__init__(None, tab_stop=False)
         self._required_height = height
 
     def process_event(self, event):
@@ -29,7 +23,7 @@ class VerticalDivider(Widget):
 
     def update(self, frame_no):
         (color, attr, background) = self._frame.palette["borders"]
-        vert = u"│" if self._frame.canvas.unicode_aware else "|"
+        vert = "│" if self._frame.canvas.unicode_aware else "|"
         for i in range(self._h):
             self._frame.canvas.print_at(vert, self._x, self._y + i, color, attr, background)
 

@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
 """This module defines a file browser selection"""
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 from re import compile as re_compile
 import os
 import unicodedata
@@ -31,7 +26,7 @@ class FileBrowser(MultiColumnListBox):
         you must use a regex that matches to the end of the line - e.g. use ".*\.txt$" to find files ending
         with ".txt".  This ensures that you don't accidentally pick up files containing the filter.
         """
-        super(FileBrowser, self).__init__(
+        super().__init__(
             height,
             [0, ">8", ">14"],
             [],
@@ -55,7 +50,7 @@ class FileBrowser(MultiColumnListBox):
         if not self._initialized:
             self._populate_list(self._root)
             self._initialized = True
-        super(FileBrowser, self).update(frame_no)
+        super().update(frame_no)
 
     def _on_selection(self):
         """
@@ -118,16 +113,16 @@ class FileBrowser(MultiColumnListBox):
                 details = namedtuple("stat_type", "st_size st_mtime")
                 details.st_size = 0
                 details.st_mtime = 0
-            name = "|-- {}".format(my_file)
+            name = f"|-- {my_file}"
             tree = tree_files
             if os.path.isdir(full_path):
                 tree = tree_dirs
                 if os.path.islink(full_path):
                     # Show links separately for directories
                     real_path = os.path.realpath(full_path)
-                    name = "|-+ {} -> {}".format(my_file, real_path)
+                    name = f"|-+ {my_file} -> {real_path}"
                 else:
-                    name = "|-+ {}".format(my_file)
+                    name = f"|-+ {my_file}"
             elif self._file_filter and not self._file_filter.match(my_file):
                 # Skip files that don't match the filter (if present)
                 continue
@@ -141,11 +136,11 @@ class FileBrowser(MultiColumnListBox):
                     real_path = None
                 if real_path and os.path.exists(real_path):
                     details = os.stat(real_path)
-                    name = "|-- {} -> {}".format(my_file, real_path)
+                    name = f"|-- {my_file} -> {real_path}"
                 else:
                     # Both broken directory and file links fall to this case.
                     # Actually using the files will cause a FileNotFound exception
-                    name = "|-- {} -> {}".format(my_file, real_path)
+                    name = f"|-- {my_file} -> {real_path}"
 
             # Normalize names for MacOS and then add to the list.
             tree.append(([unicodedata.normalize("NFC", name),

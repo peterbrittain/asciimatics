@@ -1,13 +1,6 @@
-# -*- coding: utf-8 -*-
 """
 This module implements renderers that show measuring scales to the screen.
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import range
-
 from asciimatics.renderers.base import StaticRenderer
 
 
@@ -21,7 +14,7 @@ class Scale(StaticRenderer):
         """
         :param width: The width of the scale
         """
-        super(Scale, self).__init__()
+        super().__init__()
 
         contents = []
         for x in range(1, width + 1):
@@ -47,7 +40,7 @@ class VScale(StaticRenderer):
         """
         :param width: The width of the scale
         """
-        super(VScale, self).__init__()
+        super().__init__()
 
         contents = [str(i)[-1] for i in range(1, height + 1)]
         text = '\n'.join(contents)

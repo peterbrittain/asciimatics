@@ -1,11 +1,4 @@
-# -*- coding: utf-8 -*-
 """This module implements the listbox widget"""
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import str
-from builtins import range
 from asciimatics.strings import ColouredText
 from asciimatics.widgets.utilities import _enforce_width
 from asciimatics.widgets.baselistbox import _BaseListBox
@@ -35,7 +28,7 @@ class ListBox(_BaseListBox):
 
             options=[("First option", 1), ("Second option", 2)]
         """
-        super(ListBox, self).__init__(
+        super().__init__(
             height, options, label=label, name=name, parser=parser, on_change=on_change,
             on_select=on_select, validator=validator)
         self._centre = centre

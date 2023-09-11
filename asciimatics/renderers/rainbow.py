@@ -1,12 +1,6 @@
-# -*- coding: utf-8 -*-
 """
 This module implements a rainbow effect renderer.
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-
 from asciimatics.renderers.base import StaticRenderer
 
 
@@ -33,7 +27,7 @@ class Rainbow(StaticRenderer):
         :param screen: The screen object for this renderer.
         :param renderer: The renderer to wrap.
         """
-        super(Rainbow, self).__init__()
+        super().__init__()
         palette = self._256_palette if screen.colours > 16 else self._16_palette
         for image in renderer.images:
             new_image = ""

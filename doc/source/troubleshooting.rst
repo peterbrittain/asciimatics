@@ -288,7 +288,7 @@ It's just not working at all
 Some people have reported truly strange issues where things simply don't start up at all.
 Symptoms vary wildly from blank screens to other applications or tests running instead.
 
-If you are hitting something like this, check that you haven't created a file called ``test.py``
+If you are hitting something like this with versions less than 1.14, check that you haven't created a file called ``test.py``
 in your project.  This is because the ``future`` package, which asciimatics uses for
 compatibility with Python 2 and 3, imports the test package.  If you happen to have a file called
 ``test.py`` in your project, this import could pick up your file instead of the built-in package.

@@ -4,14 +4,7 @@ http://asciimatics.readthedocs.io/en/latest/animation.html
 """
 
 
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import object
-
-
-class Scene(object):
+class Scene():
     """
     Class to store the details of a single scene to be displayed.  This is
     made up of a set of :py:obj:`.Effect` objects.  See the documentation for

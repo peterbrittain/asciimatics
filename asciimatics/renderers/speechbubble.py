@@ -1,12 +1,6 @@
-# -*- coding: utf-8 -*-
 """
 This module implements a speech-bubble effect renderer.
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-
 from wcwidth.wcwidth import wcswidth
 
 from asciimatics.renderers.base import StaticRenderer
@@ -23,7 +17,7 @@ class SpeechBubble(StaticRenderer):
         :param tail: Where to put the bubble callout tail, specifying "L" or
                      "R" for left or right tails.  Can be None for no tail.
         """
-        super(SpeechBubble, self).__init__()
+        super().__init__()
         max_len = max([wcswidth(x) for x in text.split("\n")])
         if uni:
             bubble = "╭─" + "─" * max_len + "─╮\n"

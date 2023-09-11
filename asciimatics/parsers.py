@@ -1,14 +1,8 @@
-
 """
 This module provides parsers to create ColouredText objects from embedded control strings.
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
+
 import re
-from builtins import str
-from future.utils import with_metaclass
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
 import asciimatics.constants as constants
@@ -19,7 +13,7 @@ from asciimatics.utilities import _DotDict
 logger = getLogger(__name__)
 
 
-class Parser(with_metaclass(ABCMeta, object)):
+class Parser(metaclass=ABCMeta):
     """
     Abstract class to represent text parsers that extract colour control codes from raw text and
     convert them to displayable text and associated colour maps.
@@ -171,7 +165,7 @@ class AnsiTerminalParser(Parser):
         :param text: raw text to process.
         :param colours: colour tuple to initialise the colour map.
         """
-        super(AnsiTerminalParser, self).reset(text, colours)
+        super().reset(text, colours)
         if self._state.attributes is None:
             self._state.init_colours = False
             self._state.attributes = [None, None, None]
@@ -382,8 +376,7 @@ class AnsiTerminalParser(Parser):
                 if new_offset == -1:
                     break
                 if results is not None:
-                    for result in results:
-                        yield result
+                    yield from results
             else:
                 logger.debug("Ignoring character: %d", char)
                 yield (self._state.last_offset, Parser.DISPLAY_TEXT, " ")

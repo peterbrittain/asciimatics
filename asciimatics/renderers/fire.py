@@ -1,12 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 This module implements a fire effect renderer.
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import range
+
 import copy
 from random import randint, random
 
@@ -77,7 +72,7 @@ class Fire(DynamicRenderer):
         :param colours: Number of colours the screen supports.
         :param bg: (Optional) Whether to render background colours only.
         """
-        super(Fire, self).__init__(height, width)
+        super().__init__(height, width)
         self._emitter = emitter
         self._intensity = intensity
         self._spot_heat = spot

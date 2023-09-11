@@ -1,13 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 This module defines common screen output function.  For more details, see
 http://asciimatics.readthedocs.io/en/latest/io.html
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import os
 import signal
 import struct
@@ -15,17 +9,11 @@ import sys
 import time
 from abc import ABCMeta, abstractmethod
 from functools import update_wrapper, partial
+from itertools import zip_longest
 from locale import getlocale, getdefaultlocale
 from logging import getLogger
 from math import sqrt
 
-from builtins import object
-from builtins import range
-from builtins import ord
-from builtins import chr
-from builtins import str
-from future.utils import with_metaclass
-from future.moves.itertools import zip_longest
 from wcwidth import wcwidth, wcswidth
 
 from asciimatics.event import KeyboardEvent, MouseEvent
@@ -40,7 +28,7 @@ ENABLE_EXTENDED_FLAGS = 0x0080
 ENABLE_QUICK_EDIT_MODE = 0x0040
 
 
-class _DoubleBuffer(object):
+class _DoubleBuffer():
     """
     Pure python Screen buffering.
     """
@@ -50,11 +38,11 @@ class _DoubleBuffer(object):
         :param height: Height of the buffer to create.
         :param width: Width of the buffer to create.
         """
-        super(_DoubleBuffer, self).__init__()
+        super().__init__()
         self._height = height
         self._width = width
         self._double_buffer = None
-        line = [(u" ", Screen.COLOUR_WHITE, 0, 0, 1) for _ in range(self._width)]
+        line = [(" ", Screen.COLOUR_WHITE, 0, 0, 1) for _ in range(self._width)]
         self._screen_buffer = [line[:] for _ in range(self._height)]
         self.clear(Screen.COLOUR_WHITE, 0, 0)
 
@@ -77,7 +65,7 @@ class _DoubleBuffer(object):
         height = self._height if h is None else h
         width = max(0, min(self._width - x, width))
         height = max(0, min(self._height - y, height))
-        line = [(u" ", fg, attr, bg, 1) for _ in range(width)]
+        line = [(" ", fg, attr, bg, 1) for _ in range(width)]
         if x == 0 and y == 0 and w is None and h is None:
             self._double_buffer = [line[:] for _ in range(height)]
         else:
@@ -129,7 +117,7 @@ class _DoubleBuffer(object):
 
         :param lines: Number of lines to scroll.  Negative numbers move the buffer up.
         """
-        line = [(u" ", Screen.COLOUR_WHITE, 0, 0, 1) for _ in range(self._width)]
+        line = [(" ", Screen.COLOUR_WHITE, 0, 0, 1) for _ in range(self._width)]
         if lines > 0:
             # Limit to buffer size - this will just invalidate all the data
             lines = min(lines, self._height)
@@ -213,7 +201,7 @@ class _DoubleBuffer(object):
         return [[x[1:4] for x in self.slice(0, y, self.width)] for y in range(self.height)]
 
 
-class _AbstractCanvas(with_metaclass(ABCMeta, object)):
+class _AbstractCanvas(metaclass=ABCMeta):
     """
     Abstract class to handle screen buffering.
     """
@@ -502,7 +490,7 @@ class _AbstractCanvas(with_metaclass(ABCMeta, object)):
         :param colours: Number of colours for this object.
         :param unicode_aware: Force use of unicode options for this object.
         """
-        super(_AbstractCanvas, self).__init__()
+        super().__init__()
 
         # Can we handle unicode environments?
         self._unicode_aware = unicode_aware
@@ -1122,7 +1110,7 @@ class TemporaryCanvas(_AbstractCanvas):
         :param width: The width of the screen buffer to be used.
         """
         # Colours and unicode rendering are up to the user.  Pick defaults that won't limit them.
-        super(TemporaryCanvas, self).__init__(height, width, None, 256, True)
+        super().__init__(height, width, None, 256, True)
 
     @property
     def plain_image(self):
@@ -1158,7 +1146,7 @@ class Canvas(_AbstractCanvas):
         to centring within the current Screen for that location.
         """
         # Save off the screen details.
-        super(Canvas, self).__init__(
+        super().__init__(
             height, width, None, screen.colours, screen.unicode_aware)
         self._screen = screen
         self._dx = (screen.width - width) // 2 if x is None else x
@@ -1184,7 +1172,7 @@ class Canvas(_AbstractCanvas):
         return self._dx, self._dy
 
 
-class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
+class Screen(_AbstractCanvas, metaclass=ABCMeta):
     """
     Class to track basic state of the screen.  This constructs the necessary
     resources to allow us to do the ASCII animations.
@@ -1283,7 +1271,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
         """
         Don't call this constructor directly.
         """
-        super(Screen, self).__init__(
+        super().__init__(
             height, width, buffer_height, 0, unicode_aware)
 
         # Initialize base class variables - e.g. those used for drawing.
@@ -1741,7 +1729,7 @@ class Screen(with_metaclass(ABCMeta, _AbstractCanvas)):
                         break
                 else:
                     raise RuntimeError(
-                        "Could not find Scene: '{}'".format(e.name))
+                        f"Could not find Scene: '{e.name}'")
 
             # Reset the screen if needed.
             scene = self._scenes[self._scene_index]
@@ -2021,7 +2009,7 @@ if sys.platform == "win32":
             if unicode_aware is None:
                 # According to MSDN, 65001 is the Windows UTF-8 code page.
                 unicode_aware = win32console.GetConsoleCP() == 65001
-            super(_WindowsScreen, self).__init__(
+            super().__init__(
                 height, width, buffer_height, unicode_aware)
 
             # Save off the console details.
@@ -2333,7 +2321,7 @@ else:
                                  encoding.lower() == "utf-8")
 
             # Save off the screen details.
-            super(_CursesScreen, self).__init__(
+            super().__init__(
                 win.getmaxyx()[0], win.getmaxyx()[1], height, unicode_aware)
             self._screen = win
             self._screen.keypad(1)
@@ -2433,7 +2421,7 @@ else:
             """
             try:
                 sys.stdout.write(msg)
-            except IOError:
+            except OSError:
                 # Screen resize can throw IOErrors.  These can be safely
                 # ignored as the screen will be shortly reset anyway.
                 pass
@@ -2481,10 +2469,10 @@ else:
             """
             Refresh the screen.
             """
-            super(_CursesScreen, self).refresh()
+            super().refresh()
             try:
                 sys.stdout.flush()
-            except IOError:
+            except OSError:
                 pass
 
         @staticmethod
@@ -2618,7 +2606,7 @@ else:
             :param width: The width of the character (for dual-width glyphs in CJK languages).
             """
             # Move the cursor if necessary
-            cursor = u""
+            cursor = ""
             if x != self._cur_x or y != self._cur_y:
                 cursor = curses.tparm(self._move_y_x, y, x).decode("utf-8")
 
@@ -2643,7 +2631,7 @@ else:
             """
             try:
                 select.select([sys.stdin], [], [], timeout)
-            except select.error:
+            except OSError:
                 # Any error will almost certainly result in a a Screen.  Ignore.
                 pass
 
@@ -2658,7 +2646,7 @@ else:
                 self._safe_write("{}{}{}".format(self._start_title, title,
                                                  self._end_title))
 
-    class _SignalState(object):
+    class _SignalState():
         """
         Save previous user signal state while setting signals.
 

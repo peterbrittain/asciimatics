@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
 """This module defines a checkbox widget"""
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.widgets.widget import Widget
 
@@ -27,7 +22,7 @@ class CheckBox(Widget):
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
         """
-        super(CheckBox, self).__init__(name, **kwargs)
+        super().__init__(name, **kwargs)
         self._text = text
         self._label = label
         self._on_change = on_change
@@ -36,7 +31,7 @@ class CheckBox(Widget):
         self._draw_label()
 
         # Render this checkbox.
-        check_char = u"✓" if self._frame.canvas.unicode_aware else "X"
+        check_char = "✓" if self._frame.canvas.unicode_aware else "X"
         (colour, attr, bg) = self._pick_colours("control", self._has_focus)
         self._frame.canvas.print_at(
             "[{}] ".format(check_char if self._value else " "),

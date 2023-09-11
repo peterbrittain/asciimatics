@@ -1,7 +1,6 @@
-from builtins import chr
 import unittest
 from datetime import datetime
-from mock.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 from random import randint
 import os
 import sys
