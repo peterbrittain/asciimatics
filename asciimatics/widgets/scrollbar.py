@@ -1,14 +1,6 @@
-# -*- coding: utf-8 -*-
 """This module implements a scroll bar capability for widgets"""
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import range
-from builtins import object
 
-
-class _ScrollBar(object):
+class _ScrollBar():
     """
     Internal object to provide vertical scroll bars for widgets.
     """
@@ -48,8 +40,8 @@ class _ScrollBar(object):
         Draw the scroll bar.
         """
         # Sort out chars
-        cursor = u"█" if self._canvas.unicode_aware else "O"
-        back = u"░" if self._canvas.unicode_aware else "|"
+        cursor = "█" if self._canvas.unicode_aware else "O"
+        back = "░" if self._canvas.unicode_aware else "|"
 
         # Now draw...
         try:

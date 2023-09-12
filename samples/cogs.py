@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from __future__ import division
 from asciimatics.effects import Cog, Print
 from asciimatics.renderers import FigletText
 from asciimatics.scene import Scene

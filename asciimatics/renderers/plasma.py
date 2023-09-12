@@ -1,12 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 This module implements a plasma effect renderer.
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import range
+
 from math import sin, pi, sqrt
 
 from asciimatics.renderers.base import DynamicRenderer
@@ -57,7 +52,7 @@ class Plasma(DynamicRenderer):
         :param width: Width of the box to contain the plasma.
         :param colours: Number of colours the screen supports.
         """
-        super(Plasma, self).__init__(height, width)
+        super().__init__(height, width)
         self._palette = self._palette_256 if colours >= 256 else self._palette_8
         self._t = 0
 

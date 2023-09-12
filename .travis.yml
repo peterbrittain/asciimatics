@@ -24,9 +24,9 @@ matrix:
       env: BUILD=test FORCE_TTY=Y
       python: '3.11'
       script: ./noserun.sh
-    - name: "pypy Linux"
+    - name: "pypy3 Linux"
       env: BUILD=test FORCE_TTY=Y
-      python: 'pypy'
+      python: 'pypy3'
       script: ./noserun.sh
     - name: "3.8 Windows"
       os: windows

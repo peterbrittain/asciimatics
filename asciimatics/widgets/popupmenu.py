@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
 """This module implements a pop up menu widget"""
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 from collections import defaultdict
 from functools import partial
 from asciimatics.event import KeyboardEvent, MouseEvent
@@ -42,7 +37,7 @@ class PopupMenu(Frame):
             y -= h - 1
 
         # Construct the Frame
-        super(PopupMenu, self).__init__(
+        super().__init__(
             screen, h, w, x=x, y=y, has_border=False, can_scroll=False, is_modal=True, hover_focus=True)
 
         # Build the widget to display the time selection.
@@ -72,4 +67,4 @@ class PopupMenu(Frame):
                     event = None
         if event is None:
             self._destroy()
-        return super(PopupMenu, self).process_event(event)
+        return super().process_event(event)

@@ -1,10 +1,4 @@
-# -*- coding: utf-8 -*-
 """This module defines a class to display widgets"""
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import range
 from copy import copy, deepcopy
 from logging import getLogger
 from wcwidth import wcswidth
@@ -152,7 +146,7 @@ class Frame(Effect):
             receiving input events.
         :param can_scroll: Whether a scrollbar should be available on the border, or not.
         """
-        super(Frame, self).__init__(screen)
+        super().__init__(screen)
         self._focus = 0
         self._max_height = 0
         self._layouts = []
@@ -612,7 +606,7 @@ class Frame(Effect):
                 self._focus = len(self._layouts) - 1
             if self._focus >= len(self._layouts):
                 self._focus = 0
-            logger.debug("Trying tab to layout {}".format(self._focus))
+            logger.debug(f"Trying tab to layout {self._focus}")
             try:
                 if direction > 0:
                     self._layouts[self._focus].focus(force_first=True)

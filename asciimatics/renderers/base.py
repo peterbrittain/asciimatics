@@ -1,14 +1,8 @@
-# -*- coding: utf-8 -*-
 """
 This module provides common code for all Renderers.
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import object
+
 from abc import ABCMeta, abstractproperty, abstractmethod
-from future.utils import with_metaclass
 import re
 
 from wcwidth.wcwidth import wcswidth
@@ -26,7 +20,7 @@ ATTRIBUTES = {
 }
 
 
-class Renderer(with_metaclass(ABCMeta, object)):
+class Renderer(metaclass=ABCMeta):
     """
     A Renderer is simply a class that will return one or more text renderings
     for display by an Effect.
@@ -90,7 +84,7 @@ class StaticRenderer(Renderer):
         :param animation: A function to pick the image (from images) to be
                           rendered for any given frame.
         """
-        super(StaticRenderer, self).__init__()
+        super().__init__()
         self._images = images if images is not None else []
         self._index = 0
         self._max_width = 0
@@ -195,7 +189,7 @@ class StaticRenderer(Renderer):
         return self._max_width
 
 
-class DynamicRenderer(with_metaclass(ABCMeta, Renderer)):
+class DynamicRenderer(Renderer, metaclass=ABCMeta):
     """
     A DynamicRenderer is a Renderer that creates each image as requested.  It
     has a defined maximum size on construction.
@@ -206,7 +200,7 @@ class DynamicRenderer(with_metaclass(ABCMeta, Renderer)):
         :param height: The max height of the rendered image.
         :param width: The max width of the rendered image.
         """
-        super(DynamicRenderer, self).__init__()
+        super().__init__()
         self._must_clear = clear
         self._canvas = TemporaryCanvas(height, width)
 

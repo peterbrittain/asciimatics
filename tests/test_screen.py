@@ -1,18 +1,9 @@
-# -*- coding: utf-8 -*-
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import os
-from mock import MagicMock
 from random import randint
 import unittest
+from unittest.mock import MagicMock
 import sys
 import time
-from builtins import str
-from builtins import chr
-from builtins import bytes
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import StopApplication, NextScene
 try:
@@ -64,7 +55,7 @@ class TestScreen(unittest.TestCase):
                 try:
                     char, _, _, _ = canvas.get_from(x, y)
                 except Exception:
-                    raise RuntimeError("{} {}".format(x, y))
+                    raise RuntimeError(f"{x} {y}")
                 output += chr(char)
             output += "\n"
         self.assertEqual(output, expected)
@@ -593,7 +584,7 @@ class TestScreen(unittest.TestCase):
                 # we don't catch interrupts).  Still a good basic check for
                 # input, though.
                 event = win32console.PyINPUT_RECORDType(win32console.KEY_EVENT)
-                event.Char = u"\03"
+                event.Char = "\03"
                 event.KeyDown = 1
                 event.RepeatCount = 1
                 event.ControlKeyState = win32con.LEFT_CTRL_PRESSED
@@ -656,8 +647,8 @@ class TestScreen(unittest.TestCase):
                 event.VirtualKeyCode = ord(chr(char).upper())
             else:
                 # Lookup in mapping dicts
-                reverse = dict((v, k) for k, v in
-                               screen._EXTRA_KEY_MAP.items())
+                reverse = {v: k for k, v in
+                               screen._EXTRA_KEY_MAP.items()}
                 if char in reverse:
                     event.VirtualKeyCode = reverse[char]
                 else:
@@ -665,8 +656,8 @@ class TestScreen(unittest.TestCase):
                     if char == Screen.KEY_BACK_TAB:
                         char = Screen.KEY_TAB
                         event.ControlKeyState = win32con.SHIFT_PRESSED
-                    reverse = dict((v, k) for k, v in
-                                   screen._KEY_MAP.items())
+                    reverse = {v: k for k, v in
+                                   screen._KEY_MAP.items()}
                     event.VirtualKeyCode = reverse[char]
             event.KeyDown = 1
             screen._stdin.WriteConsoleInput([event])
@@ -680,8 +671,8 @@ class TestScreen(unittest.TestCase):
                 for c in reversed(bytes(chr(char).encode("utf-8"))):
                     curses.ungetch(c)
             else:
-                reverse = dict((v, k) for k, v in
-                               screen._KEY_MAP.items())
+                reverse = {v: k for k, v in
+                               screen._KEY_MAP.items()}
                 curses.ungetch(reverse[char])
 
     @staticmethod
@@ -736,15 +727,15 @@ class TestScreen(unittest.TestCase):
             self.assertIsNone(screen.get_key())
 
             # Check that unicode input also works
-            self._inject_key(screen, ord(u"├"))
+            self._inject_key(screen, ord("├"))
             ch = screen.get_event()
-            self.assertEqual(ch.key_code, ord(u"├"))
+            self.assertEqual(ch.key_code, ord("├"))
             self.assertIsNone(screen.get_event())
 
             # Check that unicode input colliding with curses KEY_MAP also works (code: 263)
-            self._inject_key(screen, ord(u"ć"))
+            self._inject_key(screen, ord("ć"))
             ch = screen.get_event()
-            self.assertEqual(ch.key_code, ord(u"ć"))
+            self.assertEqual(ch.key_code, ord("ć"))
             self.assertIsNone(screen.get_event())
 
         Screen.wrapper(internal_checks, height=15, unicode_aware=True)
@@ -901,7 +892,7 @@ class TestScreen(unittest.TestCase):
         canvas.reset()
         canvas.print_at("你確", -1, 0)
         canvas.print_at("你確", canvas.width - 1, 0)
-        self.assert_line_equals(canvas, u" 確確                                     ")
+        self.assert_line_equals(canvas, " 確確                                     ")
 
     def test_cjk_glyphs_overwrite(self):
         """
@@ -919,7 +910,7 @@ class TestScreen(unittest.TestCase):
 
         # Half-glyph appears as an "x" to show error and then double-width glyphs are returned
         # twice, reflecting their extra width.
-        self.assert_line_equals(screen, u"x你你確確 ", y=1, length=6)
+        self.assert_line_equals(screen, "x你你確確 ", y=1, length=6)
 
     def test_save_signal_state(self):
         """Tests that the signal state class works properly.

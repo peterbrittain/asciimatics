@@ -1,16 +1,8 @@
-# -*- coding: utf-8 -*-
 """
 This module defines `Effects` which can be used for animations.  For more details see
 http://asciimatics.readthedocs.io/en/latest/animation.html
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import chr
-from builtins import object
-from builtins import range
-from future.utils import with_metaclass
+
 from abc import ABCMeta, abstractmethod, abstractproperty
 from random import randint, random, choice
 from math import sin, cos, pi
@@ -19,7 +11,7 @@ from asciimatics.screen import Screen
 import datetime
 
 
-class Effect(with_metaclass(ABCMeta, object)):
+class Effect(metaclass=ABCMeta):
     """
     Abstract class to handle a special effect on the screen.  An Effect can
     cover anything from a static image at the start of the Scene through to
@@ -175,7 +167,7 @@ class Scroll(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Scroll, self).__init__(screen, **kwargs)
+        super().__init__(screen, **kwargs)
         self._rate = rate
         self._last_frame = None
 
@@ -207,7 +199,7 @@ class Cycle(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Cycle, self).__init__(screen, **kwargs)
+        super().__init__(screen, **kwargs)
         self._renderer = renderer
         self._y = y
         self._colour = 0
@@ -249,7 +241,7 @@ class BannerText(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(BannerText, self).__init__(screen, **kwargs)
+        super().__init__(screen, **kwargs)
         self._renderer = renderer
         self._y = y
         self._colour = colour
@@ -314,7 +306,7 @@ class Print(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Print, self).__init__(screen, **kwargs)
+        super().__init__(screen, **kwargs)
         self._renderer = renderer
         self._transparent = transparent
         self._y = y
@@ -373,7 +365,7 @@ class Mirage(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Mirage, self).__init__(screen, **kwargs)
+        super().__init__(screen, **kwargs)
         self._renderer = renderer
         self._y = y
         self._colour = colour
@@ -407,7 +399,7 @@ class Mirage(Effect):
         return self._stop_frame
 
 
-class _Star(object):
+class _Star():
     """
     Simple class to represent a single star for the Stars special effect.
     """
@@ -473,7 +465,7 @@ class Stars(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Stars, self).__init__(screen, **kwargs)
+        super().__init__(screen, **kwargs)
         self._pattern = pattern
         self._max = count
         self._stars = []
@@ -490,7 +482,7 @@ class Stars(Effect):
         return 0
 
 
-class _Trail(object):
+class _Trail():
     """
     Track a single trail  for a falling character effect (a la Matrix).
     """
@@ -564,7 +556,7 @@ class Matrix(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Matrix, self).__init__(screen, **kwargs)
+        super().__init__(screen, **kwargs)
         self._chars = []
 
     def reset(self):
@@ -594,7 +586,7 @@ class Wipe(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Wipe, self).__init__(screen, **kwargs)
+        super().__init__(screen, **kwargs)
         self._bg = bg
         self._y = None
 
@@ -634,7 +626,7 @@ class Sprite(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Sprite, self).__init__(screen, **kwargs)
+        super().__init__(screen, **kwargs)
         self._renderer_dict = renderer_dict
         self._path = path
         self._index = None
@@ -759,7 +751,7 @@ class Sprite(Effect):
             return event
 
 
-class _Flake(object):
+class _Flake():
     """
     Track a single snow flake.
     """
@@ -833,7 +825,7 @@ class Snow(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Snow, self).__init__(screen, **kwargs)
+        super().__init__(screen, **kwargs)
         self._chars = []
 
     def reset(self):
@@ -869,7 +861,7 @@ class Clock(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Clock, self).__init__(screen, **kwargs)
+        super().__init__(screen, **kwargs)
         self._x = x
         self._y = y
         self._r = r
@@ -951,7 +943,7 @@ class Cog(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Cog, self).__init__(screen, **kwargs)
+        super().__init__(screen, **kwargs)
         self._x = x
         self._y = y
         self._radius = radius
@@ -1009,7 +1001,7 @@ class RandomNoise(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(RandomNoise, self).__init__(screen, **kwargs)
+        super().__init__(screen, **kwargs)
         self._signal = signal
         self._strength = 0.0
         self._step = 0.0
@@ -1081,7 +1073,7 @@ class Julia(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Julia, self).__init__(screen, **kwargs)
+        super().__init__(screen, **kwargs)
         self._width = screen.width
         self._height = screen.height
         self._centre = [0.0, 0.0]
@@ -1140,7 +1132,7 @@ class Background(Effect):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(Background, self).__init__(screen, **kwargs)
+        super().__init__(screen, **kwargs)
         self._bg = bg
 
     def reset(self):

@@ -1,13 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 This module implements renderers that play content to the screen.
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 from abc import abstractmethod
-from builtins import range
 import json
 
 from asciimatics.renderers.base import DynamicRenderer
@@ -25,7 +19,7 @@ class AbstractScreenPlayer(DynamicRenderer):
         :param height: required height of the renderer.
         :param width: required width of the renderer.
         """
-        super(AbstractScreenPlayer, self).__init__(height, width, clear=False)
+        super().__init__(height, width, clear=False)
         self._parser = AnsiTerminalParser()
         self._current_colours = [Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK]
         self._show_cursor = False
@@ -157,7 +151,7 @@ class AnsiArtPlayer(AbstractScreenPlayer):
         :param strip: whether to strip CRLF from the file content.
         :param rate: number of lines to render on each update.
         """
-        super(AnsiArtPlayer, self).__init__(height, width)
+        super().__init__(height, width)
         self._file = open(filename, "rb")
         self._strip = strip
         self._rate = rate
@@ -216,7 +210,7 @@ class AsciinemaPlayer(AbstractScreenPlayer):
         width = width if width else header["width"]
 
         # Construct the full player now we have all the details.
-        super(AsciinemaPlayer, self).__init__(height, width)
+        super().__init__(height, width)
         self._max_delay = max_delay
 
     def __enter__(self):

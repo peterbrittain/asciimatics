@@ -1,12 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 This module implements a kaeldioscope effect renderer.
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import range
+
 from math import sin, cos, pi, atan2
 
 from asciimatics.renderers.base import DynamicRenderer
@@ -38,7 +33,7 @@ class Kaleidoscope(DynamicRenderer):
         :param cell: A Renderer to use as the backing cell for the kaleidoscope.
         :param symmetry: The desired rotational symmetry.  Must be a non-negative integer.
         """
-        super(Kaleidoscope, self).__init__(height, width)
+        super().__init__(height, width)
         self._symmetry = symmetry
         self._rotation = 0
         self._cell = cell

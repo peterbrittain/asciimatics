@@ -2,10 +2,6 @@
 This module provides `Sprites` to create animation effects with Paths.  For more details see
 http://asciimatics.readthedocs.io/en/latest/animation.html
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 from asciimatics.effects import Sprite
 from asciimatics.renderers import StaticRenderer
 import random
@@ -128,7 +124,7 @@ class Sam(Sprite):
         """
         See :py:obj:`.Sprite` for details.
         """
-        super(Sam, self).__init__(
+        super().__init__(
             screen,
             renderer_dict={
                 "default": StaticRenderer(images=sam_default, animation=_blink),
@@ -152,7 +148,7 @@ class Arrow(Sprite):
         """
         See :py:obj:`.Sprite` for details.
         """
-        super(Arrow, self).__init__(
+        super().__init__(
             screen,
             renderer_dict={
                 "default": StaticRenderer(images=default_arrow,
@@ -179,7 +175,7 @@ class Plot(Sprite):
         """
         See :py:obj:`.Sprite` for details.
         """
-        super(Plot, self).__init__(
+        super().__init__(
             screen,
             renderer_dict={
                 "default": StaticRenderer(images=["X"])

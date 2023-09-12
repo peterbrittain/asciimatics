@@ -1,12 +1,6 @@
-# -*- coding: utf-8 -*-
 """
 This module is just a collection of simple helper functions.
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import str
 from datetime import date, datetime
 from logging import getLogger
 
@@ -24,9 +18,9 @@ def readable_mem(mem):
     """
     for suffix in ["", "K", "M", "G", "T"]:
         if mem < 10000:
-            return "{}{}".format(int(mem), suffix)
+            return f"{int(mem)}{suffix}"
         mem /= 1024
-    return "{}P".format(int(mem))
+    return f"{int(mem)}P"
 
 
 def readable_timestamp(stamp):
@@ -52,7 +46,7 @@ class _DotDict(dict):
     __delattr__ = dict.__delitem__
 
 
-class BoxTool(object):
+class BoxTool():
     """
     Tool for building boxes out of characters.
 
@@ -111,33 +105,33 @@ class BoxTool(object):
         self._style = style
 
         if style == SINGLE_LINE and self.unicode_aware:
-            self.down_right = u"┌"
-            self.down_left = u"┐"
-            self.up_right = u"└"
-            self.up_left = u"┘"
-            self.h = u"─"
-            self.h_inside = u"─"
-            self.v = u"│"
-            self.v_inside = u"│"
-            self.v_left = u"┤"
-            self.v_right = u"├"
-            self.h_up = u"┴"
-            self.h_down = u"┬"
-            self.cross = u"┼"
+            self.down_right = "┌"
+            self.down_left = "┐"
+            self.up_right = "└"
+            self.up_left = "┘"
+            self.h = "─"
+            self.h_inside = "─"
+            self.v = "│"
+            self.v_inside = "│"
+            self.v_left = "┤"
+            self.v_right = "├"
+            self.h_up = "┴"
+            self.h_down = "┬"
+            self.cross = "┼"
         elif style == DOUBLE_LINE and self.unicode_aware:
-            self.down_right = u"╔"
-            self.down_left = u"╗"
-            self.up_right = u"╚"
-            self.up_left = u"╝"
-            self.h = u"═"
-            self.h_inside = u"═"
-            self.v = u"║"
-            self.v_inside = u"║"
-            self.v_left = u"╣"
-            self.v_right = u"╠"
-            self.h_up = u"╩"
-            self.h_down = u"╦"
-            self.cross = u"╬"
+            self.down_right = "╔"
+            self.down_left = "╗"
+            self.up_right = "╚"
+            self.up_left = "╝"
+            self.h = "═"
+            self.h_inside = "═"
+            self.v = "║"
+            self.v_inside = "║"
+            self.v_left = "╣"
+            self.v_right = "╠"
+            self.h_up = "╩"
+            self.h_down = "╦"
+            self.cross = "╬"
         else:
             self.down_left = "+"
             self.down_right = "+"

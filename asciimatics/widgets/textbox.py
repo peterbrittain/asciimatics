@@ -1,11 +1,4 @@
-# -*- coding: utf-8 -*-
 """This module implements a multi line editing text box"""
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import chr
-from builtins import str
 from copy import copy
 from logging import getLogger
 from asciimatics.event import KeyboardEvent, MouseEvent
@@ -44,7 +37,7 @@ class TextBox(Widget):
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
         """
-        super(TextBox, self).__init__(name, **kwargs)
+        super().__init__(name, **kwargs)
         self._label = label
         self._line = 0
         self._column = 0

@@ -9,7 +9,7 @@ import sys
 import sqlite3
 
 
-class ContactModel(object):
+class ContactModel():
     def __init__(self):
         # Create a database in RAM.
         self._db = sqlite3.connect(':memory:')

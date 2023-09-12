@@ -1,11 +1,5 @@
-# -*- coding: utf-8 -*-
 """This module implements a time picker widget"""
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 from datetime import datetime
-from builtins import range
 
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.screen import Screen
@@ -27,15 +21,15 @@ class _TimePickerPopup(_TempPopup):
         """
         # Construct the Frame
         location = parent.get_location()
-        super(_TimePickerPopup, self).__init__(parent.frame.screen,
+        super().__init__(parent.frame.screen,
                                                parent,
                                                location[0] - 1, location[1] - 2,
                                                10 if parent.include_seconds else 7, 5)
 
         # Build the widget to display the time selection.
-        self._hours = ListBox(3, [("{:02}".format(x), x) for x in range(24)], centre=True)
-        self._minutes = ListBox(3, [("{:02}".format(x), x) for x in range(60)], centre=True)
-        self._seconds = ListBox(3, [("{:02}".format(x), x) for x in range(60)], centre=True)
+        self._hours = ListBox(3, [(f"{x:02}", x) for x in range(24)], centre=True)
+        self._minutes = ListBox(3, [(f"{x:02}", x) for x in range(60)], centre=True)
+        self._seconds = ListBox(3, [(f"{x:02}", x) for x in range(60)], centre=True)
         if self._parent.include_seconds:
             layout = Layout([2, 1, 2, 1, 2], fill_frame=True)
         else:
@@ -77,7 +71,7 @@ class TimePicker(Widget):
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
         """
-        super(TimePicker, self).__init__(name, **kwargs)
+        super().__init__(name, **kwargs)
         self._label = label
         self._on_change = on_change
         self._value = datetime.now().time()

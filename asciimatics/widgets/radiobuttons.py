@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
 """This module implements the widget for radio buttons"""
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.screen import Screen
 from asciimatics.widgets.widget import Widget
@@ -27,7 +22,7 @@ class RadioButtons(Widget):
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
         """
-        super(RadioButtons, self).__init__(name, **kwargs)
+        super().__init__(name, **kwargs)
         self._options = options
         self._label = label
         self._selection = 0
@@ -38,7 +33,7 @@ class RadioButtons(Widget):
         self._draw_label()
 
         # Decide on check char
-        check_char = u"•" if self._frame.canvas.unicode_aware else "X"
+        check_char = "•" if self._frame.canvas.unicode_aware else "X"
 
         # Render the list of radio buttons.
         for i, (text, _) in enumerate(self._options):
@@ -46,7 +41,7 @@ class RadioButtons(Widget):
             fg2, attr2, bg2 = self._pick_colours("field", self._has_focus and i == self._selection)
             check = check_char if i == self._selection else " "
             self._frame.canvas.print_at(
-                "({}) ".format(check),
+                f"({check}) ",
                 self._x + self._offset,
                 self._y + i,
                 fg, attr, bg)

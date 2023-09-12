@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
 """This module implements a base class for popups"""
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 from collections import defaultdict
 from abc import abstractmethod
 from asciimatics.event import KeyboardEvent, MouseEvent
@@ -27,7 +22,7 @@ class _TempPopup(Frame):
         :param h: The height of the desired pop-up.
         """
         # Construct the Frame
-        super(_TempPopup, self).__init__(
+        super().__init__(
             screen, h, w, x=x, y=y, has_border=True, can_scroll=False, is_modal=True)
 
         # Set up the new palette for this Frame
@@ -63,7 +58,7 @@ class _TempPopup(Frame):
             except InvalidFields:
                 # Nothing to do as we've already prevented the Effect from being removed.
                 pass
-        return super(_TempPopup, self).process_event(event)
+        return super().process_event(event)
 
     def close(self, cancelled=False):
         """

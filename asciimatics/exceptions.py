@@ -1,11 +1,6 @@
 """
 This module defines the exceptions used by asciimatics.
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-
 
 class ResizeScreenError(Exception):
     """
@@ -18,7 +13,7 @@ class ResizeScreenError(Exception):
         :param message: Error message for this exception.
         :param scene: Scene that was active at time of resize.
         """
-        super(ResizeScreenError, self).__init__()
+        super().__init__()
         self._scene = scene
         self._message = message
 
@@ -48,7 +43,7 @@ class StopApplication(Exception):
         """
         :param message: Error message for this exception.
         """
-        super(StopApplication, self).__init__()
+        super().__init__()
         self._message = message
 
     def __str__(self):
@@ -68,7 +63,7 @@ class NextScene(Exception):
         """
         :param name: Next Scene to invoke.  Defaults to next in the list.
         """
-        super(NextScene, self).__init__()
+        super().__init__()
         self._name = name
 
     @property
@@ -90,7 +85,7 @@ class InvalidFields(Exception):
         """
         :param fields: The list of the fields that are invalid.
         """
-        super(InvalidFields, self).__init__()
+        super().__init__()
         self._fields = fields
 
     @property

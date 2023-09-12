@@ -2,14 +2,8 @@
 This module provides `Paths` to create animation effects with Sprites.  For more details see
 http://asciimatics.readthedocs.io/en/latest/animation.html
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from future.utils import with_metaclass
+
 from abc import ABCMeta, abstractmethod
-from builtins import object
-from builtins import range
 
 
 def _spline(t, p0, p1, p2, p3):
@@ -29,7 +23,7 @@ def _spline(t, p0, p1, p2, p3):
         (t - 1) * t * t * p3) / 2
 
 
-class _AbstractPath(with_metaclass(ABCMeta, object)):
+class _AbstractPath(metaclass=ABCMeta):
     """
     Class to represent the motion of a Sprite.
 
@@ -81,7 +75,7 @@ class Path(_AbstractPath):
         To define a Path, use the methods to jump to a location, wait or move
         between points.
         """
-        super(Path, self).__init__()
+        super().__init__()
         self._steps = []
         self._index = 0
         self._rec_x = 0
@@ -184,7 +178,7 @@ class Path(_AbstractPath):
                 self._add_step((x, int(y)))
 
 
-class DynamicPath(with_metaclass(ABCMeta, _AbstractPath)):
+class DynamicPath(_AbstractPath, metaclass=ABCMeta):
     """
     Class to create a dynamic path that reacts to events
 
@@ -198,7 +192,7 @@ class DynamicPath(with_metaclass(ABCMeta, _AbstractPath)):
         To implement a DynamicPath, override the :py:meth:`.process_event()`
         method to react to any user input.
         """
-        super(DynamicPath, self).__init__()
+        super().__init__()
         self._screen = screen
         self._x = self._start_x = x
         self._y = self._start_y = y

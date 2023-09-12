@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
 """This module defines a button widget"""
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.widgets.widget import Widget
 
@@ -28,7 +23,7 @@ class Button(Widget):
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
         """
-        super(Button, self).__init__(name, **kwargs)
+        super().__init__(name, **kwargs)
         self._add_box = add_box
         self.text = text
         self._on_click = on_click
@@ -37,7 +32,7 @@ class Button(Widget):
     def set_layout(self, x, y, offset, w, h):
         # Do the usual layout work. then recalculate exact x/w values for the
         # rendered button.
-        super(Button, self).set_layout(x, y, offset, w, h)
+        super().set_layout(x, y, offset, w, h)
         text_width = self.string_len(self._text)
         if self._add_box:
             # Minimize widget to make a nice little button.  Only centre it if there are no label offsets.
@@ -88,7 +83,7 @@ class Button(Widget):
     @text.setter
     def text(self, new_text):
         self._text_raw = new_text
-        self._text = "< {} >".format(new_text) if self._add_box else new_text
+        self._text = f"< {new_text} >" if self._add_box else new_text
 
     @property
     def value(self):

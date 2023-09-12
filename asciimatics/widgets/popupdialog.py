@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
 """This module implements a Pop up dialog message box"""
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 from inspect import isfunction
 from functools import partial
 from wcwidth import wcswidth
@@ -55,7 +50,7 @@ class PopUpDialog(Frame):
 
         # Construct the Frame
         self._data = {"message": self._message}
-        super(PopUpDialog, self).__init__(
+        super().__init__(
             screen, height, width, self._data, has_shadow=has_shadow, is_modal=True)
 
         # Build up the message box
