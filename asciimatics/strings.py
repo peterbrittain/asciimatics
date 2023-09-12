@@ -4,7 +4,7 @@ This module provides classes to handle embedded control strings for widgets.
 from asciimatics.parsers import Parser
 
 
-class ColouredText(object):
+class ColouredText():
     """
     Unicode string-like object to store text and colour maps, using a parser to convert the raw text
     passed in into visible text and an associated colour map.  This only handles simple colour
@@ -23,7 +23,7 @@ class ColouredText(object):
         The colour_map, offsets and text options are to optimize creation of substrings from an
         existing ColouredText object and should not be used in general.
         """
-        super(ColouredText, self).__init__()
+        super().__init__()
         self._raw_text = raw_text
         self._raw_offsets = []
         self._parser = parser

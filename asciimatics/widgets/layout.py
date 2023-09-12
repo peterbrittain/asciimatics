@@ -1,11 +1,4 @@
-# -*- coding: utf-8 -*-
 """This module implements the displaying of widgets appropriately"""
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import range
-from builtins import object
 from logging import getLogger
 from wcwidth import wcswidth
 from asciimatics.event import KeyboardEvent, MouseEvent
@@ -19,7 +12,7 @@ from asciimatics.widgets.widget import Widget
 logger = getLogger(__name__)
 
 
-class Layout(object):
+class Layout():
     """
     Widget layout handler.
 

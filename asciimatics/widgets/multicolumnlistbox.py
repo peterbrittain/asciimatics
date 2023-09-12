@@ -1,13 +1,6 @@
-# -*- coding: utf-8 -*-
 """This module implements the widget for a multiple column list box"""
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import str
-from builtins import range
 from re import match as re_match
-from future.moves.itertools import zip_longest
+from itertools import zip_longest
 from asciimatics.strings import ColouredText
 from asciimatics.widgets.utilities import _enforce_width
 from asciimatics.widgets.baselistbox import _BaseListBox
@@ -67,7 +60,7 @@ class MultiColumnListBox(_BaseListBox):
         """
         if titles is not None and parser is not None:
             titles = [ColouredText(x, parser) for x in titles]
-        super(MultiColumnListBox, self).__init__(
+        super().__init__(
             height, options, titles=titles, label=label, name=name, parser=parser,
             on_change=on_change, on_select=on_select)
         self._columns = []

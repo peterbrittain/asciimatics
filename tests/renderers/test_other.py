@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import str
 import unittest
 import os
 import sys
@@ -24,9 +18,9 @@ class TestRendererOthers(unittest.TestCase):
             str(renderer),
             " _          _ _       \n" +
             "| |__   ___| | | ___  \n" +
-            "| '_ \ / _ \ | |/ _ \ \n" +
+            "| '_ \\ / _ \\ | |/ _ \\ \n" +
             "| | | |  __/ | | (_) |\n" +
-            "|_| |_|\___|_|_|\___/ \n" +
+            "|_| |_|\\___|_|_|\\___/ \n" +
             "                      \n")
 
     def test_bubble(self):
@@ -61,9 +55,9 @@ class TestRendererOthers(unittest.TestCase):
         # Unicode rendering.
         renderer = SpeechBubble("hello", uni=True)
         self.assertEqual(str(renderer),
-                         u"╭───────╮\n"
-                         u"│ hello │\n"
-                         u"╰───────╯")
+                         "╭───────╮\n"
+                         "│ hello │\n"
+                         "╰───────╯")
 
         # Multiline text rendering
         text = "Hello\n" \

@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
 # -*- coding: utf-8 -*-
-from __future__ import division
-from __future__ import print_function
 import traceback
 from math import pi, exp, atan, log, tan, sqrt
 import sys

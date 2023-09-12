@@ -1,20 +1,13 @@
-# -*- coding: utf-8 -*-
 """This is the baseclass for list box types"""
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import chr
 from datetime import datetime, timedelta
 from abc import ABCMeta, abstractmethod, abstractproperty
-from future.utils import with_metaclass
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.screen import Screen
 from asciimatics.widgets.widget import Widget
 from asciimatics.widgets.scrollbar import _ScrollBar
 
 
-class _BaseListBox(with_metaclass(ABCMeta, Widget)):
+class _BaseListBox(Widget, metaclass=ABCMeta):
     """
     An Internal class to contain common function between list box types.
     """
@@ -35,7 +28,7 @@ class _BaseListBox(with_metaclass(ABCMeta, Widget)):
             this list - e.g. by double-clicking or pressing Enter.
         :param validator: Optional function to validate selection for this widget.
         """
-        super(_BaseListBox, self).__init__(name)
+        super().__init__(name)
         self._titles = titles
         self._label = label
         self._parser = parser

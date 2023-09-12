@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 This module implements bar chart renderers.
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
+
 from abc import abstractmethod
 
 from asciimatics.constants import DOUBLE_LINE, SINGLE_LINE
@@ -33,7 +29,7 @@ class _BarChartBase(DynamicRenderer):
                  bg=Screen.COLOUR_BLACK, gradient=None, scale=None, axes=Y_AXIS, intervals=None,
                  labels=False, border=True, keys=None, gap=None):
         ### See children BarChart and VBarChart for argument descriptions and pydocs
-        super(_BarChartBase, self).__init__(height, width)
+        super().__init__(height, width)
         self._functions = functions
         self._char = char
         self._colours = [colour] if isinstance(colour, int) else colour
@@ -174,7 +170,7 @@ class BarChart(_BarChartBase):
             * A Y_AXIS uses a width of 1
         """
         # Have to have a call to super as the defaults for the class are different than the parent
-        super(BarChart, self).__init__(
+        super().__init__(
             height, width, functions, char, colour, bg, gradient, scale, axes, intervals, labels, border,
             keys, gap)
 
@@ -325,7 +321,7 @@ class VBarChart(_BarChartBase):
             * An X_AXIS uses a height of 1
             * A Y_AXIS uses a width of 1
         """
-        super(VBarChart, self).__init__(
+        super().__init__(
             height, width, functions, char, colour, bg, gradient, scale, axes, intervals, labels, border,
             keys, gap)
 

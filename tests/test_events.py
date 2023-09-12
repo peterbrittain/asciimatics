@@ -23,7 +23,7 @@ class TestEvents(unittest.TestCase):
         self.assertEqual(event.x, x)
         self.assertEqual(event.y, y)
         self.assertEqual(event.buttons, buttons)
-        self.assertIn("({}, {})".format(x, y), str(event))
+        self.assertIn(f"({x}, {y})", str(event))
         self.assertIn(str(buttons), str(event))
 
 

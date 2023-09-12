@@ -46,7 +46,6 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
@@ -63,16 +62,10 @@ setup(
         'pyfiglet >= 0.7.2',
         'Pillow >= 2.7.0',
         'wcwidth',
-        'future',
-        'backports.functools_lru_cache;python_version<"3.0"',
     ],
     extras_require={
         ':sys_platform == "win32"': ['pywin32'],
     },
     setup_requires=['setuptools_scm'],
-    tests_require=[
-        'mock',
-        'nose',
-    ],
-    test_suite='nose.collector',
+    python_requires=">= 3.8",
 )

@@ -1,6 +1,6 @@
 import random
 import unittest
-from mock.mock import MagicMock
+from unittest.mock import MagicMock
 from asciimatics.particles import ShootScreen, DropScreen, Explosion, Rain, \
     StarFirework, PalmFirework, RingFirework, SerpentFirework
 from asciimatics.screen import Screen, Canvas

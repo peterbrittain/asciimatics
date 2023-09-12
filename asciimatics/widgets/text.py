@@ -1,10 +1,4 @@
-# -*- coding: utf-8 -*-
 """This widget implements a text based input field"""
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import chr
 from re import match
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.screen import Screen
@@ -38,7 +32,7 @@ class Text(Widget):
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
         """
-        super(Text, self).__init__(name, **kwargs)
+        super().__init__(name, **kwargs)
         self._label = label
         self._column = 0
         self._start_column = 0
@@ -50,7 +44,7 @@ class Text(Widget):
 
     def set_layout(self, x, y, offset, w, h):
         # Do the usual layout work. then apply max length to resulting dimensions.
-        super(Text, self).set_layout(x, y, offset, w, h)
+        super().set_layout(x, y, offset, w, h)
         if self._max_length:
             # Allow extra char for cursor, so contents don't scroll at required length
             self._w = min(self._w, self._max_length + self._offset + 1)

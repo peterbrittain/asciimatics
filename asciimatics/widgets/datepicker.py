@@ -1,12 +1,5 @@
-# -*- coding: utf-8 -*-
 """This module defines a datepicker widget"""
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import range
-from datetime import date
-from datetime import datetime
+from datetime import date, datetime
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import InvalidFields
 from asciimatics.screen import Screen
@@ -32,7 +25,7 @@ class _DatePickerPopup(_TempPopup):
         if year_range is None:
             year_range = range(now.year - 50, now.year + 50)
         self._days = ListBox(3,
-                             [("{:02}".format(x), x) for x in range(1, 32)],
+                             [(f"{x:02}", x) for x in range(1, 32)],
                              centre=True,
                              validator=self._check_date)
         self._months = ListBox(3,
@@ -41,13 +34,13 @@ class _DatePickerPopup(_TempPopup):
                                centre=True,
                                on_change=self._refresh_day)
         self._years = ListBox(3,
-                              [("{:04}".format(x), x) for x in year_range],
+                              [(f"{x:04}", x) for x in year_range],
                               centre=True,
                               on_change=self._refresh_day)
 
         # Construct the Frame
         location = parent.get_location()
-        super(_DatePickerPopup, self).__init__(parent.frame.screen,
+        super().__init__(parent.frame.screen,
                                                parent,
                                                location[0] - 1, location[1] - 2,
                                                13, 5)
@@ -102,7 +95,7 @@ class DatePicker(Widget):
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
         """
-        super(DatePicker, self).__init__(name, **kwargs)
+        super().__init__(name, **kwargs)
         self._label = label
         self._on_change = on_change
         self._value = datetime.now().date()

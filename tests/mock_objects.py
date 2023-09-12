@@ -15,7 +15,7 @@ class MockEffect(Effect):
         :param next_scene: The next scene to move to (if stop=False)
         :param frame_rate: The frame rate for updates.
         """
-        super(MockEffect, self).__init__(None, **kwargs)
+        super().__init__(None, **kwargs)
         self.stop_called = False
         self.reset_called = False
         self.event_called = False

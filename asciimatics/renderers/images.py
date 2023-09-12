@@ -1,20 +1,14 @@
-# -*- coding: utf-8 -*-
 """
 This module implements renderers that produce content based on image files.
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-from builtins import object
-from builtins import range
+
 from PIL import Image
 
 from asciimatics.renderers.base import StaticRenderer
 from asciimatics.screen import Screen
 
 
-class _ImageSequence(object):
+class _ImageSequence():
     """
     Simple class to make an iterator for a PIL Image object.
     """
@@ -46,7 +40,7 @@ class ImageFile(StaticRenderer):
         :param height: The height of the text rendered image.
         :param colours: The number of colours the terminal supports.
         """
-        super(ImageFile, self).__init__()
+        super().__init__()
         with Image.open(filename) as image:
             background = image.info['background'] if 'background' in \
                 image.info else None
@@ -101,7 +95,7 @@ class ColourImageFile(StaticRenderer):
         :param uni: Whether to use unicode box characters or not.
         :param dither: Whether to dither the rendered image or not.
         """
-        super(ColourImageFile, self).__init__()
+        super().__init__()
         with Image.open(filename) as image:
             # Find any PNG or GIF background colour.
             background = None

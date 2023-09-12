@@ -4,7 +4,7 @@ http://asciimatics.readthedocs.io/en/latest/.html
 """
 
 
-class Event(object):
+class Event():
     """
     A class to hold information about an input event.
 
@@ -31,7 +31,7 @@ class KeyboardEvent(Event):
         """
         :returns: a string representation of the keyboard event.
         """
-        return "KeyboardEvent: {}".format(self.key_code)
+        return f"KeyboardEvent: {self.key_code}"
 
 
 class MouseEvent(Event):
@@ -61,4 +61,4 @@ class MouseEvent(Event):
         """
         :returns: a string representation of the mouse event.
         """
-        return "MouseEvent ({}, {}) {}".format(self.x, self.y, self.buttons)
+        return f"MouseEvent ({self.x}, {self.y}) {self.buttons}"

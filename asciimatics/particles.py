@@ -2,22 +2,16 @@
 This module implements a particle system for complex animcation effects.  For more details, see
 http://asciimatics.readthedocs.io/en/latest/animation.html
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
+
 from abc import ABCMeta, abstractmethod
-from builtins import object
-from builtins import range
 from copy import copy
 from math import pi, sin, cos, sqrt
 from random import uniform, randint
-from future.utils import with_metaclass
 from asciimatics.effects import Effect
 from asciimatics.screen import Screen
 
 
-class Particle(object):
+class Particle():
     """
     A single particle in a Particle Effect.
     """
@@ -117,7 +111,7 @@ class Particle(object):
         return self._last
 
 
-class ParticleEmitter(object):
+class ParticleEmitter():
     """
     An emitter for a particle system to create a set of :py:obj:`._Particle`
     objects for a :py:obj:`.ParticleEffect`.  After initialization, the
@@ -140,7 +134,7 @@ class ParticleEmitter(object):
             Each Particle individually as they are drawn.
             Defaults to False.
         """
-        super(ParticleEmitter, self).__init__()
+        super().__init__()
         self._screen = screen
         self._x = x
         self._y = y
@@ -201,7 +195,7 @@ class ParticleEmitter(object):
                 self.particles.remove(particle)
 
 
-class ParticleEffect(with_metaclass(ABCMeta, Effect)):
+class ParticleEffect(Effect, metaclass=ABCMeta):
     """
     An Effect that uses a :py:obj:`.ParticleEmitter` to create the animation.
 
@@ -219,7 +213,7 @@ class ParticleEffect(with_metaclass(ABCMeta, Effect)):
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
-        super(ParticleEffect, self).__init__(screen, **kwargs)
+        super().__init__(screen, **kwargs)
         self._x = x
         self._y = y
         self._life_time = life_time
@@ -259,7 +253,7 @@ class Rocket(ParticleEmitter):
         :param life_time: The life time of the rocket.
         :param on_destroy: The function to call when the rocket explodes.
         """
-        super(Rocket, self).__init__(
+        super().__init__(
             screen, x, screen.height - 1, 1, self._next_particle, 1, life_time)
         self._end_y = y
         self._acceleration = (self._end_y - self._y) // life_time
@@ -299,7 +293,7 @@ class RingExplosion(ParticleEmitter):
         :param y: The line (y coordinate) for the origin of this explosion.
         :param life_time: The life time of this explosion.
         """
-        super(RingExplosion, self).__init__(
+        super().__init__(
             screen, x, y, 30, self._next_particle, 1, life_time)
         self._colour = randint(1, 7)
         self._acceleration = 1.0 - (1.0 / life_time)
@@ -339,7 +333,7 @@ class SerpentExplosion(ParticleEmitter):
         :param y: The line (y coordinate) for the origin of this explosion.
         :param life_time: The life time of this explosion.
         """
-        super(SerpentExplosion, self).__init__(
+        super().__init__(
             screen, x, y, 8, self._next_particle, 2, life_time)
         self._colour = randint(1, 7)
 
@@ -383,7 +377,7 @@ class StarExplosion(ParticleEmitter):
         :param points: Number of points the explosion should have.
         :param on_each: The function to call to spawn a trail.
         """
-        super(StarExplosion, self).__init__(
+        super().__init__(
             screen, x, y, points, self._next_particle, 1, life_time)
         self._colour = randint(1, 7)
         self._acceleration = 1.0 - (1.0 / life_time)
@@ -427,7 +421,7 @@ class StarTrail(ParticleEmitter):
         :param life_time: The life time of this trail.
         :param colour: The colour of this trail.
         """
-        super(StarTrail, self).__init__(
+        super().__init__(
             screen, x, y, 1, self._next_particle, 1, life_time)
         self._colour = colour
 
@@ -465,7 +459,7 @@ class PalmExplosion(ParticleEmitter):
         :param life_time: The life time of this explosion.
         :param on_each: The function to call to spawn a trail.
         """
-        super(PalmExplosion, self).__init__(
+        super().__init__(
             screen, x, y, 6, self._next_particle, 2, life_time)
         self._colour = randint(1, 7)
         self._on_each = on_each
@@ -507,7 +501,7 @@ class ExplosionFlames(ParticleEmitter):
         :param y: The line (y coordinate) for the origin of this explosion.
         :param life_time: The life time of this explosion.
         """
-        super(ExplosionFlames, self).__init__(
+        super().__init__(
             screen, x, y, 30, self._next_particle, life_time - 10, life_time,
             blend=True)
 
@@ -553,7 +547,7 @@ class DropEmitter(ParticleEmitter):
         :param screen: The Screen being used for this particle system.
         :param life_time: The life time of this particle system.
         """
-        super(DropEmitter, self).__init__(
+        super().__init__(
             screen, 0, 0, 20, self._next_particle, life_time, life_time)
         self._particles = None
         self._full_count = 0
@@ -603,7 +597,7 @@ class ShotEmitter(ParticleEmitter):
         :param diameter: The diameter of the explosion.
         :param life_time: The life time of this particle system.
         """
-        super(ShotEmitter, self).__init__(
+        super().__init__(
             screen, x, y, 50, self._next_particle, life_time, life_time)
         self._particles = None
         self._diameter = diameter
@@ -669,7 +663,7 @@ class RainSource(ParticleEmitter):
         :param life_time: The life time of this particle system.
         :param on_each: Function to call on each iteration of the particle.
         """
-        super(RainSource, self).__init__(
+        super().__init__(
             screen, 0, 0, 4, self._next_particle, life_time, life_time)
         self._particles = None
         self._on_each = on_each
@@ -701,7 +695,7 @@ class Splash(ParticleEmitter):
         """
         :param screen: The Screen being used for this particle system.
         """
-        super(Splash, self).__init__(
+        super().__init__(
             screen, x, y, 1, self._next_particle, 1, 3)
 
     def _next_particle(self):
@@ -819,7 +813,7 @@ class DropScreen(ParticleEffect):
         See :py:obj:`.ParticleEffect` for details of the parameters.
         """
         # No need for an origin as this uses the whole screen.
-        super(DropScreen, self).__init__(screen, 0, 0, life_time, **kwargs)
+        super().__init__(screen, 0, 0, life_time, **kwargs)
 
     def reset(self):
         self._active_systems = []
@@ -840,7 +834,7 @@ class ShootScreen(ParticleEffect):
         """
         # Need to set the field first because the underlying constructor calls reset.
         self._diameter = diameter
-        super(ShootScreen, self).__init__(screen, x, y, life_time, **kwargs)
+        super().__init__(screen, x, y, life_time, **kwargs)
 
     def reset(self):
         self._active_systems = []
@@ -858,7 +852,7 @@ class Rain(ParticleEffect):
         See :py:obj:`.ParticleEffect` for details of the parameters.
         """
         # No need for an origin as this uses the whole screen.
-        super(Rain, self).__init__(screen, 0, 0, life_time, **kwargs)
+        super().__init__(screen, 0, 0, life_time, **kwargs)
 
     def reset(self):
         self._active_systems = []

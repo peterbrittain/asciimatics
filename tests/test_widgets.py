@@ -1,17 +1,8 @@
-# -*- coding: utf-8 -*-
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
 from datetime import date, time
 from time import sleep
-from mock import patch
-from builtins import ord
-from builtins import chr
-from builtins import str
 import unittest
 import sys
-from mock.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import NextScene, StopApplication, InvalidFields
 from asciimatics.scene import Scene
@@ -24,9 +15,9 @@ from asciimatics.parsers import AsciimaticsParser, AnsiTerminalParser
 from asciimatics.strings import ColouredText
 
 
-class TestFrame(Frame):
+class _TestFrame(Frame):
     def __init__(self, screen, has_border=True, can_scroll=True, reduce_cpu=False, label_height=1):
-        super(TestFrame, self).__init__(screen,
+        super().__init__(screen,
                                         screen.height,
                                         screen.width,
                                         name="Test Form",
@@ -118,9 +109,9 @@ class TestFrame(Frame):
         raise StopApplication("User requested exit")
 
 
-class TestFrame2(Frame):
+class _TestFrame2(Frame):
     def __init__(self, screen, init_values):
-        super(TestFrame2, self).__init__(screen,
+        super().__init__(screen,
                                          screen.height,
                                          screen.width,
                                          data={"selected": "None"},
@@ -177,17 +168,17 @@ class TestFrame2(Frame):
         raise StopApplication("User pressed quit")
 
 
-class TestFrame3(Frame):
+class _TestFrame3(Frame):
     def __init__(self, screen):
-        super(TestFrame3, self).__init__(screen, 10, 20,
+        super().__init__(screen, 10, 20,
                                          name="Blank",
                                          has_shadow=True)
         self.fix()
 
 
-class TestFrame4(Frame):
+class _TestFrame4(Frame):
     def __init__(self, screen, file_filter=None):
-        super(TestFrame4, self).__init__(
+        super().__init__(
             screen, screen.height, screen.width, has_border=False, can_scroll=False, name="My Form")
 
         # State tracking for callbacks
@@ -213,9 +204,9 @@ class TestFrame4(Frame):
         self.highlighted = self.file_list.value
 
 
-class TestFrame5(Frame):
+class _TestFrame5(Frame):
     def __init__(self, screen):
-        super(TestFrame5, self).__init__(
+        super().__init__(
             screen, screen.height, screen.width, has_border=True, name="My Form")
 
         # Simple full-page Widget
@@ -238,9 +229,9 @@ class TestFrame5(Frame):
         self.changed = True
 
 
-class TestFrame6(Frame):
+class _TestFrame6(Frame):
     def __init__(self, screen):
-        super(TestFrame6, self).__init__(
+        super().__init__(
             screen, screen.height, screen.width, has_border=True, name="My Form")
 
         # Simple full-page Widget
@@ -301,7 +292,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         scene = Scene([], -1)
-        form = TestFrame(canvas)
+        form = _TestFrame(canvas)
         scene.add_effect(form)
 
         # Should be empty on construction
@@ -330,7 +321,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         scene = Scene([], -1)
-        form = TestFrame(canvas)
+        form = _TestFrame(canvas)
         scene.add_effect(form)
         form.reset()
 
@@ -388,7 +379,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=True)
         canvas = Canvas(screen, 10, 40, 0, 0)
         scene = Scene([], -1)
-        form = TestFrame(canvas)
+        form = _TestFrame(canvas)
         scene.add_effect(form)
         form.reset()
 
@@ -446,7 +437,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         scene = Scene([], -1)
-        form = TestFrame(canvas, has_border=False, can_scroll=False)
+        form = _TestFrame(canvas, has_border=False, can_scroll=False)
         scene.add_effect(form)
         form.reset()
 
@@ -488,7 +479,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         scene = Scene([], -1)
-        form = TestFrame(canvas, has_border=False, can_scroll=True)
+        form = _TestFrame(canvas, has_border=False, can_scroll=True)
         scene.add_effect(form)
         form.reset()
 
@@ -514,7 +505,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         scene = Scene([], -1)
-        form = TestFrame(canvas)
+        form = _TestFrame(canvas)
         scene.add_effect(form)
         form.reset()
         self.process_keys(form,
@@ -548,7 +539,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         scene = Scene([], -1)
-        form = TestFrame(canvas)
+        form = _TestFrame(canvas)
         scene.add_effect(form)
         form.reset()
 
@@ -622,7 +613,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         scene = Scene([], -1)
-        form = TestFrame(canvas)
+        form = _TestFrame(canvas)
         scene.add_effect(form)
         form.reset()
 
@@ -667,7 +658,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         scene = Scene([], -1)
-        form = TestFrame(canvas)
+        form = _TestFrame(canvas)
         scene.add_effect(form)
         form.reset()
 
@@ -699,7 +690,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         scene = Scene([], -1)
-        form = TestFrame(canvas)
+        form = _TestFrame(canvas)
         scene.add_effect(form)
         form.reset()
 
@@ -728,7 +719,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         scene = Scene([], -1)
-        form = TestFrame(canvas)
+        form = _TestFrame(canvas)
         scene.add_effect(form)
         form.reset()
 
@@ -770,7 +761,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         scene = Scene([], -1)
-        form = TestFrame(canvas)
+        form = _TestFrame(canvas)
         scene.add_effect(form)
         form.reset()
 
@@ -817,7 +808,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         scene = Scene([], -1)
-        form = TestFrame(canvas)
+        form = _TestFrame(canvas)
         scene.add_effect(form)
         form.reset()
 
@@ -837,7 +828,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         scene = Scene([], -1)
-        form = TestFrame(canvas)
+        form = _TestFrame(canvas)
         scene.add_effect(form)
         form.reset()
 
@@ -855,7 +846,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         scene = Scene([], -1)
-        form = TestFrame(canvas)
+        form = _TestFrame(canvas)
         scene.add_effect(form)
         form.reset()
 
@@ -933,7 +924,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         scene = Scene([], -1)
-        form = TestFrame2(
+        form = _TestFrame2(
             canvas, [("One", 1), ("Two is now quite a bit longer than before", 2)])
         scene.add_effect(form)
         form.reset()
@@ -1022,7 +1013,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         scene = Scene([], -1)
-        form = TestFrame2(canvas, [("One", 1), ("Two", 2)])
+        form = _TestFrame2(canvas, [("One", 1), ("Two", 2)])
         scene.add_effect(form)
         form.reset()
 
@@ -1645,7 +1636,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=True)
         scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
-        form = PopUpDialog(canvas, u"你確定嗎？ 你確定嗎？ 你確定嗎？", [u"是", u"否"])
+        form = PopUpDialog(canvas, "你確定嗎？ 你確定嗎？ 你確定嗎？", ["是", "否"])
         scene.add_effect(form)
         form.reset()
 
@@ -1682,9 +1673,9 @@ class TestWidgets(unittest.TestCase):
             [3, 5, 0],
             [
                 (["1", "2", "3"], 1),
-                ([u"你", u"確", u"定"], 2),
+                (["你", "確", "定"], 2),
             ],
-            titles=[u"你確定嗎？", u"你確定嗎？", u"你確定嗎？"])
+            titles=["你確定嗎？", "你確定嗎？", "你確定嗎？"])
         text = Text()
         text_box = TextBox(3)
         form.add_layout(layout)
@@ -1696,23 +1687,23 @@ class TestWidgets(unittest.TestCase):
         form.reset()
 
         # Set some interesting values...
-        text.value = u"你確定嗎？ 你確定嗎？ 你確定嗎？"
-        text_box.value = [u"你確定嗎", u"？"]
+        text.value = "你確定嗎？ 你確定嗎？ 你確定嗎？"
+        text_box.value = ["你確定嗎", "？"]
 
         # Check that the CJK characters render correctly - no really this is correctly aligned!
         form.update(0)
         self.assert_canvas_equals(
             canvas,
-            u"你你 你你確確 你你確確定定嗎嗎？？                      \n" +
-            u"1  2    3                               \n" +
-            u"你你 確確   定定                              \n" +
-            u"                                        \n" +
-            u"你你確確定定嗎嗎？？ 你你確確定定嗎嗎？？ 你你確確定定嗎嗎？？        \n" +
-            u"你你確確定定嗎嗎                                \n" +
-            u"？？                                      \n" +
-            u"                                        \n" +
-            u"                                        \n" +
-            u"                                        \n")
+            "你你 你你確確 你你確確定定嗎嗎？？                      \n" +
+            "1  2    3                               \n" +
+            "你你 確確   定定                              \n" +
+            "                                        \n" +
+            "你你確確定定嗎嗎？？ 你你確確定定嗎嗎？？ 你你確確定定嗎嗎？？        \n" +
+            "你你確確定定嗎嗎                                \n" +
+            "？？                                      \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
 
         # Check that mouse input takes into account the glyph width
         self.process_mouse(form, [(5, 4, MouseEvent.LEFT_CLICK)])
@@ -1720,14 +1711,14 @@ class TestWidgets(unittest.TestCase):
         self.process_mouse(form, [(2, 4, MouseEvent.LEFT_CLICK)])
         self.process_keys(form, ["p"])
         form.save()
-        self.assertEqual(text.value, u"你p確b定嗎？ 你確定嗎？ 你確定嗎？")
+        self.assertEqual(text.value, "你p確b定嗎？ 你確定嗎？ 你確定嗎？")
 
         self.process_mouse(form, [(2, 5, MouseEvent.LEFT_CLICK)])
         self.process_keys(form, ["p"])
         self.process_mouse(form, [(1, 6, MouseEvent.LEFT_CLICK)])
         self.process_keys(form, ["b"])
         form.save()
-        self.assertEqual(text_box.value, [u"你p確定嗎", u"b？"])
+        self.assertEqual(text_box.value, ["你p確定嗎", "b？"])
 
     def test_shadow(self):
         """
@@ -1783,8 +1774,8 @@ class TestWidgets(unittest.TestCase):
         self.assertEqual(scene2.effects[0]._buttons, ["Yes", "No"])
 
         # Check that normal Frame data gets copied to the new Scene.
-        frame = TestFrame(canvas)
-        frame2 = TestFrame(canvas)
+        frame = _TestFrame(canvas)
+        frame2 = _TestFrame(canvas)
         scene = Scene([frame], 10)
         scene2 = Scene([frame2], 10)
         frame.data = {"TA": ["something"]}
@@ -1802,7 +1793,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         scene = Scene([], -1)
-        form = TestFrame(canvas)
+        form = _TestFrame(canvas)
         scene.add_effect(form)
         form.reset()
 
@@ -1826,7 +1817,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         scene = Scene([], -1)
-        form = TestFrame(canvas, reduce_cpu=True)
+        form = _TestFrame(canvas, reduce_cpu=True)
         scene.add_effect(form)
         form.reset()
 
@@ -1845,7 +1836,7 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
-        form = TestFrame(canvas, reduce_cpu=True)
+        form = _TestFrame(canvas, reduce_cpu=True)
         self.assertEqual(form.stop_frame, -1)
 
     def test_empty_frame(self):
@@ -1855,7 +1846,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
         scene = Scene([], -1)
-        form = TestFrame3(canvas)
+        form = _TestFrame3(canvas)
         scene.add_effect(form)
         form.reset()
 
@@ -1879,7 +1870,7 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
-        form = TestFrame(canvas)
+        form = _TestFrame(canvas)
         form.reset()
 
         # Check initial rendering
@@ -1923,7 +1914,7 @@ class TestWidgets(unittest.TestCase):
         """
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
-        form = TestFrame(canvas, label_height=2)
+        form = _TestFrame(canvas, label_height=2)
         form.reset()
 
         # Check Label obeys required height
@@ -2037,7 +2028,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
-        form = TestFrame4(canvas)
+        form = _TestFrame4(canvas)
         scene.add_effect(form)
         form.reset()
 
@@ -2071,7 +2062,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
-        form = TestFrame4(canvas)
+        form = _TestFrame4(canvas)
         scene.add_effect(form)
         form.reset()
 
@@ -2121,7 +2112,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
-        form = TestFrame4(canvas)
+        form = _TestFrame4(canvas)
         scene.add_effect(form)
         form.reset()
 
@@ -2214,7 +2205,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         scene = Scene([], -1)
         canvas = Canvas(screen, 10, 40, 0, 0)
-        form = TestFrame4(canvas, file_filter=r".*\.bmp$")
+        form = _TestFrame4(canvas, file_filter=r".*\.bmp$")
         scene.add_effect(form)
         form.reset()
 
@@ -2252,7 +2243,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         scene = Scene([], duration=-1)
         canvas = Canvas(screen, 10, 40, 0, 0)
-        form = TestFrame5(canvas)
+        form = _TestFrame5(canvas)
         scene.add_effect(form)
         scene.reset()
 
@@ -2369,7 +2360,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         scene = Scene([], duration=-1)
         canvas = Canvas(screen, 10, 40, 0, 0)
-        form = TestFrame5(canvas)
+        form = _TestFrame5(canvas)
         scene.add_effect(form)
         scene.reset()
 
@@ -2598,7 +2589,7 @@ class TestWidgets(unittest.TestCase):
         layout = Layout([100], fill_frame=True)
         form.add_layout(layout)
         layout.add_widget(Divider(draw_line=False, height=7))
-        dd_list = DropdownList([("Item {}".format(i), i) for i in range(10)])
+        dd_list = DropdownList([(f"Item {i}", i) for i in range(10)])
         layout.add_widget(dd_list)
         form.fix()
         scene.add_effect(form)
@@ -2651,7 +2642,7 @@ class TestWidgets(unittest.TestCase):
         layout = Layout([100], fill_frame=True)
         form.add_layout(layout)
         layout.add_widget(Divider(draw_line=False, height=7))
-        dd_list = DropdownList([("Item {}".format(i), i) for i in range(10)], fit=True)
+        dd_list = DropdownList([(f"Item {i}", i) for i in range(10)], fit=True)
         layout.add_widget(dd_list)
         form.fix()
         scene.add_effect(form)
@@ -2722,7 +2713,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         scene = Scene([], duration=-1)
         canvas = Canvas(screen, 10, 40, 0, 0)
-        form = TestFrame5(canvas)
+        form = _TestFrame5(canvas)
         scene.add_effect(form)
         scene.reset()
 
@@ -3424,7 +3415,7 @@ class TestWidgets(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         scene = Scene([], duration=-1)
         canvas = Canvas(screen, 10, 40, 0, 0)
-        form = TestFrame6(canvas)
+        form = _TestFrame6(canvas)
         scene.add_effect(form)
         scene.reset()
 

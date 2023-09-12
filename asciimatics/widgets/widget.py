@@ -1,17 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 This module allows you to create interactive text user interfaces.  For more details see
 http://asciimatics.readthedocs.io/en/latest/widgets.html
 """
-from __future__ import division
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import unicode_literals
-
-from builtins import object
 from abc import ABCMeta, abstractmethod, abstractproperty
 
-from future.utils import with_metaclass
 from logging import getLogger
 from wcwidth import wcswidth
 from asciimatics.screen import Screen
@@ -21,7 +13,7 @@ from asciimatics.widgets.utilities import _split_text
 logger = getLogger(__name__)
 
 
-class Widget(with_metaclass(ABCMeta, object)):
+class Widget(metaclass=ABCMeta):
     """
     A Widget is a re-usable component that can be used to create a simple GUI.
     """
@@ -47,7 +39,7 @@ class Widget(with_metaclass(ABCMeta, object)):
         :param on_focus: Optional callback whenever this widget gets the focus.
         :param on_blur: Optional callback whenever this widget loses the focus.
         """
-        super(Widget, self).__init__()
+        super().__init__()
         # Internal properties
         self._name = name
         self._label = None

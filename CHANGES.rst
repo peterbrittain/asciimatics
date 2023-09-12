@@ -8,6 +8,7 @@ LATEST
 - Added speed option to Sprite.
 - Fixed bug where moving focus between Frames resulted in no current focus.
 - Fixed internal state of RadioButton values to be consistent with selection.
+- Dropped support for Python 2, Python 3.9 or above is now required.
 
 1.14.0
 ------

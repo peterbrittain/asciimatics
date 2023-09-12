@@ -8,7 +8,7 @@ from asciimatics.exceptions import ResizeScreenError, NextScene, StopApplication
 import sys
 
 
-class ContactModel(object):
+class ContactModel():
     def __init__(self):
         # Current contact when editing.
         self.current_id = None
