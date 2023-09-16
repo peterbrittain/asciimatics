@@ -46,9 +46,9 @@ jobs:
         pip install -r requirements/dev.txt
         pip install pywin32
     - name: Test
+      shell: cmd
       run: |
         coverage run --source=asciimatics -m unittest
-        shell: cmd
     - name: Upload to coveralls
       uses: AndreMiras/coveralls-python-action@develop
       with:
