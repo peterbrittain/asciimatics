@@ -833,6 +833,9 @@ class TestScreen(unittest.TestCase):
         """
         Check that wait_for_input delays as requested when no input.
         """
+        if sys.platform == "win32":
+            self.skipTest("Broken on github runner.")
+
         def internal_checks(screen):
             # Clear any outstanding events - sometimes windows has system events waiting.
             for _ in range (10):
