@@ -179,7 +179,7 @@ class BarChart(_BarChartBase):
 
         # Make room for the keys if supplied.
         if self._keys:
-            max_key = max([len(x) for x in self._keys])
+            max_key = max(len(x) for x in self._keys)
             key_x = start_x
             int_w -= max_key + 1
             start_x += max_key + 1
@@ -259,8 +259,7 @@ class BarChart(_BarChartBase):
                     if value - last > 0:
                         # Size to fit the available space
                         size = value if bar_len >= value else bar_len
-                        if size > int_w:
-                            size = int_w
+                        size = min(size, int_w)
                         for line in range(bar_size):
                             self._write(
                                 self._char * (size - last), start_x + last, y + line, colour, bg=bg)
@@ -350,6 +349,7 @@ class VBarChart(_BarChartBase):
             labels[-1] = (str(scale), False)
             if self._intervals:
                 next_interval = self._intervals
+                # pylint: disable-next=consider-using-enumerate
                 for i in range(0, len(labels)):
                     value = (i + 1) * scale / int_h
                     if value >= next_interval:
@@ -357,7 +357,7 @@ class VBarChart(_BarChartBase):
                         next_interval += self._intervals
 
             # Change size based on
-            widest_label = max([len(x[0]) for x in labels])
+            widest_label = max(len(x[0]) for x in labels)
             int_w -= widest_label + 1
             start_x += widest_label + 1
 
@@ -400,8 +400,8 @@ class VBarChart(_BarChartBase):
 
         if bar_width <= 0:
             raise ValueError(
-                "Not enough space. %s bars + %s space for gaps is > your graph width of %s" % 
-                (len(self._functions), total_gap_space, int_w))
+                f"Not enough space. {len(self._functions)} bars + {total_gap_space} space for gaps "
+                f"is > your graph width of {int_w}")
 
         # Write keys
         if self._keys:

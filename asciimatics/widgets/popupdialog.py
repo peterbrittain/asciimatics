@@ -37,9 +37,9 @@ class PopUpDialog(Frame):
 
         # Decide on optimum width of the dialog.  Limit to 2/3 the screen width.
         string_len = wcswidth if screen.unicode_aware else len
-        width = max([string_len(x) for x in text.split("\n")])
+        width = max(string_len(x) for x in text.split("\n"))
         width = max(width + 2,
-                    sum([string_len(x) + 4 for x in buttons]) + len(buttons) + 5)
+                    sum(string_len(x) + 4 for x in buttons) + len(buttons) + 5)
         width = min(width, screen.width * 2 // 3)
 
         # Figure out the necessary message and allow for buttons and borders

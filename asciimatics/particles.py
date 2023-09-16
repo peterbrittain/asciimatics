@@ -574,6 +574,9 @@ class DropEmitter(ParticleEmitter):
             x, y, ch, fg, attr, bg = self._particles.pop()
             return Particle(chr(ch), x, y, 0.0, 0.0, [(fg, attr, bg)], self._life_time, self._move)
 
+        # Keep lint happy
+        return None
+
     @staticmethod
     def _move(particle):
         result = int(particle.x), int(particle.y)

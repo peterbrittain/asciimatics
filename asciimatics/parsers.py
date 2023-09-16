@@ -5,7 +5,7 @@ This module provides parsers to create ColouredText objects from embedded contro
 import re
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
-import asciimatics.constants as constants
+from asciimatics import constants
 from asciimatics.utilities import _DotDict
 
 
@@ -58,7 +58,7 @@ class Parser(metaclass=ABCMeta):
         self._state = _DotDict()
         self._state.text = text
         # Force colours to be mutable (in case a tuple was passed in).
-        self._state.attributes = [x for x in colours] if colours else None
+        self._state.attributes = list(x for x in colours) if colours else None
 
     @abstractmethod
     def parse(self):

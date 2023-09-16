@@ -13,8 +13,7 @@ class Text(Widget):
     It consists of an optional label and an entry box.
     """
 
-    __slots__ = ["_label", "_column", "_start_column", "_on_change", "_validator", "_hide_char",
-                 "_max_length", "_readonly"]
+    __slots__ = ["_column", "_start_column", "_on_change", "_validator", "_hide_char", "_max_length"]
 
     def __init__(self, label=None, name=None, on_change=None, validator=None, hide_char=None,
                  max_length=None, readonly=False, **kwargs):

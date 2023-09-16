@@ -18,9 +18,9 @@ class TextBox(Widget):
     It consists of a framed box with option label.
     """
 
-    __slots__ = ["_label", "_line", "_column", "_start_line", "_start_column", "_required_height",
+    __slots__ = ["_line", "_column", "_start_line", "_start_column", "_required_height",
                  "_as_string", "_line_wrap", "_on_change", "_reflowed_text_cache", "_parser",
-                 "_readonly", "_hide_cursor", "_auto_scroll"]
+                 "_hide_cursor", "_auto_scroll"]
 
     def __init__(self, height, label=None, name=None, as_string=False, line_wrap=False, parser=None,
                  on_change=None, readonly=False, **kwargs):
@@ -82,8 +82,7 @@ class TextBox(Widget):
                 display_column = self._column - col
 
         # Restrict to visible/valid content.
-        self._start_line = max(0, max(display_line - height + 1,
-                                      min(self._start_line, display_line)))
+        self._start_line = max(0, display_line - height + 1, min(self._start_line, display_line))
 
         # Render visible portion of the text.
         for line, (text, _, _) in enumerate(display_text):

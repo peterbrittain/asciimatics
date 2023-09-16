@@ -95,7 +95,7 @@ class MultiColumnListBox(_BaseListBox):
             return int(max_width * width)
         if width == 0:
             width = (max_width - sum(self._spacing) -
-                     sum([self._get_width(x, max_width) for x in self._columns if x != 0]))
+                     sum(self._get_width(x, max_width) for x in self._columns if x != 0))
         return width
 
     def _print_cell(self, space, text, align, width, x, y, foreground, attr, background):
@@ -167,8 +167,7 @@ class MultiColumnListBox(_BaseListBox):
             return
 
         # Render visible portion of the text.
-        self._start_line = max(0, max(self._line - height + 1,
-                                      min(self._start_line, self._line)))
+        self._start_line = max(0, self._line - height + 1, min(self._start_line, self._line))
         for i, [row, _] in enumerate(self._options):
             if self._start_line <= i < self._start_line + height:
                 colour, attr, background = self._pick_colours("field", i == self._line)

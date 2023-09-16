@@ -11,7 +11,7 @@ class CheckBox(Widget):
     the box and a field name.
     """
 
-    __slots__ = ["_text", "_label", "_on_change"]
+    __slots__ = ["_text", "_on_change"]
 
     def __init__(self, text, label=None, name=None, on_change=None, **kwargs):
         """
@@ -34,7 +34,7 @@ class CheckBox(Widget):
         check_char = "✓" if self._frame.canvas.unicode_aware else "X"
         (colour, attr, bg) = self._pick_colours("control", self._has_focus)
         self._frame.canvas.print_at(
-            "[{}] ".format(check_char if self._value else " "),
+            f"[{check_char if self._value else ' '}]",
             self._x + self._offset,
             self._y,
             colour, attr, bg)

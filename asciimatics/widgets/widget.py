@@ -2,7 +2,7 @@
 This module allows you to create interactive text user interfaces.  For more details see
 http://asciimatics.readthedocs.io/en/latest/widgets.html
 """
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 
 from logging import getLogger
 from wcwidth import wcswidth
@@ -197,7 +197,7 @@ class Widget(metaclass=ABCMeta):
         # Check this part of the canvas is visible - can't be clicked if not visible.
         if (event.y < self._frame.canvas.start_line or
                 event.y >= self._frame.canvas.start_line + self._frame.canvas.height):
-            return
+            return False
 
         # Check for any overlap
         if self._y <= event.y < self._y + self._h:
@@ -319,15 +319,12 @@ class Widget(metaclass=ABCMeta):
         """
         return self._name
 
-    # I need an abstract writable property - which bizarrely needs functions
-    # to be declared.  Use None for all of them to force errors if called.
-
-    #: The value to return for this widget based on the user's input.
-    value = abstractproperty(
-        None,
-        None,
-        None,
-        "The value to return for this widget based on the user's input.")
+    @property
+    @abstractmethod
+    def value(self):
+        """
+        The value to return for this widget based on the user's input.
+        """
 
     @abstractmethod
     def required_height(self, offset, width):

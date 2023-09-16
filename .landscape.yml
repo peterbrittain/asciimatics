@@ -12,16 +12,12 @@ ignore-paths:
     - coverage_fix.py
     - version.py
 python-targets:
-    - 2
     - 3
 pylint:
+  options:
+    max-bool-expr: 6
+    max-nested-blocks: 6
   disable:
-    # Py2/3 compatibility
-    - redefined-builtin
-    - useless-object-inheritance
-    - super-with-arguments
-    - redundant-u-string-prefix
-    - consider-using-f-string
     # Need many attributes on widgets
     - too-many-arguments
     - too-many-locals
@@ -39,8 +35,6 @@ pylint:
     # Don't agree with these styles
     - no-else-return
     - len-as-condition
-    # Bug in pylint raising too many false positives
-    - unsubscriptable-object
 mccabe:
   run: false
 pep257:

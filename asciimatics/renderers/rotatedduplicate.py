@@ -19,7 +19,7 @@ class RotatedDuplicate(StaticRenderer):
         """
         super().__init__()
         for image in renderer.images:
-            mx = (width - max([len(x) for x in image])) // 2
+            mx = (width - max(len(x) for x in image)) // 2
             my = height // 2 - len(image)
             tab = (" " * mx if mx > 0 else "") + "\n" + (" " * mx if mx > 0 else "")
             new_image = []

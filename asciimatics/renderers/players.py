@@ -152,6 +152,7 @@ class AnsiArtPlayer(AbstractScreenPlayer):
         :param rate: number of lines to render on each update.
         """
         super().__init__(height, width)
+        # pylint: disable-next=consider-using-with
         self._file = open(filename, "rb")
         self._strip = strip
         self._rate = rate
@@ -200,7 +201,8 @@ class AsciinemaPlayer(AbstractScreenPlayer):
         :param max_delay: maximum time interval (in secs) to wait between frame updates.
         """
         # Open the file and check it looks plausibly like a supported format.
-        self._file = open(filename)
+        # pylint: disable-next=consider-using-with
+        self._file = open(filename, "rb")
         header = json.loads(self._file.readline())
         if header["version"] != 2:
             raise RuntimeError("Unsupported file format")

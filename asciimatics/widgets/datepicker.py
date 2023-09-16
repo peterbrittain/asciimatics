@@ -41,9 +41,9 @@ class _DatePickerPopup(_TempPopup):
         # Construct the Frame
         location = parent.get_location()
         super().__init__(parent.frame.screen,
-                                               parent,
-                                               location[0] - 1, location[1] - 2,
-                                               13, 5)
+                         parent,
+                         location[0] - 1, location[1] - 2,
+                         13, 5)
 
         # Build the widget to display the time selection.
         layout = Layout([2, 1, 3, 1, 4], fill_frame=True)
@@ -76,8 +76,8 @@ class _DatePickerPopup(_TempPopup):
                 self._parent.value = self._parent.value.replace(day=self._days.value,
                                                                 month=self._months.value,
                                                                 year=self._years.value)
-        except ValueError:
-            raise InvalidFields([self._days])
+        except ValueError as e:
+            raise InvalidFields([self._days]) from e
 
 
 class DatePicker(Widget):
@@ -85,7 +85,7 @@ class DatePicker(Widget):
     A DatePicker widget allows you to pick a date from a compact, temporary, pop-up Frame.
     """
 
-    __slots__ = ["_label", "_on_change", "_value", "_child", "_year_range"]
+    __slots__ = ["_on_change", "_child", "_year_range"]
 
     def __init__(self, label=None, name=None, year_range=None, on_change=None, **kwargs):
         """

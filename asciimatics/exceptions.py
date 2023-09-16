@@ -2,6 +2,7 @@
 This module defines the exceptions used by asciimatics.
 """
 
+
 class ResizeScreenError(Exception):
     """
     Asciimatics raises this Exception if the terminal is resized while playing

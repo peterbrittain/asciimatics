@@ -18,7 +18,7 @@ class SpeechBubble(StaticRenderer):
                      "R" for left or right tails.  Can be None for no tail.
         """
         super().__init__()
-        max_len = max([wcswidth(x) for x in text.split("\n")])
+        max_len = max(wcswidth(x) for x in text.split("\n"))
         if uni:
             bubble = "╭─" + "─" * max_len + "─╮\n"
             for line in text.split("\n"):

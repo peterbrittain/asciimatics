@@ -3,7 +3,7 @@ This module defines `Effects` which can be used for animations.  For more detail
 http://asciimatics.readthedocs.io/en/latest/animation.html
 """
 
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 from random import randint, random, choice
 from math import sin, cos, pi
 from asciimatics.paths import DynamicPath
@@ -85,7 +85,8 @@ class Effect(metaclass=ABCMeta):
         :param frame_no: The index of the frame being generated.
         """
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def stop_frame(self):
         """
         Last frame for this effect.  A value of zero means no specific end.
@@ -141,7 +142,6 @@ class Effect(metaclass=ABCMeta):
         """
         return self._scene
 
-    # pylint: disable=no-self-use
     def process_event(self, event):
         """
         Process any input event.

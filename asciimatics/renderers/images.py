@@ -21,8 +21,8 @@ class _ImageSequence():
             if ix:
                 self.im.seek(ix)
             return self.im
-        except EOFError:
-            raise IndexError
+        except EOFError as exc:
+            raise IndexError from exc
 
 
 class ImageFile(StaticRenderer):

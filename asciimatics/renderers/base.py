@@ -2,7 +2,7 @@
 This module provides common code for all Renderers.
 """
 
-from abc import ABCMeta, abstractproperty, abstractmethod
+from abc import ABCMeta, abstractmethod
 import re
 
 from wcwidth.wcwidth import wcswidth
@@ -32,25 +32,29 @@ class Renderer(metaclass=ABCMeta):
     the other to make a simple animation sequence - e.g. a rotating globe.
     """
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def max_width(self):
         """
         :return: The max width of the rendered text (across all images if an animated renderer).
         """
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def rendered_text(self):
         """
         :return: The next image and colour map in the sequence as a tuple.
         """
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def images(self):
         """
         :return: An iterator of all the images in the Renderer.
         """
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def max_height(self):
         """
         :return: The max height of the rendered text (across all images if an animated renderer).
@@ -184,7 +188,7 @@ class StaticRenderer(Renderer):
 
         if self._max_width == 0:
             for image in self._plain_images:
-                new_max = max([wcswidth(x) for x in image])
+                new_max = max(wcswidth(x) for x in image)
                 self._max_width = max(new_max, self._max_width)
         return self._max_width
 

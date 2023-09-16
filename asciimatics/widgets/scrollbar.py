@@ -1,5 +1,6 @@
 """This module implements a scroll bar capability for widgets"""
 
+
 class _ScrollBar():
     """
     Internal object to provide vertical scroll bars for widgets.

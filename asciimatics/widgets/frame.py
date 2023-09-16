@@ -606,7 +606,7 @@ class Frame(Effect):
                 self._focus = len(self._layouts) - 1
             if self._focus >= len(self._layouts):
                 self._focus = 0
-            logger.debug(f"Trying tab to layout {self._focus}")
+            logger.debug("Trying tab to layout %s", self._focus)
             try:
                 if direction > 0:
                     self._layouts[self._focus].focus(force_first=True)

@@ -36,9 +36,9 @@ class _DropdownPopup(_TempPopup):
             width = parent.width
         # Construct the Frame
         super().__init__(parent.frame.screen,
-                                             parent,
-                                             location[0], start_line,
-                                             width, height)
+                         parent,
+                         location[0], start_line,
+                         width, height)
 
         # Build the widget to display the time selection.
         layout = Layout([1], fill_frame=True)
@@ -73,7 +73,7 @@ class DropdownList(Widget):
     This widget allows you to pick an item from a temporary pop-up list.
     """
 
-    __slots__ = ["_label", "_on_change", "_child", "_options", "_line", "_value", "_fit"]
+    __slots__ = ["_on_change", "_child", "_options", "_line", "_fit"]
 
     def __init__(self, options, label=None, name=None, on_change=None, fit=None, **kwargs):
         """
@@ -98,7 +98,7 @@ class DropdownList(Widget):
         self._options = options
         self._line = 0 if len(options) > 0 else None
         self._value = options[self._line][1] if self._line is not None else None
-        self._fit = True if fit else False
+        self._fit = fit
 
     @property
     def options(self):
@@ -131,8 +131,7 @@ class DropdownList(Widget):
         else:
             width = self.width - 3
         self._frame.canvas.print_at(
-            "[ {:{}}]".format(
-                _enforce_width(text, width, self._frame.canvas.unicode_aware), width),
+            f"[ {_enforce_width(text, width, self._frame.canvas.unicode_aware):{width}}]",
             self._x + self._offset,
             self._y,
             colour, attr, background)

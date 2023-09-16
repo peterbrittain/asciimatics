@@ -1,6 +1,6 @@
 """This is the baseclass for list box types"""
 from datetime import datetime, timedelta
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.screen import Screen
 from asciimatics.widgets.widget import Widget
@@ -12,7 +12,7 @@ class _BaseListBox(Widget, metaclass=ABCMeta):
     An Internal class to contain common function between list box types.
     """
 
-    __slots__ = ["_options", "_titles", "_label", "_line", "_start_line", "_required_height", "_on_change",
+    __slots__ = ["_options", "_titles", "_line", "_start_line", "_required_height", "_on_change",
                  "_on_select", "_validator", "_search", "_last_search", "_scroll_bar", "_parser"]
 
     def __init__(self, height, options, titles=None, label=None, name=None, parser=None,
@@ -205,8 +205,7 @@ class _BaseListBox(Widget, metaclass=ABCMeta):
             self._on_change()
 
         # Fix up the start line now that we've explicitly set a new value.
-        self._start_line = max(
-            0, max(self._line - self._h + 1, min(self._start_line, self._line)))
+        self._start_line = max(0, self._line - self._h + 1, min(self._start_line, self._line))
 
     def _parse_options(self, options):
         """
@@ -231,7 +230,8 @@ class _BaseListBox(Widget, metaclass=ABCMeta):
         :returns: the option parsed and converted to ColouredText.
         """
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def options(self):
         """
         The list of options available for user selection.

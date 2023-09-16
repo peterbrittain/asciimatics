@@ -25,7 +25,7 @@ class Scene():
             self.add_effect(effect, reset=False)
         self._duration = duration
         if duration == 0:
-            self._duration = max([x.stop_frame for x in effects])
+            self._duration = max(x.stop_frame for x in effects)
         self._clear = clear
         self._name = name
 

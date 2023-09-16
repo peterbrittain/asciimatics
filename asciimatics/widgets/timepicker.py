@@ -22,9 +22,9 @@ class _TimePickerPopup(_TempPopup):
         # Construct the Frame
         location = parent.get_location()
         super().__init__(parent.frame.screen,
-                                               parent,
-                                               location[0] - 1, location[1] - 2,
-                                               10 if parent.include_seconds else 7, 5)
+                         parent,
+                         location[0] - 1, location[1] - 2,
+                         10 if parent.include_seconds else 7, 5)
 
         # Build the widget to display the time selection.
         self._hours = ListBox(3, [(f"{x:02}", x) for x in range(24)], centre=True)
@@ -60,7 +60,7 @@ class TimePicker(Widget):
     A TimePicker widget allows you to pick a time from a compact, temporary, pop-up Frame.
     """
 
-    __slots__ = ["_label", "_on_change", "_value", "_child", "include_seconds"]
+    __slots__ = ["_on_change", "_child", "include_seconds"]
 
     def __init__(self, label=None, name=None, seconds=False, on_change=None, **kwargs):
         """

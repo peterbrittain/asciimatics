@@ -11,7 +11,7 @@ class RadioButtons(Widget):
     It consists of an optional label and then a list of selection bullets with field names.
     """
 
-    __slots__ = ["_options", "_label", "_selection", "_start_column", "_on_change"]
+    __slots__ = ["_options", "_selection", "_start_column", "_on_change"]
 
     def __init__(self, options, label=None, name=None, on_change=None, **kwargs):
         """

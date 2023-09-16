@@ -19,7 +19,7 @@ from wcwidth import wcwidth, wcswidth
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import ResizeScreenError, StopApplication, NextScene
 from asciimatics.utilities import _DotDict
-import asciimatics.constants as constants
+from asciimatics import constants
 
 logger = getLogger(__name__)
 
@@ -845,10 +845,8 @@ class _AbstractCanvas(metaclass=ABCMeta):
         :param x: The column (x coord) for the location to check.
         :param y: The line (y coord) for the location to check.
         """
-        return ((x >= 0) and
-                (x <= self.width) and
-                (y >= self._start_line) and
-                (y < self._start_line + self.height))
+        return ((0 <= x < self.width) and
+                (self._start_line <= y < self._start_line + self.height))
 
     def move(self, x, y):
         """
@@ -890,6 +888,7 @@ class _AbstractCanvas(metaclass=ABCMeta):
         self._y = y1
 
         # Don't bother drawing anything if we're guaranteed to be off-screen
+        # pylint: disable-next=too-many-boolean-expressions
         if ((x0 < 0 and x1 < 0) or (x0 >= self.width * 2 and x1 >= self.width * 2) or
                 (y0 < 0 and y1 < 0) or (y0 >= self.height * 2 and y1 >= self.height * 2)):
             return
@@ -1720,7 +1719,7 @@ class Screen(_AbstractCanvas, metaclass=ABCMeta):
                     if repeat:
                         self._scene_index = 0
                     else:
-                        raise StopApplication("Repeat disabled")
+                        raise StopApplication("Repeat disabled") from e
             else:
                 # Find the required scene.
                 for i, scene in enumerate(self._scenes):
@@ -1728,8 +1727,7 @@ class Screen(_AbstractCanvas, metaclass=ABCMeta):
                         self._scene_index = i
                         break
                 else:
-                    raise RuntimeError(
-                        f"Could not find Scene: '{e.name}'")
+                    raise RuntimeError(f"Could not find Scene: '{e.name}'") from e
 
             # Reset the screen if needed.
             scene = self._scenes[self._scene_index]
@@ -1855,7 +1853,7 @@ class ManagedScreen():
         self.screen = Screen.open()
         return self.screen
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, etype, value, traceback):
         """
         Method used for with statement
         """
@@ -2450,13 +2448,12 @@ else:
                 down.
             """
             if lines < 0:
-                self._safe_write("{}{}".format(
-                    curses.tparm(self._move_y_x, 0, 0).decode("utf-8"),
-                    (self._up_line + self._clear_line) * -lines))
+                start = curses.tparm(self._move_y_x, 0, 0).decode("utf-8")
+                scroll = (self._up_line + self._clear_line) * -lines
             else:
-                self._safe_write("{}{}".format(curses.tparm(
-                    self._move_y_x, self.height, 0).decode("utf-8"),
-                    (self._down_line + self._clear_line) * lines))
+                start = curses.tparm(self._move_y_x, self.height, 0).decode("utf-8")
+                scroll = (self._down_line + self._clear_line) * lines
+            self._safe_write(f"{start}{scroll}")
 
         def _clear(self):
             """
@@ -2522,19 +2519,23 @@ else:
                     # Handle any byte streams first
                     logger.debug("Processing key: %x", key)
                     if self._unicode_aware and key > 0:
+                        # Start of unicode byte stream
                         if key & 0xC0 == 0xC0:
                             self._bytes_to_return = struct.pack(b"B", key)
                             self._bytes_to_read = bin(key)[2:].index("0") - 1
                             logger.debug("Byte stream: %d bytes left",
                                          self._bytes_to_read)
                             continue
-                        elif self._bytes_to_read > 0:
+
+                        # Process unicode bytestream if still expecting data.
+                        if self._bytes_to_read > 0:
                             self._bytes_to_return += struct.pack(b"B", key)
                             self._bytes_to_read -= 1
                             if self._bytes_to_read > 0:
                                 continue
-                            else:
-                                key = ord(self._bytes_to_return.decode("utf-8"))
+
+                            # If we get here we have a key definition.
+                            key = ord(self._bytes_to_return.decode("utf-8"))
 
                     # Handle a genuine key press.
                     logger.debug("Returning key: %x", key)
@@ -2577,7 +2578,7 @@ else:
                 self._bg = None
 
             # next check for default colours - which reset both fg and bg.
-            if colour == Screen.COLOUR_DEFAULT or bg == Screen.COLOUR_DEFAULT:
+            if Screen.COLOUR_DEFAULT in (colour, bg):
                 if self._default_colours:
                     self._safe_write(self._default_colours)
                     self._colour = colour if colour == Screen.COLOUR_DEFAULT else None
@@ -2643,8 +2644,7 @@ else:
             :param title: The title to be set.
             """
             if self._start_line is not None:
-                self._safe_write("{}{}{}".format(self._start_title, title,
-                                                 self._end_title))
+                self._safe_write(f"{self._start_title}{title}{self._end_title}")
 
     class _SignalState():
         """

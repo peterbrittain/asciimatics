@@ -11,7 +11,7 @@ class Button(Widget):
     on a form).
     """
 
-    __slots__ = ["_text", "_text_raw", "_add_box", "_on_click", "_label"]
+    __slots__ = ["_text", "_text_raw", "_add_box", "_on_click"]
 
     def __init__(self, text, on_click, label=None, add_box=True, name=None, **kwargs):
         """

@@ -189,7 +189,7 @@ class Layout():
             # For each column determine if we need a tab offset for labels.
             # Only allow labels to take up 1/3 of the column.
             if len(column) > 0:
-                offset = max([0 if c.label is None else string_len(c.label) + 1 for c in column])
+                offset = max(0 if c.label is None else string_len(c.label) + 1 for c in column)
             else:
                 offset = 0
             offset = int(min(offset,
@@ -275,8 +275,7 @@ class Layout():
             if direction < 0:
                 indexed_column = reversed(indexed_column)
             # Force this to be a list for python 2/3 compatibility.
-            live_widgets = [x for x in filter(
-                lambda x: x[1].is_tab_stop and not x[1].disabled, indexed_column)]
+            live_widgets = list(filter(lambda x: x[1].is_tab_stop and not x[1].disabled, indexed_column))
             try:
                 j, candidate = live_widgets[0]
                 new_distance = _euclidian_distance(target_widget, candidate)
@@ -485,7 +484,7 @@ class Layout():
                         # This relies on the fact that we are passed the actual
                         # dict and so can edit it directly.  In this case, that
                         # is all we want - no need to update the widgets.
-                        self._frame._data[widget.name] = widget.value
+                        self._frame.data[widget.name] = widget.value
                 else:
                     invalid.append(widget.name)
         if len(invalid) > 0:

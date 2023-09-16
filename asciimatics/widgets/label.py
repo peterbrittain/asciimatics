@@ -39,7 +39,7 @@ class Label(Widget):
         for i, text in enumerate(
                 _split_text(self._text, self._w, self._h, self._frame.canvas.unicode_aware)):
             self._frame.canvas.paint(
-                "{:{}{}}".format(text, self._align, self._w),
+                f"{text:{self._align}{self._w}}",
                 self._x, self._y + i, colour, attr, background
             )
 

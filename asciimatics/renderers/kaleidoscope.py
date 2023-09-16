@@ -57,7 +57,7 @@ class Kaleidoscope(DynamicRenderer):
             for dy in range(self._canvas.height):
                 # Figure out which segment of the circle we're in, so we know what affine
                 # transformations to apply.
-                ox = (dx - self._canvas.width / 4)
+                ox = dx - self._canvas.width / 4
                 oy = dy - self._canvas.height / 2
                 segment = round(atan2(oy, ox) * self._symmetry / pi)
                 if segment % 2 == 0:
