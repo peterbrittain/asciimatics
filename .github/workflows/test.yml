@@ -47,7 +47,8 @@ jobs:
         pip install pywin32
     - name: Test
       run: |
-        coverage run --debug=trace --source=asciimatics -m unittest
+        coverage run --source=asciimatics -m unittest
+        shell: cmd
     - name: Upload to coveralls
       uses: AndreMiras/coveralls-python-action@develop
       with:
