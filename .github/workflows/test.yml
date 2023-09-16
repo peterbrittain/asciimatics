@@ -24,10 +24,10 @@ jobs:
       run: |
         coverage run --source=asciimatics -m unittest
     - name: Upload to coveralls
-      uses: AndreMiras/coveralls-python-action@develop
+      uses: coverallsapp/github-action@v2
       with:
+        flag-name: run-${{ join(matrix.*, '-') }}
         parallel: true
-        flag-name: Unit Test
 
   testwindows:
     runs-on: windows-latest
@@ -50,16 +50,16 @@ jobs:
       run: |
         coverage run --source=asciimatics -m unittest
     - name: Upload to coveralls
-      uses: AndreMiras/coveralls-python-action@develop
+      uses: coverallsapp/github-action@v2
       with:
+        flag-name: run-${{ join(matrix.*, '-') }}
         parallel: true
-        flag-name: Unit Test
 
   coveralls_finish:
     needs: [ test, testwindows ]
     runs-on: ubuntu-latest
     steps:
     - name: Coveralls finished
-      uses: AndreMiras/coveralls-python-action@develop
+      uses: coverallsapp/github-action@v2
       with:
         parallel-finished: true
