@@ -835,8 +835,8 @@ class TestScreen(unittest.TestCase):
         """
         def internal_checks(screen):
             # Clear any outstanding events - sometimes windows has system events waiting.
-            while screen.get_event() != None:
-                pass
+            for _ in range (10):
+                screen.get_event()
             start = time.time()
             screen.wait_for_input(0.1)
             self.assertGreaterEqual(time.time() - start, 0.1)
