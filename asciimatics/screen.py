@@ -2419,7 +2419,10 @@ else:
                     curses.nocbreak()
                 except curses.error:
                     pass
-                curses.endwin()
+                try:
+                    curses.endwin()
+                except curses.error:
+                    pass
 
         @staticmethod
         def _safe_write(msg):
