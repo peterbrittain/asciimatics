@@ -52,11 +52,6 @@ jobs:
       shell: cmd
       run: |
         coverage run --source=asciimatics -m unittest
-    - name: Upload to coveralls
-      uses: coverallsapp/github-action@v2
-      with:
-        flag-name: run-${{ join(matrix.*, '-') }}
-        parallel: true
 
   coveralls_finish:
     needs: [ test, testwindows ]
