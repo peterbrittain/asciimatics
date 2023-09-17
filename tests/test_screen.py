@@ -918,6 +918,14 @@ class TestScreen(unittest.TestCase):
         # twice, reflecting their extra width.
         self.assert_line_equals(screen, "x你你確確 ", y=1, length=6)
 
+    def test_zero_width(self):
+        """
+        Check that zero width modifiers are ignored.
+        """
+        screen = Screen.open(unicode_aware=True)
+        screen.print_at("Xx🛡️🍀🍀xX", 0, 0)
+        self.assert_line_equals(screen, "Xx🛡🍀🍀🍀🍀xX", length=9)
+
     def test_save_signal_state(self):
         """Tests that the signal state class works properly.
 

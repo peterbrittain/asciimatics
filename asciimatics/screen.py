@@ -626,6 +626,11 @@ class _AbstractCanvas(metaclass=ABCMeta):
                     if x + i + j + width > self.width:
                         return
 
+                    # Handle modifier glyphs - just delete them for now.
+                    if width == 0:
+                        j -= 1
+                        continue
+
                     # Now handle the update.
                     if c != " " or not transparent:
                         # Fix up orphaned double-width glyphs that we've just bisected.

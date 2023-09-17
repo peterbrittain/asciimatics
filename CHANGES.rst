@@ -3,12 +3,13 @@ CHANGE HISTORY
 
 LATEST
 ------
+- Dropped support for Python 2, Python 3.9 or above is now required.
 - Added support for ColouredText titles in MultiColumnLIstBox.
 - Added gutter option to Layout.
 - Added speed option to Sprite.
 - Fixed bug where moving focus between Frames resulted in no current focus.
 - Fixed internal state of RadioButton values to be consistent with selection.
-- Dropped support for Python 2, Python 3.9 or above is now required.
+- Fixed handling of zero width modifiers.
 
 1.14.0
 ------
