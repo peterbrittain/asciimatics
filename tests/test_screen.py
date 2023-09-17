@@ -917,6 +917,7 @@ class TestScreen(unittest.TestCase):
         # Half-glyph appears as an "x" to show error and then double-width glyphs are returned
         # twice, reflecting their extra width.
         self.assert_line_equals(screen, "x你你確確 ", y=1, length=6)
+        screen.close()
 
     def test_zero_width(self):
         """
@@ -925,6 +926,7 @@ class TestScreen(unittest.TestCase):
         screen = Screen.open(unicode_aware=True)
         screen.print_at("Xx🛡️🍀🍀xX", 0, 0)
         self.assert_line_equals(screen, "Xx🛡🍀🍀🍀🍀xX", length=9)
+        screen.close()
 
     def test_save_signal_state(self):
         """Tests that the signal state class works properly.
