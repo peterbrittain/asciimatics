@@ -19,7 +19,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update -qq
-        sudo apt-get install -qq ncurses
+        sudo apt list --installed
         python -m pip install --upgrade pip
         pip install -r requirements/dev.txt
     - name: Test
