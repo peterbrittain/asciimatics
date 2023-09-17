@@ -835,7 +835,7 @@ class TestScreen(unittest.TestCase):
         """
         if sys.platform == "win32":
             self.skipTest("Broken on github runner.")
-        if not sys.stdout.isatty()):
+        if not sys.stdout.isatty():
             self.skipTest("Not a valid TTY")
 
         def internal_checks(screen):
