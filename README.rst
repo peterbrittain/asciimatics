@@ -1,14 +1,14 @@
 
-.. image:: https://app.travis-ci.com/peterbrittain/asciimatics.svg?branch=master
-    :target: https://app.travis-ci.com/peterbrittain/asciimatics
+.. image:: https://github.com/peterbrittain/asciimatics/actions/workflows/test.yml/badge.svg
+    :target: https://github.com/peterbrittain/asciimatics/actions/workflows/test.yml
     :alt: Build status
 
 .. image:: https://app.codacy.com/project/badge/Grade/c1fed1f2dc6a47a1bbe91f8851456beb
    :target: https://app.codacy.com/gh/peterbrittain/asciimatics/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade
    :alt: Code Health
 
-.. image:: https://coveralls.io/repos/github/peterbrittain/asciimatics/badge.svg?branch=master
-    :target: https://coveralls.io/github/peterbrittain/asciimatics?branch=master
+.. image:: https://codecov.io/gh/peterbrittain/asciimatics/graph/badge.svg?token=UlVFVeLagX
+    :target: https://codecov.io/gh/peterbrittain/asciimatics
     :alt: Code Coverage
 
 .. image:: https://img.shields.io/pypi/v/asciimatics.svg

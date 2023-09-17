@@ -833,9 +833,15 @@ class TestScreen(unittest.TestCase):
         """
         Check that wait_for_input delays as requested when no input.
         """
+        if sys.platform == "win32":
+            self.skipTest("Broken on github runner.")
+        if not sys.stdout.isatty():
+            self.skipTest("Not a valid TTY")
+
         def internal_checks(screen):
             # Clear any outstanding events - sometimes windows has system events waiting.
-            screen.get_event()
+            for _ in range (10):
+                screen.get_event()
             start = time.time()
             screen.wait_for_input(0.1)
             self.assertGreaterEqual(time.time() - start, 0.1)

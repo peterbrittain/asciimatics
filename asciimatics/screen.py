@@ -1369,7 +1369,11 @@ class Screen(_AbstractCanvas, metaclass=ABCMeta):
             # Reproduce curses.wrapper()
             stdscr = curses.initscr()
             curses.noecho()
-            curses.cbreak()
+            # Shouldn't fail on real systems.  This code is for running tests in CI pipelines.
+            try:
+                curses.cbreak()
+            except curses.error:
+                pass
             stdscr.keypad(1)
 
             # Fed up with linters complaining about original curses code - trying to be a bit better...
@@ -2376,10 +2380,13 @@ else:
 
             # Look for a mismatch between the kernel terminal and the terminfo
             # database for backspace.  Fix up keyboard mappings if needed.
-            kbs = curses.tigetstr("kbs").decode("utf-8")
-            tbs = termios.tcgetattr(sys.stdin)[6][termios.VERASE]
-            if tbs != kbs:
-                self._KEY_MAP[ord(tbs)] = Screen.KEY_BACK
+            try:
+                kbs = curses.tigetstr("kbs").decode("utf-8")
+                tbs = termios.tcgetattr(sys.stdin)[6][termios.VERASE]
+                if tbs != kbs:
+                    self._KEY_MAP[ord(tbs)] = Screen.KEY_BACK
+            except termios.error:
+                pass
 
             # Conversion from Screen attributes to curses equivalents.
             self._ATTRIBUTES = {
@@ -2407,8 +2414,15 @@ else:
             if restore:
                 self._screen.keypad(0)
                 curses.echo()
-                curses.nocbreak()
-                curses.endwin()
+                # Shouldn't fail on real systems.  This code is for running tests in CI pipelines.
+                try:
+                    curses.nocbreak()
+                except curses.error:
+                    pass
+                try:
+                    curses.endwin()
+                except curses.error:
+                    pass
 
         @staticmethod
         def _safe_write(msg):
