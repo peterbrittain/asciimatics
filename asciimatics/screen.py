@@ -1369,7 +1369,11 @@ class Screen(_AbstractCanvas, metaclass=ABCMeta):
             # Reproduce curses.wrapper()
             stdscr = curses.initscr()
             curses.noecho()
-            curses.cbreak()
+            # Shouldn't fail on real systems.  This code is for running tests in CI pipelines.
+            try:
+                curses.cbreak()
+            except curses.error:
+                pass
             stdscr.keypad(1)
 
             # Fed up with linters complaining about original curses code - trying to be a bit better...
