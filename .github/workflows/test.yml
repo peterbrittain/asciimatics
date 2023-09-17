@@ -26,11 +26,10 @@ jobs:
         TERM: xterm-256color
       run: |
         coverage run --source=asciimatics -m unittest
-    - name: Upload to coveralls
-      uses: coverallsapp/github-action@v2
-      with:
-        flag-name: run-${{ join(matrix.*, '-') }}
-        parallel: true
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   testwindows:
     runs-on: windows-latest
@@ -52,12 +51,7 @@ jobs:
       shell: cmd
       run: |
         coverage run --source=asciimatics -m unittest
-
-  coveralls_finish:
-    needs: [ test, testwindows ]
-    runs-on: ubuntu-latest
-    steps:
-    - name: Coveralls finished
-      uses: coverallsapp/github-action@v2
-      with:
-        parallel-finished: true
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
