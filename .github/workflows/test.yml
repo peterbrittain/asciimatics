@@ -18,11 +18,14 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
+        sudo apt-get update -qq
+        sudo apt-get install -qq ncurses
         python -m pip install --upgrade pip
         pip install -r requirements/dev.txt
     - name: Test
       env:
         FORCE_TTY: Y
+        TERM: xterm-256color
       run: |
         coverage run --source=asciimatics -m unittest
     - name: Upload to coveralls
