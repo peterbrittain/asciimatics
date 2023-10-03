@@ -4,4 +4,4 @@ Pillow == 6.2.2
 coveralls
 sphinx
 # Try to resolve dependency clashes on 2.7 systems
-urllib3==1.26.5
+urllib3==1.26.17
