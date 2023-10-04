@@ -1,7 +1,5 @@
 -r base.txt
-# Tie down version to ensure Image dithering is consistent in UTs
-Pillow == 6.2.2
+Pillow
 coveralls
 sphinx
-# Try to resolve dependency clashes on 2.7 systems
-urllib3==1.26.5
+urllib3
