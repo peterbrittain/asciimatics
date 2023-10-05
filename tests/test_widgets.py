@@ -213,13 +213,17 @@ class _TestFrame5(Frame):
         layout = Layout([1], fill_frame=True)
         self.add_layout(layout)
         self.date_widget = DatePicker(
-            label="Date:", name="date", year_range=range(1999, 2020), on_change=self._changed)
+            label="Date:", name="date", on_change=self._changed)
         self.date_widget.value = date(2017, 1, 2)
         layout.add_widget(self.date_widget)
         self.time_widget = TimePicker(
             label="Time:", name="time", seconds=True, on_change=self._changed)
         self.time_widget.value = time(12, 0, 59)
         layout.add_widget(self.time_widget)
+        self.time_widget2 = TimePicker(
+            label="Tim2:", name="time", seconds=False, on_change=self._changed)
+        self.time_widget2.value = time(11, 2, 58)
+        layout.add_widget(self.time_widget2)
         self.fix()
 
         # State tracking for widgets
@@ -2255,7 +2259,7 @@ class TestWidgets(unittest.TestCase):
             "+--------------------------------------+\n" +
             "|Date: 02/Jan/2017                     |\n" +
             "|Time: 12:00:59                        O\n" +
-            "|                                      |\n" +
+            "|Tim2: 11:02                           |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
@@ -2273,7 +2277,7 @@ class TestWidgets(unittest.TestCase):
             "+-----|01     2016|--------------------+\n" +
             "|Date:|02/Jan/2017|                    |\n" +
             "|Time:|03 Feb 2018|                    O\n" +
-            "|     +-----------+                    |\n" +
+            "|Tim2:+-----------+                    |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
@@ -2291,7 +2295,7 @@ class TestWidgets(unittest.TestCase):
             "+-----|30 Jan 2016|--------------------+\n" +
             "|Date:|31/Feb/2017|                    |\n" +
             "|Time:|   Mar 2018|                    O\n" +
-            "|     +-----------+                    |\n" +
+            "|Tim2:+-----------+                    |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
@@ -2310,7 +2314,7 @@ class TestWidgets(unittest.TestCase):
             "+--------------------------------------+\n" +
             "|Date: 15/Jun/2017                     |\n" +
             "|Time: 12:00:59                        O\n" +
-            "|                                      |\n" +
+            "|Tim2: 11:02                           |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
@@ -2328,7 +2332,7 @@ class TestWidgets(unittest.TestCase):
             "+-----|14 May 2016|--------------------+\n" +
             "|Date:|15/Jun/2017|                    |\n" +
             "|Time:|16 Jul 2018|                    O\n" +
-            "|     +-----------+                    |\n" +
+            "|Tim2:+-----------+                    |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
@@ -2344,7 +2348,7 @@ class TestWidgets(unittest.TestCase):
             "+-----|14 Jun 2016|--------------------+\n" +
             "|Date:|15/Jul/2017|                    |\n" +
             "|Time:|16 Aug 2018|                    O\n" +
-            "|     +-----------+                    |\n" +
+            "|Tim2:+-----------+                    |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
@@ -2373,7 +2377,7 @@ class TestWidgets(unittest.TestCase):
             "+--------------------------------------+\n" +
             "|Date: 02/Jan/2017                     |\n" +
             "|Time: 12:00:59                        O\n" +
-            "|                                      |\n" +
+            "|Tim2: 11:02                           |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
@@ -2391,7 +2395,7 @@ class TestWidgets(unittest.TestCase):
             "+-----+--------+-----------------------+\n" +
             "|Date:|11    58|17                     |\n" +
             "|Time:|12:00:59|                       O\n" +
-            "|     |13 01   |                       |\n" +
+            "|Tim2:|13 01   |                       |\n" +
             "|     +--------+                       |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
@@ -2412,7 +2416,7 @@ class TestWidgets(unittest.TestCase):
             "+--------------------------------------+\n" +
             "|Date: 02/Jan/2017                     |\n" +
             "|Time: 11:01:58                        O\n" +
-            "|                                      |\n" +
+            "|Tim2: 11:02                           |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
@@ -2421,16 +2425,34 @@ class TestWidgets(unittest.TestCase):
             "+--------------------------------------+\n")
         self.assertEqual(form.time_widget.value, time(11, 1, 58))
 
-        # Check the mouse works too - pass mouse events to top-level effect
-        self.process_mouse(scene.effects[-1], [(7, 2, MouseEvent.LEFT_CLICK)])
+        # Check that small time pops correctly.
+        self.process_keys(scene, [Screen.KEY_TAB, Screen.ctrl('m')])
         for effect in scene.effects:
             effect.update(3)
+        self.assert_canvas_equals(
+            canvas,
+            "+--------------------------------------+\n" +
+            "|Date:+-----+/2017                     |\n" +
+            "|Time:|10 01|58                        O\n" +
+            "|Tim2:|11:02|                          |\n" +
+            "|     |12 03|                          |\n" +
+            "|     +-----+                          |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
+        # Check the mouse works too
+        self.process_mouse(scene, 
+            [(30, 3, MouseEvent.LEFT_CLICK), (7, 2, MouseEvent.LEFT_CLICK)])
+        for effect in scene.effects:
+            effect.update(4)
         self.assert_canvas_equals(
             canvas,
             "+-----+--------+-----------------------+\n" +
             "|Date:|10 00 57|17                     |\n" +
             "|Time:|11:01:58|                       O\n" +
-            "|     |12 02 59|                       |\n" +
+            "|Tim2:|12 02 59|                       |\n" +
             "|     +--------+                       |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
@@ -2440,13 +2462,13 @@ class TestWidgets(unittest.TestCase):
 
         self.process_mouse(scene.effects[-1], [(7, 1, MouseEvent.LEFT_CLICK)])
         for effect in scene.effects:
-            effect.update(4)
+            effect.update(5)
         self.assert_canvas_equals(
             canvas,
             "+-----+--------+-----------------------+\n" +
             "|Date:|09 00 57|17                     |\n" +
             "|Time:|10:01:58|                       O\n" +
-            "|     |11 02 59|                       |\n" +
+            "|Tim2:|11 02 59|                       |\n" +
             "|     +--------+                       |\n" +
             "|                                      |\n" +
             "|                                      |\n" +
@@ -2481,6 +2503,9 @@ class TestWidgets(unittest.TestCase):
         """
         Check DropdownList widget works as expected.
         """
+        def _click():
+            self._clicked = True
+
         # Now set up the Frame ready for testing
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         scene = Scene([], duration=-1)
@@ -2488,10 +2513,11 @@ class TestWidgets(unittest.TestCase):
         form = Frame(canvas, canvas.height, canvas.width)
         layout = Layout([100], fill_frame=True)
         form.add_layout(layout)
-        layout.add_widget(DropdownList([("Item 1", 1), ("Item 2", 3), ("Item 3", 5)]))
+        layout.add_widget(DropdownList([("Item 1", 1), ("Item 2", 3), ("Item 3", 5)], on_change=_click))
         form.fix()
         scene.add_effect(form)
         scene.reset()
+        self._clicked = False
 
         # Check that the Frame is rendered correctly.
         for effect in scene.effects:
@@ -2542,6 +2568,7 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "|                                      |\n" +
             "+--------------------------------------+\n")
+        self.assertFalse(self._clicked)
 
         # Check key selection works as expected
         self.process_keys(scene, [" ", Screen.KEY_DOWN])
@@ -2576,6 +2603,7 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "|                                      |\n" +
             "+--------------------------------------+\n")
+        self.assertTrue(self._clicked)
 
     def test_dropdown_list_options(self):
         """
@@ -3376,6 +3404,10 @@ class TestWidgets(unittest.TestCase):
         self.process_mouse(form, [(15, 2, MouseEvent.LEFT_CLICK)])
         self.assertTrue(self.clicked)
 
+        # Check that pressing space on a button works
+        self.clicked = False
+        self.process_keys(form, [" "])
+        self.assertTrue(self.clicked)
 
     def test_button_name1(self):
         """
