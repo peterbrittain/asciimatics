@@ -28,8 +28,7 @@ class TestRendererImages(unittest.TestCase):
         self.maxDiff = None
         self.assertEqual(
             image,
-            ['',
-             '     sA3h3h3Hr2     ',
+            ['     sA3h3h3Hr2     ',
              '  ;:;G#99G@&3;;;r   ',
              ' :::#9&&@@G;rrrr;;3 ',
              '.:;;A&@AAGsssssrr;#H',
@@ -74,8 +73,7 @@ class TestRendererImages(unittest.TestCase):
             self.maxDiff = None
             self.assertEqual(
                 image,
-                ['',
-                 '     ##########     ',
+                ['     ##########     ',
                  '  ###############   ',
                  ' ################## ',
                  '####################',
@@ -145,8 +143,7 @@ class TestRendererImages(unittest.TestCase):
             image = next(renderer.images)
             self.assertEqual(
                 image,
-                ['.',
-                 '....▄▄▄▄▄▄▄▄▄▄▄▄.....',
+                ['....▄▄▄▄▄▄▄▄▄▄▄▄.....',
                  '..▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄...',
                  '.▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄..',
                  '▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄.',

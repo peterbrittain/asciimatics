@@ -12,7 +12,7 @@ def demo(screen):
     scenes = []
     effects = [
         Print(screen, ImageFile("globe.gif", screen.height - 2, colours=screen.colours),
-              0,
+              1,
               stop_frame=100),
     ]
     scenes.append(Scene(effects))
@@ -21,7 +21,7 @@ def demo(screen):
               ColourImageFile(screen, "colour_globe.gif", screen.height-2,
                               uni=screen.unicode_aware,
                               dither=screen.unicode_aware),
-              0,
+              1,
               stop_frame=200),
         Print(screen,
               FigletText("ASCIIMATICS",

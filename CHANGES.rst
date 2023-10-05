@@ -10,6 +10,7 @@ LATEST
 - Fixed bug where moving focus between Frames resulted in no current focus.
 - Fixed internal state of RadioButton values to be consistent with selection.
 - Fixed handling of zero width modifiers.
+- Fixed image conversion to use modern PIL API and sort off-by-one height error.
 
 1.14.0
 ------
