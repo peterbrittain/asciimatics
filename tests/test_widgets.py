@@ -758,6 +758,11 @@ class TestWidgets(unittest.TestCase):
         form.save()
         self.assertEqual(form.data["Things"], 1)
 
+        # Check mouse clicks change selection
+        self.process_mouse(form, [(14, 7, MouseEvent.LEFT_CLICK)])
+        form.save()
+        self.assertEqual(form.data["Things"], 2)
+
     def test_mouse_input(self):
         """
         Check mouse input works as expected.
@@ -1428,6 +1433,23 @@ class TestWidgets(unittest.TestCase):
             "                                        \n" +
             "                                        \n" +
             "                                        \n")
+
+        # Check that search works
+        self.process_keys(form, ["111"])
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "A  B                                  C \n" +
+            "11 222                              333O\n" +
+            "1112                                  3|\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
 
     def test_disabled_layout(self):
         """
@@ -2403,6 +2425,24 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "+--------------------------------------+\n")
 
+        # Check that no match on search changes nothing.
+        self.process_keys(scene, ["99"])
+        for effect in scene.effects:
+            effect.update(1)
+        self.assertFalse(form.changed)
+        self.assert_canvas_equals(
+            canvas,
+            "+-----+--------+-----------------------+\n" +
+            "|Date:|11    58|17                     |\n" +
+            "|Time:|12:00:59|                       O\n" +
+            "|Tim2:|13 01   |                       |\n" +
+            "|     +--------+                       |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "+--------------------------------------+\n")
+
         # Check that we can change the time with cursors keys and mouse selection - and click out
         # to exit.
         self.process_mouse(scene, [(7, 1, MouseEvent.LEFT_CLICK)])
@@ -3160,7 +3200,7 @@ class TestWidgets(unittest.TestCase):
         scene.add_effect(form)
         layout = Layout([100], fill_frame=True)
         form.add_layout(layout)
-        text_box = TextBox(3, as_string=True, parser=AsciimaticsParser())
+        text_box = TextBox(3, as_string=False, parser=AsciimaticsParser())
         layout.add_widget(text_box)
         listbox = ListBox(2, [("P", 1), ("${9,2}Q", 2), ("R", 3), ("S", 4)], parser=AsciimaticsParser())
         layout.add_widget(listbox)
@@ -3175,12 +3215,25 @@ class TestWidgets(unittest.TestCase):
         form.reset()
 
         # Check that the Asciimatics colour parsing worked.
-        text_box.value = "A${1}B"
+        text_box.value = ["A${1}B"]
         form.update(0)
         self.assertEqual(canvas.get_from(0, 0), (ord("A"), 7, 1, 6))
         self.assertEqual(canvas.get_from(1, 0), (ord("B"), 1, 0, 6))
         self.assertEqual(canvas.get_from(0, 3), (ord("P"), 3, 1, 4))
         self.assertEqual(canvas.get_from(0, 4), (ord("Q"), 9, 2, 4))
+
+        # Check that using ColouredText preserves colour data
+        text_box.value = [ColouredText("B${2}A", AsciimaticsParser())]
+        form.update(0)
+        self.assertEqual(canvas.get_from(0, 0), (ord("B"), 7, 1, 6))
+        self.assertEqual(canvas.get_from(1, 0), (ord("A"), 2, 0, 6))
+
+        # Check that keys work on parsed text.
+        self.process_keys(form, [Screen.KEY_END, "\n1", Screen.KEY_UP, Screen.KEY_END, Screen.KEY_DELETE])
+        form.update(0)
+        self.assertEqual(canvas.get_from(0, 0), (ord("B"), 7, 1, 6))
+        self.assertEqual(canvas.get_from(1, 0), (ord("A"), 2, 0, 6))
+        self.assertEqual(canvas.get_from(2, 0), (ord("1"), 7, 3, 6))
 
         # Check that the Ansi terminal colour parsing worked.
         self.assertEqual(canvas.get_from(0, 5), (ord("A"), 7, 1, 4))
