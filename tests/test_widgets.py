@@ -830,6 +830,23 @@ class TestWidgets(unittest.TestCase):
         form._focus = 9999
         self.assertIsNone(form.focussed_widget)
 
+        # Refixing frame resets focus when needed.
+        form._focus = 0
+        old_focus = form.focussed_widget
+        self.assertIsNotNone(old_focus)
+        form._layouts[0].clear_widgets()
+        form.fix()
+        self.assertNotEqual(form.focussed_widget, old_focus)
+
+        # Moving focus to undefined widget has no effect.
+        old_focus = form.focussed_widget
+        form.switch_focus(None, 0, 0)
+        self.assertEqual(form.focussed_widget, old_focus)
+
+        # Blurring removes focus.
+        form.blur()
+        self.assertIsNone(form.focussed_widget)
+
     def test_frame_focus_widget_property_when_frame_focussed(self):
         """
         check the frame exposes nothing when frame is foccused

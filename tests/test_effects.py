@@ -120,7 +120,7 @@ class TestEffects(unittest.TestCase):
         """
         # Check that banner redraws every frame.
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
-        canvas = Canvas(screen, 10, 100, 0, 0)
+        canvas = Canvas(screen, 10, 10, 0, 0)
         effect = BannerText(canvas, StaticRenderer(images=["hello"]), 2, 3)
         effect.reset()
         effect.update(0)
@@ -129,6 +129,13 @@ class TestEffects(unittest.TestCase):
         effect.update(1)
         self.assertEqual(canvas.get_from(canvas.width - 1, 2),
                          (ord("e"), 3, 0, 0))
+        my_buffer = [[(32, 7, 0, 0) for _ in range(10)] for _ in range(10)]
+        for i in range(2, 12):
+            effect.update(i)
+            self.assertTrue(self.check_canvas(
+                canvas,
+                my_buffer,
+                lambda value: self.assertIn(chr(value[0]), " helo")))
 
         # Check there is some stop frame - will vary according to screen width
         self.assertGreater(effect.stop_frame, 0)
@@ -164,6 +171,29 @@ class TestEffects(unittest.TestCase):
         # This effect should ignore events.
         event = object()
         self.assertEqual(event, effect.process_event(event))
+
+    def test_print_clear(self):
+        """
+        Check that clear option works on Print.
+        """
+        # Check that Stars randomly updates the Screen every frame.
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        effect = Print(canvas, StaticRenderer(images=["hello"]), 2, 1, clear=True, stop_frame=20)
+        effect.reset()
+        self.assert_blank(canvas)
+        my_buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
+
+        # Should only update on first iteration
+        for i in range(20):
+            effect.update(i)
+            self.assertEqual(self.check_canvas(
+                canvas,
+                my_buffer,
+                lambda value: self.assertIn(chr(value[0]), " helo")), i in (0,19), f"Stopped on {i}")
+
+        # Should be clear by now.
+        self.assert_blank(canvas)
 
     def test_mirage(self):
         """
@@ -270,7 +300,7 @@ class TestEffects(unittest.TestCase):
         effect.reset()
         self.assert_blank(canvas)
         my_buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
-        for i in range(10):
+        for i in range(60):
             effect.update(i)
             self.assertEqual(self.check_canvas(
                 canvas,
@@ -493,12 +523,16 @@ class TestEffects(unittest.TestCase):
         # Check that RandomNoise updates every frame.
         screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
         canvas = Canvas(screen, 10, 40, 0, 0)
-        effect = RandomNoise(canvas)
+        effect = RandomNoise(canvas, signal=StaticRenderer(images=["hello world!"]))
         effect.reset()
+        effect._step = 0.1
+        effect2 = RandomNoise(canvas)
+        effect2.reset()
         self.assert_blank(canvas)
         my_buffer = [[(32, 7, 0, 0) for _ in range(40)] for _ in range(10)]
-        for i in range(20):
+        for i in range(30):
             effect.update(i)
+            effect2.update(i)
             self.assertEqual(self.check_canvas(
                 canvas,
                 my_buffer,
