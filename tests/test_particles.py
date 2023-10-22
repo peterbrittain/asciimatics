@@ -56,7 +56,7 @@ class TestParticles(unittest.TestCase):
         screen = MagicMock(spec=Screen, colours=8)
         canvas = Canvas(screen, 10, 40, 0, 0)
         canvas.centre("Hello World!", 5)
-        effect = ShootScreen(canvas, canvas.width // 2, canvas.height // 2, 100)
+        effect = ShootScreen(canvas, canvas.width // 2, canvas.height // 2, 100, diameter=10)
         self.check_effect(canvas,
                           effect,
                           lambda value: self.assertIn(chr(value[0]),

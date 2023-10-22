@@ -92,7 +92,7 @@ class ControlCodeParser(Parser):
         :returns: a 3-tuple of (start offset in raw text, command to execute, parameters)
         """
         if self._state.attributes:
-            yield (0, Parser.CHANGE_COLOURS, tuple(self._attributes))
+            yield (0, Parser.CHANGE_COLOURS, tuple(self._state.attributes))
         offset = 0
         while len(self._state.text) > 0:
             letter = self._state.text[0]
@@ -352,7 +352,7 @@ class AnsiTerminalParser(Parser):
 
         if self._state.init_colours:
             self._state.init_colours = False
-            yield (0, Parser.CHANGE_COLOURS, self._state.attributes)
+            yield (0, Parser.CHANGE_COLOURS, tuple(self._state.attributes))
         while len(self._state.text) > 0:
             char = ord(self._state.text[0])
             new_offset = 1

@@ -45,6 +45,7 @@ class TestUtilities(unittest.TestCase):
             "└───┘\n")
 
         # DOUBLE_LINE
+        self.assertEqual(tool.style, SINGLE_LINE)
         tool.style = DOUBLE_LINE
         self.assertEqual("╔═══╗", tool.box_top(5))
         self.assertEqual("╚═══╝", tool.box_bottom(5))

@@ -10,8 +10,9 @@ class TestParsers(unittest.TestCase):
         Check ControlCodeParser  works as expected
         """
         parser = ControlCodeParser()
-        parser.reset("\0\b\ra[", None)
+        parser.reset("\0\b\ra[", colours=(1, 2, 3))
         tokens = parser.parse()
+        self.assertEqual(next(tokens), (0, Parser.CHANGE_COLOURS, (1, 2, 3)))
         self.assertEqual(next(tokens), (0, Parser.DISPLAY_TEXT, "^@"))
         self.assertEqual(next(tokens), (1, Parser.DISPLAY_TEXT, "^H"))
         self.assertEqual(next(tokens), (2, Parser.DISPLAY_TEXT, "^M"))
@@ -286,6 +287,33 @@ class TestParsers(unittest.TestCase):
         parser = AnsiTerminalParser()
         parser.reset("\x07", None)
         tokens = parser.parse()
+        with self.assertRaises(StopIteration):
+            next(tokens)
+
+    def test_ansi_terminal_parser_start_colour(self):
+        """
+        Check AnsiTerminalParser uses the starting colours.
+        """
+        parser = AnsiTerminalParser()
+        parser.reset("a", colours=(1,2,3))
+        tokens = parser.parse()
+        self.assertEqual(next(tokens), (0, Parser.CHANGE_COLOURS, (1, 2, 3)))
+        self.assertEqual(next(tokens), (0, Parser.DISPLAY_TEXT, "a"))
+
+    def test_ansi_terminal_parser_unknown(self):
+        """
+        Check AnsiTerminalParser ignores unknown codes.
+        """
+        parser = AnsiTerminalParser()
+        parser.reset("a\x1B[2345£", None)
+        tokens = parser.parse()
+        self.assertEqual(next(tokens), (0, Parser.DISPLAY_TEXT, "a"))
+        with self.assertRaises(StopIteration):
+            next(tokens)
+
+        parser.reset("a\x1B", None)
+        tokens = parser.parse()
+        self.assertEqual(next(tokens), (0, Parser.DISPLAY_TEXT, "a"))
         with self.assertRaises(StopIteration):
             next(tokens)
 

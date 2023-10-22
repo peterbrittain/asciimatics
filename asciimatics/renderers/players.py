@@ -35,7 +35,9 @@ class AbstractScreenPlayer(DynamicRenderer):
 
     @abstractmethod
     def _render_now(self):
-        pass
+        """
+        Render the next iteration.
+        """
 
     def _play_content(self, text):
         """

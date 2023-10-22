@@ -1,8 +1,9 @@
 import unittest
 import os
 import sys
+from unittest.mock import MagicMock
 from asciimatics.renderers import ImageFile, ColourImageFile
-from asciimatics.screen import Screen
+from asciimatics.screen import Screen, Canvas
 if sys.platform != "win32":
     import curses
 
@@ -39,20 +40,33 @@ class TestRendererImages(unittest.TestCase):
              '   .:::;;;;9#r::2   ',
              '      s.::r:;       '])
 
+    def test_image_files_256(self):
+        """
+        Check that the ImageFile renderer works.
+        """
+        renderer = ImageFile(
+            os.path.join(os.path.dirname(__file__), "globe.gif"), height=10, colours=256)
+
+        # Check an image looks plausible
+        image = next(renderer.images)
+        self.maxDiff = None
+        self.assertEqual(
+            image,
+            ['     sA3h3h3Hr2     ',
+             '  ;:;G#99G@&3;;;r   ',
+             ' :::#9&&@@G;rrrr;;3 ',
+             '.:;;A&@AAGsssssrr;#H',
+             '::;;;r39@srssssrr;A2',
+             '.::;;rrrrr@@@@9;r;;A',
+             's::;;;;rr2@@@@@@#;; ',
+             ' s:::;;;;;;9&&&3;:  ',
+             '   .:::;;;;9#r::2   ',
+             '      s.::r:;       '])
+
     def test_colour_image_file(self):
         """
         Check that the ColourImageFile renderer works.
         """
-        # Skip for non-Windows if the terminal definition is incomplete.
-        # This typically means we're running inside a non-standard terminal.
-        # For example, this happens when embedded in PyCharm.
-        if sys.platform != "win32":
-            if not (("FORCE_TTY" in os.environ and os.environ["FORCE_TTY"] == "Y") or sys.stdout.isatty()):
-                self.skipTest("Not a valid TTY")
-            curses.initscr()
-            if curses.tigetstr("ri") is None:
-                self.skipTest("No valid terminal definition")
-
         def internal_checks(screen):
             # Check the original FG only rendering
             renderer = ColourImageFile(
@@ -108,22 +122,15 @@ class TestRendererImages(unittest.TestCase):
                         self.assertEqual(attr1[0], attr2[0])
                         self.assertEqual(attr2[0], attr2[2])
 
-        Screen.wrapper(internal_checks, height=15)
+        # Mock screen for better coverage.
+        screen = MagicMock(spec=Screen, colours=16, unicode_aware=True, palette=Screen._8_palette)
+        canvas = Canvas(screen, 15, 40, 0, 0)
+        internal_checks(screen)
 
     def test_uni_image_files(self):
         """
         Check that the unicode ColourImageFile rendering works.
         """
-        # Skip for non-Windows if the terminal definition is incomplete.
-        # This typically means we're running inside a non-standard terminal.
-        # For example, this happens when embedded in PyCharm.
-        if sys.platform != "win32":
-            if not (("FORCE_TTY" in os.environ and os.environ["FORCE_TTY"] == "Y") or sys.stdout.isatty()):
-                self.skipTest("Not a valid TTY")
-            curses.initscr()
-            if curses.tigetstr("ri") is None:
-                self.skipTest("No valid terminal definition")
-
         def internal_checks(screen):
             # Check the original FG only rendering
             renderer = ColourImageFile(
@@ -154,7 +161,10 @@ class TestRendererImages(unittest.TestCase):
                  '..▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄....',
                  '.....▄▄▄▄▄▄▄▄▄▄......'])
 
-        Screen.wrapper(internal_checks, height=15)
+        # Mock screen for better coverage.
+        screen = MagicMock(spec=Screen, colours=16, unicode_aware=True, palette=Screen._8_palette)
+        canvas = Canvas(screen, 15, 40, 0, 0)
+        internal_checks(screen)
 
 
 if __name__ == '__main__':
