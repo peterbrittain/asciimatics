@@ -230,7 +230,7 @@ class DynamicRenderer(Renderer, metaclass=ABCMeta):
         This is only kept for back compatibility.  Direct access to the canvas methods is
         preferred.
         """
-        self._canvas.print_at(text, x, y, colour, attr, bg) 
+        self._canvas.print_at(text, x, y, colour, attr, bg)
 
     @property
     def _plain_image(self):

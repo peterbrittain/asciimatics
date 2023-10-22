@@ -38,7 +38,7 @@ class _BorderManager:
                 scroll_y = 1
 
             self.scroll_bar = _ScrollBar(
-                frame.canvas, frame.palette, frame.canvas.width - 1, scroll_y, scroll_height, 
+                frame.canvas, frame.palette, frame.canvas.width - 1, scroll_y, scroll_height,
                 frame.get_scroll_pos, frame.set_scroll_pos, absolute=True
             )
 
@@ -101,7 +101,7 @@ class _BorderManager:
             (colour, attr, bg) = frame.palette["title"]
             title_width = self.string_len(frame.title)
             frame.canvas.print_at(
-                frame.title, (frame.canvas.width - title_width) // 2, frame.canvas.start_line, 
+                frame.title, (frame.canvas.width - title_width) // 2, frame.canvas.start_line,
                 colour, attr, bg
             )
 
@@ -680,7 +680,7 @@ class Frame(Effect):
             # TODO: Should have Desktop Manager handling this - wait for v2.0
             # By this stage, if we're processing keys and topmost, we have the focus.
             if self._scene.effects[-1] is not self:
-                return old_event 
+                return old_event
             if not self._has_focus and self._focus < len(self._layouts):
                 self._layouts[self._focus].focus()
             self._has_focus = True

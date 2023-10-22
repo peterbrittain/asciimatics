@@ -615,7 +615,7 @@ class ShotEmitter(ParticleEmitter):
                     ch, fg, attr, bg = self._screen.get_from(x, y)
                     if ch != 32:
                         self._particles.append((x, y, ch, fg, attr, bg))
-            if self._diameter: 
+            if self._diameter:
                 self._particles = filter(self._filter, self._particles)
             self._particles = sorted(self._particles, key=self._sort, reverse=True)
 

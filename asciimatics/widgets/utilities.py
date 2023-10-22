@@ -11,7 +11,7 @@ logger = getLogger(__name__)
 
 #: Standard palettes for use with :py:meth:`~Frame.set_theme`.
 #: Each entry in THEMES contains a colour palette for use by the widgets within a Frame.
-#: Each colour palette is a dictionary mapping a colour key to a 3-tuple of 
+#: Each colour palette is a dictionary mapping a colour key to a 3-tuple of
 #: (foreground colour, attribute, background colour).
 #: The "default" theme defines all the required keys for a palette.
 THEMES = {

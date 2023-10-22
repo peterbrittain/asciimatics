@@ -115,7 +115,8 @@ class ColourImageFile(StaticRenderer):
 
                 # Convert to terminal 256 colour palette.
                 new_frame2 = new_frame.convert('RGB')
-                new_frame2 = new_frame2.quantize(colors=256,
+                new_frame2 = new_frame2.quantize(
+                    colors=256,
                     palette=tmp_img,
                     dither=Image.Dither.FLOYDSTEINBERG if dither else Image.Dither.NONE)
 
