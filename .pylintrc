@@ -438,7 +438,10 @@ disable=raw-checker-failed,
         too-many-statements,
         no-else-return,
         len-as-condition,
-        missing-docstring
+        missing-docstring,
+        too-few-public-methods,
+        import-error,
+        fixme
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option

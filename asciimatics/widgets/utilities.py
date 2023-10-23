@@ -2,8 +2,8 @@
 from logging import getLogger
 from math import sqrt
 from collections import defaultdict
-from wcwidth import wcswidth, wcwidth
 from functools import lru_cache
+from wcwidth import wcswidth, wcwidth
 from asciimatics.screen import Screen
 
 # Logging
