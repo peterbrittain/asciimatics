@@ -12,7 +12,7 @@ build:
     python: "3.11"
   jobs:
     pre_install:
-      - git update-index --assume-unchanged environment.yml doc/source/conf.py
+      - git update-index --assume-unchanged doc/source/conf.py
     pre_build:
       - cd doc
       - bash ./build.sh
