@@ -28,7 +28,7 @@ class _BarChartBase(DynamicRenderer):
     def __init__(self, height, width, functions, char="#", colour=Screen.COLOUR_GREEN,
                  bg=Screen.COLOUR_BLACK, gradient=None, scale=None, axes=Y_AXIS, intervals=None,
                  labels=False, border=True, keys=None, gap=None):
-        ### See children BarChart and VBarChart for argument descriptions and pydocs
+        # See children BarChart and VBarChart for argument descriptions and pydocs
         super().__init__(height, width)
         self._functions = functions
         self._char = char

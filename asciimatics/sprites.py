@@ -2,9 +2,9 @@
 This module provides `Sprites` to create animation effects with Paths.  For more details see
 http://asciimatics.readthedocs.io/en/latest/animation.html
 """
+import random
 from asciimatics.effects import Sprite
 from asciimatics.renderers import StaticRenderer
-import random
 
 # Images for Sam-ple sprite.
 from asciimatics.screen import Screen

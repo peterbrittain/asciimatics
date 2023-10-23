@@ -6,9 +6,9 @@ http://asciimatics.readthedocs.io/en/latest/animation.html
 from abc import ABCMeta, abstractmethod
 from random import randint, random, choice
 from math import sin, cos, pi
+import datetime
 from asciimatics.paths import DynamicPath
 from asciimatics.screen import Screen
-import datetime
 
 
 class Effect(metaclass=ABCMeta):
@@ -230,8 +230,7 @@ class BannerText(Effect):
     banner.
     """
 
-    def __init__(self, screen, renderer, y, colour, bg=Screen.COLOUR_BLACK,
-                 **kwargs):
+    def __init__(self, screen, renderer, y, colour, bg=Screen.COLOUR_BLACK, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param renderer: The renderer to be scrolled

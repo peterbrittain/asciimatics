@@ -516,7 +516,7 @@ class _AbstractCanvas(metaclass=ABCMeta):
         Clear a box in the current double-buffer used by this object.
 
         This is the recommended way to clear parts, or all, ofthe Screen without causing flicker
-        as it will only become visible at the next refresh.  Defaults to the whole buffer if no 
+        as it will only become visible at the next refresh.  Defaults to the whole buffer if no
         box is specified.
 
         :param fg: The foreground colour to use for the new buffer.

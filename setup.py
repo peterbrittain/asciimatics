@@ -6,10 +6,9 @@ https://packaging.python.org/en/latest/distributing.html
 https://github.com/pypa/sampleproject
 """
 
-from setuptools import setup, find_packages
 from codecs import open as file_open
 from os import path
-import shutil
+from setuptools import setup, find_packages
 
 
 # Get the long description from the relevant file and strip any pre-amble (i.e. badges) from it.
