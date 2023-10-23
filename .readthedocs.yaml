@@ -10,6 +10,12 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.11"
+  jobs:
+    pre_install:
+      - git update-index --assume-unchanged environment.yml doc/source/conf.py
+    pre_build:
+      - cd doc
+      - bash ./build.sh
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:

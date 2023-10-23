@@ -50,7 +50,7 @@ master_doc = 'index'
 # General information about the project.
 project = u'asciimatics'
 # noinspection PyShadowingBuiltins
-copyright = u'2015-16, Peter Brittain'
+copyright = u'2015-23, Peter Brittain'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -267,7 +267,7 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'http://docs.python.org/': None}
+intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 
 # Include constructor comments for classes.
 autoclass_content = "both"

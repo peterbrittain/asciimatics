@@ -60,14 +60,6 @@ asciimatics.renderers.kaleidoscope module
    :inherited-members:
    :show-inheritance:
 
-asciimatics.renderers.old module
---------------------------------
-
-.. automodule:: asciimatics.renderers.old
-   :members:
-   :inherited-members:
-   :show-inheritance:
-
 asciimatics.renderers.plasma module
 -----------------------------------
 
