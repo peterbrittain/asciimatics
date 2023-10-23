@@ -14,8 +14,7 @@ build:
     pre_install:
       - git update-index --assume-unchanged doc/source/conf.py
     pre_build:
-      - cd doc
-      - bash ./build.sh
+      - cd doc && bash ./build.sh
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
