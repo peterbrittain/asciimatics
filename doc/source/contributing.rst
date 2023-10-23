@@ -39,7 +39,7 @@ Install the dependencies and build the documentation with:
 .. code-block:: bash
 
     $ pip install -r requirements/dev.txt
-    $ cd doc && cp source/conf_orig.py source/conf.py
+    $ cd doc
     $ ./build.sh
 
 You can then view your new shiny documentation in the ``build`` folder.
@@ -52,14 +52,14 @@ Install the dependencies and run the tests with the following:
 .. code-block:: bash
 
     $ pip install -r requirements/dev.txt
-    $ nosetests
+    $ python -m unittest
 
 On most systems this will avoid running tests that require a Linux TTY.  If you are making changes to the
 Screen, you must also run the TTY tests.  You can force that on a Linux box using the following:
 
 .. code-block:: bash
 
-    $ FORCE_TTY=Y nosetests
+    $ FORCE_TTY=Y python -m unittest
 
 The reason for this split is that you only typically get a TTY on a live interactive connection to your
 terminal.  This means you should always be able to run the full suite manually.  However, many CI systems
