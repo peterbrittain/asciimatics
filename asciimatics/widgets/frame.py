@@ -598,6 +598,13 @@ class Frame(Effect):
         logger.debug("New event: %s", new_event)
         return new_event
 
+    def _outside_frame(self, event):
+        origin = self._canvas.origin
+        if (event.y < origin[1] or event.y >= origin[1] + self._canvas.height or
+                event.x < origin[0] or event.x >= origin[0] + self._canvas.width):
+            return True
+        return False
+
     def _find_next_tab_stop(self, direction):
         old_focus = self._focus
         self._focus += direction
@@ -651,11 +658,7 @@ class Frame(Effect):
                 return
             focus += direction
 
-    def process_event(self, event):
-        # Rebase any mouse events into Frame coordinates now.
-        old_event = event
-        event = self.rebase_event(event)
-
+    def _handle_desktop_ordering(self, event):
         claimed_focus = False
         if isinstance(event, MouseEvent) and event.buttons > 0:
             # TODO: Should have Desktop Manager handling this - wait for v2.0
@@ -675,15 +678,27 @@ class Frame(Effect):
                         except AttributeError:
                             pass
             else:
-                return old_event
+                return claimed_focus, True
         elif isinstance(event, KeyboardEvent):
             # TODO: Should have Desktop Manager handling this - wait for v2.0
             # By this stage, if we're processing keys and topmost, we have the focus.
             if self._scene.effects[-1] is not self:
-                return old_event
+                return claimed_focus, True
             if not self._has_focus and self._focus < len(self._layouts):
                 self._layouts[self._focus].focus()
             self._has_focus = True
+
+        return claimed_focus, False
+
+    def process_event(self, event):
+        # Rebase any mouse events into Frame coordinates now.
+        old_event = event
+        event = self.rebase_event(event)
+
+        # Should we change z-order or quit now?
+        claimed_focus, quit_now = self._handle_desktop_ordering(event)
+        if quit_now:
+            return old_event
 
         # No need to do anything if this Frame has no Layouts - and hence no
         # widgets.  Swallow all Keyboard events while we have focus.

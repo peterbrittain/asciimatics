@@ -45,10 +45,7 @@ class _TempPopup(Frame):
                     event = None
                     cancelled = True
             elif isinstance(event, MouseEvent) and event.buttons != 0:
-                origin = self._canvas.origin
-                if event.y < origin[1] or event.y >= origin[1] + self._canvas.height:
-                    event = None
-                elif event.x < origin[0] or event.x >= origin[0] + self._canvas.width:
+                if self._outside_frame(event):
                     event = None
 
         # Remove this pop-up if we're done; otherwise bubble up the event.
