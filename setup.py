@@ -21,7 +21,10 @@ long_description = "\n".join(long_description)
 
 setup(
     name='asciimatics',
-    use_scm_version={"write_to": "asciimatics/version.py"},
+    use_scm_version={
+        "write_to": "asciimatics/version.py",
+        "local_scheme": "no-local-version"
+    },
     description='A cross-platform package to replace curses (mouse/keyboard '
                 'input & text colours/positioning) and create ASCII '
                 'animations',
