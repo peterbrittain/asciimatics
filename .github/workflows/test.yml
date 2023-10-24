@@ -59,7 +59,7 @@ jobs:
   builddist:
     name: Build distribution 📦
     runs-on: ubuntu-latest
-      # TODO: add back once working needs: [test, testwindows]
+    needs: [test, testwindows]
     if: github.event_name != 'pull_request'
     steps:
     - uses: actions/checkout@v4
