@@ -3,6 +3,9 @@ CHANGE HISTORY
 
 LATEST
 ------
+
+1.15.0
+------
 - Dropped support for Python 2, Python 3.9 or above is now required.
 - Added support for ColouredText titles in MultiColumnLIstBox.
 - Added gutter option to Layout.

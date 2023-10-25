@@ -146,7 +146,7 @@ More examples
 -------------
 
 More examples of what you can do are available in the project samples directory, hosted on GitHub.
-See https://github.com/peterbrittain/asciimatics/tree/v1.14/samples.
+See https://github.com/peterbrittain/asciimatics/tree/v1.15/samples.
 
 To view them, simply download these files and then simply run them directly with `python`.
 Alternatively, you can browse recordings of many of the samples in the gallery at
