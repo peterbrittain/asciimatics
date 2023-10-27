@@ -34,7 +34,7 @@ class CheckBox(Widget):
         check_char = "✓" if self._frame.canvas.unicode_aware else "X"
         (colour, attr, bg) = self._pick_colours("control", self._has_focus)
         self._frame.canvas.print_at(
-            f"[{check_char if self._value else ' '}]",
+            f"[{check_char if self._value else ' '}] ",
             self._x + self._offset,
             self._y,
             colour, attr, bg)
