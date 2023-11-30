@@ -3,6 +3,7 @@ CHANGE HISTORY
 
 LATEST
 ------
+- Added border option to PopupMenu
 
 1.15.0
 ------

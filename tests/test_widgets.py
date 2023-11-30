@@ -2905,6 +2905,73 @@ class TestWidgets(unittest.TestCase):
         self.assertEqual(len(scene.effects), 0)
         self.assertEqual(self.clicked, 2)
 
+        # Reset menu for border test
+        self.clicked = 0
+        popup = PopupMenu(canvas,
+                          [
+                              ("First", lambda: click(1)),
+                              ("Second", lambda: click(2)),
+                              ("Third", lambda: click(4))
+                          ],
+                          0, 0, has_border=True)
+        scene.add_effect(popup)
+        scene.reset()
+
+        # Check that the menu is rendered correctly.
+        for effect in scene.effects:
+            effect.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+------+                                \n" +
+            "|First |                                \n" +
+            "|Second|                                \n" +
+            "|Third |                                \n" +
+            "+------+                                \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        # Check it handles a selection as expected
+        self.process_mouse(scene, [(1, 2, MouseEvent.LEFT_CLICK)])
+        self.assertEqual(len(scene.effects), 0)
+        self.assertEqual(self.clicked, 2)
+
+        # Reset menu for border and title test
+        self.clicked = 0
+        popup = PopupMenu(canvas,
+                          [
+                              ("First", lambda: click(1)),
+                              ("Second Wider", lambda: click(2)),
+                              ("Third", lambda: click(4))
+                          ],
+                          0, 0, has_border=True)
+        popup.title = 'Test'
+        scene.add_effect(popup)
+        scene.reset()
+
+        # Check that the menu is rendered correctly.
+        for effect in scene.effects:
+            effect.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+--- Test ---+                          \n" +
+            "|First       |                          \n" +
+            "|Second Wider|                          \n" +
+            "|Third       |                          \n" +
+            "+------------+                          \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        # Check it handles a selection as expected
+        self.process_mouse(scene, [(1, 2, MouseEvent.LEFT_CLICK)])
+        self.assertEqual(len(scene.effects), 0)
+        self.assertEqual(self.clicked, 2)
+
         # Check choice of location at bottom right
         self.clicked = 0
         canvas.reset()
