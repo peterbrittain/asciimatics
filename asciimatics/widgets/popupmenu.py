@@ -16,21 +16,27 @@ class PopupMenu(Frame):
     palette = defaultdict(lambda: (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_CYAN))
     palette["focus_button"] = (Screen.COLOUR_CYAN, Screen.A_NORMAL, Screen.COLOUR_WHITE)
 
-    def __init__(self, screen, menu_items, x, y):
+    def __init__(self, screen, menu_items, x, y, has_border=False):
         """
         :param screen: The Screen being used for this pop-up.
         :param menu_items: a list of items to be displayed in the menu.
         :param x: The X coordinate for the desired pop-up.
         :param y: The Y coordinate for the desired pop-up.
+        :param has_border: Whether the menu has a border box. Defaults to False.
 
         The menu_items parameter is a list of 2-tuples, which define the text to be displayed in
         the menu and the function to call when that menu item is clicked.  For example:
 
             menu_items = [("Open", file_open), ("Save", file_save), ("Close", file_close)]
         """
+
+        border_adjustment = 0
+        if has_border:
+            border_adjustment = 2 # We add one character to each side for the border
+
         # Sort out location based on width of menu text.
-        w = max(len(i[0]) for i in menu_items)
-        h = len(menu_items)
+        w = max(len(i[0]) for i in menu_items) + border_adjustment
+        h = len(menu_items) + border_adjustment
         if x + w >= screen.width:
             x -= w - 1
         if y + h >= screen.height:
@@ -38,7 +44,7 @@ class PopupMenu(Frame):
 
         # Construct the Frame
         super().__init__(
-            screen, h, w, x=x, y=y, has_border=False, can_scroll=False, is_modal=True, hover_focus=True)
+            screen, h, w, x=x, y=y, has_border=has_border, can_scroll=False, is_modal=True, hover_focus=True)
 
         # Build the widget to display the time selection.
         layout = Layout([1], fill_frame=True)
