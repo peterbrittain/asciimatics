@@ -2553,13 +2553,13 @@ class TestWidgets(unittest.TestCase):
             self._clicked = True
 
         # Now set up the Frame ready for testing
-        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=True)
         scene = Scene([], duration=-1)
         canvas = Canvas(screen, 10, 40, 0, 0)
         form = Frame(canvas, canvas.height, canvas.width)
         layout = Layout([100], fill_frame=True)
         form.add_layout(layout)
-        layout.add_widget(DropdownList([("Item 1", 1), ("Item 2", 3), ("Item 3", 5)], on_change=_click))
+        layout.add_widget(DropdownList([("这是第一个选项", 1), ("Item 2", 3), ("Item 3", 5)], on_change=_click))
         form.fix()
         scene.add_effect(form)
         scene.reset()
@@ -2570,16 +2570,16 @@ class TestWidgets(unittest.TestCase):
             effect.update(0)
         self.assert_canvas_equals(
             canvas,
-            "+--------------------------------------+\n" +
-            "|[ Item 1                             ]|\n" +
-            "|                                      O\n" +
-            "|                                      |\n" +
-            "|                                      |\n" +
-            "|                                      |\n" +
-            "|                                      |\n" +
-            "|                                      |\n" +
-            "|                                      |\n" +
-            "+--------------------------------------+\n")
+            "┌──────────────────────────────────────┐\n" +
+            "│[ 这这是是第第一一个个选选项项                     ]│\n" +
+            "│                                      █\n" +
+            "│                                      ░\n" +
+            "│                                      ░\n" +
+            "│                                      ░\n" +
+            "│                                      ░\n" +
+            "│                                      ░\n" +
+            "│                                      │\n" +
+            "└──────────────────────────────────────┘\n")
 
         # Check it opens as expected
         self.process_mouse(scene, [(7, 1, MouseEvent.LEFT_CLICK)])
@@ -2587,16 +2587,16 @@ class TestWidgets(unittest.TestCase):
             effect.update(1)
         self.assert_canvas_equals(
             canvas,
-            "++------------------------------------++\n" +
-            "|| Item 1                             ||\n" +
-            "||------------------------------------|O\n" +
-            "|| Item 1                             ||\n" +
-            "|| Item 2                             ||\n" +
-            "|| Item 3                             ||\n" +
-            "|+------------------------------------+|\n" +
-            "|                                      |\n" +
-            "|                                      |\n" +
-            "+--------------------------------------+\n")
+            "┌┌────────────────────────────────────┐┐\n" +
+            "││ 这这是是第第一一个个选选项项                     ││\n" +
+            "││────────────────────────────────────│█\n" +
+            "││ 这这是是第第一一个个选选项项                     │░\n" +
+            "││ Item 2                             │░\n" +
+            "││ Item 3                             │░\n" +
+            "│└────────────────────────────────────┘░\n" +
+            "│                                      ░\n" +
+            "│                                      │\n" +
+            "└──────────────────────────────────────┘\n")
 
         # Check ESC works as expected
         self.process_keys(scene, [Screen.KEY_DOWN, Screen.KEY_ESCAPE])
@@ -2604,16 +2604,16 @@ class TestWidgets(unittest.TestCase):
             effect.update(2)
         self.assert_canvas_equals(
             canvas,
-            "+--------------------------------------+\n" +
-            "|[ Item 1                             ]|\n" +
-            "|                                      O\n" +
-            "|                                      |\n" +
-            "|                                      |\n" +
-            "|                                      |\n" +
-            "|                                      |\n" +
-            "|                                      |\n" +
-            "|                                      |\n" +
-            "+--------------------------------------+\n")
+            "┌──────────────────────────────────────┐\n" +
+            "│[ 这这是是第第一一个个选选项项                     ]│\n" +
+            "│                                      █\n" +
+            "│                                      ░\n" +
+            "│                                      ░\n" +
+            "│                                      ░\n" +
+            "│                                      ░\n" +
+            "│                                      ░\n" +
+            "│                                      │\n" +
+            "└──────────────────────────────────────┘\n")
         self.assertFalse(self._clicked)
 
         # Check key selection works as expected
@@ -2622,16 +2622,16 @@ class TestWidgets(unittest.TestCase):
             effect.update(3)
         self.assert_canvas_equals(
             canvas,
-            "++------------------------------------++\n" +
-            "|| Item 2                             ||\n" +
-            "||------------------------------------|O\n" +
-            "|| Item 1                             ||\n" +
-            "|| Item 2                             ||\n" +
-            "|| Item 3                             ||\n" +
-            "|+------------------------------------+|\n" +
-            "|                                      |\n" +
-            "|                                      |\n" +
-            "+--------------------------------------+\n")
+            "┌┌────────────────────────────────────┐┐\n" +
+            "││ Item 2                             ││\n" +
+            "││────────────────────────────────────│█\n" +
+            "││ 这这是是第第一一个个选选项项                     │░\n" +
+            "││ Item 2                             │░\n" +
+            "││ Item 3                             │░\n" +
+            "│└────────────────────────────────────┘░\n" +
+            "│                                      ░\n" +
+            "│                                      │\n" +
+            "└──────────────────────────────────────┘\n")
 
         # Check Enter works as expected
         self.process_keys(scene, [Screen.ctrl("m")])
@@ -2639,16 +2639,16 @@ class TestWidgets(unittest.TestCase):
             effect.update(4)
         self.assert_canvas_equals(
             canvas,
-            "+--------------------------------------+\n" +
-            "|[ Item 2                             ]|\n" +
-            "|                                      O\n" +
-            "|                                      |\n" +
-            "|                                      |\n" +
-            "|                                      |\n" +
-            "|                                      |\n" +
-            "|                                      |\n" +
-            "|                                      |\n" +
-            "+--------------------------------------+\n")
+            "┌──────────────────────────────────────┐\n" +
+            "│[ Item 2                             ]│\n" +
+            "│                                      █\n" +
+            "│                                      ░\n" +
+            "│                                      ░\n" +
+            "│                                      ░\n" +
+            "│                                      ░\n" +
+            "│                                      ░\n" +
+            "│                                      │\n" +
+            "└──────────────────────────────────────┘\n")
         self.assertTrue(self._clicked)
 
     def test_dropdown_list_options(self):

@@ -1,4 +1,5 @@
 """This module defines a dropdown list widget"""
+from wcwidth import wcswidth
 from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.screen import Screen
 from asciimatics.widgets.divider import Divider
@@ -31,7 +32,7 @@ class _DropdownPopup(_TempPopup):
             reverse = False
 
         if parent.fit:
-            width = min(max(map(lambda x: len(x[0]), parent.options)) + 4, parent.width)
+            width = min(max(map(lambda x: wcswidth(x[0]), parent.options)) + 4, parent.width)
         else:
             width = parent.width
         # Construct the Frame
@@ -127,11 +128,16 @@ class DropdownList(Widget):
         text = "" if self._line is None else self._options[self._line][0]
         (colour, attr, background) = self._pick_colours("field", selected=self._has_focus)
         if self._fit:
-            width = min(max(map(lambda x: len(x[0]), self._options)) + 1, self.width - 3)
+            width = min(max(map(lambda x: wcswidth(x[0]), self._options)) + 1, self.width - 3)
         else:
             width = self.width - 3
+
+        # For unicode output, we need to adjust for any double width characters.
+        output = _enforce_width(text, width, self._frame.canvas.unicode_aware)
+        output_tweak = wcswidth(output) - len(output)
+
         self._frame.canvas.print_at(
-            f"[ {_enforce_width(text, width, self._frame.canvas.unicode_aware):{width}}]",
+            f"[ {output:{width - output_tweak}}]",
             self._x + self._offset,
             self._y,
             colour, attr, background)

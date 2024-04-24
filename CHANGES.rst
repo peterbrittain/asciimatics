@@ -4,6 +4,7 @@ CHANGE HISTORY
 LATEST
 ------
 - Added border option to PopupMenu
+- Fixed double-width alignment issues on DropdownList
 
 1.15.0
 ------
