@@ -108,13 +108,15 @@ THEMES = {
 }
 
 
-def _enforce_width(text, width, unicode_aware=True):
+def _enforce_width(text, width, unicode_aware=True, split_on_words=False):
     """
     Enforce a displayed piece of text to be a certain number of cells wide.  This takes into
     account double-width characters used in CJK languages.
 
     :param text: The text to be truncated
     :param width: The screen cell width to enforce
+    :param unicode_aware: Whether the text needs unicode-aware handling.
+    :param split_on_words: Whether to respect word boundaries when splitting.
     :return: The resulting truncated text
     """
     # Double-width strings cannot be more than twice the string length, so no need to try
@@ -123,12 +125,15 @@ def _enforce_width(text, width, unicode_aware=True):
         return text
 
     # Can still optimize performance if we are not handling unicode characters.
-    if unicode_aware:
+    if unicode_aware or split_on_words:
         size = 0
+        last_space = 9999999999
         for i, char in enumerate(str(text)):
             c_width = wcwidth(char) if ord(char) >= 256 else 1
+            if split_on_words and char in (" ", "\t"):
+                last_space = i + 1
             if size + c_width > width:
-                return text[0:i]
+                return text[0:min(i, last_space)]
             size += c_width
     elif len(text) + 1 > width:
         return text[0:width]

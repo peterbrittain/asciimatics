@@ -5,6 +5,7 @@ LATEST
 ------
 - Added border option to PopupMenu
 - Fixed double-width alignment issues on DropdownList
+- Improved TextBox line wrapping to break on word boundaries.
 
 1.15.0
 ------

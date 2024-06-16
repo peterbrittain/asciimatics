@@ -1557,8 +1557,8 @@ class TestWidgets(unittest.TestCase):
         self.assert_canvas_equals(
             canvas,
             "A                                       \n" +
-            "Some very long text that will wrap acros\n" +
-            "s multiple lines                        \n" +
+            "Some very long text that will wrap      \n" +
+            "across multiple lines                   \n" +
             "B                                       \n" +
             "                                        \n" +
             "                                        \n" +
@@ -1574,8 +1574,8 @@ class TestWidgets(unittest.TestCase):
         self.assert_canvas_equals(
             canvas,
             "A                                       \n" +
-            "ASome very long text that will wrap acro\n" +
-            "ss multiple linesB                      \n" +
+            "ASome very long text that will wrap     \n" +
+            "across multiple linesB                  \n" +
             "B                                       \n" +
             "                                        \n" +
             "                                        \n" +
@@ -1593,7 +1593,7 @@ class TestWidgets(unittest.TestCase):
         self.process_keys(form, ["Y"])
         form.update(1)
         self.assertEqual(text_box.value,
-                         "A\nASome very long text that will wrap acroZss multiple linesB\nBY\n")
+                         "A\nASome very long text that will wrap Zacross multiple linesB\nBY\n")
 
     def test_pop_up_widget(self):
         """
