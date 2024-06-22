@@ -3287,7 +3287,7 @@ class TestWidgets(unittest.TestCase):
         form.update(0)
         self.assertEqual(canvas.get_from(0, 0), (ord("A"), 7, 1, 6))
         self.assertEqual(canvas.get_from(1, 0), (ord("B"), 1, 0, 6))
-        self.assertEqual(canvas.get_from(0, 3), (ord("P"), 3, 1, 4))
+        self.assertEqual(canvas.get_from(0, 3), (ord("P"), 3, 2, 4))
         self.assertEqual(canvas.get_from(0, 4), (ord("Q"), 9, 2, 4))
 
         # Check that using ColouredText preserves colour data
@@ -3306,8 +3306,8 @@ class TestWidgets(unittest.TestCase):
         # Check that the Ansi terminal colour parsing worked.
         self.assertEqual(canvas.get_from(0, 5), (ord("A"), 7, 1, 4))
         self.assertEqual(canvas.get_from(3, 5), (ord("B"), 1, 1, 4))
-        self.assertEqual(canvas.get_from(0, 6), (ord("1"), 3, 1, 4))
-        self.assertEqual(canvas.get_from(3, 6), (ord("2"), 2, 1, 4))
+        self.assertEqual(canvas.get_from(0, 6), (ord("1"), 3, 2, 4))
+        self.assertEqual(canvas.get_from(3, 6), (ord("2"), 2, 2, 4))
 
     def test_list_box_options(self):
         """
