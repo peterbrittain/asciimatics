@@ -37,8 +37,8 @@ class RadioButtons(Widget):
 
         # Render the list of radio buttons.
         for i, (text, _) in enumerate(self._options):
-            fg, attr, bg = self._pick_colours("control", self._has_focus and i == self._selection)
-            fg2, attr2, bg2 = self._pick_colours("field", self._has_focus and i == self._selection)
+            fg, attr, bg = self._pick_colours("control", i == self._selection)
+            fg2, attr2, bg2 = self._pick_colours("field", i == self._selection)
             check = check_char if i == self._selection else " "
             self._frame.canvas.print_at(
                 f"({check}) ",
