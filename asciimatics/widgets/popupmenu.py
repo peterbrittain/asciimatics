@@ -29,10 +29,9 @@ class PopupMenu(Frame):
 
             menu_items = [("Open", file_open), ("Save", file_save), ("Close", file_close)]
         """
-
         border_adjustment = 0
         if has_border:
-            border_adjustment = 2 # We add one character to each side for the border
+            border_adjustment = 2  # We add one character to each side for the border
 
         # Sort out location based on width of menu text.
         w = max(len(i[0]) for i in menu_items) + border_adjustment
