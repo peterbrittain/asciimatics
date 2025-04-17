@@ -1,6 +1,6 @@
 """This module implements the listbox widget"""
 from asciimatics.strings import ColouredText
-from asciimatics.widgets.utilities import _enforce_width
+from asciimatics.widgets.utilities import _enforce_width_ext
 from asciimatics.widgets.baselistbox import _BaseListBox
 
 
@@ -73,9 +73,12 @@ class ListBox(_BaseListBox):
         for i, (text, _) in enumerate(self._options):
             if start_line <= i < start_line + height - y_offset:
                 colour, attr, background = self._pick_colours("field", i == self._line)
-                if len(text) > width:
-                    text = text[:width - 3] + "..."
-                paint_text = _enforce_width(text, width, self._frame.canvas.unicode_aware)
+                paint_text = text
+                if self.string_len(str(text)) > width:
+                    paint_text, truncated = _enforce_width_ext(
+                        text[self._start_char:], width, self._frame.canvas.unicode_aware)
+                    if truncated:
+                        paint_text = paint_text[:-3] + "..."
                 paint_text += " " * (width - self.string_len(str(paint_text)))
                 self._frame.canvas.paint(
                     str(paint_text),
@@ -93,6 +96,12 @@ class ListBox(_BaseListBox):
             if text.startswith(search_value):
                 return value
         return None
+
+    def _max_len(self):
+        """
+        Max length of any entry in the options.
+        """
+        return max(len(x[0]) for x in self._options)
 
     def _parse_option(self, option):
         """

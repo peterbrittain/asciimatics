@@ -12,8 +12,9 @@ class _BaseListBox(Widget, metaclass=ABCMeta):
     An Internal class to contain common function between list box types.
     """
 
-    __slots__ = ["_options", "_titles", "_line", "_start_line", "_required_height", "_on_change",
-                 "_on_select", "_validator", "_search", "_last_search", "_scroll_bar", "_parser"]
+    __slots__ = ["_options", "_titles", "_line", "_start_line", "_start_char", "_required_height",
+                 "_on_change", "_on_select", "_validator", "_search", "_last_search", "_scroll_bar",
+                 "_parser"]
 
     def __init__(self, height, options, titles=None, label=None, name=None, parser=None,
                  on_change=None, on_select=None, validator=None):
@@ -36,6 +37,7 @@ class _BaseListBox(Widget, metaclass=ABCMeta):
         self._line = 0
         self._value = None
         self._start_line = 0
+        self._start_char = 0
         self._required_height = height
         self._on_change = on_change
         self._on_select = on_select
@@ -57,6 +59,18 @@ class _BaseListBox(Widget, metaclass=ABCMeta):
                 # Move down one line in text - use value to trigger on_select.
                 self._line = min(len(self._options) - 1, self._line + 1)
                 self.value = self._options[self._line][1]
+            elif len(self._options) > 0 and event.key_code == Screen.KEY_HOME:
+                # Go to start of text
+                self._start_char = 0
+            elif len(self._options) > 0 and event.key_code == Screen.KEY_END:
+                # Go to end of text
+                self._start_char = self._max_len() - 1
+            elif len(self._options) > 0 and event.key_code == Screen.KEY_LEFT:
+                # Scroll left
+                self._start_char = max(0, self._start_char - 1)
+            elif len(self._options) > 0 and event.key_code == Screen.KEY_RIGHT:
+                # Scroll right
+                self._start_char = min(self._max_len() - 1, self._start_char + 1)
             elif len(self._options) > 0 and event.key_code == Screen.KEY_PAGE_UP:
                 # Move up one page.
                 self._line = max(0, self._line - self._h + (1 if self._titles else 0))
@@ -220,6 +234,12 @@ class _BaseListBox(Widget, metaclass=ABCMeta):
                 parsed_value.append((self._parse_option(option[0]), option[1]))
             return parsed_value
         return options
+
+    @abstractmethod
+    def _max_len(self):
+        """
+        Max length of any entry in the options.
+        """
 
     @abstractmethod
     def _parse_option(self, option):

@@ -127,9 +127,9 @@ class ColouredText():
 
     def startswith(self, text):
         """
-        Check whether parsed (i.e. displayed) text starts woth specified string.
+        Check whether parsed (i.e. displayed) text starts with specified string.
         """
-        return self._text.startswith(text)
+        return self._text.startswith(str(text))
 
     def join(self, others):
         """

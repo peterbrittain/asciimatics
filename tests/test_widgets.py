@@ -981,6 +981,37 @@ class TestWidgets(unittest.TestCase):
             "|Selected: None                        |\n" +
             "+--------------------------------------+\n")
 
+        # Check that left/right scrolls truncated text.
+        self.process_keys(form, [Screen.KEY_RIGHT])
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+------------ Test Frame 2 ------------+\n" +
+            "|One                                   |\n" +
+            "|wo is now quite a bit longer than b...O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|######################################|\n" +
+            "| < Add > < Edit > < Delete < Quit >   |\n" +
+            "|Selected: None                        |\n" +
+            "+--------------------------------------+\n")
+
+        self.process_keys(form, [Screen.KEY_LEFT])
+        form.update(0)
+        self.assert_canvas_equals(
+            canvas,
+            "+------------ Test Frame 2 ------------+\n" +
+            "|One                                   |\n" +
+            "|Two is now quite a bit longer than ...O\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|                                      |\n" +
+            "|######################################|\n" +
+            "| < Add > < Edit > < Delete < Quit >   |\n" +
+            "|Selected: None                        |\n" +
+            "+--------------------------------------+\n")
+
         # Check that mouse input changes selection.
         self.process_mouse(form, [(2, 2, MouseEvent.LEFT_CLICK)])
         form.save()
@@ -1167,13 +1198,13 @@ class TestWidgets(unittest.TestCase):
         layout = Layout([100], fill_frame=True)
         mc_list = MultiColumnListBox(
             Widget.FILL_FRAME,
-            [3, "4", ">4", "<4", "^10%", "100%"],
+            [3, "4", ">4", "<4", "^10%", 0],
             [
                 (["1", "2", "3", "4", "5", "6"], 1),
                 (["11", "222", "333", "444", "555", "6"], 2),
                 (["111", "2", "3", "4", "5", "6"], 3),
                 (["1", "2", "33333", "4", "5", "6"], 4),
-                (["1", "2", "3", "4", "5", "6666666666666666666666"], 5),
+                (["1", "2", "3", "4", "5", "6766666666666666666666"], 5),
             ],
             titles=["A", "B", "C", "D", "E", "F"],
             name="mc_list")
@@ -1212,7 +1243,69 @@ class TestWidgets(unittest.TestCase):
             "11 222  333 444 555 6                   \n" +
             "1112      3 4    5  6                   \n" +
             "1  2   3... 4    5  6                   \n" +
-            "1  2      3 4    5  66666666666666666666\n" +
+            "1  2      3 4    5  67666666666666666...\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        # Check that left/right scroll truncated text.
+        self.process_keys(form, [Screen.KEY_RIGHT])
+        form.update(1)
+        self.assert_canvas_equals(
+            canvas,
+            "A  B      C D    E  F                   \n" +
+            "1  2      3 4    5  6                   \n" +
+            "11 222  333 444 555 6                   \n" +
+            "1112      3 4    5  6                   \n" +
+            "1  2   3... 4    5  6                   \n" +
+            "1  2      3 4    5  76666666666666666...\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        self.process_keys(form, [Screen.KEY_LEFT])
+        form.update(2)
+        self.assert_canvas_equals(
+            canvas,
+            "A  B      C D    E  F                   \n" +
+            "1  2      3 4    5  6                   \n" +
+            "11 222  333 444 555 6                   \n" +
+            "1112      3 4    5  6                   \n" +
+            "1  2   3... 4    5  6                   \n" +
+            "1  2      3 4    5  67666666666666666...\n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        # Check that home/end scroll truncated text.
+        self.process_keys(form, [Screen.KEY_END])
+        form.update(3)
+        self.assert_canvas_equals(
+            canvas,
+            "A  B      C D    E  F                   \n" +
+            "1  2      3 4    5  6                   \n" +
+            "11 222  333 444 555 6                   \n" +
+            "1112      3 4    5  6                   \n" +
+            "1  2        4    5  6                   \n" +
+            "1  2      3 4    5  6                   \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n" +
+            "                                        \n")
+
+        self.process_keys(form, [Screen.KEY_HOME])
+        form.update(4)
+        self.assert_canvas_equals(
+            canvas,
+            "A  B      C D    E  F                   \n" +
+            "1  2      3 4    5  6                   \n" +
+            "11 222  333 444 555 6                   \n" +
+            "1112      3 4    5  6                   \n" +
+            "1  2   3... 4    5  6                   \n" +
+            "1  2      3 4    5  67666666666666666...\n" +
             "                                        \n" +
             "                                        \n" +
             "                                        \n" +
@@ -1241,7 +1334,7 @@ class TestWidgets(unittest.TestCase):
         self.assertEqual(mc_list.options, [])
 
         # Check that the form re-renders correctly afterwards.
-        form.update(1)
+        form.update(5)
         self.assert_canvas_equals(
             canvas,
             "A  B      C D    E  F                   \n" +
@@ -1708,7 +1801,7 @@ class TestWidgets(unittest.TestCase):
                 (["1", "2", "3"], 1),
                 (["你", "確", "定"], 2),
             ],
-            titles=["你確定嗎？", "你確定嗎？", "你確定嗎？"])
+            titles=["你", "嗎？", "你確定嗎？"])
         text = Text()
         text_box = TextBox(3)
         form.add_layout(layout)
@@ -1727,7 +1820,7 @@ class TestWidgets(unittest.TestCase):
         form.update(0)
         self.assert_canvas_equals(
             canvas,
-            "你你 你你確確 你你確確定定嗎嗎？？                      \n" +
+            "你你 嗎嗎？？ 你你確確定定嗎嗎？？                      \n" +
             "1  2    3                               \n" +
             "你你 確確   定定                              \n" +
             "                                        \n" +

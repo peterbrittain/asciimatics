@@ -120,10 +120,25 @@ def _enforce_width(text, width, unicode_aware=True, split_on_words=False):
     :param split_on_words: Whether to respect word boundaries when splitting.
     :return: The resulting truncated text
     """
+    return _enforce_width_ext(
+        text, width, unicode_aware=unicode_aware, split_on_words=split_on_words)[0]
+
+
+def _enforce_width_ext(text, width, unicode_aware=True, split_on_words=False):
+    """
+    Enforce a displayed piece of text to be a certain number of cells wide.  This takes into
+    account double-width characters used in CJK languages.
+
+    :param text: The text to be truncated
+    :param width: The screen cell width to enforce
+    :param unicode_aware: Whether the text needs unicode-aware handling.
+    :param split_on_words: Whether to respect word boundaries when splitting.
+    :return: Tuple of the resulting new text and whether it was truncated.
+    """
     # Double-width strings cannot be more than twice the string length, so no need to try
     # expensive truncation if this upper bound isn't an issue.
     if (2 * len(text) < width) or (len(text) < width and not unicode_aware):
-        return text
+        return text, False
 
     # Can still optimize performance if we are not handling unicode characters.
     if unicode_aware or split_on_words:
@@ -134,11 +149,11 @@ def _enforce_width(text, width, unicode_aware=True, split_on_words=False):
             if split_on_words and char in (" ", "\t"):
                 last_space = i + 1
             if size + c_width > width:
-                return text[0:min(i, last_space)]
+                return text[0:min(i, last_space)], True
             size += c_width
     elif len(text) + 1 > width:
-        return text[0:width]
-    return text
+        return text[0:width], True
+    return text, False
 
 
 def _find_min_start(text, max_width, unicode_aware=True, at_end=False):

@@ -50,7 +50,7 @@ class DemoFrame(Frame):
         self._header.custom_colour = "label"
         self._list = MultiColumnListBox(
             Widget.FILL_FRAME,
-            [">6", 10, ">4", ">7", ">7", ">5", ">5", "100%"],
+            [">6", 10, ">4", ">7", ">7", ">5", ">5", 0],
             [],
             titles=["PID", "USER", "NI", "VIRT", "RSS", "CPU%", "MEM%", "CMD"],
             name="mc_list",

@@ -2,7 +2,7 @@
 from re import match as re_match
 from itertools import zip_longest
 from asciimatics.strings import ColouredText
-from asciimatics.widgets.utilities import _enforce_width
+from asciimatics.widgets.utilities import _enforce_width_ext
 from asciimatics.widgets.baselistbox import _BaseListBox
 
 
@@ -104,7 +104,13 @@ class MultiColumnListBox(_BaseListBox):
             self._frame.canvas.print_at(self._space_delimiter * space, x, y, foreground, attr, background)
 
         # Now align text, taking into account double space glyphs.
-        paint_text = _enforce_width(text, width, self._frame.canvas.unicode_aware)
+        paint_text = text
+        if self.string_len(str(text)) > width:
+            paint_text, truncated = _enforce_width_ext(
+                text[self._start_char:], width, self._frame.canvas.unicode_aware)
+            if truncated:
+                paint_text = paint_text[:-3] + "..."
+
         text_size = self.string_len(str(paint_text))
         if text_size < width:
             # Default does no alignment or padding.
@@ -179,8 +185,6 @@ class MultiColumnListBox(_BaseListBox):
                     if cell_width == "":
                         break
                     cell_width = self._get_width(cell_width, width)
-                    if len(text) > cell_width:
-                        text = text[:cell_width - 3] + "..."
                     self._print_cell(
                         space, text, align, cell_width,
                         self._x + self._offset + row_dx,
@@ -198,6 +202,12 @@ class MultiColumnListBox(_BaseListBox):
             if row[0].startswith(search_value):
                 return value
         return None
+
+    def _max_len(self):
+        """
+        Max length of any entry in the options.
+        """
+        return max(max(len(y) for y in x[0]) for x in self._options)
 
     def _parse_option(self, option):
         """
