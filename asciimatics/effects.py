@@ -798,8 +798,7 @@ class _Flake():
                                   self._x,
                                   self._y)
         else:
-            if self._y > self._screen.start_line + self._screen.height:
-                self._y = self._screen.start_line + self._screen.height
+            self._y = min(self._y, self._screen.start_line + self._screen.height)
 
             drift_index = -1
             if cell:

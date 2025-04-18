@@ -129,8 +129,7 @@ class TextBox(Widget):
         self._line = min(max(0, self._line + delta), len(self._value) - 1)
 
         # Fix up column if the new line is shorter than before.
-        if self._column >= len(self._value[self._line]):
-            self._column = len(self._value[self._line])
+        self._column = min(self._column, len(self._value[self._line]))
 
     def process_event(self, event):
         def _join(a, b):

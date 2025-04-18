@@ -1,13 +1,11 @@
 """This module implements a time picker widget"""
 from datetime import datetime
 
-from asciimatics.event import KeyboardEvent, MouseEvent
-from asciimatics.screen import Screen
+from asciimatics.widgets.basepicker import _BasePicker
 from asciimatics.widgets.label import Label
 from asciimatics.widgets.layout import Layout
 from asciimatics.widgets.listbox import ListBox
 from asciimatics.widgets.temppopup import _TempPopup
-from asciimatics.widgets.widget import Widget
 
 
 class _TimePickerPopup(_TempPopup):
@@ -55,12 +53,12 @@ class _TimePickerPopup(_TempPopup):
                                                             second=self._seconds.value)
 
 
-class TimePicker(Widget):
+class TimePicker(_BasePicker):
     """
     A TimePicker widget allows you to pick a time from a compact, temporary, pop-up Frame.
     """
 
-    __slots__ = ["_on_change", "_child", "include_seconds"]
+    __slots__ = ["include_seconds"]
 
     def __init__(self, label=None, name=None, seconds=False, on_change=None, **kwargs):
         """
@@ -71,11 +69,8 @@ class TimePicker(Widget):
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
         """
-        super().__init__(name, **kwargs)
-        self._label = label
-        self._on_change = on_change
+        super().__init__(_TimePickerPopup, label=label, name=name, on_change=on_change, **kwargs)
         self._value = datetime.now().time()
-        self._child = None
         self.include_seconds = seconds
 
     def update(self, frame_no):
@@ -89,42 +84,3 @@ class TimePicker(Widget):
             self._x + self._offset,
             self._y,
             colour, attr, background)
-
-    def reset(self):
-        pass
-
-    def process_event(self, event):
-        if event is not None:
-            # Handle key or mouse selection events - e.g. click on widget or Enter.
-            if isinstance(event, KeyboardEvent):
-                if event.key_code in [Screen.ctrl("M"), Screen.ctrl("J"), ord(" ")]:
-                    event = None
-            elif isinstance(event, MouseEvent):
-                if event.buttons != 0:
-                    if self.is_mouse_over(event, include_label=False):
-                        event = None
-
-            # Create the pop-up if needed
-            if event is None:
-                self._child = _TimePickerPopup(self)
-                self.frame.scene.add_effect(self._child)
-
-        return event
-
-    def required_height(self, offset, width):
-        return 1
-
-    @property
-    def value(self):
-        """
-        The current selected time.
-        """
-        return self._value
-
-    @value.setter
-    def value(self, new_value):
-        # Only trigger the notification after we've changed the value.
-        old_value = self._value
-        self._value = new_value
-        if old_value != self._value and self._on_change:
-            self._on_change()

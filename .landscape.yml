@@ -14,27 +14,7 @@ ignore-paths:
 python-targets:
     - 3
 pylint:
-  options:
-    max-bool-expr: 6
-    max-nested-blocks: 6
-  disable:
-    # Need many attributes on widgets
-    - too-many-arguments
-    - too-many-locals
-    - too-many-instance-attributes
-    - invalid-name
-    # Need conditional imports for Windows/Linux
-    - wrong-import-order
-    - import-error
-    # Use pep257 to handle docstring issues
-    - missing-docstring
-    # Complexity isn't as bad as the metrics think - but stuff for v2.0
-    - too-many-lines
-    - too-many-branches
-    - too-many-statements
-    # Don't agree with these styles
-    - no-else-return
-    - len-as-condition
+  run: false
 mccabe:
   run: false
 pep257:

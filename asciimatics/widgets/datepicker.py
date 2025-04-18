@@ -1,13 +1,11 @@
 """This module defines a datepicker widget"""
 from datetime import date, datetime
-from asciimatics.event import KeyboardEvent, MouseEvent
 from asciimatics.exceptions import InvalidFields
-from asciimatics.screen import Screen
+from asciimatics.widgets.basepicker import _BasePicker
 from asciimatics.widgets.label import Label
 from asciimatics.widgets.layout import Layout
 from asciimatics.widgets.listbox import ListBox
 from asciimatics.widgets.temppopup import _TempPopup
-from asciimatics.widgets.widget import Widget
 
 
 class _DatePickerPopup(_TempPopup):
@@ -80,12 +78,12 @@ class _DatePickerPopup(_TempPopup):
             raise InvalidFields([self._days]) from e
 
 
-class DatePicker(Widget):
+class DatePicker(_BasePicker):
     """
     A DatePicker widget allows you to pick a date from a compact, temporary, pop-up Frame.
     """
 
-    __slots__ = ["_on_change", "_child", "_year_range"]
+    __slots__ = ["_year_range"]
 
     def __init__(self, label=None, name=None, year_range=None, on_change=None, **kwargs):
         """
@@ -95,11 +93,8 @@ class DatePicker(Widget):
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
         """
-        super().__init__(name, **kwargs)
-        self._label = label
-        self._on_change = on_change
+        super().__init__(_DatePickerPopup, label=label, name=name, on_change=on_change, **kwargs)
         self._value = datetime.now().date()
-        self._child = None
         self._year_range = year_range
 
     def update(self, frame_no):
@@ -113,39 +108,3 @@ class DatePicker(Widget):
             self._x + self._offset,
             self._y,
             colour, attr, background)
-
-    def reset(self):
-        pass
-
-    def process_event(self, event):
-        if event is not None:
-            if isinstance(event, KeyboardEvent):
-                if event.key_code in [Screen.ctrl("M"), Screen.ctrl("J"), ord(" ")]:
-                    event = None
-            elif isinstance(event, MouseEvent):
-                if event.buttons != 0:
-                    if self.is_mouse_over(event, include_label=False):
-                        event = None
-            if event is None:
-                self._child = _DatePickerPopup(self, year_range=self._year_range)
-                self.frame.scene.add_effect(self._child)
-
-        return event
-
-    def required_height(self, offset, width):
-        return 1
-
-    @property
-    def value(self):
-        """
-        The current selected date.
-        """
-        return self._value
-
-    @value.setter
-    def value(self, new_value):
-        # Only trigger the notification after we've changed the value.
-        old_value = self._value
-        self._value = new_value
-        if old_value != self._value and self._on_change:
-            self._on_change()
