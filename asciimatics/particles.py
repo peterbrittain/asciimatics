@@ -714,15 +714,27 @@ class Splash(ParticleEmitter):
         return int(particle.x), int(particle.y)
 
 
-class StarFirework(ParticleEffect):
+class _BaseFirework(ParticleEffect, metaclass=ABCMeta):
     """
-    Classic rocket with star explosion.
+    Base class for fireworks, to handle common Rocket logic.
     """
 
     def reset(self):
         self._active_systems = []
         self._active_systems.append(
             Rocket(self._screen, self._x, self._y, 10, on_destroy=self._next))
+
+    @abstractmethod
+    def _next(self, parent):
+        """
+        Next particle effect after the rocket.
+        """
+
+
+class StarFirework(_BaseFirework):
+    """
+    Classic rocket with star explosion.
+    """
 
     def _next(self, parent):
         self._active_systems.append(
@@ -740,45 +752,30 @@ class StarFirework(ParticleEffect):
                              parent.colours[0][0]))
 
 
-class RingFirework(ParticleEffect):
+class RingFirework(_BaseFirework):
     """
     Classic rocket with ring explosion.
     """
-
-    def reset(self):
-        self._active_systems = []
-        self._active_systems.append(
-            Rocket(self._screen, self._x, self._y, 10, on_destroy=self._next))
 
     def _next(self, parent):
         self._active_systems.append(RingExplosion(
             self._screen, parent.x, parent.y, self._life_time - 10))
 
 
-class SerpentFirework(ParticleEffect):
+class SerpentFirework(_BaseFirework):
     """
     A firework where each trail changes direction.
     """
-
-    def reset(self):
-        self._active_systems = []
-        self._active_systems.append(
-            Rocket(self._screen, self._x, self._y, 10, on_destroy=self._next))
 
     def _next(self, parent):
         self._active_systems.append(SerpentExplosion(
             self._screen, parent.x, parent.y, self._life_time - 10))
 
 
-class PalmFirework(ParticleEffect):
+class PalmFirework(_BaseFirework):
     """
     Classic palm shaped firework.
     """
-
-    def reset(self):
-        self._active_systems = []
-        self._active_systems.append(
-            Rocket(self._screen, self._x, self._y, 10, on_destroy=self._next))
 
     def _next(self, parent):
         self._active_systems.append(PalmExplosion(

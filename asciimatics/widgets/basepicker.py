@@ -27,8 +27,6 @@ class _BasePicker(Widget, metaclass=ABCMeta):
         self._label = label
         self._on_change = on_change
         self._child = None
-        if on_change is None:
-            raise RuntimeError("oops")
 
     def reset(self):
         pass
