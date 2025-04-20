@@ -109,6 +109,9 @@ class TestScreen(unittest.TestCase):
                     self.assertEqual(attr, attr2)
                     self.assertEqual(bg, bg2)
 
+            # Also force refresh to try to display all colours
+            screen.refresh()
+
         Screen.wrapper(
             check_screen_and_canvas, height=15, arguments=[internal_checks])
 
@@ -220,7 +223,7 @@ class TestScreen(unittest.TestCase):
             self.assertEqual(bg, Screen.COLOUR_BLACK)
 
         Screen.wrapper(
-            check_screen_and_canvas, height=15, arguments=[internal_checks])
+            check_screen_and_canvas, height=15, unicode_aware=False, arguments=[internal_checks])
 
     def test_scroll(self):
         """
@@ -252,6 +255,7 @@ class TestScreen(unittest.TestCase):
             self.assertEqual(bg, Screen.COLOUR_BLACK)
 
         Screen.wrapper(internal_checks, height=15)
+        Screen.wrapper(internal_checks, height=15, unicode_aware=False)
 
     def test_draw(self):
         """
@@ -311,11 +315,17 @@ class TestScreen(unittest.TestCase):
         Check that filled polygons work as expected.
         """
         def internal_checks(screen):
+            # Visible polygons
             screen.fill_polygon([[(0, 0), (10, 0), (0, 10), (10, 10)]])
             screen.fill_polygon([[(20, 0), (30, 0), (30, 10), (25, 5), (20, 10)]])
             screen.fill_polygon([[(40, 0), (45, 5), (50, 0), (50, 10), (40, 10)]])
             screen.fill_polygon([[(60, 0), (70, 0), (70, 10), (60, 10)],
                                  [(63, 2), (67, 2), (67, 8), (63, 8)]])
+
+            # Invisible - to check optimizations
+            screen.fill_polygon([[(0, 0), (75, 9)]])
+            screen.fill_polygon([[(-50, 0), (5, 9), (-20, 5)]])
+
             self.maxDiff = None
             self.assert_canvas_equals(
                 screen,
@@ -840,7 +850,7 @@ class TestScreen(unittest.TestCase):
 
         def internal_checks(screen):
             # Clear any outstanding events - sometimes windows has system events waiting.
-            for _ in range (10):
+            for _ in range(10):
                 screen.get_event()
             start = time.time()
             screen.wait_for_input(0.1)
