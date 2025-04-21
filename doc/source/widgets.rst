@@ -806,6 +806,17 @@ outside of the menu).
 
 Owing to their temporary nature, they are not maintained over screen resizing.
 
+Event handling with multiple Frames
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In order to work similarly to a GUI desktop, Frames check if they are at the front of the Z order.
+if one determines that it is at the front, it will swallow all keyboard events that it receives.
+This prevents keys from randomly triggering effects in lower windows (which would be unexpected in
+a desktop environment).  As a result, there will never be unhandled keyboard input for a Scene that
+contains any Frames.
+
+Mouse events may still be passed to the unhandled input handler if they fall outside of all Effects
+on the Screen.
+
 Screen resizing
 ~~~~~~~~~~~~~~~
 If you follow the standard application mainline logic as found in all the sample code, your

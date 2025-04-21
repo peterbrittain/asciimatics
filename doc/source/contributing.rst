@@ -9,7 +9,7 @@ So you want to join in?  Great!  There's a few ground rules...
 #. Before you do anything else, read up on the design.
 
    * You should find all general background in these 4 classes: :py:obj:`.Screen`,
-     :py:obj:`.Scene`, :py:obj:`.Effect` and :py:obj:`.Renderer`.
+     :py:obj:`.Scene`, :py:obj:`.Effect` and :py:obj:`~renderers.Renderer`.
    * You will find more details on TUIs in these 3 classes: :py:obj:`.Frame`, :py:obj:`.Layout`
      and :py:obj:`.Widget`.
 

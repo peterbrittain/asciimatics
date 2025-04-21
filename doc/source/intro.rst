@@ -59,7 +59,7 @@ Once you have installed asciimatics as per the instructions above, simply
 create a :py:obj:`.Screen`, put together a :py:obj:`.Scene` using some
 :py:obj:`.Effect` objects and then get the Screen to play it.  An Effect
 will typically need to display some pre-formatted text.  This is usually
-provided by a :py:obj:`.Renderer`.  For example:
+provided by a :py:obj:`~renderers.Renderer`.  For example:
 
 .. code-block:: python
 

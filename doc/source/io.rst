@@ -99,7 +99,7 @@ look `here <https://askubuntu.com/a/821163/1014276>`__.
 
 When creating effects that use these extra colours, it is recommended that you also support a
 reduced colour mode, using just the 8 common colours.  For an example of how to do this, see the
-:py:obj:`.Rainbow` class.
+:py:obj:`~renderers.Rainbow` class.
 
 Finally, some terminals have the concept of a default colour.  These can often have special attributes
 that are otherwise impossible to set in a terminal - e.g. transparency.  If your terminal supports

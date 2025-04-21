@@ -12,6 +12,14 @@ asciimatics.widgets.baselistbox module
    :inherited-members:
    :show-inheritance:
 
+asciimatics.widgets.basepicker module
+-------------------------------------
+
+.. automodule:: asciimatics.widgets.basepicker
+   :members:
+   :inherited-members:
+   :show-inheritance:
+
 asciimatics.widgets.button module
 ---------------------------------
 
