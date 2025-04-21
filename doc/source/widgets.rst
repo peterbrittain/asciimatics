@@ -695,7 +695,23 @@ start with `on` and correspond to a significant input action from the user, e.g.
 
 When writing your application, you simply need to decide which events you want to use to trigger
 some processing and create appropriate callbacks.  The most common pattern is to use a `Button` and
-define an `on_click` callback.
+define an `on_click` callback.  For example, see the following code:
+
+.. code-block:: python
+
+    class SomeForm(Frame):
+        def __init__(self):
+            # Code omitted to create Frame and Layouts...
+            # The following line creates a Button that will call self._add when clicked.
+            layout.add_widget(Button("Add", on_click=self._add), 0)
+
+        def _add(self):
+            # Do stuff here to react to Add button being clicked.
+
+.. note::
+
+    Note that you must pass a reference to the function/method to be called and not call the
+    function directly (i.e. don't include the brackets after the function name).
 
 In addition, there are other events that can be triggered when widget values change.  These can
 be used to provide dynamic effects like enabling/disabling Buttons based on the current value of
