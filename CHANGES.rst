@@ -7,6 +7,7 @@ LATEST
 - Added border option to PopupMenu.
 - Added scrolling of truncated text to ListBox and MulticolumnListBox.
 - Added ability for StaticRenderers to use DynamicRenders as input.
+- Added reset() to Renderers.
 - Fixed double-width alignment issues on DropdownList.
 - Improved TextBox line wrapping to break on word boundaries.
 - Fixed logic for highlighting selected widget controls without focus.

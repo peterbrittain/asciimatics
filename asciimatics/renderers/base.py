@@ -4,9 +4,7 @@ This module provides common code for all Renderers.
 
 from abc import ABCMeta, abstractmethod
 import re
-
 from wcwidth.wcwidth import wcswidth
-
 from asciimatics.screen import Screen, TemporaryCanvas
 from asciimatics.constants import COLOUR_REGEX
 
@@ -31,6 +29,12 @@ class Renderer(metaclass=ABCMeta):
     It can also represent a sequence of strings that can be played one after
     the other to make a simple animation sequence - e.g. a rotating globe.
     """
+
+    @abstractmethod
+    def reset(self):
+        """
+        Reset the state of this Renderer.
+        """
 
     @property
     @abstractmethod
@@ -96,6 +100,9 @@ class StaticRenderer(Renderer):
         self._animation = animation
         self._colour_map = None
         self._plain_images = []
+
+    def reset(self):
+        self._index = 0
 
     def _convert_images(self):
         """

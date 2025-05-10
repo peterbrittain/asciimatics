@@ -76,9 +76,6 @@ class Fire(DynamicRenderer):
         self._emitter = emitter
         self._intensity = intensity
         self._spot_heat = spot
-        self._count = len([c for c in emitter if c not in " \n"])
-        line = [0 for _ in range(self._canvas.width)]
-        self._buffer = [copy.deepcopy(line) for _ in range(self._canvas.width * 2)]
         self._colours = self._COLOURS_256 if colours >= 256 else \
             self._COLOURS_16
         self._bg_too = bg
@@ -91,6 +88,12 @@ class Fire(DynamicRenderer):
             e_height += 1
         self._x = (width - e_width) // 2
         self._y = height - e_height
+
+        self.reset()
+
+    def reset(self):
+        line = [0 for _ in range(self._canvas.width)]
+        self._buffer = [copy.deepcopy(line) for _ in range(self._canvas.width * 2)]
 
     def _render_all(self):
         return [self._render_now()]

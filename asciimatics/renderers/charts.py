@@ -60,6 +60,9 @@ class _BarChartBase(DynamicRenderer):
                 else:
                     raise ValueError("Gradients must be 2-tuple or 3-tuple in size")
 
+    def reset(self):
+        pass
+
     @abstractmethod
     def _render_now(self):
         pass

@@ -38,6 +38,9 @@ class Kaleidoscope(DynamicRenderer):
         self._rotation = 0
         self._cell = cell
 
+    def reset(self):
+        self._rotation = 0
+
     def _render_all(self):
         return [self._render_now()]
 

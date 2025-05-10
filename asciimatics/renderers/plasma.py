@@ -56,6 +56,9 @@ class Plasma(DynamicRenderer):
         self._palette = self._palette_256 if colours >= 256 else self._palette_8
         self._t = 0
 
+    def reset(self):
+        self._t = 0
+
     def _render_all(self):
         return [self._render_now()]
 

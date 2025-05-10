@@ -205,7 +205,7 @@ class Cycle(Effect):
         self._colour = 0
 
     def reset(self):
-        pass
+        self._renderer.reset()
 
     def _update(self, frame_no):
         if frame_no % 2 == 0:
@@ -251,6 +251,7 @@ class BannerText(Effect):
     def reset(self):
         self._text_pos = 0
         self._scr_pos = self._screen.width
+        self._renderer.reset()
 
     def _update(self, frame_no):
         if self._scr_pos == 0 and self._text_pos < self._renderer.max_width:
@@ -319,7 +320,7 @@ class Print(Effect):
         self._frame_no = 0
 
     def reset(self):
-        pass  # Nothing required
+        self._renderer.reset()
 
     def _update(self, frame_no):
         self._frame_no = frame_no
@@ -372,6 +373,7 @@ class Mirage(Effect):
 
     def reset(self):
         self._count = 0
+        self._renderer.reset()
 
     def _update(self, frame_no):
         if frame_no % 2 == 0:
@@ -650,6 +652,8 @@ class Sprite(Effect):
         self._old_y = None
         self._old_direction = None
         self._path.reset()
+        for _, renderer in self._renderer_dict.items():
+            renderer.reset()
 
     def last_position(self):
         """
@@ -1008,6 +1012,8 @@ class RandomNoise(Effect):
     def reset(self):
         self._strength = 0.0
         self._step = -0.01
+        if self._signal:
+            self._signal.reset()
 
     def _update(self, frame_no):
         if self._signal:

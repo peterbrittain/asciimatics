@@ -14,12 +14,26 @@ class AbstractScreenPlayer(DynamicRenderer):
     Abstract renderer to play terminal text with support for ANSI control codes.
     """
 
-    def __init__(self, height, width):
+    def __init__(self, file, height, width):
         """
         :param height: required height of the renderer.
         :param width: required width of the renderer.
         """
         super().__init__(height, width, clear=False)
+        self._file = file
+        self._parser = None
+        self._current_colours = None
+        self._show_cursor = None
+        self._cursor_x = None
+        self._cursor_y = None
+        self._save_cursor_x = None
+        self._save_cursor_y = None
+        self._counter = None
+        self._next = None
+        self._buffer = None
+        self.reset()
+
+    def reset(self):
         self._parser = AnsiTerminalParser()
         self._current_colours = [Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK]
         self._show_cursor = False
@@ -32,6 +46,22 @@ class AbstractScreenPlayer(DynamicRenderer):
         self._buffer = None
         self._parser.reset("", self._current_colours)
         self._clear()
+
+    def __enter__(self):
+        """
+        Create context for use as a context manager.
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """
+        Clear up the resources for this context.
+        """
+        if self._file:
+            self._file.close()
+
+    def _render_all(self):
+        return [self._render_now()]
 
     @abstractmethod
     def _render_now(self):
@@ -153,28 +183,11 @@ class AnsiArtPlayer(AbstractScreenPlayer):
         :param strip: whether to strip CRLF from the file content.
         :param rate: number of lines to render on each update.
         """
-        super().__init__(height, width)
         # pylint: disable-next=consider-using-with
-        self._file = open(filename, "rb")
+        super().__init__(open(filename, "rb"), height, width)
         self._strip = strip
         self._rate = rate
         self._encoding = encoding
-
-    def __enter__(self):
-        """
-        Create context for use as a context manager.
-        """
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """
-        Clear up the resources for this context.
-        """
-        if self._file:
-            self._file.close()
-
-    def _render_all(self):
-        return [self._render_now()]
 
     def _render_now(self):
         count = 0
@@ -208,8 +221,8 @@ class AsciinemaPlayer(AbstractScreenPlayer):
         """
         # Open the file and check it looks plausibly like a supported format.
         # pylint: disable-next=consider-using-with
-        self._file = open(filename, "rb")
-        header = json.loads(self._file.readline())
+        f = open(filename, "rb")
+        header = json.loads(f.readline())
         if header["version"] != 2:
             raise RuntimeError("Unsupported file format")
 
@@ -218,24 +231,8 @@ class AsciinemaPlayer(AbstractScreenPlayer):
         width = width if width else header["width"]
 
         # Construct the full player now we have all the details.
-        super().__init__(height, width)
+        super().__init__(f, height, width)
         self._max_delay = max_delay
-
-    def __enter__(self):
-        """
-        Create context for use as a context manager.
-        """
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """
-        Clear up the resources for this context.
-        """
-        if self._file:
-            self._file.close()
-
-    def _render_all(self):
-        return [self._render_now()]
 
     def _render_now(self):
         self._counter += 0.05
