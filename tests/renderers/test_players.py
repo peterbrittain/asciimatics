@@ -2,12 +2,14 @@ import unittest
 import os
 from asciimatics.renderers import AnsiArtPlayer, AsciinemaPlayer
 
+
 class TestRendererPlayers(unittest.TestCase):
     def test_ansi_art(self):
         """
         Check that ansi art player works.
         """
-        with AnsiArtPlayer(os.path.join(os.path.dirname(__file__), "test.ans"), height=5, width=20) as renderer:
+        with AnsiArtPlayer(os.path.join(os.path.dirname(__file__), "test.ans"),
+                           height=5, width=20) as renderer:
             self.assertEqual(
                 str(renderer),
                 "This is a test file \n" +
@@ -36,6 +38,17 @@ class TestRendererPlayers(unittest.TestCase):
                 "                    \n" +
                 "123                 \n" +
                 "                    ")
+
+            # Check images just returns one frame.
+            self.assertEqual(len(renderer.images), 1)
+
+        # Test line stripping
+        with AnsiArtPlayer(os.path.join(os.path.dirname(__file__), "test2.ans"),
+                           height=2, width=10, rate=1, strip=True) as renderer:
+            self.assertEqual(str(renderer), "One       \n          ")
+            self.assertEqual(str(renderer), "OneTwo    \n          ")
+            self.assertEqual(str(renderer), "OneTwoThre\neFourFive ")
+            self.assertEqual(str(renderer), "eFourFiveS\nix        ")
 
     def test_asciinema(self):
         """
@@ -67,6 +80,15 @@ class TestRendererPlayers(unittest.TestCase):
                 "                                                                                                                                      \n" +
                 "                                                                                                                                      \n" +
                 "                                                                                                                                      ")
+
+            # Check images just returns one frame.
+            self.assertEqual(len(renderer.images), 1)
+
+        # Check for unsupported format
+        with self.assertRaises(RuntimeError):
+            with AsciinemaPlayer(os.path.join(os.path.dirname(__file__), "test_bad.rec")) as renderer:
+                pass
+
 
 if __name__ == '__main__':
     unittest.main()

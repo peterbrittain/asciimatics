@@ -92,6 +92,9 @@ class Fire(DynamicRenderer):
         self._x = (width - e_width) // 2
         self._y = height - e_height
 
+    def _render_all(self):
+        return [self._render_now()]
+
     def _render_now(self):
         # First make the fire rise with convection
         for y in range(len(self._buffer) - 1):

@@ -38,6 +38,9 @@ class Kaleidoscope(DynamicRenderer):
         self._rotation = 0
         self._cell = cell
 
+    def _render_all(self):
+        return [self._render_now()]
+
     def _render_now(self):
         # Rotate a point (x, y) through an angle theta.
         def _rotate(x, y, theta):

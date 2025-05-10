@@ -1,26 +1,27 @@
 #!/usr/bin/env python3
 
+import sys
 import copy
 import math
 from asciimatics.effects import Cycle, Print, Stars
-from asciimatics.renderers import SpeechBubble, FigletText, Box
+from asciimatics.renderers import StaticRenderer, SpeechBubble, Typewriter, FigletText, Box
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.sprites import Arrow, Plot, Sam
 from asciimatics.paths import Path
 from asciimatics.exceptions import ResizeScreenError
-import sys
 
 
 def _speak(screen, text, pos, start):
     return Print(
         screen,
-        SpeechBubble(text, "L", uni=screen.unicode_aware),
+        SpeechBubble(Typewriter(StaticRenderer(images=[text])), "L", uni=screen.unicode_aware),
         x=pos[0] + 4, y=pos[1] - 4,
         colour=Screen.COLOUR_CYAN,
         clear=True,
+        speed=1,
         start_frame=start,
-        stop_frame=start+50)
+        stop_frame=start+len(text)+20)
 
 
 def demo(screen):
@@ -64,8 +65,8 @@ def demo(screen):
         _speak(screen, "As you can see, the Screen handles them both at once.",
                podium, 430),
         _speak(screen, "It can handle as many Effects as you like.",
-               podium, 500),
-        _speak(screen, "Please press <SPACE> now.", podium, 570),
+               podium, 520),
+        _speak(screen, "Please press <SPACE> now.", podium, 590),
         Stars(screen, (screen.width + screen.height) // 2, start_frame=360)
     ]
     scenes.append(Scene(effects, -1))
@@ -80,10 +81,10 @@ def demo(screen):
         _speak(screen, "The Screen stops all Effects and clears itself between "
                        "Scenes.",
                podium, 70),
-        _speak(screen, "That's why you can't see the Stars now.", podium, 130),
+        _speak(screen, "That's why you can't see the Stars now.", podium, 160),
         _speak(screen, "(Though you can override that if you need to.)", podium,
-               200),
-        _speak(screen, "Please press <SPACE> now.", podium, 270),
+               230),
+        _speak(screen, "Please press <SPACE> now.", podium, 310),
     ]
     scenes.append(Scene(effects, -1))
 

@@ -2,6 +2,7 @@ import unittest
 from asciimatics.renderers import StaticRenderer
 from asciimatics.screen import Screen
 
+
 class TestRenderers(unittest.TestCase):
     def test_height(self):
         """

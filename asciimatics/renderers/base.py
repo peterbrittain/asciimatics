@@ -249,10 +249,21 @@ class DynamicRenderer(Renderer, metaclass=ABCMeta):
         :py:meth:`.rendered_text`.
         """
 
+    @abstractmethod
+    def _render_all(self):
+        """
+        Generate all output.
+
+        If this renderer cannot reasonably return everything, it will just return the next frame (as
+        per _render_now() inside an iterable object.
+
+        :returns: an iterable of image/colour map tuples.
+        """
+
     @property
     def images(self):
-        # We can't return all, so just return the latest rendered image.
-        return [self.rendered_text[0]]
+        # Attempt to get all images.  Note that many are genuinely dynamic and so will only return one.
+        return [x[0] for x in self._render_all()]
 
     @property
     def rendered_text(self):

@@ -173,6 +173,9 @@ class AnsiArtPlayer(AbstractScreenPlayer):
         if self._file:
             self._file.close()
 
+    def _render_all(self):
+        return [self._render_now()]
+
     def _render_now(self):
         count = 0
         line = None
@@ -182,6 +185,7 @@ class AnsiArtPlayer(AbstractScreenPlayer):
             if self._strip:
                 line = line.rstrip("\r\n")
             self._play_content(line)
+
         return self._plain_image, self._colour_map
 
 
@@ -229,6 +233,9 @@ class AsciinemaPlayer(AbstractScreenPlayer):
         """
         if self._file:
             self._file.close()
+
+    def _render_all(self):
+        return [self._render_now()]
 
     def _render_now(self):
         self._counter += 0.05

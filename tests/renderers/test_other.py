@@ -1,8 +1,8 @@
 import unittest
 import os
 import sys
-from asciimatics.renderers import (StaticRenderer, FigletText, SpeechBubble, Box, Rainbow, Fire, 
-    Plasma, Kaleidoscope, RotatedDuplicate, Scale, VScale)
+from asciimatics.renderers import (StaticRenderer, FigletText, SpeechBubble, Box, Rainbow, Fire,
+                                   Plasma, Kaleidoscope, RotatedDuplicate, Scale, VScale)
 from asciimatics.screen import Screen
 if sys.platform != "win32":
     import curses
@@ -174,6 +174,9 @@ class TestRendererOthers(unittest.TestCase):
         for char in "\n".join(output[0]):
             self.assertIn(char, " \n")
 
+        # Check images just returns one frame.
+        self.assertEqual(len(renderer.images), 1)
+
     def test_plasma(self):
         """
         Check that the Plasma renderer works.
@@ -191,6 +194,9 @@ class TestRendererOthers(unittest.TestCase):
         self.assertEqual(renderer.max_height, 5)
         self.assertEqual(renderer.max_width, 10)
 
+        # Check images just returns one frame.
+        self.assertEqual(len(renderer.images), 1)
+
     def test_kaleidoscope(self):
         """
         Check that the Kaleidoscope renderer works.
@@ -207,6 +213,9 @@ class TestRendererOthers(unittest.TestCase):
         # Check dimensions
         self.assertEqual(renderer.max_height, 5)
         self.assertEqual(renderer.max_width, 10)
+
+        # Check images just returns one frame.
+        self.assertEqual(len(renderer.images), 1)
 
     def test_rotated_dup(self):
         """
@@ -231,6 +240,7 @@ class TestRendererOthers(unittest.TestCase):
     def test_vscale(self):
         renderer = VScale(5)
         self.assertEqual(str(renderer), "1\n2\n3\n4\n5")
+
 
 if __name__ == '__main__':
     unittest.main()

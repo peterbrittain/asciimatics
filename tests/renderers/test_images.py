@@ -1,11 +1,8 @@
 import unittest
 import os
-import sys
 from unittest.mock import MagicMock
 from asciimatics.renderers import ImageFile, ColourImageFile
 from asciimatics.screen import Screen, Canvas
-if sys.platform != "win32":
-    import curses
 
 
 class TestRendererImages(unittest.TestCase):
@@ -124,7 +121,6 @@ class TestRendererImages(unittest.TestCase):
 
         # Mock screen for better coverage.
         screen = MagicMock(spec=Screen, colours=16, unicode_aware=True, palette=Screen._8_palette)
-        canvas = Canvas(screen, 15, 40, 0, 0)
         internal_checks(screen)
 
     def test_uni_image_files(self):
@@ -163,7 +159,6 @@ class TestRendererImages(unittest.TestCase):
 
         # Mock screen for better coverage.
         screen = MagicMock(spec=Screen, colours=16, unicode_aware=True, palette=Screen._8_palette)
-        canvas = Canvas(screen, 15, 40, 0, 0)
         internal_checks(screen)
 
 

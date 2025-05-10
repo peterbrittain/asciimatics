@@ -15,8 +15,9 @@ from asciimatics.renderers.rainbow import Rainbow
 from asciimatics.renderers.rotatedduplicate import RotatedDuplicate
 from asciimatics.renderers.scales import Scale, VScale
 from asciimatics.renderers.speechbubble import SpeechBubble
+from asciimatics.renderers.typewriter import Typewriter
 
 __all__ = ["Renderer", "StaticRenderer", "DynamicRenderer", "Box", "BarChart", "VBarChart",
            "FigletText", "Fire", "ImageFile", "ColourImageFile", "AbstractScreenPlayer", "AnsiArtPlayer",
            "AsciinemaPlayer", "Kaleidoscope", "Plasma", "Rainbow", "RotatedDuplicate", "Scale",
-           "VScale", "SpeechBubble"]
+           "VScale", "SpeechBubble", "Typewriter"]

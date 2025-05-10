@@ -56,6 +56,9 @@ class Plasma(DynamicRenderer):
         self._palette = self._palette_256 if colours >= 256 else self._palette_8
         self._t = 0
 
+    def _render_all(self):
+        return [self._render_now()]
+
     def _render_now(self):
         # Internal function for creating a sine wave radiating out from a point
         def f(x1, y1, xp, yp, n):
