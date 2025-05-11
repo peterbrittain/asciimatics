@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
+import sys
 from random import choice
 from asciimatics.renderers import Plasma, Rainbow, FigletText
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.effects import Print
 from asciimatics.exceptions import ResizeScreenError
-import sys
 
 
 class PlasmaScene(Scene):
@@ -30,7 +30,7 @@ class PlasmaScene(Scene):
                   speed=1,
                   transparent=False),
         ]
-        super(PlasmaScene, self).__init__(effects, 200, clear=False)
+        super().__init__(effects, 200, clear=False)
 
     def _add_cheesy_comment(self):
         msg = FigletText(choice(self._comments), "banner3")
@@ -52,11 +52,13 @@ class PlasmaScene(Scene):
                   speed=1))
 
     def reset(self, old_scene=None, screen=None):
-        super(PlasmaScene, self).reset(old_scene, screen)
+        # Avoid reseting the Plasma effect so that the animation continues across scenes.
+        plasma = self._effects[0]
+        self._effects = []
+        super().reset(old_scene, screen)
 
-        # Make sure that we only have the initial Effect and add a new cheesy
-        # comment.
-        self._effects = [self._effects[0]]
+        # Make sure that we only have the initial plasma Effect and a single cheesy comment.
+        self._effects = [plasma]
         self._add_cheesy_comment()
 
 

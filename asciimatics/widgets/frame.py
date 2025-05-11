@@ -537,7 +537,10 @@ class Frame(Effect):
         # If the frame has no focus, it's a NOOP.
         if not self._has_focus:
             return
-        self._layouts[self._focus].blur()
+        try:
+            self._layouts[self._focus].blur()
+        except IndexError:
+            pass
         self._has_focus = False
         logger.debug("Blurred frame: %s", self)
 

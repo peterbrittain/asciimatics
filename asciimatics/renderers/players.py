@@ -46,6 +46,8 @@ class AbstractScreenPlayer(DynamicRenderer):
         self._buffer = None
         self._parser.reset("", self._current_colours)
         self._clear()
+        self._file.seek(0)
+        self._canvas.reset()
 
     def __enter__(self):
         """
