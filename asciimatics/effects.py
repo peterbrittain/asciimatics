@@ -7,8 +7,13 @@ from abc import ABCMeta, abstractmethod
 from random import randint, random, choice
 from math import sin, cos, pi
 import datetime
-from asciimatics.paths import DynamicPath
+import time
+from typing import Dict, Optional, Tuple
+from asciimatics.event import Event
+from asciimatics.paths import Path, DynamicPath
 from asciimatics.screen import Screen
+from asciimatics.renderers.base import Renderer
+from asciimatics.scene import Scene
 
 
 class Effect(metaclass=ABCMeta):
@@ -39,7 +44,11 @@ class Effect(metaclass=ABCMeta):
     event (and so effects don't need to implement this method unless needed).
     """
 
-    def __init__(self, screen, start_frame=0, stop_frame=0, delete_count=None):
+    def __init__(self,
+                 screen: Screen,
+                 start_frame: int = 0,
+                 stop_frame: int = 0,
+                 delete_count: Optional[int] = None):
         """
         :param screen: The Screen that will render this Effect.
         :param start_frame: Start index for the effect.
@@ -50,19 +59,18 @@ class Effect(metaclass=ABCMeta):
         self._start_frame = start_frame
         self._stop_frame = stop_frame
         self._delete_count = delete_count
-        self._scene = None
+        self._scene: Optional[Scene] = None
 
-    def update(self, frame_no):
+    def update(self, frame_no: int):
         """
         Process the animation effect for the specified frame number.
 
         :param frame_no: The index of the frame being generated.
         """
-        if (frame_no >= self._start_frame and
-                (self._stop_frame == 0 or frame_no < self._stop_frame)):
+        if (frame_no >= self._start_frame and (self._stop_frame == 0 or frame_no < self._stop_frame)):
             self._update(frame_no)
 
-    def register_scene(self, scene):
+    def register_scene(self, scene: Scene):
         """
         Register the Scene that owns this Effect.
 
@@ -104,7 +112,7 @@ class Effect(metaclass=ABCMeta):
         self._delete_count = value
 
     @property
-    def screen(self):
+    def screen(self) -> Screen:
         """
         The Screen that will render this Effect.
         """
@@ -136,13 +144,13 @@ class Effect(metaclass=ABCMeta):
         return True
 
     @property
-    def scene(self):
+    def scene(self) -> Optional[Scene]:
         """
         The Scene that owns this Effect.
         """
         return self._scene
 
-    def process_event(self, event):
+    def process_event(self, event: Event) -> Optional[Event]:
         """
         Process any input event.
 
@@ -160,7 +168,7 @@ class Scroll(Effect):
     Scroll for the desired time.
     """
 
-    def __init__(self, screen, rate, **kwargs):
+    def __init__(self, screen: Screen, rate: int, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param rate: How many frames to wait between scrolling the screen.
@@ -169,12 +177,12 @@ class Scroll(Effect):
         """
         super().__init__(screen, **kwargs)
         self._rate = rate
-        self._last_frame = None
+        self._last_frame = 0
 
     def reset(self):
         self._last_frame = 0
 
-    def _update(self, frame_no):
+    def _update(self, frame_no: int):
         if (frame_no - self._last_frame) >= self._rate:
             self._screen.scroll()
             self._last_frame = frame_no
@@ -191,7 +199,7 @@ class Cycle(Effect):
     This effect is not compatible with multi-colour rendered text.
     """
 
-    def __init__(self, screen, renderer, y, **kwargs):
+    def __init__(self, screen: Screen, renderer: Renderer, y: int, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param renderer: The Renderer which is to be cycled.
@@ -207,7 +215,7 @@ class Cycle(Effect):
     def reset(self):
         self._renderer.reset()
 
-    def _update(self, frame_no):
+    def _update(self, frame_no: int):
         if frame_no % 2 == 0:
             return
 
@@ -230,7 +238,13 @@ class BannerText(Effect):
     banner.
     """
 
-    def __init__(self, screen, renderer, y, colour, bg=Screen.COLOUR_BLACK, **kwargs):
+    def __init__(self,
+                 screen: Screen,
+                 renderer: Renderer,
+                 y: int,
+                 colour: int,
+                 bg: int = Screen.COLOUR_BLACK,
+                 **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param renderer: The renderer to be scrolled
@@ -245,15 +259,15 @@ class BannerText(Effect):
         self._y = y
         self._colour = colour
         self._bg = bg
-        self._text_pos = None
-        self._scr_pos = None
+        self._text_pos = 0
+        self._scr_pos = 0
 
     def reset(self):
         self._text_pos = 0
         self._scr_pos = self._screen.width
         self._renderer.reset()
 
-    def _update(self, frame_no):
+    def _update(self, frame_no: int):
         if self._scr_pos == 0 and self._text_pos < self._renderer.max_width:
             self._text_pos += 1
 
@@ -264,9 +278,7 @@ class BannerText(Effect):
         for (i, line) in enumerate(image):
             line += " "
             colours[i].append((self._colour, 2, self._bg))
-            end_pos = min(
-                len(line),
-                self._text_pos + self._screen.width - self._scr_pos)
+            end_pos = min(len(line), self._text_pos + self._screen.width - self._scr_pos)
             self._screen.paint(line[self._text_pos:end_pos],
                                self._scr_pos,
                                self._y + i,
@@ -275,7 +287,7 @@ class BannerText(Effect):
                                colour_map=colours[i][self._text_pos:end_pos])
 
     @property
-    def stop_frame(self):
+    def stop_frame(self) -> int:
         return self._start_frame + self._renderer.max_width + self._screen.width
 
 
@@ -285,8 +297,18 @@ class Print(Effect):
     the required location.
     """
 
-    def __init__(self, screen, renderer, y, x=None, colour=7, attr=0, bg=0,
-                 clear=False, transparent=True, speed=4, **kwargs):
+    def __init__(self,
+                 screen: Screen,
+                 renderer: Renderer,
+                 y: int,
+                 x: Optional[int] = None,
+                 colour: int = 7,
+                 attr: int = 0,
+                 bg: int = 0,
+                 clear: bool = False,
+                 transparent: bool = True,
+                 speed: int = 4,
+                 **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param renderer: The renderer to be printed.
@@ -310,8 +332,7 @@ class Print(Effect):
         self._renderer = renderer
         self._transparent = transparent
         self._y = y
-        self._x = ((self._screen.width - renderer.max_width) // 2 if x is None
-                   else x)
+        self._x = ((self._screen.width - renderer.max_width) // 2 if x is None else x)
         self._colour = colour
         self._attr = attr
         self._bg = bg
@@ -322,30 +343,30 @@ class Print(Effect):
     def reset(self):
         self._renderer.reset()
 
-    def _update(self, frame_no):
+    def _update(self, frame_no: int):
         self._frame_no = frame_no
         if self._clear and \
                 (frame_no == self._stop_frame - 1) or (self._delete_count == 1):
             for i in range(0, self._renderer.max_height):
-                self._screen.print_at(" " * self._renderer.max_width,
-                                      self._x,
-                                      self._y + i,
-                                      bg=self._bg)
+                self._screen.print_at(" " * self._renderer.max_width, self._x, self._y + i, bg=self._bg)
         elif self._speed == 0 or frame_no % self._speed == 0:
             image, colours = self._renderer.rendered_text
             for (i, line) in enumerate(image):
-                self._screen.paint(line, self._x, self._y + i, self._colour,
+                self._screen.paint(line,
+                                   self._x,
+                                   self._y + i,
+                                   self._colour,
                                    attr=self._attr,
                                    bg=self._bg,
                                    transparent=self._transparent,
                                    colour_map=colours[i])
 
     @property
-    def stop_frame(self):
+    def stop_frame(self) -> int:
         return self._stop_frame
 
     @property
-    def frame_update_count(self):
+    def frame_update_count(self) -> int:
         # Only demand update for next update frame.
         return self._speed - (self._frame_no % self._speed) if self._speed > 0 else 1000000
 
@@ -356,7 +377,7 @@ class Mirage(Effect):
     text is automatically centred on the screen.
     """
 
-    def __init__(self, screen, renderer, y, colour, **kwargs):
+    def __init__(self, screen: Screen, renderer: Renderer, y: int, colour: int, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param renderer: The renderer to be displayed.
@@ -375,7 +396,7 @@ class Mirage(Effect):
         self._count = 0
         self._renderer.reset()
 
-    def _update(self, frame_no):
+    def _update(self, frame_no: int):
         if frame_no % 2 == 0:
             return
 
@@ -387,16 +408,14 @@ class Mirage(Effect):
                 for j, c in enumerate(line):
                     if c != " " and random() > 0.85:
                         if colours[i][j][0] is not None:
-                            self._screen.print_at(c, x, y,
-                                                  colours[i][j][0],
-                                                  colours[i][j][1])
+                            self._screen.print_at(c, x, y, colours[i][j][0], colours[i][j][1])
                         else:
                             self._screen.print_at(c, x, y, self._colour)
                     x += 1
             y += 1
 
     @property
-    def stop_frame(self):
+    def stop_frame(self) -> int:
         return self._stop_frame
 
 
@@ -405,7 +424,7 @@ class _Star():
     Simple class to represent a single star for the Stars special effect.
     """
 
-    def __init__(self, screen, pattern):
+    def __init__(self, screen: Screen, pattern: str):
         """
         :param screen: The Screen being used for the Scene.
         :param pattern: The pattern to loop through
@@ -458,7 +477,11 @@ class Stars(Effect):
     Add random stars to the screen and make them twinkle.
     """
 
-    def __init__(self, screen, count, pattern="..+..   ...x...  ...*...         ", **kwargs):
+    def __init__(self,
+                 screen: Screen,
+                 count: int,
+                 pattern: str = "..+..   ...x...  ...*...         ",
+                 **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param count: The number of starts to create.
@@ -469,12 +492,12 @@ class Stars(Effect):
         super().__init__(screen, **kwargs)
         self._pattern = pattern
         self._max = count
-        self._stars = []
+        self._stars: list[_Star] = []
 
     def reset(self):
         self._stars = [_Star(self._screen, self._pattern) for _ in range(self._max)]
 
-    def _update(self, frame_no):
+    def _update(self, frame_no: int):
         for star in self._stars:
             star.update()
 
@@ -488,7 +511,7 @@ class _Trail():
     Track a single trail  for a falling character effect (a la Matrix).
     """
 
-    def __init__(self, screen, x):
+    def __init__(self, screen: Screen, x: int):
         """
         :param screen: The Screen being used for the Scene.
         :param x: The column (y coordinate) for this trail to use.
@@ -501,7 +524,7 @@ class _Trail():
         self._clear = True
         self._maybe_reseed(True)
 
-    def _maybe_reseed(self, normal):
+    def _maybe_reseed(self, normal: bool):
         """
         Randomly create a new column once this one is finished.
         """
@@ -519,7 +542,7 @@ class _Trail():
                 self._life = \
                     randint(1, self._screen.height - self._y) // self._rate
 
-    def update(self, reseed):
+    def update(self, reseed: bool):
         """
         Update that trail!
 
@@ -527,9 +550,7 @@ class _Trail():
         """
         if self._clear:
             for i in range(0, 3):
-                self._screen.print_at(" ",
-                                      self._x,
-                                      self._screen.start_line + self._y + i)
+                self._screen.print_at(" ", self._x, self._screen.start_line + self._y + i)
             self._maybe_reseed(reseed)
         else:
             for i in range(0, 3):
@@ -551,27 +572,25 @@ class Matrix(Effect):
     Matrix-like falling green letters.
     """
 
-    def __init__(self, screen, **kwargs):
+    def __init__(self, screen: Screen, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
         super().__init__(screen, **kwargs)
-        self._chars = []
+        self._chars: list[_Trail] = []
 
     def reset(self):
-        self._chars = [_Trail(self._screen, x) for x in
-                       range(self._screen.width)]
+        self._chars = [_Trail(self._screen, x) for x in range(self._screen.width)]
 
-    def _update(self, frame_no):
+    def _update(self, frame_no: int):
         if frame_no % 2 == 0:
             for char in self._chars:
-                char.update((self._stop_frame == 0) or (
-                    self._stop_frame - frame_no > 100))
+                char.update((self._stop_frame == 0) or (self._stop_frame - frame_no > 100))
 
     @property
-    def stop_frame(self):
+    def stop_frame(self) -> int:
         return self._stop_frame
 
 
@@ -580,7 +599,7 @@ class Wipe(Effect):
     Wipe the screen down from top to bottom.
     """
 
-    def __init__(self, screen, bg=0, **kwargs):
+    def __init__(self, screen: Screen, bg: int = 0, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param bg: Optional background colour to use for the wipe.
@@ -589,20 +608,19 @@ class Wipe(Effect):
         """
         super().__init__(screen, **kwargs)
         self._bg = bg
-        self._y = None
+        self._y = 0
 
     def reset(self):
         self._y = 0
 
-    def _update(self, frame_no):
+    def _update(self, frame_no: int):
         if frame_no % 2 == 0:
             if self._screen.is_visible(0, self._y):
-                self._screen.print_at(
-                    " " * self._screen.width, 0, self._y, bg=self._bg)
+                self._screen.print_at(" " * self._screen.width, 0, self._y, bg=self._bg)
             self._y += 1
 
     @property
-    def stop_frame(self):
+    def stop_frame(self) -> int:
         return self._stop_frame
 
 
@@ -611,8 +629,14 @@ class Sprite(Effect):
     An animated character capable of following a path around the screen.
     """
 
-    def __init__(self, screen, renderer_dict, path, colour=Screen.COLOUR_WHITE,
-                 clear=True, speed=2, **kwargs):
+    def __init__(self,
+                 screen: Screen,
+                 renderer_dict: Dict[str, Renderer],
+                 path: Path,
+                 colour: int = Screen.COLOUR_WHITE,
+                 clear: bool = True,
+                 speed: int = 2,
+                 **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param renderer_dict: A dictionary of Renderers to use for displaying
@@ -633,14 +657,14 @@ class Sprite(Effect):
         self._index = None
         self._colour = colour
         self._clear = clear
-        self._old_height = None
-        self._old_width = None
-        self._old_x = None
-        self._old_y = None
+        self._old_height = 0
+        self._old_width = 0
+        self._old_x = 0
+        self._old_y = 0
         self._dir_count = 0
-        self._dir_x = None
-        self._dir_y = None
-        self._old_direction = None
+        self._dir_x = 0
+        self._dir_y = 0
+        self._old_direction = ""
         self._speed = speed
         self.reset()
 
@@ -655,14 +679,14 @@ class Sprite(Effect):
         for _, renderer in self._renderer_dict.items():
             renderer.reset()
 
-    def last_position(self):
+    def last_position(self) -> Tuple[int, int, int, int]:
         """
         Returns the last position of this Sprite as a tuple
         (x, y, width, height).
         """
         return self._old_x, self._old_y, self._old_width, self._old_height
 
-    def overlaps(self, other, use_new_pos=False):
+    def overlaps(self, other: "Sprite", use_new_pos: bool = False):
         """
         Check whether this Sprite overlaps another.
 
@@ -671,27 +695,23 @@ class Sprite(Effect):
             update).  Defaults to False.
         :returns: True if the two Sprites overlap.
         """
-        (x, y) = self._path.next_pos() if use_new_pos else (self._old_x,
-                                                            self._old_y)
+        (x, y) = self._path.next_pos() if use_new_pos else (self._old_x, self._old_y)
         w = self._old_width
         h = self._old_height
 
         x2, y2, w2, h2 = other.last_position()
 
-        if ((x > x2 + w2 - 1) or (x2 > x + w - 1) or
-                (y > y2 + h2 - 1) or (y2 > y + h - 1)):
+        if ((x > x2 + w2 - 1) or (x2 > x + w - 1) or (y > y2 + h2 - 1) or (y2 > y + h - 1)):
             return False
         else:
             return True
 
-    def _update(self, frame_no):
+    def _update(self, frame_no: int):
         if self._speed == 0 or frame_no % self._speed == 0:
             # Blank out the old sprite if moved.
-            if (self._clear and
-                    self._old_x is not None and self._old_y is not None):
+            if (self._clear and self._old_x is not None and self._old_y is not None):
                 for i in range(0, self._old_height):
-                    self._screen.print_at(
-                        " " * self._old_width, self._old_x, self._old_y + i, 0)
+                    self._screen.print_at(" " * self._old_width, self._old_x, self._old_y + i, 0)
 
             # Don't draw a new one if we're about to stop the Sprite.
             if self._delete_count is not None and self._delete_count <= 2:
@@ -733,8 +753,7 @@ class Sprite(Effect):
             # self._screen.print_at(str(x)+","+str(y)+" ", 0, 0)
             image, colours = self._renderer_dict[direction].rendered_text
             for (i, line) in enumerate(image):
-                self._screen.paint(line, x, y + i, self._colour,
-                                   colour_map=colours[i])
+                self._screen.paint(line, x, y + i, self._colour, colour_map=colours[i])
 
             # Remember what we need to clear up next frame.
             self._old_width = self._renderer_dict[direction].max_width
@@ -744,10 +763,10 @@ class Sprite(Effect):
             self._old_y = y
 
     @property
-    def stop_frame(self):
+    def stop_frame(self) -> int:
         return self._stop_frame
 
-    def process_event(self, event):
+    def process_event(self, event: Event) -> Optional[Event]:
         if isinstance(self._path, DynamicPath):
             return self._path.process_event(event)
         else:
@@ -762,7 +781,7 @@ class _Flake():
     _snow_chars = ".+*"
     _drift_chars = " ,;#@"
 
-    def __init__(self, screen):
+    def __init__(self, screen: Screen):
         """
         :param screen: The Screen being used for the Scene.
         """
@@ -770,7 +789,7 @@ class _Flake():
         self._x = 0
         self._y = 0
         self._rate = 0
-        self._char = None
+        self._char = ""
         self._reseed()
 
     def _reseed(self):
@@ -782,7 +801,7 @@ class _Flake():
         self._x = randint(0, self._screen.width - 1)
         self._y = self._screen.start_line + randint(0, self._rate)
 
-    def update(self, reseed):
+    def update(self, reseed: bool):
         """
         Update that snowflake!
 
@@ -796,11 +815,9 @@ class _Flake():
             if cell is None or cell[0] != 32:
                 break
 
-        if ((cell is not None and cell[0] in [ord(x) for x in self._snow_chars + " "]) and
-                (self._y < self._screen.start_line + self._screen.height)):
-            self._screen.print_at(self._char,
-                                  self._x,
-                                  self._y)
+        if ((cell is not None and cell[0] in [ord(x) for x in self._snow_chars + " "])
+                and (self._y < self._screen.start_line + self._screen.height)):
+            self._screen.print_at(self._char, self._x, self._y)
         else:
             self._y = min(self._y, self._screen.start_line + self._screen.height)
 
@@ -821,30 +838,29 @@ class Snow(Effect):
     Settling snow effect.
     """
 
-    def __init__(self, screen, **kwargs):
+    def __init__(self, screen: Screen, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
 
         Also see the common keyword arguments in :py:obj:`.Effect`.
         """
         super().__init__(screen, **kwargs)
-        self._chars = []
+        self._chars: list[_Flake] = []
 
     def reset(self):
         # Make the snow start falling one flake at a time.
         self._chars = []
 
-    def _update(self, frame_no):
+    def _update(self, frame_no: int):
         if frame_no % 3 == 0:
             if len(self._chars) < self._screen.width // 3:
                 self._chars.append(_Flake(self._screen))
 
             for char in self._chars:
-                char.update((self._stop_frame == 0) or (
-                    self._stop_frame - frame_no > 100))
+                char.update((self._stop_frame == 0) or (self._stop_frame - frame_no > 100))
 
     @property
-    def stop_frame(self):
+    def stop_frame(self) -> int:
         return self._stop_frame
 
 
@@ -853,7 +869,7 @@ class Clock(Effect):
     An ASCII ticking clock (telling the correct local time).
     """
 
-    def __init__(self, screen, x, y, r, bg=Screen.COLOUR_BLACK, **kwargs):
+    def __init__(self, screen: Screen, x: int, y: int, r: int, bg: int = Screen.COLOUR_BLACK, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param x: X coordinate for the centre of the clock.
@@ -868,12 +884,12 @@ class Clock(Effect):
         self._y = y
         self._r = r
         self._bg = bg
-        self._old_time = None
+        self._old_time: Optional[time.struct_time] = None
 
     def reset(self):
         pass
 
-    def _update(self, frame_no):
+    def _update(self, frame_no: int):
         # Helper functions to map various time elements
         def _hour_pos(t):
             return (t.tm_hour + t.tm_min / 60) * pi / 6
@@ -890,36 +906,42 @@ class Clock(Effect):
             self._screen.move(self._x, self._y)
             self._screen.draw(self._x + (self._r * sin(_hour_pos(ot))),
                               self._y - (self._r * cos(_hour_pos(ot)) / 2),
-                              char=" ", bg=self._bg)
+                              char=" ",
+                              bg=self._bg)
             self._screen.move(self._x, self._y)
             self._screen.draw(self._x + (self._r * sin(_min_pos(ot)) * 2),
                               self._y - (self._r * cos(_min_pos(ot))),
-                              char=" ", bg=self._bg)
+                              char=" ",
+                              bg=self._bg)
             self._screen.move(self._x, self._y)
             self._screen.draw(self._x + (self._r * sin(_sec_pos(ot)) * 2),
                               self._y - (self._r * cos(_sec_pos(ot))),
-                              char=" ", bg=self._bg)
+                              char=" ",
+                              bg=self._bg)
 
         # Draw new ones
         new_time = datetime.datetime.now().timetuple()
         self._screen.move(self._x, self._y)
         self._screen.draw(self._x + (self._r * sin(_hour_pos(new_time))),
                           self._y - (self._r * cos(_hour_pos(new_time)) / 2),
-                          colour=Screen.COLOUR_WHITE, bg=self._bg)
+                          colour=Screen.COLOUR_WHITE,
+                          bg=self._bg)
         self._screen.move(self._x, self._y)
         self._screen.draw(self._x + (self._r * sin(_min_pos(new_time)) * 2),
                           self._y - (self._r * cos(_min_pos(new_time))),
-                          colour=Screen.COLOUR_WHITE, bg=self._bg)
+                          colour=Screen.COLOUR_WHITE,
+                          bg=self._bg)
         self._screen.move(self._x, self._y)
         self._screen.draw(self._x + (self._r * sin(_sec_pos(new_time)) * 2),
                           self._y - (self._r * cos(_sec_pos(new_time))),
-                          colour=Screen.COLOUR_CYAN, bg=self._bg, thin=True)
-        self._screen.print_at("o", self._x, self._y, Screen.COLOUR_YELLOW,
-                              Screen.A_BOLD, bg=self._bg)
+                          colour=Screen.COLOUR_CYAN,
+                          bg=self._bg,
+                          thin=True)
+        self._screen.print_at("o", self._x, self._y, Screen.COLOUR_YELLOW, Screen.A_BOLD, bg=self._bg)
         self._old_time = new_time
 
     @property
-    def stop_frame(self):
+    def stop_frame(self) -> int:
         return self._stop_frame
 
     @property
@@ -933,7 +955,14 @@ class Cog(Effect):
     A rotating cog.
     """
 
-    def __init__(self, screen, x, y, radius, direction=1, colour=7, **kwargs):
+    def __init__(self,
+                 screen: Screen,
+                 x: int,
+                 y: int,
+                 radius: int,
+                 direction: int = 1,
+                 colour: int = 7,
+                 **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param x: X coordinate of the centre of the cog.
@@ -957,19 +986,17 @@ class Cog(Effect):
     def reset(self):
         pass
 
-    def _update(self, frame_no):
+    def _update(self, frame_no: int):
         # Rate limit the animation
         if frame_no % self._rate != 0:
             return
 
         # Function to plot.
         def f(p):
-            return self._x + (self._radius * 2 - (6 * (p // 4 % 2))) * sin(
-                (self._old_frame + p) * pi / 40)
+            return self._x + (self._radius * 2 - (6 * (p // 4 % 2))) * sin((self._old_frame + p) * pi / 40)
 
         def g(p):
-            return self._y + (self._radius - (3 * (p // 4 % 2))) * cos(
-                (self._old_frame + p) * pi / 40)
+            return self._y + (self._radius - (3 * (p // 4 % 2))) * cos((self._old_frame + p) * pi / 40)
 
         # Clear old wave.
         if self._old_frame != 0:
@@ -984,7 +1011,7 @@ class Cog(Effect):
             self._screen.draw(f(x), g(x), colour=self._colour)
 
     @property
-    def stop_frame(self):
+    def stop_frame(self) -> int:
         return self._stop_frame
 
 
@@ -995,7 +1022,7 @@ class RandomNoise(Effect):
     will appear from the noise.
     """
 
-    def __init__(self, screen, signal=None, jitter=6, **kwargs):
+    def __init__(self, screen: Screen, signal: Optional[Renderer] = None, jitter: int = 6, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param signal: The renderer to use as the 'signal' in the white noise.
@@ -1015,7 +1042,7 @@ class RandomNoise(Effect):
         if self._signal:
             self._signal.reset()
 
-    def _update(self, frame_no):
+    def _update(self, frame_no: int):
         if self._signal:
             start_x = int((self._screen.width - self._signal.max_width) // 2)
             start_y = int((self._screen.height - self._signal.max_height) // 2)
@@ -1033,12 +1060,9 @@ class RandomNoise(Effect):
             for x in range(self._screen.width):
                 ix = x - start_x
                 iy = y - start_y
-                if (self._signal and random() <= self._strength and
-                        x >= start_x and y >= start_y and
-                        iy < len(text) and 0 <= ix < len(text[iy])):
-                    self._screen.paint(text[iy][ix],
-                                       x + offset, y,
-                                       colour_map=[colours[iy][ix]])
+                if (self._signal and random() <= self._strength and x >= start_x and y >= start_y
+                        and iy < len(text) and 0 <= ix < len(text[iy])):
+                    self._screen.paint(text[iy][ix], x + offset, y, colour_map=[colours[iy][ix]])
                 else:
                     if random() < 0.2:
                         self._screen.print_at(chr(randint(33, 126)), x, y)
@@ -1049,7 +1073,7 @@ class RandomNoise(Effect):
             self._step = -self._step
 
     @property
-    def stop_frame(self):
+    def stop_frame(self) -> int:
         return self._stop_frame
 
 
@@ -1063,10 +1087,39 @@ class Julia(Effect):
     _greyscale = '@@&&99##GGHHhh3322AAss;;::.. '
 
     # Colour palette for 256 colour xterm mode.
-    _256_palette = [196, 202, 208, 214, 220, 226, 154, 118, 82, 46, 47, 48, 49, 50, 51,
-                    45, 39, 33, 27, 21, 57, 93, 129, 201, 200, 199, 198, 197, 0]
+    _256_palette = [
+        196,
+        202,
+        208,
+        214,
+        220,
+        226,
+        154,
+        118,
+        82,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        45,
+        39,
+        33,
+        27,
+        21,
+        57,
+        93,
+        129,
+        201,
+        200,
+        199,
+        198,
+        197,
+        0
+    ]
 
-    def __init__(self, screen, c=None, **kwargs):
+    def __init__(self, screen: Screen, c: Optional[tuple[float, float]] = None, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param c: The starting value of 'c' for the Julia Set.
@@ -1086,18 +1139,17 @@ class Julia(Effect):
     def reset(self):
         pass
 
-    def _update(self, frame_no):
+    def _update(self, frame_no: int):
         # Draw the new image to the required block.
         c = complex(self._c[0], self._c[1])
         sx = self._centre[0] - (self._size[0] / 2.0)
         sy = self._centre[1] - (self._size[1] / 2.0)
         for y in range(self._height):
             for x in range(self._width):
-                z = complex(sx + self._size[0] * (x / self._width),
-                            sy + self._size[1] * (y / self._height))
+                z = complex(sx + self._size[0] * (x / self._width), sy + self._size[1] * (y / self._height))
                 n = len(self._256_palette)
                 while abs(z) < 10 and n >= 1:
-                    z = z ** 2 + c
+                    z = z**2 + c
                     n -= 1
                 colour = \
                     self._256_palette[
@@ -1111,11 +1163,13 @@ class Julia(Effect):
             self._scale = 1.0 / self._scale
 
         # Rotate
-        self._c = [self._c[0] * cos(pi / 180) - self._c[1] * sin(pi / 180),
-                   self._c[0] * sin(pi / 180) + self._c[1] * cos(pi / 180)]
+        self._c = [
+            self._c[0] * cos(pi / 180) - self._c[1] * sin(pi / 180),
+            self._c[0] * sin(pi / 180) + self._c[1] * cos(pi / 180)
+        ]
 
     @property
-    def stop_frame(self):
+    def stop_frame(self) -> int:
         return self._stop_frame
 
 
@@ -1125,7 +1179,7 @@ class Background(Effect):
     colour.
     """
 
-    def __init__(self, screen, bg=0, **kwargs):
+    def __init__(self, screen: Screen, bg: int = 0, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param bg: Optional colour for the background.
@@ -1138,7 +1192,7 @@ class Background(Effect):
     def reset(self):
         pass
 
-    def _update(self, frame_no):
+    def _update(self, frame_no: int):
         self._screen.clear_buffer(7, 0, self._bg)
 
     @property
@@ -1146,5 +1200,5 @@ class Background(Effect):
         return 1000000
 
     @property
-    def stop_frame(self):
+    def stop_frame(self) -> int:
         return self._stop_frame
