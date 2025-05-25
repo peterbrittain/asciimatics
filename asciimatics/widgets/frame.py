@@ -119,7 +119,7 @@ class Frame(Effect):
 
     #: Colour palette for the widgets within the Frame.  Each entry should be
     #: a 3-tuple of (foreground colour, attribute, background colour).
-    palette = {}
+    palette: dict[str, tuple[int, int, int]] = {}
 
     def __init__(self, screen, height, width, data=None, on_load=None,
                  has_border=True, hover_focus=False, name=None, title=None,

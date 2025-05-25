@@ -99,16 +99,16 @@ class Effect(metaclass=ABCMeta):
         """
         return self._delete_count
 
+    @delete_count.setter
+    def delete_count(self, value):
+        self._delete_count = value
+
     @property
     def screen(self):
         """
         The Screen that will render this Effect.
         """
         return self._screen
-
-    @delete_count.setter
-    def delete_count(self, value):
-        self._delete_count = value
 
     @property
     def frame_update_count(self):
