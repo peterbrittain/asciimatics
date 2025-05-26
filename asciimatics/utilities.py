@@ -3,15 +3,14 @@ This module is just a collection of simple helper functions.
 """
 from datetime import date, datetime
 from logging import getLogger
-
+from typing import Union
 from asciimatics.constants import SINGLE_LINE, DOUBLE_LINE
-
 
 # Diagnostic logging
 logger = getLogger(__name__)
 
 
-def readable_mem(mem):
+def readable_mem(mem: int) -> str:
     """
     :param mem: An integer number of bytes to convert to human-readable form.
     :return: A human-readable string representation of the number.
@@ -19,11 +18,11 @@ def readable_mem(mem):
     for suffix in ["", "K", "M", "G", "T"]:
         if mem < 10000:
             return f"{int(mem)}{suffix}"
-        mem /= 1024
+        mem //= 1024
     return f"{int(mem)}P"
 
 
-def readable_timestamp(stamp):
+def readable_timestamp(stamp: Union[float, int]) -> str:
     """
     :param stamp: A floating point number representing the POSIX file timestamp.
     :return: A short human-readable string representation of the timestamp.
@@ -68,8 +67,8 @@ class BoxTool():
     * ``up_right`` -- corner piece facing up and right
     * ``down_left`` -- corner piece facing down and left
     * ``down_right`` -- corner piece facing down and right
-    * ``h`` -- horizontal line 
-    * ``v`` --  vertical line 
+    * ``h`` -- horizontal line
+    * ``v`` --  vertical line
     * ``v_inside`` --  vertical line used inside the grid
     * ``v_left`` -- vertical line with mid joiner facing to the left
     * ``v_right`` -- vertical line with mid joiner facing to the right
@@ -78,7 +77,7 @@ class BoxTool():
     * ``cross`` -- intersection between vertical and horizontal
     """
 
-    def __init__(self, unicode_aware, style=SINGLE_LINE):
+    def __init__(self, unicode_aware: bool, style: int = SINGLE_LINE):
         """
         :param unicode_aware: boolean indicating if the terminal is Unicode
             aware. If False, will force the use of the ASCII style
@@ -101,7 +100,7 @@ class BoxTool():
         return self._style
 
     @style.setter
-    def style(self, style):
+    def style(self, style: int):
         self._style = style
 
         if style == SINGLE_LINE and self.unicode_aware:
@@ -148,7 +147,7 @@ class BoxTool():
             self.cross = "+"
 
     # --- Empty box methods
-    def box_top(self, width):
+    def box_top(self, width: int) -> str:
         """
         Returns a string containing the top border of a box
 
@@ -156,7 +155,7 @@ class BoxTool():
         """
         return self.down_right + (width - 2) * self.h + self.down_left
 
-    def box_bottom(self, width):
+    def box_bottom(self, width: int) -> str:
         """
         Returns a string containing the bottom border of a box
 
@@ -164,7 +163,7 @@ class BoxTool():
         """
         return self.up_right + (width - 2) * self.h + self.up_left
 
-    def box_line(self, width):
+    def box_line(self, width: int) -> str:
         """
         Returns a string with a vertical bar on each end, padded with
         spaces in between for the given width.
@@ -173,7 +172,7 @@ class BoxTool():
         """
         return self.v + (width - 2) * ' ' + self.v
 
-    def box(self, width, height):
+    def box(self, width: int, height: int) -> str:
         """
         Returns a string containing a box with the given width and height.
         """

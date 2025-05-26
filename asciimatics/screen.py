@@ -43,7 +43,8 @@ class _DoubleBuffer():
         self._width = width
         self._double_buffer: list[list[tuple]] = []
         line = [(" ", Screen.COLOUR_WHITE, 0, 0, 1) for _ in range(self._width)]
-        self._screen_buffer = [line[:] for _ in range(self._height)]
+        self._screen_buffer: List[List[tuple[Any, Any, Any, Any,
+                                             Any]]] = [line[:] for _ in range(self._height)]
         self.clear(Screen.COLOUR_WHITE, 0, 0)
 
     def clear(self,
@@ -182,9 +183,7 @@ class _DoubleBuffer():
                 self._double_buffer[by][block_min_x:block_max_x] = buffer.get_slice(
                     block_min_x - x, by - y, block_max_x - block_min_x)
 
-    def get_slice(self,
-                  x: int,
-                  y: int,
+    def get_slice(self, x: int, y: int,
                   width: int) -> List[Tuple[str, Optional[int], Optional[int], Optional[int], Optional[int]]]:
         """
         Provide a slice of data from the buffer at the specified location
@@ -236,7 +235,8 @@ class _AbstractCanvas(metaclass=ABCMeta):
     _line_chars = " ''^.|/7.\\|Ywbd#"
     _uni_line_chars = " ▘▝▀▖▌▞▛▗▚▐▜▄▙▟█"
 
-    #  Colour palette for 8/16 colour terminals
+    # Colour palette for 8/16 colour terminals
+    # yapf: disable
     _8_palette = [
         0x00, 0x00, 0x00,
         0x80, 0x00, 0x00,
@@ -507,6 +507,7 @@ class _AbstractCanvas(metaclass=ABCMeta):
         0xe4, 0xe4, 0xe4,
         0xee, 0xee, 0xee,
     ]
+    # yapf: enable
 
     def __init__(self,
                  height: int,
@@ -573,7 +574,7 @@ class _AbstractCanvas(metaclass=ABCMeta):
         """
         # Reset our screen buffer
         self._start_line = 0
-        self._x = self._y = None
+        self._x = self._y = 0
         self._buffer = _DoubleBuffer(self._buffer_height, self.width)
         self._reset()
 
@@ -699,8 +700,8 @@ class _AbstractCanvas(metaclass=ABCMeta):
                 if x + len(text) > self.width:
                     text = text[:self.width - x]
                 if not transparent:
-                    self._buffer.set_slice(
-                        slice(x, x + len(text)), y, [(c, colour, attr, bg, 1) for c in text])
+                    self._buffer.set_slice(slice(x, x + len(text)),
+                                           y, [(c, colour, attr, bg, 1) for c in text])
                 else:
                     for i, c in enumerate(text):
                         if c != " ":
@@ -857,12 +858,11 @@ class _AbstractCanvas(metaclass=ABCMeta):
         b = f(b1, b2)
 
         # Now do the reverse lookup...
-        nearest: float = (256 ** 2) * 3
+        nearest: float = (256**2) * 3
         match = 0
         for c in range(self.colours):
             (rc, gc, bc) = self.palette[c * 3:c * 3 + 3]
-            diff = sqrt(((rc - r) * 0.3) ** 2 + ((gc - g) * 0.59) ** 2 +
-                        ((bc - b) * 0.11) ** 2)
+            diff = sqrt(((rc - r) * 0.3)**2 + ((gc - g) * 0.59)**2 + ((bc - b) * 0.11)**2)
             if diff < nearest:
                 nearest = diff
                 match = c
@@ -917,8 +917,7 @@ class _AbstractCanvas(metaclass=ABCMeta):
         :param x: The column (x coord) for the location to check.
         :param y: The line (y coord) for the location to check.
         """
-        return ((0 <= x < self.width) and
-                (self._start_line <= y < self._start_line + self.height))
+        return ((0 <= x < self.width) and (self._start_line <= y < self._start_line + self.height))
 
     def move(self, x: Union[float, int], y: Union[float, int]):
         """
@@ -952,8 +951,7 @@ class _AbstractCanvas(metaclass=ABCMeta):
         :param thin: Optional width of anti-aliased line.
         """
         # Decide what type of line drawing to use.
-        line_chars = (self._uni_line_chars if self._unicode_aware else
-                      self._line_chars)
+        line_chars = (self._uni_line_chars if self._unicode_aware else self._line_chars)
 
         # Define line end points.
         x0 = self._x
@@ -967,8 +965,8 @@ class _AbstractCanvas(metaclass=ABCMeta):
 
         # Don't bother drawing anything if we're guaranteed to be off-screen
         # pylint: disable-next=too-many-boolean-expressions
-        if ((x0 < 0 and x1 < 0) or (x0 >= self.width * 2 and x1 >= self.width * 2) or
-                (y0 < 0 and y1 < 0) or (y0 >= self.height * 2 and y1 >= self.height * 2)):
+        if ((x0 < 0 and x1 < 0) or (x0 >= self.width * 2 and x1 >= self.width * 2) or (y0 < 0 and y1 < 0)
+                or (y0 >= self.height * 2 and y1 >= self.height * 2)):
             return
 
         dx = abs(x1 - x0)
@@ -990,7 +988,7 @@ class _AbstractCanvas(metaclass=ABCMeta):
             for ix in range(start_x, end_x):
                 if ix % 2 == 0 or next_char == -1:
                     next_char = _get_start_char(ix // 2, iy // 2)
-                next_char |= 2 ** abs(ix % 2) * 4 ** (iy % 2)
+                next_char |= 2**abs(ix % 2) * 4**(iy % 2)
                 if ix % 2 == 1:
                     self.print_at(line_chars[next_char], ix // 2, iy // 2, colour, bg=bg)
             if end_x % 2 == 1:
@@ -1006,7 +1004,7 @@ class _AbstractCanvas(metaclass=ABCMeta):
                     px = ix & ~1
                     py = iy & ~1
                     next_char = _get_start_char(px // 2, py // 2)
-                next_char |= 2 ** abs(ix % 2) * 4 ** (iy % 2)
+                next_char |= 2**abs(ix % 2) * 4**(iy % 2)
                 err -= 2 * dy
                 if err < 0:
                     iy += sy
@@ -1014,8 +1012,7 @@ class _AbstractCanvas(metaclass=ABCMeta):
                 ix += sx
 
                 if char is None:
-                    self.print_at(line_chars[next_char],
-                                  px // 2, py // 2, colour, bg=bg)
+                    self.print_at(line_chars[next_char], px // 2, py // 2, colour, bg=bg)
                 else:
                     self.print_at(char, px // 2, py // 2, colour, bg=bg)
 
@@ -1029,7 +1026,7 @@ class _AbstractCanvas(metaclass=ABCMeta):
                     px = ix & ~1
                     py = iy & ~1
                     next_char = _get_start_char(px // 2, py // 2)
-                next_char |= 2 ** abs(ix % 2) * 4 ** (iy % 2)
+                next_char |= 2**abs(ix % 2) * 4**(iy % 2)
                 err -= 2 * dx
                 if err < 0:
                     ix += sx
@@ -1037,8 +1034,7 @@ class _AbstractCanvas(metaclass=ABCMeta):
                 iy += sy
 
                 if char is None:
-                    self.print_at(line_chars[next_char],
-                                  px // 2, py // 2, colour, bg=bg)
+                    self.print_at(line_chars[next_char], px // 2, py // 2, colour, bg=bg)
                 else:
                     self.print_at(char, px // 2, py // 2, colour, bg=bg)
 
@@ -1066,6 +1062,7 @@ class _AbstractCanvas(metaclass=ABCMeta):
         :param colour: The foreground colour to use for the polygon
         :param bg: The background colour to use for the polygon
         """
+
         @dataclass
         class _Edge:
             min_y: int = 0
@@ -1172,8 +1169,7 @@ class _AbstractCanvas(metaclass=ABCMeta):
                                     (last_x >= self.width and edge.x >= self.width)):
                                 # Clip raster to screen width.
                                 self.move(max(0, last_x), y)
-                                self.draw(
-                                    min(edge.x, self.width), y, colour=colour, bg=bg, thin=True)
+                                self.draw(min(edge.x, self.width), y, colour=colour, bg=bg, thin=True)
 
                 # Update the x location for this active edge.
                 edge.x += edge.dx
@@ -1239,8 +1235,7 @@ class Canvas(_AbstractCanvas):
         to centring within the current Screen for that location.
         """
         # Save off the screen details.
-        super().__init__(
-            height, width, None, screen.colours, screen.unicode_aware)
+        super().__init__(height, width, None, screen.colours, screen.unicode_aware)
         self._screen = screen
         self._dx = (screen.width - width) // 2 if x is None else x
         self._dy = (screen.height - height) // 2 if y is None else y
@@ -1364,8 +1359,7 @@ class Screen(_AbstractCanvas, metaclass=ABCMeta):
         """
         Don't call this constructor directly.
         """
-        super().__init__(
-            height, width, buffer_height, 0, unicode_aware)
+        super().__init__(height, width, buffer_height, 0, unicode_aware)
 
         # Initialize base class variables - e.g. those used for drawing.
         self.height = height
@@ -1446,22 +1440,19 @@ class Screen(_AbstractCanvas, metaclass=ABCMeta):
 
             # Disable scrolling
             out_mode = win_out.GetConsoleMode()
-            win_out.SetConsoleMode(
-                out_mode & ~ win32console.ENABLE_WRAP_AT_EOL_OUTPUT)
+            win_out.SetConsoleMode(out_mode & ~win32console.ENABLE_WRAP_AT_EOL_OUTPUT)
 
             # Enable mouse input, disable quick-edit mode and disable ctrl-c
             # if needed.
             in_mode = win_in.GetConsoleMode()
-            new_mode = (in_mode | win32console.ENABLE_MOUSE_INPUT |
-                        ENABLE_EXTENDED_FLAGS)
+            new_mode = (in_mode | win32console.ENABLE_MOUSE_INPUT | ENABLE_EXTENDED_FLAGS)
             new_mode &= ~ENABLE_QUICK_EDIT_MODE
             if catch_interrupt:
                 # Ignore ctrl-c handlers if specified.
                 new_mode &= ~win32console.ENABLE_PROCESSED_INPUT
             win_in.SetConsoleMode(new_mode)
 
-            screen = _WindowsScreen(win_out, win_in, height, old_out, in_mode,
-                                    unicode_aware=unicode_aware)
+            screen = _WindowsScreen(win_out, win_in, height, old_out, in_mode, unicode_aware=unicode_aware)
         else:
             # Reproduce curses.wrapper()
             stdscr = curses.initscr()
@@ -1480,7 +1471,8 @@ class Screen(_AbstractCanvas, metaclass=ABCMeta):
                 curses.start_color()
             except Exception as e:
                 logger.debug(e)
-            screen = _CursesScreen(stdscr, height,
+            screen = _CursesScreen(stdscr,
+                                   height,
                                    catch_interrupt=catch_interrupt,
                                    unicode_aware=unicode_aware)
 
@@ -1515,9 +1507,7 @@ class Screen(_AbstractCanvas, metaclass=ABCMeta):
         :param unicode_aware: Whether the application can use unicode or not.
             If None, try to detect from the environment if UTF-8 is enabled.
         """
-        screen = Screen.open(height,
-                             catch_interrupt=catch_interrupt,
-                             unicode_aware=unicode_aware)
+        screen = Screen.open(height, catch_interrupt=catch_interrupt, unicode_aware=unicode_aware)
         restore = True
         try:
             try:
@@ -1555,7 +1545,7 @@ class Screen(_AbstractCanvas, metaclass=ABCMeta):
         # use double-width characters, so don't try to draw the next 2nd char (of 0 width).
         for y, x in self._buffer.deltas(0, self.height):
             new_cell = self._buffer.get(x, y)
-            if new_cell[4] > 0:
+            if new_cell[4] is not None and new_cell[4] > 0:
                 self._change_colours(new_cell[1], new_cell[2], new_cell[3])
                 self._print_at(new_cell[0], x, y, new_cell[4])
 
@@ -1700,8 +1690,7 @@ class Screen(_AbstractCanvas, metaclass=ABCMeta):
         event that was not handled.
         """
         # Initialise the Screen for animation.
-        self.set_scenes(
-            scenes, unhandled_input=unhandled_input, start_scene=start_scene)
+        self.set_scenes(scenes, unhandled_input=unhandled_input, start_scene=start_scene)
 
         # Mainline loop for animations
         try:
@@ -1711,8 +1700,7 @@ class Screen(_AbstractCanvas, metaclass=ABCMeta):
                 if self.has_resized():
                     if stop_on_resize:
                         self._scenes[self._scene_index].exit()
-                        raise ResizeScreenError("Screen resized",
-                                                self._scenes[self._scene_index])
+                        raise ResizeScreenError("Screen resized", self._scenes[self._scene_index])
                 b = time.time()
                 if b - a < 0.05:
                     # Just in case time has jumped (e.g. time change), ensure we only delay for 0.05s
@@ -1771,8 +1759,7 @@ class Screen(_AbstractCanvas, metaclass=ABCMeta):
 
         # Reset the Scene - this allows the original scene to pick up old
         # values on resizing.
-        self._scenes[self._scene_index].reset(
-            old_scene=start_scene, screen=self)
+        self._scenes[self._scene_index].reset(old_scene=start_scene, screen=self)
 
         # Reset other internal state for the animation
         self._frame = 0
@@ -1821,8 +1808,7 @@ class Screen(_AbstractCanvas, metaclass=ABCMeta):
 
                     # Sort out when we next _need_ to do a refresh.
                     if effect.frame_update_count > 0:
-                        self._idle_frame_count = min(self._idle_frame_count,
-                                                     effect.frame_update_count)
+                        self._idle_frame_count = min(self._idle_frame_count, effect.frame_update_count)
                 self.refresh()
 
             if 0 < scene.duration <= self._frame:
@@ -2061,22 +2047,17 @@ if sys.platform == "win32":
 
         # Foreground colour lookup table.
         _COLOURS = {
-            Screen.COLOUR_DEFAULT: (win32console.FOREGROUND_RED |
-                                    win32console.FOREGROUND_GREEN |
-                                    win32console.FOREGROUND_BLUE),
+            Screen.COLOUR_DEFAULT:
+                (win32console.FOREGROUND_RED | win32console.FOREGROUND_GREEN | win32console.FOREGROUND_BLUE),
             Screen.COLOUR_BLACK: 0,
             Screen.COLOUR_RED: win32console.FOREGROUND_RED,
             Screen.COLOUR_GREEN: win32console.FOREGROUND_GREEN,
-            Screen.COLOUR_YELLOW: (win32console.FOREGROUND_RED |
-                                   win32console.FOREGROUND_GREEN),
+            Screen.COLOUR_YELLOW: (win32console.FOREGROUND_RED | win32console.FOREGROUND_GREEN),
             Screen.COLOUR_BLUE: win32console.FOREGROUND_BLUE,
-            Screen.COLOUR_MAGENTA: (win32console.FOREGROUND_RED |
-                                    win32console.FOREGROUND_BLUE),
-            Screen.COLOUR_CYAN: (win32console.FOREGROUND_BLUE |
-                                 win32console.FOREGROUND_GREEN),
-            Screen.COLOUR_WHITE: (win32console.FOREGROUND_RED |
-                                  win32console.FOREGROUND_GREEN |
-                                  win32console.FOREGROUND_BLUE)
+            Screen.COLOUR_MAGENTA: (win32console.FOREGROUND_RED | win32console.FOREGROUND_BLUE),
+            Screen.COLOUR_CYAN: (win32console.FOREGROUND_BLUE | win32console.FOREGROUND_GREEN),
+            Screen.COLOUR_WHITE:
+                (win32console.FOREGROUND_RED | win32console.FOREGROUND_GREEN | win32console.FOREGROUND_BLUE)
         }
 
         # Background colour lookup table.
@@ -2085,16 +2066,12 @@ if sys.platform == "win32":
             Screen.COLOUR_BLACK: 0,
             Screen.COLOUR_RED: win32console.BACKGROUND_RED,
             Screen.COLOUR_GREEN: win32console.BACKGROUND_GREEN,
-            Screen.COLOUR_YELLOW: (win32console.BACKGROUND_RED |
-                                   win32console.BACKGROUND_GREEN),
+            Screen.COLOUR_YELLOW: (win32console.BACKGROUND_RED | win32console.BACKGROUND_GREEN),
             Screen.COLOUR_BLUE: win32console.BACKGROUND_BLUE,
-            Screen.COLOUR_MAGENTA: (win32console.BACKGROUND_RED |
-                                    win32console.BACKGROUND_BLUE),
-            Screen.COLOUR_CYAN: (win32console.BACKGROUND_BLUE |
-                                 win32console.BACKGROUND_GREEN),
-            Screen.COLOUR_WHITE: (win32console.BACKGROUND_RED |
-                                  win32console.BACKGROUND_GREEN |
-                                  win32console.BACKGROUND_BLUE)
+            Screen.COLOUR_MAGENTA: (win32console.BACKGROUND_RED | win32console.BACKGROUND_BLUE),
+            Screen.COLOUR_CYAN: (win32console.BACKGROUND_BLUE | win32console.BACKGROUND_GREEN),
+            Screen.COLOUR_WHITE:
+                (win32console.BACKGROUND_RED | win32console.BACKGROUND_GREEN | win32console.BACKGROUND_BLUE)
         }
 
         # Attribute lookup table
@@ -2108,8 +2085,7 @@ if sys.platform == "win32":
             Screen.A_UNDERLINE: lambda x: x
         }
 
-        def __init__(self, stdout, stdin, buffer_height, old_out, old_in,
-                     unicode_aware=False):
+        def __init__(self, stdout, stdin, buffer_height, old_out, old_in, unicode_aware=False):
             """
             :param stdout: The win32console PyConsoleScreenBufferType object for stdout.
             :param stdin: The win32console PyConsoleScreenBufferType object for stdin.
@@ -2128,8 +2104,7 @@ if sys.platform == "win32":
             if unicode_aware is None:
                 # According to MSDN, 65001 is the Windows UTF-8 code page.
                 unicode_aware = win32console.GetConsoleCP() == 65001
-            super().__init__(
-                height, width, buffer_height, unicode_aware)
+            super().__init__(height, width, buffer_height, unicode_aware)
 
             # Save off the console details.
             self._stdout = stdout
@@ -2195,9 +2170,8 @@ if sys.platform == "win32":
                     # as long as the Alt key is present.
                     key_code = ord(event.Char)
                     logger.debug("Processing key: %x", key_code)
-                    if (event.KeyDown or
-                            (key_code > 0 and key_code not in self._keys and
-                             event.VirtualKeyCode == win32con.VK_MENU)):
+                    if (event.KeyDown or (key_code > 0 and key_code not in self._keys
+                                          and event.VirtualKeyCode == win32con.VK_MENU)):
                         # Record any keys that were pressed.
                         if event.KeyDown:
                             self._keys.add(key_code)
@@ -2211,13 +2185,11 @@ if sys.platform == "win32":
                         # If the user decided not to be cross-platform, so be
                         # it, otherwise map some standard bindings for extended
                         # keys.
-                        if (self._map_all and
-                                event.VirtualKeyCode in self._EXTRA_KEY_MAP):
+                        if (self._map_all and event.VirtualKeyCode in self._EXTRA_KEY_MAP):
                             key_code = self._EXTRA_KEY_MAP[event.VirtualKeyCode]
                         else:
-                            if (event.VirtualKeyCode == win32con.VK_TAB and
-                                    event.ControlKeyState &
-                                    win32con.SHIFT_PRESSED):
+                            if (event.VirtualKeyCode == win32con.VK_TAB
+                                    and event.ControlKeyState & win32con.SHIFT_PRESSED):
                                 key_code = Screen.KEY_BACK_TAB
 
                         # Don't return anything if we didn't have a valid
@@ -2233,23 +2205,18 @@ if sys.platform == "win32":
 
                 elif event.EventType == win32console.MOUSE_EVENT:
                     # Translate into a MouseEvent object.
-                    logger.debug("Processing mouse: %d, %d",
-                                 event.MousePosition.X, event.MousePosition.Y)
+                    logger.debug("Processing mouse: %d, %d", event.MousePosition.X, event.MousePosition.Y)
                     button = 0
                     if event.EventFlags == 0:
                         # Button pressed - translate it.
-                        if (event.ButtonState &
-                                win32con.FROM_LEFT_1ST_BUTTON_PRESSED != 0):
+                        if (event.ButtonState & win32con.FROM_LEFT_1ST_BUTTON_PRESSED != 0):
                             button |= MouseEvent.LEFT_CLICK
-                        if (event.ButtonState &
-                                win32con.RIGHTMOST_BUTTON_PRESSED != 0):
+                        if (event.ButtonState & win32con.RIGHTMOST_BUTTON_PRESSED != 0):
                             button |= MouseEvent.RIGHT_CLICK
                     elif event.EventFlags & win32con.DOUBLE_CLICK != 0:
                         button |= MouseEvent.DOUBLE_CLICK
 
-                    return MouseEvent(event.MousePosition.X,
-                                      event.MousePosition.Y,
-                                      button)
+                    return MouseEvent(event.MousePosition.X, event.MousePosition.Y, button)
 
             # If we get here, we've fully processed the event queue and found
             # nothing interesting.
@@ -2280,8 +2247,7 @@ if sys.platform == "win32":
             # Change attribute first as this will reset colours when swapping
             # modes.
             if colour != self._colour or attr != self._attr or self._bg != bg:
-                new_attr = self._ATTRIBUTES[attr](
-                    self._COLOURS[colour] + self._BG_COLOURS[bg])
+                new_attr = self._ATTRIBUTES[attr](self._COLOURS[colour] + self._BG_COLOURS[bg])
                 self._stdout.SetConsoleTextAttribute(new_attr)
                 self._attr = attr
                 self._colour = colour
@@ -2301,8 +2267,7 @@ if sys.platform == "win32":
             try:
                 # Move the cursor if necessary
                 if x != self._cur_x or y != self._cur_y:
-                    self._stdout.SetConsoleCursorPosition(
-                        win32console.PyCOORDType(x, y))
+                    self._stdout.SetConsoleCursorPosition(win32console.PyCOORDType(x, y))
 
                 # Print the text at the required location and update the current
                 # position.
@@ -2331,11 +2296,9 @@ if sys.platform == "win32":
             """
             # Scroll the visible screen up by one line
             info = self._stdout.GetConsoleScreenBufferInfo()['Window']
-            rectangle = win32console.PySMALL_RECTType(
-                info.Left, info.Top + lines, info.Right, info.Bottom)
+            rectangle = win32console.PySMALL_RECTType(info.Left, info.Top + lines, info.Right, info.Bottom)
             new_pos = win32console.PyCOORDType(0, info.Top)
-            self._stdout.ScrollConsoleScreenBuffer(
-                rectangle, None, new_pos, " ", 0)
+            self._stdout.ScrollConsoleScreenBuffer(rectangle, None, new_pos, " ", 0)
 
         def _clear(self):
             """
@@ -2345,12 +2308,9 @@ if sys.platform == "win32":
             width = info.Right - info.Left + 1
             height = info.Bottom - info.Top + 1
             box_size = width * height
-            self._stdout.FillConsoleOutputAttribute(
-                0, box_size, win32console.PyCOORDType(0, 0))
-            self._stdout.FillConsoleOutputCharacter(
-                " ", box_size, win32console.PyCOORDType(0, 0))
-            self._stdout.SetConsoleCursorPosition(
-                win32console.PyCOORDType(0, 0))
+            self._stdout.FillConsoleOutputAttribute(0, box_size, win32console.PyCOORDType(0, 0))
+            self._stdout.FillConsoleOutputCharacter(" ", box_size, win32console.PyCOORDType(0, 0))
+            self._stdout.SetConsoleCursorPosition(win32console.PyCOORDType(0, 0))
 
         def set_title(self, title):
             """
@@ -2437,12 +2397,10 @@ else:
                     encoding = getlocale()[1]
                 except ValueError:
                     encoding = os.environ.get("LC_CTYPE")
-                unicode_aware = (encoding is not None and
-                                 encoding.lower() == "utf-8")
+                unicode_aware = (encoding is not None and encoding.lower() == "utf-8")
 
             # Save off the screen details.
-            super().__init__(
-                win.getmaxyx()[0], win.getmaxyx()[1], height, unicode_aware)
+            super().__init__(win.getmaxyx()[0], win.getmaxyx()[1], height, unicode_aware)
             self._screen = win
             self._screen.keypad(True)
 
@@ -2472,8 +2430,7 @@ else:
                 self._signal_state.set(signal.SIGTSTP, self._catch_interrupt)
 
             # Enable mouse events
-            curses.mousemask(curses.ALL_MOUSE_EVENTS |
-                             curses.REPORT_MOUSE_POSITION)
+            curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
 
             # Lookup the necessary escape codes in the terminfo database.
             self._move_y_x = cast(bytes, curses.tigetstr("cup"))
@@ -2637,11 +2594,9 @@ else:
                     buttons = 0
                     # Some Linux modes only report clicks, so check for any
                     # button down or click events.
-                    if (bstate & curses.BUTTON1_PRESSED != 0 or
-                            bstate & curses.BUTTON1_CLICKED != 0):
+                    if (bstate & curses.BUTTON1_PRESSED != 0 or bstate & curses.BUTTON1_CLICKED != 0):
                         buttons |= MouseEvent.LEFT_CLICK
-                    if (bstate & curses.BUTTON3_PRESSED != 0 or
-                            bstate & curses.BUTTON3_CLICKED != 0):
+                    if (bstate & curses.BUTTON3_PRESSED != 0 or bstate & curses.BUTTON3_CLICKED != 0):
                         buttons |= MouseEvent.RIGHT_CLICK
                     if bstate & curses.BUTTON1_DOUBLE_CLICKED != 0:
                         buttons |= MouseEvent.DOUBLE_CLICK
@@ -2654,8 +2609,7 @@ else:
                         if key & 0xC0 == 0xC0:
                             self._bytes_to_return = struct.pack(b"B", key)
                             self._bytes_to_read = bin(key)[2:].index("0") - 1
-                            logger.debug("Byte stream: %d bytes left",
-                                         self._bytes_to_read)
+                            logger.debug("Byte stream: %d bytes left", self._bytes_to_read)
                             continue
 
                         # Process unicode bytestream if still expecting data.
@@ -2720,12 +2674,10 @@ else:
 
             # Now swap colours if required.
             if colour != self._colour:
-                self._safe_write(curses.tparm(
-                    self._fg_color, colour).decode("utf-8"))
+                self._safe_write(curses.tparm(self._fg_color, colour).decode("utf-8"))
                 self._colour = colour
             if bg != self._bg:
-                self._safe_write(curses.tparm(
-                    self._bg_color, bg).decode("utf-8"))
+                self._safe_write(curses.tparm(self._bg_color, bg).decode("utf-8"))
                 self._bg = bg
 
         def _print_at(self, text: str, x: int, y: int, width: int):

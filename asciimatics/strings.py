@@ -1,6 +1,7 @@
 """
 This module provides classes to handle embedded control strings for widgets.
 """
+from typing import List, Optional, Tuple, Union, Any
 from asciimatics.parsers import Parser
 
 
@@ -11,7 +12,13 @@ class ColouredText():
     change commands and will ignore more complex commands).
     """
 
-    def __init__(self, raw_text, parser, colour=None, colour_map=None, offsets=None, text=None):
+    def __init__(self,
+                 raw_text: str,
+                 parser: Parser,
+                 colour: Optional[Tuple[Optional[int], Optional[int], Optional[int]]] = None,
+                 colour_map: Optional[List[Tuple[Optional[int], Optional[int], Optional[int]]]] = None,
+                 offsets: Optional[List[int]] = None,
+                 text: Optional[str] = None):
         """
         :param raw_text: The raw unicode string to be processed
         :param parser: The parser to process the text
@@ -25,17 +32,16 @@ class ColouredText():
         """
         super().__init__()
         self._raw_text = raw_text
-        self._raw_offsets = []
+        self._raw_offsets: list[int] = []
         self._parser = parser
-        self._colour_map = None
         self._last_colour = colour if colour else (None, None, None)
         self._init_colour = colour
-        self._colour_map = []
-        self._text = ""
+        self._colour_map: Optional[list[tuple[Optional[int], Optional[int], Optional[int]]]] = []
+        self._text: Optional[str] = ""
         if colour_map:
             self._colour_map = colour_map
             self._last_colour = colour_map[-1]
-            self._raw_offsets = offsets
+            self._raw_offsets = [] if offsets is None else offsets
             self._text = text
         else:
             self._parser.reset(self._raw_text, self._init_colour)
@@ -47,22 +53,23 @@ class ColouredText():
                 elif command == Parser.CHANGE_COLOURS:
                     self._last_colour = params
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Return the processed (displayable) text.
         """
-        return self._text
+        return "None" if self._text is None else self._text
 
-    def __len__(self):
+    def __len__(self) -> int:
         """
         Returns the length of the processed (displayable) text.
         """
-        return len(self._text)
+        return 0 if self._text is None else len(self._text)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: Union[slice, int]) -> "ColouredText":
         """
         Slice magic method.
         """
+        start: Optional[int]
         if isinstance(item, int):
             start = self._raw_offsets[item]
             stop = None if item == len(self._raw_offsets) - 1 else self._raw_offsets[item + 1]
@@ -70,6 +77,7 @@ class ColouredText():
             colour_index = max(0, item - 1)
             base = self._raw_offsets[item]
             offsets = [0]
+            colour_map = None if self._colour_map is None else [self._colour_map[item]]
         else:
             try:
                 start = None if item.start is None else self._raw_offsets[slice(item.start, None, None)][0]
@@ -87,18 +95,22 @@ class ColouredText():
             except IndexError:
                 base = 0
                 offsets = []
+            colour_map = None if self._colour_map is None else self._colour_map[item]
         try:
-            colour = self._colour_map[colour_index]
+            if self._colour_map is None:
+                colour = self._init_colour
+            else:
+                colour = self._colour_map[colour_index]
         except IndexError:
             colour = self._init_colour
         return ColouredText(self._raw_text[slice(start, stop, step)],
                             parser=self._parser,
                             colour=colour,
-                            text=self._text[item],
-                            colour_map=self._colour_map[item],
+                            text=None if self._text is None else self._text[item],
+                            colour_map=colour_map,
                             offsets=offsets)
 
-    def __add__(self, other):
+    def __add__(self, other: Any) -> "ColouredText":
         """
         Addition magic method.
         """
@@ -108,7 +120,7 @@ class ColouredText():
             new_text = self._raw_text + str(other)
         return ColouredText(new_text, parser=self._parser, colour=self._init_colour)
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         """
         Equals magic method.
         """
@@ -116,7 +128,7 @@ class ColouredText():
             return self.raw_text == other.raw_text
         return NotImplemented
 
-    def __ne__(self, other):
+    def __ne__(self, other: Any) -> bool:
         """
         Not equals magic method.
         """
@@ -125,13 +137,13 @@ class ColouredText():
             return not x
         return NotImplemented
 
-    def startswith(self, text):
+    def startswith(self, text: str) -> bool:
         """
         Check whether parsed (i.e. displayed) text starts with specified string.
         """
-        return self._text.startswith(str(text))
+        return False if self._text is None else self._text.startswith(str(text))
 
-    def join(self, others):
+    def join(self, others: List[Any]) -> "ColouredText":
         """
         Join the list of ColouredObjects using this ColouredObject.
 
@@ -142,33 +154,31 @@ class ColouredText():
                                 parser=self._parser,
                                 colour=self._init_colour)
         except AttributeError:
-            return ColouredText(self._raw_text.join(others),
-                                parser=self._parser,
-                                colour=self._init_colour)
+            return ColouredText(self._raw_text.join(others), parser=self._parser, colour=self._init_colour)
 
     @property
-    def colour_map(self):
+    def colour_map(self) -> Optional[List[Tuple[Optional[int], Optional[int], Optional[int]]]]:
         """
         Colour map for the processed text (for use with `paint` method).
         """
         return self._colour_map
 
     @property
-    def raw_text(self):
+    def raw_text(self) -> str:
         """
         Raw (unprocessed) text for this object.
         """
         return self._raw_text
 
     @property
-    def first_colour(self):
+    def first_colour(self) -> Optional[Tuple[Optional[int], Optional[int], Optional[int]]]:
         """
         First colour triplet used for this text.
         """
         return self._init_colour
 
     @property
-    def last_colour(self):
+    def last_colour(self) -> Tuple[Optional[int], Optional[int], Optional[int]]:
         """
         Last colour triplet used for this text.
         """

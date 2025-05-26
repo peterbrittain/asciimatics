@@ -21,13 +21,13 @@ class KeyboardEvent(Event):
     constants in the :py:obj:`.Screen` class) where not.
     """
 
-    def __init__(self, key_code):
+    def __init__(self, key_code: int):
         """
         :param key_code: the ordinal value of the key that was pressed.
         """
         self.key_code = key_code
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         :returns: a string representation of the keyboard event.
         """
@@ -47,7 +47,7 @@ class MouseEvent(Event):
     RIGHT_CLICK = 2
     DOUBLE_CLICK = 4
 
-    def __init__(self, x, y, buttons):
+    def __init__(self, x: int, y: int, buttons: int):
         """
         :param x: The X coordinate of the mouse event.
         :param y: The Y coordinate of the mouse event.
@@ -57,7 +57,7 @@ class MouseEvent(Event):
         self.y = y
         self.buttons = buttons
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         :returns: a string representation of the mouse event.
         """

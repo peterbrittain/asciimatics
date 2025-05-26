@@ -124,18 +124,17 @@ class Sam(Sprite):
         """
         See :py:obj:`.Sprite` for details.
         """
-        super().__init__(
-            screen,
-            renderer_dict={
-                "default": StaticRenderer(images=sam_default, animation=_blink),
-                "left": StaticRenderer(images=[sam_left]),
-                "right": StaticRenderer(images=[sam_right]),
-                "down": StaticRenderer(images=[sam_down]),
-                "up": StaticRenderer(images=[sam_up]),
-            },
-            path=path,
-            start_frame=start_frame,
-            stop_frame=stop_frame)
+        super().__init__(screen,
+                         renderer_dict={
+                             "default": StaticRenderer(images=sam_default, animation=_blink),
+                             "left": StaticRenderer(images=[sam_left]),
+                             "right": StaticRenderer(images=[sam_right]),
+                             "down": StaticRenderer(images=[sam_down]),
+                             "up": StaticRenderer(images=[sam_up]),
+                         },
+                         path=path,
+                         start_frame=start_frame,
+                         stop_frame=stop_frame)
 
 
 class Arrow(Sprite):
@@ -143,25 +142,22 @@ class Arrow(Sprite):
     Sample arrow sprite - points where it is going.
     """
 
-    def __init__(self, screen, path, colour=Screen.COLOUR_WHITE, start_frame=0,
-                 stop_frame=0):
+    def __init__(self, screen, path, colour=Screen.COLOUR_WHITE, start_frame=0, stop_frame=0):
         """
         See :py:obj:`.Sprite` for details.
         """
-        super().__init__(
-            screen,
-            renderer_dict={
-                "default": StaticRenderer(images=default_arrow,
-                                          animation=_blink),
-                "left": StaticRenderer(images=[left_arrow]),
-                "right": StaticRenderer(images=[right_arrow]),
-                "down": StaticRenderer(images=[down_arrow]),
-                "up": StaticRenderer(images=[up_arrow]),
-            },
-            path=path,
-            colour=colour,
-            start_frame=start_frame,
-            stop_frame=stop_frame)
+        super().__init__(screen,
+                         renderer_dict={
+                             "default": StaticRenderer(images=default_arrow, animation=_blink),
+                             "left": StaticRenderer(images=[left_arrow]),
+                             "right": StaticRenderer(images=[right_arrow]),
+                             "down": StaticRenderer(images=[down_arrow]),
+                             "up": StaticRenderer(images=[up_arrow]),
+                         },
+                         path=path,
+                         colour=colour,
+                         start_frame=start_frame,
+                         stop_frame=stop_frame)
 
 
 class Plot(Sprite):
@@ -170,18 +166,14 @@ class Plot(Sprite):
     for plotting a path to the screen.
     """
 
-    def __init__(self, screen, path, colour=Screen.COLOUR_WHITE, start_frame=0,
-                 stop_frame=0):
+    def __init__(self, screen, path, colour=Screen.COLOUR_WHITE, start_frame=0, stop_frame=0):
         """
         See :py:obj:`.Sprite` for details.
         """
-        super().__init__(
-            screen,
-            renderer_dict={
-                "default": StaticRenderer(images=["X"])
-            },
-            path=path,
-            colour=colour,
-            clear=False,
-            start_frame=start_frame,
-            stop_frame=stop_frame)
+        super().__init__(screen,
+                         renderer_dict={"default": StaticRenderer(images=["X"])},
+                         path=path,
+                         colour=colour,
+                         clear=False,
+                         start_frame=start_frame,
+                         stop_frame=stop_frame)

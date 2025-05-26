@@ -297,7 +297,7 @@ class TestParsers(unittest.TestCase):
         parser = AnsiTerminalParser()
         parser.reset("a", colours=(1,2,3))
         tokens = parser.parse()
-        self.assertEqual(next(tokens), (0, Parser.CHANGE_COLOURS, (1, 2, 3)))
+        self.assertEqual(next(tokens), (0, Parser.CHANGE_COLOURS, [1, 2, 3]))
         self.assertEqual(next(tokens), (0, Parser.DISPLAY_TEXT, "a"))
 
     def test_ansi_terminal_parser_unknown(self):

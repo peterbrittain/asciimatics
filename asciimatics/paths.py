@@ -4,9 +4,12 @@ http://asciimatics.readthedocs.io/en/latest/animation.html
 """
 
 from abc import ABCMeta, abstractmethod
+from typing import List, Tuple, Optional
+from asciimatics.screen import Screen
+from asciimatics.event import Event
 
 
-def _spline(t, p0, p1, p2, p3):
+def _spline(t: float, p0: float, p1: float, p2: float, p3: float) -> float:
     """
     Catmull-Rom cubic spline to interpolate 4 given points.
 
@@ -16,11 +19,8 @@ def _spline(t, p0, p1, p2, p3):
     :param p2: The second point to interpolate.
     :param p3: The last point to interpolate.
     """
-    return (
-        t * ((2 - t) * t - 1) * p0 +
-        (t * t * (3 * t - 5) + 2) * p1 +
-        t * ((4 - 3 * t) * t + 1) * p2 +
-        (t - 1) * t * t * p3) / 2
+    return (t * ((2 - t) * t - 1) * p0 + (t * t * (3 * t - 5) + 2) * p1 + t * ((4 - 3 * t) * t + 1) * p2 +
+            (t - 1) * t * t * p3) / 2
 
 
 class _AbstractPath(metaclass=ABCMeta):
@@ -38,7 +38,7 @@ class _AbstractPath(metaclass=ABCMeta):
         between points.
         """
         self._steps = []
-        self._index = None
+        self._index = 0
         self._rec_x = 0
         self._rec_y = 0
 
@@ -49,13 +49,13 @@ class _AbstractPath(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def next_pos(self):
+    def next_pos(self) -> Tuple[int, int]:
         """
         :return: The next position tuple (x, y) for the Sprite on this path.
         """
 
     @abstractmethod
-    def is_finished(self):
+    def is_finished(self) -> bool:
         """
         :return: Whether this path has got to the end.
         """
@@ -76,8 +76,7 @@ class Path(_AbstractPath):
         between points.
         """
         super().__init__()
-        self._steps = []
-        self._index = 0
+        self._steps: list[tuple[int, int]] = []
         self._rec_x = 0
         self._rec_y = 0
         self.reset()
@@ -88,23 +87,24 @@ class Path(_AbstractPath):
         """
         self._index = 0
 
-    def next_pos(self):
+    def next_pos(self) -> Tuple[int, int]:
         """
         :return: The next position tuple (x, y) for the Sprite on this path.
         """
-        result = None
         if self._index <= len(self._steps):
             result = self._steps[self._index]
             self._index += 1
+        else:
+            result = self._steps[-1]
         return result
 
-    def is_finished(self):
+    def is_finished(self) -> bool:
         """
         :return: Whether this path has got to the end.
         """
         return self._index >= len(self._steps)
 
-    def _add_step(self, pos):
+    def _add_step(self, pos: Tuple[int, int]):
         """
         Add a step to the end of the current recorded path.
 
@@ -114,7 +114,7 @@ class Path(_AbstractPath):
         self._rec_x = pos[0]
         self._rec_y = pos[1]
 
-    def wait(self, delay):
+    def wait(self, delay: int):
         """
         Wait at the current location for the specified number of iterations.
 
@@ -123,7 +123,7 @@ class Path(_AbstractPath):
         for _ in range(0, delay):
             self._add_step((self._rec_x, self._rec_y))
 
-    def jump_to(self, x, y):
+    def jump_to(self, x: int, y: int):
         """
         Jump straight to the newly specified location - i.e. teleport there and
         don't create a path to get there.
@@ -133,7 +133,7 @@ class Path(_AbstractPath):
         """
         self._add_step((x, y))
 
-    def move_straight_to(self, x, y, steps):
+    def move_straight_to(self, x: int, y: int, steps: int):
         """
         Move straight to the newly specified location - i.e. create a straight
         line Path from the current location to the specified point.
@@ -145,11 +145,10 @@ class Path(_AbstractPath):
         start_x = self._rec_x
         start_y = self._rec_y
         for i in range(1, steps + 1):
-            self._add_step((
-                int(start_x + (x - start_x) / float(steps) * i),
-                int(start_y + (y - start_y) / float(steps) * i)))
+            self._add_step((int(start_x + (x - start_x) / float(steps) * i),
+                            int(start_y + (y - start_y) / float(steps) * i)))
 
-    def move_round_to(self, points, steps):
+    def move_round_to(self, points: List[Tuple[int, int]], steps: int):
         """
         Follow a path pre-defined by a set of at least 4 points.  This Path will
         interpolate the points into a curve and follow that curve.
@@ -168,13 +167,13 @@ class Path(_AbstractPath):
         steps_per_spline = steps // (len(points) - 3)
         for j in range(1, len(points) - 2):
             for t in range(1, steps_per_spline + 1):
-                y = _spline(float(t) / steps_per_spline,
-                            float(points[j - 1][1]),
-                            float(points[j][1]),
-                            float(points[j + 1][1]),
-                            float(points[j + 2][1]))
-                x = int(points[j][0] + ((points[j + 1][0] - points[j][0]) *
-                                        float(t) / steps_per_spline))
+                y = _spline(
+                    float(t) / steps_per_spline,
+                    float(points[j - 1][1]),
+                    float(points[j][1]),
+                    float(points[j + 1][1]),
+                    float(points[j + 2][1]))
+                x = int(points[j][0] + ((points[j + 1][0] - points[j][0]) * float(t) / steps_per_spline))
                 self._add_step((x, int(y)))
 
 
@@ -187,7 +186,7 @@ class DynamicPath(_AbstractPath, metaclass=ABCMeta):
     is_finished().
     """
 
-    def __init__(self, screen, x, y):
+    def __init__(self, screen: Screen, x: int, y: int):
         """
         To implement a DynamicPath, override the :py:meth:`.process_event()`
         method to react to any user input.
@@ -205,20 +204,20 @@ class DynamicPath(_AbstractPath, metaclass=ABCMeta):
         self._x = self._start_x
         self._y = self._start_y
 
-    def next_pos(self):
+    def next_pos(self) -> Tuple[int, int]:
         """
         :return: The next position tuple (x, y) for the Sprite on this path.
         """
         return self._x, self._y
 
-    def is_finished(self):
+    def is_finished(self) -> bool:
         """
         :return: Whether this path has got to the end.
         """
         return False
 
     @abstractmethod
-    def process_event(self, event):
+    def process_event(self, event: Event) -> Optional[Event]:
         """
         Process any mouse event.
 

@@ -5,12 +5,25 @@ This module provides parsers to create ColouredText objects from embedded contro
 import re
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
+from typing import Any, Iterator, Optional, Tuple, List
+from dataclasses import dataclass
 from asciimatics import constants
-from asciimatics.utilities import _DotDict
-
 
 # Diagnostic logging
 logger = getLogger(__name__)
+
+
+@dataclass
+class _State:
+    """
+    Internal state class for all parsers.
+    """
+    text = ""
+    attributes: Optional[list[Optional[int]]] = None
+    init_colours = False
+    offset = 0
+    last_offset = 0
+    cursor = 0
 
 
 class Parser(metaclass=ABCMeta):
@@ -46,22 +59,22 @@ class Parser(metaclass=ABCMeta):
         """
         Initialize the parser.
         """
-        self._state = None
+        self._state = _State()
 
-    def reset(self, text, colours):
+    def reset(self, text: str, colours: Optional[Tuple[Optional[int], Optional[int], Optional[int]]]):
         """
         Reset the parser to analyze the supplied raw text.
 
         :param text: raw text to process.
         :param colours: colour tuple to initialise the colour map.
         """
-        self._state = _DotDict()
+        self._state = _State()
         self._state.text = text
         # Force colours to be mutable (in case a tuple was passed in).
         self._state.attributes = list(x for x in colours) if colours else None
 
     @abstractmethod
-    def parse(self):
+    def parse(self) -> Iterator[Tuple[int, int, Any]]:
         """
         Generator to return coloured text from raw text.
 
@@ -71,7 +84,7 @@ class Parser(metaclass=ABCMeta):
         :returns: a 3-tuple of (start offset in raw text, command to execute, parameters)
         """
 
-    def append(self, text):
+    def append(self, text: str):
         """
         Append more text to the current text being processed.
 
@@ -85,7 +98,7 @@ class ControlCodeParser(Parser):
     Parser to replace all control codes with a readable version - e.g. "^M" for carriage return.
     """
 
-    def parse(self):
+    def parse(self) -> Iterator[Tuple[int, int, Any]]:
         """
         Generator to return coloured text from raw text.
 
@@ -113,7 +126,7 @@ class AsciimaticsParser(Parser):
     # It should match ${n}, ${m,n} or ${m,n,o}
     _colour_sequence = re.compile(constants.COLOUR_REGEX)
 
-    def parse(self):
+    def parse(self) -> Iterator[Tuple[int, int, Any]]:
         """
         Generator to return coloured text from raw text.
 
@@ -134,14 +147,13 @@ class AsciimaticsParser(Parser):
                 # - 2,3,4 for ${c,a,b}
                 # - 5,6 for ${c,a}
                 # - 7 for ${c}.
+                attributes: Any
                 if match.group(2) is not None:
                     attributes = (int(match.group(2)),
                                   constants.MAPPING_ATTRIBUTES[match.group(3)],
                                   int(match.group(4)))
                 elif match.group(5) is not None:
-                    attributes = (int(match.group(5)),
-                                  constants.MAPPING_ATTRIBUTES[match.group(6)],
-                                  None)
+                    attributes = (int(match.group(5)), constants.MAPPING_ATTRIBUTES[match.group(6)], None)
                 else:
                     attributes = (int(match.group(7)), 0, None)
                 yield (last_offset, Parser.CHANGE_COLOURS, attributes)
@@ -158,7 +170,7 @@ class AnsiTerminalParser(Parser):
     _colour_sequence = re.compile(r"^(\x1B\[([^@-~]*)([@-~]))(.*)")
     _os_cmd = re.compile(r"^(\x1B].*\x07)(.*)")
 
-    def reset(self, text, colours):
+    def reset(self, text: str, colours: Optional[Tuple[Optional[int], Optional[int], Optional[int]]]):
         """
         Reset the parser to analyze the supplied raw text.
 
@@ -175,8 +187,10 @@ class AnsiTerminalParser(Parser):
         self._state.last_offset = 0
         self._state.cursor = 0
 
-    def parse(self):
+    def parse(self) -> Iterator[Tuple[int, int, Any]]:
+
         def _handle_escape(st):
+            results: List[Tuple[int, int, Any]]
             match = self._colour_sequence.match(str(st.text))
             if match is None:
                 # Not a CSI sequence... Check for some other options.
@@ -237,9 +251,9 @@ class AnsiTerminalParser(Parser):
                             # top-level stream processing
                             if parameter == 0:
                                 # Reset
-                                st.attributes = [constants.COLOUR_WHITE,
-                                                 constants.A_NORMAL,
-                                                 constants.COLOUR_BLACK]
+                                st.attributes = [
+                                    constants.COLOUR_WHITE, constants.A_NORMAL, constants.COLOUR_BLACK
+                                ]
                             elif parameter == 1:
                                 # Bold
                                 st.attributes[1] = constants.A_BOLD
@@ -352,7 +366,7 @@ class AnsiTerminalParser(Parser):
 
         if self._state.init_colours:
             self._state.init_colours = False
-            yield (0, Parser.CHANGE_COLOURS, tuple(self._state.attributes))
+            yield (0, Parser.CHANGE_COLOURS, self._state.attributes)
         while len(self._state.text) > 0:
             char = ord(self._state.text[0])
             new_offset = 1
