@@ -2,6 +2,12 @@
 This module defines Scene objects for animation purposes.  For more details, see
 http://asciimatics.readthedocs.io/en/latest/animation.html
 """
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any, List, Optional
+if TYPE_CHECKING:
+    from asciimatics.effects import Effect
+    from asciimatics.event import Event
+    from asciimatics.screen import Screen
 
 
 class Scene():
@@ -12,7 +18,11 @@ class Scene():
     http://asciimatics.readthedocs.io/en/latest/animation.html for how to use them together.
     """
 
-    def __init__(self, effects, duration=0, clear=True, name=None):
+    def __init__(self,
+                 effects: List[Effect],
+                 duration: int = 0,
+                 clear: bool = True,
+                 name: Optional[str] = None):
         """
         :param effects: The list of effects to apply to this scene.
         :param duration: The number of frames in this Scene.  A value of 0 means that the Scene
@@ -20,7 +30,7 @@ class Scene():
         :param clear: Whether to clear the Screen at the start of the Scene.
         :param name: Optional name to identify the scene.
         """
-        self._effects = []
+        self._effects: list[Effect] = []
         for effect in effects:
             self.add_effect(effect, reset=False)
         self._duration = duration
@@ -29,7 +39,7 @@ class Scene():
         self._clear = clear
         self._name = name
 
-    def reset(self, old_scene=None, screen=None):
+    def reset(self, old_scene: Optional["Scene"] = None, screen: Optional[Screen] = None):
         """
         Reset the scene ready for playing.
 
@@ -59,7 +69,7 @@ class Scene():
             if hasattr(effect, "save"):
                 effect.save()
 
-    def add_effect(self, effect, reset=True):
+    def add_effect(self, effect: Effect, reset: bool = True):
         """
         Add an effect to the Scene.
 
@@ -76,7 +86,7 @@ class Scene():
         effect.register_scene(self)
         self._effects.append(effect)
 
-    def remove_effect(self, effect):
+    def remove_effect(self, effect: Effect):
         """
         Remove an effect from the scene.
 
@@ -84,7 +94,7 @@ class Scene():
         """
         self._effects.remove(effect)
 
-    def process_event(self, event):
+    def process_event(self, event: Event) -> Optional[Event]:
         """
         Process a new input event.
 
@@ -95,34 +105,35 @@ class Scene():
         :returns: None if the Scene processed the event, else the original event.
         """
         for effect in reversed(self._effects):
-            event = effect.process_event(event)
-            if event is None:
+            new_event = effect.process_event(event)
+            if new_event is None:
                 break
+            event = new_event
         return event
 
     @property
-    def name(self):
+    def name(self) -> Optional[str]:
         """
         :return: The name of this Scene.  May be None.
         """
         return self._name
 
     @property
-    def effects(self):
+    def effects(self) -> List[Any]:
         """
         :return: The list of Effects in this Scene.
         """
         return self._effects
 
     @property
-    def duration(self):
+    def duration(self) -> int:
         """
         :return: The length of the scene in frames.
         """
         return self._duration
 
     @property
-    def clear(self):
+    def clear(self) -> bool:
         """
         :return: Whether the Scene should clear at the start.
         """

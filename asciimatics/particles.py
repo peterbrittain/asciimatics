@@ -6,6 +6,7 @@ http://asciimatics.readthedocs.io/en/latest/animation.html
 from abc import ABCMeta, abstractmethod
 from copy import copy
 from math import pi, sin, cos, sqrt
+from typing import Callable, List, Optional, Tuple, Union, cast
 from random import uniform, randint
 from asciimatics.effects import Effect
 from asciimatics.screen import Screen
@@ -17,20 +18,20 @@ class Particle():
     """
 
     def __init__(self,
-                 chars,
-                 x,
-                 y,
-                 dx,
-                 dy,
-                 colours,
-                 life_time,
-                 move,
-                 next_colour=None,
-                 next_char=None,
-                 parm=None,
-                 on_create=None,
-                 on_each=None,
-                 on_destroy=None):
+                 chars: str,
+                 x: float,
+                 y: float,
+                 dx: float,
+                 dy: float,
+                 colours: List[Tuple[Optional[int], Optional[int], Optional[int]]],
+                 life_time: int,
+                 move: Callable,
+                 next_colour: Optional[Callable] = None,
+                 next_char: None = None,
+                 parm: Optional[float] = None,
+                 on_create: Optional[Callable] = None,
+                 on_each: Optional[Callable] = None,
+                 on_destroy: Optional[Callable] = None):
         """
         :param chars: String of characters to use for the particle.
         :param x: The initial horizontal position of the particle.
@@ -64,14 +65,14 @@ class Particle():
         self._move = move
         self._next_colour = (self._default_next_colour if next_colour is None else next_colour)
         self._next_char = (self._default_next_char if next_char is None else next_char)
-        self._last = None
+        self._last: Optional[tuple[str, int, int, Optional[int], Optional[int], Optional[int]]] = None
         self.parm = parm
         self._on_create = on_create
         self._on_each = on_each
         self._on_destroy = on_destroy
 
     @staticmethod
-    def _default_next_char(particle):
+    def _default_next_char(particle: "Particle") -> str:
         """
         Default next character implementation - linear progression through
         each character.
@@ -79,14 +80,14 @@ class Particle():
         return particle.chars[(len(particle.chars) - 1) * particle.time // particle.life_time]
 
     @staticmethod
-    def _default_next_colour(particle):
+    def _default_next_colour(particle: "Particle") -> Tuple[Optional[int], Optional[int], Optional[int]]:
         """
         Default next colour implementation - linear progression through
         each colour tuple.
         """
         return particle.colours[(len(particle.colours) - 1) * particle.time // particle.life_time]
 
-    def last(self):
+    def last(self) -> Optional[Tuple[str, int, int, Optional[int], Optional[int], Optional[int]]]:
         """
         The last attributes returned for this particle - typically used for
         clearing out the particle on the next frame.  See :py:meth:`.next` for
@@ -94,7 +95,7 @@ class Particle():
         """
         return self._last
 
-    def next(self):
+    def next(self) -> Tuple[str, int, int, Optional[int], Optional[int], Optional[int]]:
         """
         The set of attributes for this particle for the next frame to be
         rendered.
@@ -126,7 +127,15 @@ class ParticleEmitter():
     emitter will be called once per frame to be displayed on the Screen.
     """
 
-    def __init__(self, screen, x, y, count, new_particle, spawn, life_time, blend=False):
+    def __init__(self,
+                 screen: Screen,
+                 x: Union[float, int],
+                 y: Union[float, int],
+                 count: int,
+                 new_particle: Callable,
+                 spawn: int,
+                 life_time: int,
+                 blend: bool = False):
         """
         :param screen: The screen to which the particle system will be rendered.
         :param x: The x location of origin of the particle system.
@@ -148,12 +157,12 @@ class ParticleEmitter():
         self._count = count
         self._new_particle = new_particle
         self._life_time = life_time
-        self.particles = []
+        self.particles: list[Particle] = []
         self.time_left = spawn
         self._blend = blend
 
     @staticmethod
-    def _find_colour(particle, start_index, screen_data):
+    def _find_colour(particle: Particle, start_index: int, screen_data: Tuple[int, int, int, int]) -> int:
         """
         Helper function to find an existing colour in the particle palette.
         """
@@ -211,7 +220,7 @@ class ParticleEffect(Effect, metaclass=ABCMeta):
     _active_systems list.
     """
 
-    def __init__(self, screen, x, y, life_time, **kwargs):
+    def __init__(self, screen: Screen, x: int, y: int, life_time: int, **kwargs):
         """
         :param screen: The Screen being used for the Scene.
         :param x: The column (x coordinate) for the origin of the effect.
@@ -224,7 +233,7 @@ class ParticleEffect(Effect, metaclass=ABCMeta):
         self._x = x
         self._y = y
         self._life_time = life_time
-        self._active_systems = []
+        self._active_systems: list[ParticleEmitter] = []
         self.reset()
 
     @abstractmethod
@@ -234,7 +243,7 @@ class ParticleEffect(Effect, metaclass=ABCMeta):
         implemented by the child classes.
         """
 
-    def _update(self, frame_no):
+    def _update(self, frame_no: int):
         # Take a copy in case a new system is added to the list this iteration.
         for system in copy(self._active_systems):
             if len(system.particles) > 0 or system.time_left > 0:
@@ -243,7 +252,7 @@ class ParticleEffect(Effect, metaclass=ABCMeta):
                 self._active_systems.remove(system)
 
     @property
-    def stop_frame(self):
+    def stop_frame(self) -> int:
         return self._stop_frame
 
 
@@ -252,7 +261,7 @@ class Rocket(ParticleEmitter):
     A rocket being launched from the ground.
     """
 
-    def __init__(self, screen, x, y, life_time, on_destroy=None):
+    def __init__(self, screen: Screen, x: int, y: int, life_time: int, on_destroy: Optional[Callable] = None):
         """
         :param screen: The Screen being used for this particle system.
         :param x: The column (x coordinate) for the origin of the rocket.
@@ -265,7 +274,7 @@ class Rocket(ParticleEmitter):
         self._acceleration = (self._end_y - self._y) // life_time
         self._on_destroy = on_destroy
 
-    def _next_particle(self):
+    def _next_particle(self) -> Particle:
         return Particle("|",
                         self._x,
                         self._y,
@@ -275,7 +284,7 @@ class Rocket(ParticleEmitter):
                         self._move,
                         on_destroy=self._on_destroy)
 
-    def _move(self, particle):
+    def _move(self, particle: Particle) -> Tuple[int, int]:
         particle.x += particle.dx
         particle.y += particle.dy
         if particle.y <= self._end_y:
@@ -291,7 +300,7 @@ class RingExplosion(ParticleEmitter):
     A classic firework explosion in a simple ring.
     """
 
-    def __init__(self, screen, x, y, life_time):
+    def __init__(self, screen: Screen, x: int, y: int, life_time: int):
         """
         :param screen: The Screen being used for this particle system.
         :param x: The column (x coordinate) for the origin of this explosion.
@@ -302,7 +311,7 @@ class RingExplosion(ParticleEmitter):
         self._colour = randint(1, 7)
         self._acceleration = 1.0 - (1.0 / life_time)
 
-    def _next_particle(self):
+    def _next_particle(self) -> Particle:
         direction = uniform(0, 2 * pi)
         return Particle("***:. ",
                         self._x,
@@ -313,7 +322,7 @@ class RingExplosion(ParticleEmitter):
                         self._life_time,
                         self._explode)
 
-    def _explode(self, particle):
+    def _explode(self, particle: Particle) -> Tuple[int, int]:
         # Simulate some gravity and slowdown in explosion
         particle.dy = particle.dy * self._acceleration + 0.03
         particle.dx *= self._acceleration
@@ -328,7 +337,7 @@ class SerpentExplosion(ParticleEmitter):
     A firework explosion where each trail changes direction.
     """
 
-    def __init__(self, screen, x, y, life_time):
+    def __init__(self, screen: Screen, x: int, y: int, life_time: int):
         """
         :param screen: The Screen being used for this particle system.
         :param x: The column (x coordinate) for the origin of this explosion.
@@ -338,7 +347,7 @@ class SerpentExplosion(ParticleEmitter):
         super().__init__(screen, x, y, 8, self._next_particle, 2, life_time)
         self._colour = randint(1, 7)
 
-    def _next_particle(self):
+    def _next_particle(self) -> Particle:
         direction = uniform(0, 2 * pi)
         acceleration = uniform(0, 2 * pi)
         return Particle("++++- ",
@@ -351,12 +360,12 @@ class SerpentExplosion(ParticleEmitter):
                         parm=acceleration)
 
     @staticmethod
-    def _explode(particle):
+    def _explode(particle: Particle) -> Tuple[int, int]:
         # Change direction like a serpent firework.
         if particle.time % 3 == 0:
             particle.parm = uniform(0, 2 * pi)
-        particle.dx = (particle.dx + cos(particle.parm) / 2) * 0.8
-        particle.dy = (particle.dy + sin(particle.parm) / 4) * 0.8
+        particle.dx = (particle.dx + cos(cast(float, particle.parm)) / 2) * 0.8
+        particle.dy = (particle.dy + sin(cast(float, particle.parm)) / 4) * 0.8
         particle.x += particle.dx
         particle.y += particle.dy
 
@@ -368,7 +377,7 @@ class StarExplosion(ParticleEmitter):
     A classic firework explosion to a Peony shape with trails.
     """
 
-    def __init__(self, screen, x, y, life_time, points, on_each):
+    def __init__(self, screen: Screen, x: int, y: int, life_time: int, points: int, on_each: Callable):
         """
         :param screen: The Screen being used for this particle system.
         :param x: The column (x coordinate) for the origin of this explosion.
@@ -384,7 +393,7 @@ class StarExplosion(ParticleEmitter):
         self._points = points
         self._point_count = 0
 
-    def _next_particle(self):
+    def _next_particle(self) -> Particle:
         direction = self._point_count * 2 * pi / self._points
         self._point_count += 1
         return Particle("+",
@@ -397,7 +406,7 @@ class StarExplosion(ParticleEmitter):
                         self._explode,
                         on_each=self._on_each)
 
-    def _explode(self, particle):
+    def _explode(self, particle: Particle) -> Tuple[int, int]:
         # Simulate some gravity and slowdown in explosion
         particle.dy = particle.dy * self._acceleration + 0.03
         particle.dx *= self._acceleration
@@ -412,7 +421,7 @@ class StarTrail(ParticleEmitter):
     A trail for a :py:obj:`.StarExplosion`.
     """
 
-    def __init__(self, screen, x, y, life_time, colour):
+    def __init__(self, screen: Screen, x: float, y: float, life_time: int, colour: Optional[int]):
         """
         :param screen: The Screen being used for this particle system.
         :param x: The column (x coordinate) for the origin of this trail.
@@ -423,7 +432,7 @@ class StarTrail(ParticleEmitter):
         super().__init__(screen, x, y, 1, self._next_particle, 1, life_time)
         self._colour = colour
 
-    def _next_particle(self):
+    def _next_particle(self) -> Particle:
         return Particle("+:,. ",
                         self._x,
                         self._y,
@@ -433,7 +442,7 @@ class StarTrail(ParticleEmitter):
                         self._twinkle)
 
     @staticmethod
-    def _twinkle(particle):
+    def _twinkle(particle: Particle) -> Tuple[int, int]:
         # Simulate some gravity
         particle.dy += 0.03
         particle.y += particle.dy
@@ -446,7 +455,7 @@ class PalmExplosion(ParticleEmitter):
     A classic firework explosion into a palm shape.
     """
 
-    def __init__(self, screen, x, y, life_time, on_each=None):
+    def __init__(self, screen: Screen, x: int, y: int, life_time: int, on_each: Optional[Callable] = None):
         """
         :param screen: The Screen being used for this particle system.
         :param x: The column (x coordinate) for the origin of this explosion.
@@ -460,7 +469,7 @@ class PalmExplosion(ParticleEmitter):
         self._arc_start = uniform(pi / 6, pi / 3)
         self._arc_end = self._arc_start + uniform(pi / 6, pi / 2)
 
-    def _next_particle(self):
+    def _next_particle(self) -> Particle:
         direction = uniform(self._arc_start, self._arc_end)
         return Particle("* ",
                         self._x,
@@ -472,7 +481,7 @@ class PalmExplosion(ParticleEmitter):
                         on_each=self._on_each)
 
     @staticmethod
-    def _explode(particle):
+    def _explode(particle: Particle) -> Tuple[int, int]:
         # Simulate some gravity
         particle.dy += 0.2
         particle.x += particle.dx
@@ -486,7 +495,7 @@ class ExplosionFlames(ParticleEmitter):
     An explosion of flame and smoke.
     """
 
-    def __init__(self, screen, x, y, life_time):
+    def __init__(self, screen: Screen, x: int, y: int, life_time: int):
         """
         :param screen: The Screen being used for this particle system.
         :param x: The column (x coordinate) for the origin of this explosion.
@@ -495,7 +504,7 @@ class ExplosionFlames(ParticleEmitter):
         """
         super().__init__(screen, x, y, 30, self._next_particle, life_time - 10, life_time, blend=True)
 
-    def _next_particle(self):
+    def _next_particle(self) -> Particle:
         direction = uniform(0, 2 * pi)
         d = self._life_time - 10
         r = uniform(0, sin(pi * (d - self.time_left) / (d * 2))) * 3.0
@@ -516,13 +525,13 @@ class ExplosionFlames(ParticleEmitter):
                         next_colour=self._colour)
 
     @staticmethod
-    def _burn(particle):
+    def _burn(particle: Particle) -> Tuple[int, int]:
         particle.x += particle.dx
         particle.y += particle.dy
         return int(particle.x), int(particle.y)
 
     @staticmethod
-    def _colour(particle):
+    def _colour(particle: Particle) -> Tuple[Optional[int], Optional[int], Optional[int]]:
         return particle.colours[0]
 
 
@@ -532,25 +541,28 @@ class DropEmitter(ParticleEmitter):
     time.
     """
 
-    def __init__(self, screen, life_time):
+    def __init__(self, screen: Screen, life_time: int):
         """
         :param screen: The Screen being used for this particle system.
         :param life_time: The life time of this particle system.
         """
         super().__init__(screen, 0, 0, 20, self._next_particle, life_time, life_time)
-        self._particles = None
+        self._particles: Optional[list[tuple[int, int, int, Optional[int], Optional[int],
+                                             Optional[int]]]] = None
         self._full_count = 0
 
-    def _next_particle(self):
+    def _next_particle(self) -> Optional[Particle]:
         # Find all particles on the Screen when we create our first particle.
         if self._particles is None:
             self._particles = []
             for x in range(self._screen.width):
                 for y in range(self._screen.height):
-                    ch, fg, attr, bg = self._screen.get_from(x, y)
-                    if ch != 32:
-                        self._particles.insert(randint(0, len(self._particles)), (x, y, ch, fg, attr, bg))
-                        self._full_count += 1
+                    temp = self._screen.get_from(x, y)
+                    if temp:
+                        ch, fg, attr, bg = temp
+                        if ch != 32:
+                            self._particles.insert(randint(0, len(self._particles)), (x, y, ch, fg, attr, bg))
+                            self._full_count += 1
 
         # Stop now if there were no more particles to move.
         if len(self._particles) == 0:
@@ -565,7 +577,7 @@ class DropEmitter(ParticleEmitter):
         return None
 
     @staticmethod
-    def _move(particle):
+    def _move(particle: Particle) -> Tuple[int, int]:
         result = int(particle.x), int(particle.y)
         particle.x += particle.dx
         particle.y += particle.dy
@@ -579,7 +591,7 @@ class ShotEmitter(ParticleEmitter):
     a given location.
     """
 
-    def __init__(self, screen, x, y, diameter, life_time):
+    def __init__(self, screen: Screen, x: int, y: int, diameter: int, life_time: int):
         """
         :param screen: The Screen being used for this particle system.
         :param x: The x position of the origin of the explosion.
@@ -588,21 +600,24 @@ class ShotEmitter(ParticleEmitter):
         :param life_time: The life time of this particle system.
         """
         super().__init__(screen, x, y, 50, self._next_particle, life_time, life_time)
-        self._particles = None
+        self._particles: Optional[list[tuple[int, int, int, Optional[int], Optional[int],
+                                             Optional[int]]]] = None
         self._diameter = diameter
 
-    def _next_particle(self):
+    def _next_particle(self) -> Optional[Particle]:
         # Find all particles on the Screen when we create our first particle
         # and sort by distance from the origin.
         if self._particles is None:
             self._particles = []
             for x in range(self._screen.width):
                 for y in range(self._screen.height):
-                    ch, fg, attr, bg = self._screen.get_from(x, y)
-                    if ch != 32:
-                        self._particles.append((x, y, ch, fg, attr, bg))
+                    temp = self._screen.get_from(x, y)
+                    if temp:
+                        ch, fg, attr, bg = temp
+                        if ch != 32:
+                            self._particles.append((x, y, ch, fg, attr, bg))
             if self._diameter:
-                self._particles = filter(self._filter, self._particles)
+                self._particles = list(filter(self._filter, self._particles))
             self._particles = sorted(self._particles, key=self._sort, reverse=True)
 
         # Stop now if there were no more particles to move.
@@ -618,18 +633,18 @@ class ShotEmitter(ParticleEmitter):
                         self._life_time,
                         self._move)
 
-    def _sort(self, data):
+    def _sort(self, data: Tuple[int, int, int, Optional[int], Optional[int], Optional[int]]) -> float:
         dx = data[0] - self._x
         dy = data[1] - self._y
         return (dx * dx / 4.0) + (dy * dy)
 
-    def _filter(self, data):
+    def _filter(self, data: Tuple[int, int, int, Optional[int], Optional[int], Optional[int]]) -> bool:
         dx = data[0] - self._x
         dy = data[1] - self._y
         return dx**2 / 4.0 + dy**2 < self._diameter**2 / 4.0
 
     @staticmethod
-    def _move(particle):
+    def _move(particle: Particle) -> Tuple[int, int]:
         result = int(particle.x), int(particle.y)
         if (particle.dx, particle.dy) == (0, 0):
             particle.dx, particle.dy = 100, 100
@@ -645,7 +660,7 @@ class RainSource(ParticleEmitter):
     screen to ensure that it can cover all the screen due to horizontal motion).
     """
 
-    def __init__(self, screen, life_time, on_each):
+    def __init__(self, screen: Screen, life_time: int, on_each: Callable):
         """
         :param screen: The Screen being used for this particle system.
         :param life_time: The life time of this particle system.
@@ -655,7 +670,7 @@ class RainSource(ParticleEmitter):
         self._particles = None
         self._on_each = on_each
 
-    def _next_particle(self):
+    def _next_particle(self) -> Particle:
         speed = randint(1, 3)
         return Particle(" ``\\"[speed],
                         randint(-self._screen.height, self._screen.width),
@@ -665,7 +680,7 @@ class RainSource(ParticleEmitter):
                         on_each=self._on_each)
 
     @staticmethod
-    def _move(particle):
+    def _move(particle: Particle) -> Tuple[int, int]:
         particle.x += particle.dx
         particle.y += particle.dy
         return int(particle.x), int(particle.y)
@@ -676,13 +691,13 @@ class Splash(ParticleEmitter):
     Splash effect for falling rain.
     """
 
-    def __init__(self, screen, x, y):
+    def __init__(self, screen: Screen, x: int, y: int):
         """
         :param screen: The Screen being used for this particle system.
         """
         super().__init__(screen, x, y, 1, self._next_particle, 1, 3)
 
-    def _next_particle(self):
+    def _next_particle(self) -> Particle:
         return Particle("v",
                         self._x,
                         self._y,
@@ -692,7 +707,7 @@ class Splash(ParticleEmitter):
                         self._splash)
 
     @staticmethod
-    def _splash(particle):
+    def _splash(particle: Particle) -> Tuple[int, int]:
         return int(particle.x), int(particle.y)
 
 
@@ -717,16 +732,16 @@ class StarFirework(_BaseFirework):
     Classic rocket with star explosion.
     """
 
-    def _next(self, parent):
+    def _next(self, parent: Particle):
         self._active_systems.append(
             StarExplosion(self._screen,
-                          parent.x,
-                          parent.y,
+                          int(parent.x),
+                          int(parent.y),
                           self._life_time - 10,
                           randint(6, 20),
                           on_each=self._trail))
 
-    def _trail(self, parent):
+    def _trail(self, parent: Particle):
         if len(self._active_systems) < 150 and randint(0, 100) < 50:
             self._active_systems.insert(0,
                                         StarTrail(self._screen, parent.x, parent.y, 10, parent.colours[0][0]))
@@ -737,8 +752,9 @@ class RingFirework(_BaseFirework):
     Classic rocket with ring explosion.
     """
 
-    def _next(self, parent):
-        self._active_systems.append(RingExplosion(self._screen, parent.x, parent.y, self._life_time - 10))
+    def _next(self, parent: Particle):
+        self._active_systems.append(
+            RingExplosion(self._screen, int(parent.x), int(parent.y), self._life_time - 10))
 
 
 class SerpentFirework(_BaseFirework):
@@ -746,8 +762,9 @@ class SerpentFirework(_BaseFirework):
     A firework where each trail changes direction.
     """
 
-    def _next(self, parent):
-        self._active_systems.append(SerpentExplosion(self._screen, parent.x, parent.y, self._life_time - 10))
+    def _next(self, parent: Particle):
+        self._active_systems.append(
+            SerpentExplosion(self._screen, int(parent.x), int(parent.y), self._life_time - 10))
 
 
 class PalmFirework(_BaseFirework):
@@ -755,11 +772,15 @@ class PalmFirework(_BaseFirework):
     Classic palm shaped firework.
     """
 
-    def _next(self, parent):
+    def _next(self, parent: Particle):
         self._active_systems.append(
-            PalmExplosion(self._screen, parent.x, parent.y, self._life_time - 10, on_each=self._trail))
+            PalmExplosion(self._screen,
+                          int(parent.x),
+                          int(parent.y),
+                          self._life_time - 10,
+                          on_each=self._trail))
 
-    def _trail(self, parent):
+    def _trail(self, parent: Particle):
         if len(self._active_systems) < 100 and randint(0, 100) < 80:
             self._active_systems.insert(0,
                                         StarTrail(self._screen, parent.x, parent.y, 10, parent.colours[0][0]))
@@ -780,7 +801,7 @@ class DropScreen(ParticleEffect):
     Drop all the text on the screen as if it was subject to gravity.
     """
 
-    def __init__(self, screen, life_time, **kwargs):
+    def __init__(self, screen: Screen, life_time: int, **kwargs):
         """
         See :py:obj:`.ParticleEffect` for details of the parameters.
         """
@@ -797,7 +818,13 @@ class ShootScreen(ParticleEffect):
     Shoot the screen out like a massive gunshot.
     """
 
-    def __init__(self, screen, x, y, life_time, diameter=None, **kwargs):
+    def __init__(self,
+                 screen: Screen,
+                 x: int,
+                 y: int,
+                 life_time: int,
+                 diameter: Optional[int] = None,
+                 **kwargs):
         """
         See :py:obj:`.ParticleEffect` for details of the parameters.
 
@@ -818,7 +845,7 @@ class Rain(ParticleEffect):
     Rain storm effect.
     """
 
-    def __init__(self, screen, life_time, **kwargs):
+    def __init__(self, screen: Screen, life_time: int, **kwargs):
         """
         See :py:obj:`.ParticleEffect` for details of the parameters.
         """
@@ -829,9 +856,12 @@ class Rain(ParticleEffect):
         self._active_systems = []
         self._active_systems.append(RainSource(self._screen, self._life_time, self._collision))
 
-    def _collision(self, particle):
+    def _collision(self, particle: Particle):
         # Already calculated new position, so go back in history
-        _, x, y, _, _, _ = particle.last()
+        temp = particle.last()
+        if temp is None:
+            return
+        _, x, y, _, _, _ = temp
 
         # Note that dx = dy, so simply calculation of next point to check.
         current_char = None

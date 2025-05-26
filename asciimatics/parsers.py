@@ -18,6 +18,7 @@ class _State:
     """
     Internal state class for all parsers.
     """
+
     text = ""
     attributes: Optional[list[Optional[int]]] = None
     init_colours = False

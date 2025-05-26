@@ -3,17 +3,19 @@ This module defines `Effects` which can be used for animations.  For more detail
 http://asciimatics.readthedocs.io/en/latest/animation.html
 """
 
+from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from random import randint, random, choice
 from math import sin, cos, pi
 import datetime
 import time
-from typing import Dict, Optional, Tuple
-from asciimatics.event import Event
-from asciimatics.paths import Path, DynamicPath
+from typing import TYPE_CHECKING, Dict, Optional, Tuple
 from asciimatics.screen import Screen
-from asciimatics.renderers.base import Renderer
-from asciimatics.scene import Scene
+from asciimatics.paths import Path, DynamicPath
+if TYPE_CHECKING:
+    from asciimatics.event import Event
+    from asciimatics.renderers.base import Renderer
+    from asciimatics.scene import Scene
 
 
 class Effect(metaclass=ABCMeta):

@@ -1,8 +1,10 @@
 """
 This module defines the exceptions used by asciimatics.
 """
-from typing import List, Optional
-from asciimatics.scene import Scene
+from __future__ import annotations
+from typing import TYPE_CHECKING, List, Optional
+if TYPE_CHECKING:
+    from asciimatics.scene import Scene
 
 
 class ResizeScreenError(Exception):

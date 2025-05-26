@@ -5,10 +5,10 @@ http://asciimatics.readthedocs.io/en/latest/animation.html
 import random
 from asciimatics.effects import Sprite
 from asciimatics.renderers import StaticRenderer
+from asciimatics.screen import Screen
+from asciimatics.paths import Path
 
 # Images for Sam-ple sprite.
-from asciimatics.screen import Screen
-
 sam_default = [
     """
     ______
@@ -120,7 +120,7 @@ class Sam(Sprite):
     Sam Paul sprite - an simple sample animated character.
     """
 
-    def __init__(self, screen, path, start_frame=0, stop_frame=0):
+    def __init__(self, screen: Screen, path: Path, start_frame: int = 0, stop_frame: int = 0):
         """
         See :py:obj:`.Sprite` for details.
         """
@@ -142,7 +142,12 @@ class Arrow(Sprite):
     Sample arrow sprite - points where it is going.
     """
 
-    def __init__(self, screen, path, colour=Screen.COLOUR_WHITE, start_frame=0, stop_frame=0):
+    def __init__(self,
+                 screen: Screen,
+                 path: Path,
+                 colour: int = Screen.COLOUR_WHITE,
+                 start_frame: int = 0,
+                 stop_frame: int = 0):
         """
         See :py:obj:`.Sprite` for details.
         """
@@ -166,7 +171,12 @@ class Plot(Sprite):
     for plotting a path to the screen.
     """
 
-    def __init__(self, screen, path, colour=Screen.COLOUR_WHITE, start_frame=0, stop_frame=0):
+    def __init__(self,
+                 screen: Screen,
+                 path: Path,
+                 colour: int = Screen.COLOUR_WHITE,
+                 start_frame: int = 0,
+                 stop_frame: int = 0):
         """
         See :py:obj:`.Sprite` for details.
         """

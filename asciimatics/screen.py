@@ -1445,7 +1445,7 @@ class Screen(_AbstractCanvas, metaclass=ABCMeta):
             # Enable mouse input, disable quick-edit mode and disable ctrl-c
             # if needed.
             in_mode = win_in.GetConsoleMode()
-            new_mode = (in_mode | win32console.ENABLE_MOUSE_INPUT | ENABLE_EXTENDED_FLAGS)
+            new_mode = in_mode | win32console.ENABLE_MOUSE_INPUT | ENABLE_EXTENDED_FLAGS
             new_mode &= ~ENABLE_QUICK_EDIT_MODE
             if catch_interrupt:
                 # Ignore ctrl-c handlers if specified.
@@ -2209,9 +2209,9 @@ if sys.platform == "win32":
                     button = 0
                     if event.EventFlags == 0:
                         # Button pressed - translate it.
-                        if (event.ButtonState & win32con.FROM_LEFT_1ST_BUTTON_PRESSED != 0):
+                        if event.ButtonState & win32con.FROM_LEFT_1ST_BUTTON_PRESSED != 0:
                             button |= MouseEvent.LEFT_CLICK
-                        if (event.ButtonState & win32con.RIGHTMOST_BUTTON_PRESSED != 0):
+                        if event.ButtonState & win32con.RIGHTMOST_BUTTON_PRESSED != 0:
                             button |= MouseEvent.RIGHT_CLICK
                     elif event.EventFlags & win32con.DOUBLE_CLICK != 0:
                         button |= MouseEvent.DOUBLE_CLICK

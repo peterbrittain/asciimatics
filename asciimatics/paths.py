@@ -3,10 +3,12 @@ This module provides `Paths` to create animation effects with Sprites.  For more
 http://asciimatics.readthedocs.io/en/latest/animation.html
 """
 
+from __future__ import annotations
 from abc import ABCMeta, abstractmethod
-from typing import List, Tuple, Optional
-from asciimatics.screen import Screen
-from asciimatics.event import Event
+from typing import TYPE_CHECKING, List, Tuple, Optional
+if TYPE_CHECKING:
+    from asciimatics.event import Event
+    from asciimatics.screen import Screen
 
 
 def _spline(t: float, p0: float, p1: float, p2: float, p3: float) -> float:
