@@ -4,6 +4,7 @@ This module provides common code for all Renderers.
 
 from abc import ABCMeta, abstractmethod
 import re
+from typing import Callable, List, Optional, Tuple, Iterable
 from wcwidth.wcwidth import wcswidth
 from asciimatics.screen import Screen, TemporaryCanvas
 from asciimatics.constants import COLOUR_REGEX
@@ -38,33 +39,34 @@ class Renderer(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def max_width(self):
+    def max_width(self) -> int:
         """
         :return: The max width of the rendered text (across all images if an animated renderer).
         """
 
     @property
     @abstractmethod
-    def rendered_text(self):
+    def rendered_text(
+            self) -> Tuple[List[str], List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]]:
         """
         :return: The next image and colour map in the sequence as a tuple.
         """
 
     @property
     @abstractmethod
-    def images(self):
+    def images(self) -> Iterable[List[str]]:
         """
         :return: An iterator of all the images in the Renderer.
         """
 
     @property
     @abstractmethod
-    def max_height(self):
+    def max_height(self) -> int:
         """
         :return: The max height of the rendered text (across all images if an animated renderer).
         """
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         :returns: a plain string representation of the next rendered image.
         """
@@ -86,7 +88,7 @@ class StaticRenderer(Renderer):
     # It should match ${n}, ${m,n} or ${m,n,o}
     _colour_sequence = re.compile(COLOUR_REGEX)
 
-    def __init__(self, images=None, animation=None):
+    def __init__(self, images: Optional[List[str]] = None, animation: Optional[Callable] = None):
         """
         :param images: An optional set of ascii images to be rendered.
         :param animation: A function to pick the image (from images) to be
@@ -98,8 +100,8 @@ class StaticRenderer(Renderer):
         self._max_width = 0
         self._max_height = 0
         self._animation = animation
-        self._colour_map = None
-        self._plain_images = []
+        self._colour_map: list[list[list[tuple[Optional[int], Optional[int], Optional[int]]]]] = []
+        self._plain_images: list[list[str]] = []
 
     def reset(self):
         self._index = 0
@@ -133,9 +135,7 @@ class StaticRenderer(Renderer):
                                           ATTRIBUTES[match.group(3)],
                                           int(match.group(4)))
                         elif match.group(5) is not None:
-                            attributes = (int(match.group(5)),
-                                          ATTRIBUTES[match.group(6)],
-                                          None)
+                            attributes = (int(match.group(5)), ATTRIBUTES[match.group(6)], None)
                         else:
                             attributes = (int(match.group(7)), 0, None)
                         line = match.group(8)
@@ -145,7 +145,7 @@ class StaticRenderer(Renderer):
             self._colour_map.append(colour_map)
 
     @property
-    def images(self):
+    def images(self) -> Iterable[List[str]]:
         """
         :return: An iterator of all the images in the Renderer.
         """
@@ -155,7 +155,8 @@ class StaticRenderer(Renderer):
         return iter(self._plain_images)
 
     @property
-    def rendered_text(self):
+    def rendered_text(
+            self) -> Tuple[List[str], List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]]:
         """
         :return: The next image and colour map in the sequence as a tuple.
         """
@@ -169,11 +170,10 @@ class StaticRenderer(Renderer):
                 self._index = 0
         else:
             index = self._animation()
-        return (self._plain_images[index],
-                self._colour_map[index])
+        return self._plain_images[index], self._colour_map[index]
 
     @property
-    def max_height(self):
+    def max_height(self) -> int:
         """
         :return: The max height of the rendered text (across all images if an animated renderer).
         """
@@ -186,7 +186,7 @@ class StaticRenderer(Renderer):
         return self._max_height
 
     @property
-    def max_width(self):
+    def max_width(self) -> int:
         """
         :return: The max width of the rendered text (across all images if an animated renderer).
         """
@@ -206,7 +206,7 @@ class DynamicRenderer(Renderer, metaclass=ABCMeta):
     has a defined maximum size on construction.
     """
 
-    def __init__(self, height, width, clear=True):
+    def __init__(self, height: int, width: int, clear: bool = True):
         """
         :param height: The max height of the rendered image.
         :param width: The max width of the rendered image.
@@ -222,8 +222,13 @@ class DynamicRenderer(Renderer, metaclass=ABCMeta):
         # self._canvas.clear_buffer(Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK)
         self._canvas.clear_buffer(None, 0, 0)
 
-    def _write(self, text, x, y, colour=Screen.COLOUR_WHITE,
-               attr=Screen.A_NORMAL, bg=Screen.COLOUR_BLACK):
+    def _write(self,
+               text: str,
+               x: int,
+               y: int,
+               colour: Optional[int] = Screen.COLOUR_WHITE,
+               attr: Optional[int] = Screen.A_NORMAL,
+               bg: Optional[int] = Screen.COLOUR_BLACK):
         """
         Write some text to the specified location in the current image.
 
@@ -240,15 +245,15 @@ class DynamicRenderer(Renderer, metaclass=ABCMeta):
         self._canvas.print_at(text, x, y, colour, attr, bg)
 
     @property
-    def _plain_image(self):
+    def _plain_image(self) -> List[str]:
         return self._canvas.plain_image
 
     @property
-    def _colour_map(self):
+    def _colour_map(self) -> List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]:
         return self._canvas.colour_map
 
     @abstractmethod
-    def _render_now(self):
+    def _render_now(self) -> Tuple[List[str], List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]]:
         """
         Common method to render the latest image.
 
@@ -257,7 +262,9 @@ class DynamicRenderer(Renderer, metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def _render_all(self):
+    def _render_all(
+            self
+    ) -> Iterable[Tuple[List[str], List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]]]:
         """
         Generate all output.
 
@@ -268,20 +275,21 @@ class DynamicRenderer(Renderer, metaclass=ABCMeta):
         """
 
     @property
-    def images(self):
+    def images(self) -> Iterable[List[str]]:
         # Attempt to get all images.  Note that many are genuinely dynamic and so will only return one.
         return [x[0] for x in self._render_all()]
 
     @property
-    def rendered_text(self):
+    def rendered_text(
+            self) -> Tuple[List[str], List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]]:
         if self._must_clear:
             self._clear()
         return self._render_now()
 
     @property
-    def max_height(self):
+    def max_height(self) -> int:
         return self._canvas.height
 
     @property
-    def max_width(self):
+    def max_width(self) -> int:
         return self._canvas.width

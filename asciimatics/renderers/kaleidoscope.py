@@ -3,8 +3,8 @@ This module implements a kaeldioscope effect renderer.
 """
 
 from math import sin, cos, pi, atan2
-
-from asciimatics.renderers.base import DynamicRenderer
+from typing import List, Tuple, Iterable, Optional
+from asciimatics.renderers.base import DynamicRenderer, Renderer
 
 
 class Kaleidoscope(DynamicRenderer):
@@ -26,7 +26,7 @@ class Kaleidoscope(DynamicRenderer):
     characters).
     """
 
-    def __init__(self, height, width, cell, symmetry):
+    def __init__(self, height: int, width: int, cell: Renderer, symmetry: int):
         """
         :param height: Height of the box to contain the kaleidoscope.
         :param width: Width of the box to contain the kaleidoscope.
@@ -35,16 +35,18 @@ class Kaleidoscope(DynamicRenderer):
         """
         super().__init__(height, width)
         self._symmetry = symmetry
-        self._rotation = 0
+        self._rotation = 0.0
         self._cell = cell
 
     def reset(self):
         self._rotation = 0
 
-    def _render_all(self):
+    def _render_all(
+            self
+    ) -> Iterable[Tuple[List[str], List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]]]:
         return [self._render_now()]
 
-    def _render_now(self):
+    def _render_now(self) -> Tuple[List[str], List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]]:
         # Rotate a point (x, y) through an angle theta.
         def _rotate(x, y, theta):
             return x * cos(theta) - y * sin(theta), x * sin(theta) + y * cos(theta)
@@ -68,8 +70,7 @@ class Kaleidoscope(DynamicRenderer):
                 segment = round(atan2(oy, ox) * self._symmetry / pi)
                 if segment % 2 == 0:
                     # Just a rotation required for even segments.
-                    x1, y1 = _rotate(
-                        ox, oy, 0 if self._symmetry == 0 else -segment * pi / self._symmetry)
+                    x1, y1 = _rotate(ox, oy, 0 if self._symmetry == 0 else -segment * pi / self._symmetry)
                 else:
                     # Odd segments require a rotation and then a reflection.
                     x1, y1 = _rotate(ox, oy, (1 - segment) * pi / self._symmetry)

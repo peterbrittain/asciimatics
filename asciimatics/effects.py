@@ -1051,7 +1051,7 @@ class RandomNoise(Effect):
             text, colours = self._signal.rendered_text
         else:
             start_x = start_y = 0
-            text, colours = "", []
+            text, colours = [""], []
 
         for y in range(self._screen.height):
             if self._strength < 1.0:

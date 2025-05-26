@@ -3,7 +3,7 @@ This module implements a plasma effect renderer.
 """
 
 from math import sin, pi, sqrt
-
+from typing import List, Tuple, Optional, Iterable
 from asciimatics.renderers.base import DynamicRenderer
 from asciimatics.screen import Screen
 
@@ -46,7 +46,7 @@ class Plasma(DynamicRenderer):
         (196, 0),
     ]
 
-    def __init__(self, height, width, colours):
+    def __init__(self, height: int, width: int, colours: int):
         """
         :param height: Height of the box to contain the plasma.
         :param width: Width of the box to contain the plasma.
@@ -59,24 +59,24 @@ class Plasma(DynamicRenderer):
     def reset(self):
         self._t = 0
 
-    def _render_all(self):
+    def _render_all(
+            self
+    ) -> Iterable[Tuple[List[str], List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]]]:
         return [self._render_now()]
 
-    def _render_now(self):
+    def _render_now(self) -> Tuple[List[str], List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]]:
         # Internal function for creating a sine wave radiating out from a point
         def f(x1, y1, xp, yp, n):
-            return sin(sqrt((x1 - self._canvas.width * xp) ** 2 +
-                            4 * ((y1 - self._canvas.height * yp) ** 2)) * pi / n)
+            return sin(
+                sqrt((x1 - self._canvas.width * xp)**2 + 4 * ((y1 - self._canvas.height * yp)**2)) * pi / n)
 
         self._t += 1
         for y in range(self._canvas.height - 1):
             for x in range(self._canvas.width - 1):
-                value = abs(f(x + self._t / 3, y, 1 / 4, 1 / 3, 15) +
-                            f(x, y, 1 / 8, 1 / 5, 11) +
-                            f(x, y + self._t / 3, 1 / 2, 1 / 5, 13) +
-                            f(x, y, 3 / 4, 4 / 5, 13)) / 4.0
-                fg, attr = self._palette[
-                    int(round(value * (len(self._palette) - 1)))]
+                value = abs(
+                    f(x + self._t / 3, y, 1 / 4, 1 / 3, 15) + f(x, y, 1 / 8, 1 / 5, 11) +
+                    f(x, y + self._t / 3, 1 / 2, 1 / 5, 13) + f(x, y, 3 / 4, 4 / 5, 13)) / 4.0
+                fg, attr = self._palette[int(round(value * (len(self._palette) - 1)))]
                 char = self._greyscale[int((len(self._greyscale) - 1) * value)]
                 self._write(char, x, y, fg, attr, 0)
 

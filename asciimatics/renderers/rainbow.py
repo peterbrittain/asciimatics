@@ -1,7 +1,8 @@
 """
 This module implements a rainbow effect renderer.
 """
-from asciimatics.renderers.base import StaticRenderer
+from asciimatics.renderers.base import StaticRenderer, Renderer
+from asciimatics.screen import Screen
 
 
 class Rainbow(StaticRenderer):
@@ -18,7 +19,7 @@ class Rainbow(StaticRenderer):
     _256_palette = [196, 202, 208, 214, 220, 226, 154, 118, 82, 46, 47, 48, 49, 50, 51,
                     45, 39, 33, 27, 21, 57, 93, 129, 201, 200, 199, 198, 197]
 
-    def __init__(self, screen, renderer):
+    def __init__(self, screen: Screen, renderer: Renderer):
         """
         :param screen: The screen object for this renderer.
         :param renderer: The renderer to wrap.

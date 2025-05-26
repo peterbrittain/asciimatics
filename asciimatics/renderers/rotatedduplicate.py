@@ -2,7 +2,7 @@
 This module implements a renderer that renders another renderer but rotated.
 """
 
-from asciimatics.renderers.base import StaticRenderer
+from asciimatics.renderers.base import StaticRenderer, Renderer
 
 
 class RotatedDuplicate(StaticRenderer):
@@ -11,7 +11,7 @@ class RotatedDuplicate(StaticRenderer):
     whole thing within within the specified dimensions.
     """
 
-    def __init__(self, width, height, renderer):
+    def __init__(self, width: int, height: int, renderer: Renderer):
         """
         :param width: The maximum width of the rendered text.
         :param height: The maximum height of the rendered text.

@@ -10,7 +10,7 @@ class Scale(StaticRenderer):
     creations. Every 5 spaces gets a tick mark, every 10 a number.
     """
 
-    def __init__(self, width):
+    def __init__(self, width: int):
         """
         :param width: The width of the scale
         """
@@ -36,7 +36,7 @@ class VScale(StaticRenderer):
     creations. Writes lowest significant digit of a count running vertically.
     """
 
-    def __init__(self, height):
+    def __init__(self, height: int):
         """
         :param width: The width of the scale
         """

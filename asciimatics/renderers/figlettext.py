@@ -13,7 +13,7 @@ class FigletText(StaticRenderer):
     See http://www.figlet.org/ for details of available fonts.
     """
 
-    def __init__(self, text, font=DEFAULT_FONT, width=200):
+    def __init__(self, text: str, font: str = DEFAULT_FONT, width: int = 200):
         """
         :param text: The text string to convert with Figlet.
         :param font: The Figlet font to use (optional).

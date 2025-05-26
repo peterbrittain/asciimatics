@@ -3,7 +3,7 @@ This module implements bar chart renderers.
 """
 
 from abc import abstractmethod, ABCMeta
-
+from typing import Callable, List, Optional, Tuple, Union, Iterable
 from asciimatics.constants import DOUBLE_LINE, SINGLE_LINE
 from asciimatics.renderers.base import DynamicRenderer
 from asciimatics.screen import Screen
@@ -25,9 +25,21 @@ class _BarChartBase(DynamicRenderer, metaclass=ABCMeta):
     BOTH = 3
     BOTH_AXES = 3
 
-    def __init__(self, height, width, functions, char="#", colour=Screen.COLOUR_GREEN,
-                 bg=Screen.COLOUR_BLACK, gradient=None, scale=None, axes=Y_AXIS, intervals=None,
-                 labels=False, border=True, keys=None, gap=None):
+    def __init__(self,
+                 height: int,
+                 width: int,
+                 functions: List[Callable],
+                 char: str = "#",
+                 colour: int = Screen.COLOUR_GREEN,
+                 bg: int = Screen.COLOUR_BLACK,
+                 gradient: Optional[List[Union[Tuple[int, int, int], Tuple[int, int]]]] = None,
+                 scale: Optional[Union[float, int]] = None,
+                 axes: int = Y_AXIS,
+                 intervals: Optional[Union[float, int]] = None,
+                 labels: bool = False,
+                 border: bool = True,
+                 keys: Optional[List[str]] = None,
+                 gap: Optional[int] = None):
         # See children BarChart and VBarChart for argument descriptions and pydocs
         super().__init__(height, width)
         self._functions = functions
@@ -105,7 +117,7 @@ class _BarChartBase(DynamicRenderer, metaclass=ABCMeta):
     def axes_style(self, style):
         self._axes_lines.style = style
 
-    def _setup_chart(self):
+    def _setup_chart(self) -> Tuple[int, int, int, int]:
         """
         Draws any borders and returns initial height, width, and starting X and Y.
         """
@@ -115,8 +127,9 @@ class _BarChartBase(DynamicRenderer, metaclass=ABCMeta):
         start_x = 0
         start_y = 0
 
-        # Create  the box around the chart...
+        # Create the box around the chart...
         if self._border:
+            assert self._border_lines
             draw = self._border_lines.box_top(self._canvas.width)
             self._write(draw, 0, 0)
             for line in range(1, self._canvas.height):
@@ -139,9 +152,21 @@ class BarChart(_BarChartBase):
     sound equalizer or a progress indicator.
     """
 
-    def __init__(self, height, width, functions, char="#", colour=Screen.COLOUR_GREEN,
-                 bg=Screen.COLOUR_BLACK, gradient=None, scale=None, axes=_BarChartBase.Y_AXIS,
-                 intervals=None, labels=False, border=True, keys=None, gap=None):
+    def __init__(self,
+                 height: int,
+                 width: int,
+                 functions: List[Callable],
+                 char: str = "#",
+                 colour: int = Screen.COLOUR_GREEN,
+                 bg: int = Screen.COLOUR_BLACK,
+                 gradient: Optional[List[Union[Tuple[int, int, int], Tuple[int, int]]]] = None,
+                 scale: Optional[float] = None,
+                 axes: int = _BarChartBase.Y_AXIS,
+                 intervals: Optional[Union[float, int]] = None,
+                 labels: bool = False,
+                 border: bool = True,
+                 keys: Optional[List[str]] = None,
+                 gap: Optional[int] = None):
         """
         :param height: The max height of the rendered image.
         :param width: The max width of the rendered image.
@@ -175,14 +200,27 @@ class BarChart(_BarChartBase):
             * A Y_AXIS uses a width of 1
         """
         # Have to have a call to super as the defaults for the class are different than the parent
-        super().__init__(
-            height, width, functions, char, colour, bg, gradient, scale, axes, intervals, labels, border,
-            keys, gap)
+        super().__init__(height,
+                         width,
+                         functions,
+                         char,
+                         colour,
+                         bg,
+                         gradient,
+                         scale,
+                         axes,
+                         intervals,
+                         labels,
+                         border,
+                         keys,
+                         gap)
 
-    def _render_all(self):
+    def _render_all(
+            self
+    ) -> Iterable[Tuple[List[str], List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]]]:
         return [self._render_now()]
 
-    def _render_now(self):
+    def _render_now(self) -> Tuple[List[str], List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]]:
         int_h, int_w, start_x, start_y = self._setup_chart()
 
         # Make room for the keys if supplied.
@@ -241,8 +279,10 @@ class BarChart(_BarChartBase):
 
         gap = self._gap
         if self._gap is None:
-            gap = 0 if len(self._functions) <= 1 else (int_h - (bar_size * len(
-                self._functions))) / (len(self._functions) - 1)
+            gap = 0 if len(
+                self._functions) <= 1 else (int_h -
+                                            (bar_size * len(self._functions))) // (len(self._functions) - 1)
+        assert gap is not None
 
         # Now add the bars...
         for i, fn in enumerate(self._functions):
@@ -269,8 +309,7 @@ class BarChart(_BarChartBase):
                         size = value if bar_len >= value else bar_len
                         size = min(size, int_w)
                         for line in range(bar_size):
-                            self._write(
-                                self._char * (size - last), start_x + last, y + line, colour, bg=bg)
+                            self._write(self._char * (size - last), start_x + last, y + line, colour, bg=bg)
 
                     # Stop if we reached the end of the line or the chart
                     if bar_len < value or size >= int_w:
@@ -291,9 +330,21 @@ class VBarChart(_BarChartBase):
     sound equalizer or a progress indicator.
     """
 
-    def __init__(self, height, width, functions, char="#", colour=Screen.COLOUR_GREEN,
-                 bg=Screen.COLOUR_BLACK, gradient=None, scale=None, axes=_BarChartBase.X_AXIS,
-                 intervals=None, labels=False, border=True, keys=None, gap=None):
+    def __init__(self,
+                 height: int,
+                 width: int,
+                 functions: List[Callable],
+                 char: str = "#",
+                 colour: int = Screen.COLOUR_GREEN,
+                 bg: int = Screen.COLOUR_BLACK,
+                 gradient: Optional[List[Union[Tuple[int, int, int], Tuple[int, int]]]] = None,
+                 scale: Optional[Union[float, int]] = None,
+                 axes: int = _BarChartBase.X_AXIS,
+                 intervals: Optional[Union[float, int]] = None,
+                 labels: bool = False,
+                 border: bool = True,
+                 keys: Optional[List[str]] = None,
+                 gap: Optional[int] = None):
         """
         :param height: The max height of the rendered image.
         :param width: The max width of the rendered image.
@@ -328,14 +379,27 @@ class VBarChart(_BarChartBase):
             * An X_AXIS uses a height of 1
             * A Y_AXIS uses a width of 1
         """
-        super().__init__(
-            height, width, functions, char, colour, bg, gradient, scale, axes, intervals, labels, border,
-            keys, gap)
+        super().__init__(height,
+                         width,
+                         functions,
+                         char,
+                         colour,
+                         bg,
+                         gradient,
+                         scale,
+                         axes,
+                         intervals,
+                         labels,
+                         border,
+                         keys,
+                         gap)
 
-    def _render_all(self):
+    def _render_all(
+            self
+    ) -> Iterable[Tuple[List[str], List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]]]:
         return [self._render_now()]
 
-    def _render_now(self):
+    def _render_now(self) -> Tuple[List[str], List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]]:
         int_h, int_w, start_x, start_y = self._setup_chart()
 
         # Make room for the keys if supplied.

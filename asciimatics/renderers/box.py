@@ -14,7 +14,7 @@ class Box(StaticRenderer):
     Windows and direct access to curses in Linux.
     """
 
-    def __init__(self, width, height, uni=False, style=SINGLE_LINE):
+    def __init__(self, width: int, height: int, uni: bool = False, style: int = SINGLE_LINE):
         """
         :param width: width of box
         :param height: height of box

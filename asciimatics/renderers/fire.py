@@ -4,7 +4,7 @@ This module implements a fire effect renderer.
 
 import copy
 from random import randint, random
-
+from typing import List, Tuple, Iterable, Optional
 from asciimatics.renderers.base import DynamicRenderer
 from asciimatics.screen import Screen
 
@@ -59,8 +59,14 @@ class Fire(DynamicRenderer):
 
     _CHARS = " ...::$$$&&&@@"
 
-    def __init__(self, height, width, emitter, intensity, spot, colours,
-                 bg=False):
+    def __init__(self,
+                 height: int,
+                 width: int,
+                 emitter: str,
+                 intensity: float,
+                 spot: int,
+                 colours: int,
+                 bg: bool = False):
         """
         :param height: Height of the box to contain the flames.
         :param width: Width of the box to contain the flames.
@@ -95,10 +101,12 @@ class Fire(DynamicRenderer):
         line = [0 for _ in range(self._canvas.width)]
         self._buffer = [copy.deepcopy(line) for _ in range(self._canvas.width * 2)]
 
-    def _render_all(self):
+    def _render_all(
+            self
+    ) -> Iterable[Tuple[List[str], List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]]]:
         return [self._render_now()]
 
-    def _render_now(self):
+    def _render_now(self) -> Tuple[List[str], List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]]:
         # First make the fire rise with convection
         for y in range(len(self._buffer) - 1):
             self._buffer[y] = self._buffer[y + 1]
@@ -118,8 +126,7 @@ class Fire(DynamicRenderer):
 
         # Seed a few cooler spots
         for _ in range(self._canvas.width // 2):
-            self._buffer[randint(0, self._canvas.height - 1)][
-                randint(0, self._canvas.width - 1)] -= 10
+            self._buffer[randint(0, self._canvas.height - 1)][randint(0, self._canvas.width - 1)] -= 10
 
         # Simulate cooling effect of the resulting environment.
         for y, row in enumerate(self._buffer):
