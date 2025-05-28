@@ -1,8 +1,9 @@
 """This module defines a file browser selection"""
+from __future__ import annotations
 from re import compile as re_compile
 import os
 import unicodedata
-from collections import namedtuple
+from typing import Callable, Optional
 from asciimatics.utilities import readable_timestamp, readable_mem
 from asciimatics.widgets.multicolumnlistbox import MultiColumnListBox
 
@@ -12,7 +13,13 @@ class FileBrowser(MultiColumnListBox):
     A FileBrowser is a widget for finding a file on the local disk.
     """
 
-    def __init__(self, height, root, name=None, on_select=None, on_change=None, file_filter=None):
+    def __init__(self,
+                 height: int,
+                 root: str,
+                 name: Optional[str] = None,
+                 on_select: Optional[Callable] = None,
+                 on_change: Optional[Callable] = None,
+                 file_filter: Optional[str] = None):
         r"""
         :param height: The desired height for this widget.
         :param root: The starting root directory to display in the widget.
@@ -26,14 +33,11 @@ class FileBrowser(MultiColumnListBox):
         you must use a regex that matches to the end of the line - e.g. use ".*\.txt$" to find files ending
         with ".txt".  This ensures that you don't accidentally pick up files containing the filter.
         """
-        super().__init__(
-            height,
-            [0, ">8", ">14"],
-            [],
-            titles=["Filename", "Size", "Last modified"],
-            name=name,
-            on_select=self._on_selection,
-            on_change=on_change)
+        super().__init__(height, [0, ">8", ">14"], [],
+                         titles=["Filename", "Size", "Last modified"],
+                         name=name,
+                         on_select=self._on_selection,
+                         on_change=on_change)
 
         # Remember the on_select handler for external notification.  This allows us to wrap the
         # normal on_select notification with a function that will open new sub-directories as
@@ -44,7 +48,7 @@ class FileBrowser(MultiColumnListBox):
         self._initialized = False
         self._file_filter = None if file_filter is None else re_compile(file_filter)
 
-    def update(self, frame_no):
+    def update(self, frame_no: int):
         # Defer initial population until we first display the widget in order to avoid race
         # conditions in the Frame that may be using this widget.
         if not self._initialized:
@@ -73,7 +77,7 @@ class FileBrowser(MultiColumnListBox):
         new_widget._root = self._root
         new_widget.value = self.value
 
-    def _populate_list(self, value):
+    def _populate_list(self, value: str):
         """
         Populate the current multi-column list with the contents of the selected directory.
 
@@ -97,8 +101,8 @@ class FileBrowser(MultiColumnListBox):
         if len(self._root) > len(os.path.abspath(os.sep)):
             tree_view.append((["|-+ .."], os.path.abspath(os.path.join(self._root, ".."))))
 
-        tree_dirs = []
-        tree_files = []
+        tree_dirs: list[tuple[list[str], str]] = []
+        tree_files: list[tuple[list[str], str]] = []
         try:
             files = os.listdir(self._root)
         except OSError:
@@ -110,9 +114,7 @@ class FileBrowser(MultiColumnListBox):
                 details = os.lstat(full_path)
             except OSError:
                 # Can happen on Windows due to access permissions
-                details = namedtuple("stat_type", "st_size st_mtime")
-                details.st_size = 0
-                details.st_mtime = 0
+                details = os.stat_result([0] * 10)
             name = f"|-- {my_file}"
             tree = tree_files
             if os.path.isdir(full_path):
@@ -143,15 +145,19 @@ class FileBrowser(MultiColumnListBox):
                     name = f"|-- {my_file} -> {real_path}"
 
             # Normalize names for MacOS and then add to the list.
-            tree.append(([unicodedata.normalize("NFC", name),
-                          readable_mem(details.st_size),
-                          readable_timestamp(details.st_mtime)], full_path))
+            tree.append(([
+                unicodedata.normalize("NFC", name),
+                readable_mem(details.st_size),
+                readable_timestamp(details.st_mtime)
+            ],
+                         full_path))
 
         tree_view.extend(sorted(tree_dirs))
         tree_view.extend(sorted(tree_files))
 
         self.options = tree_view
-        self._titles[0] = self._root
+        if self._titles:
+            self._titles[0] = self._root
 
         # We're out of the function - unset recursion flag.
         self._in_update = False

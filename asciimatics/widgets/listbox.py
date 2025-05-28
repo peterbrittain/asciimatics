@@ -1,7 +1,11 @@
 """This module implements the listbox widget"""
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple, Union
 from asciimatics.strings import ColouredText
 from asciimatics.widgets.utilities import _enforce_width_ext
 from asciimatics.widgets.baselistbox import _BaseListBox
+if TYPE_CHECKING:
+    from asciimatics.parsers import Parser
 
 
 class ListBox(_BaseListBox):
@@ -9,8 +13,17 @@ class ListBox(_BaseListBox):
     A ListBox is a widget that displays a list from which the user can select one option.
     """
 
-    def __init__(self, height, options, centre=False, label=None, name=None, add_scroll_bar=False,
-                 parser=None, on_change=None, on_select=None, validator=None):
+    def __init__(self,
+                 height: int,
+                 options: List[Union[Tuple[str, int], Any]],
+                 centre: bool = False,
+                 label: Optional[str] = None,
+                 name: Optional[str] = None,
+                 add_scroll_bar: bool = False,
+                 parser: Optional[Parser] = None,
+                 on_change: Optional[Callable] = None,
+                 on_select: Optional[Callable] = None,
+                 validator: Optional[Callable] = None):
         """
         :param height: The required number of input lines for this ListBox.
         :param options: The options for each row in the widget.
@@ -28,13 +41,18 @@ class ListBox(_BaseListBox):
 
             options=[("First option", 1), ("Second option", 2)]
         """
-        super().__init__(
-            height, options, label=label, name=name, parser=parser, on_change=on_change,
-            on_select=on_select, validator=validator)
+        super().__init__(height,
+                         options,
+                         label=label,
+                         name=name,
+                         parser=parser,
+                         on_change=on_change,
+                         on_select=on_select,
+                         validator=validator)
         self._centre = centre
         self._add_scroll_bar = add_scroll_bar
 
-    def update(self, frame_no):
+    def update(self, frame_no: int):
         self._draw_label()
 
         # Prepare to calculate new visible limits if needed.
@@ -42,13 +60,15 @@ class ListBox(_BaseListBox):
         width = self._w - self._offset
 
         # Clear out the existing box content
+        assert self._frame
         (colour, attr, background) = self._frame.palette["field"]
         for i in range(height):
-            self._frame.canvas.print_at(
-                " " * self.width,
-                self._x + self._offset,
-                self._y + i,
-                colour, attr, background)
+            self._frame.canvas.print_at(" " * self.width,
+                                        self._x + self._offset,
+                                        self._y + i,
+                                        colour,
+                                        attr,
+                                        background)
 
         # Don't bother with anything else if there are no options to render.
         if len(self._options) <= 0:
@@ -84,34 +104,37 @@ class ListBox(_BaseListBox):
                     str(paint_text),
                     self._x + self._offset,
                     self._y + y_offset + i - start_line,
-                    colour, attr, background,
+                    colour,
+                    attr,
+                    background,
                     colour_map=paint_text.colour_map if hasattr(paint_text, "colour_map") else None)
 
         # And finally draw any scroll bar.
         if self._scroll_bar:
             self._scroll_bar.update()
 
-    def _find_option(self, search_value):
+    def _find_option(self, search_value: str) -> Optional[int]:
         for text, value in self._options:
             if text.startswith(search_value):
                 return value
         return None
 
-    def _max_len(self):
+    def _max_len(self) -> int:
         """
         Max length of any entry in the options.
         """
         return max(len(x[0]) for x in self._options)
 
-    def _parse_option(self, option):
+    def _parse_option(self, option: str) -> ColouredText:
         """
         Parse a single option for ColouredText.
 
         :param option: the option to parse
         :returns: the option parsed and converted to ColouredText.
         """
+        assert self._parser
         try:
-            return ColouredText(option.raw_text, self._parser)
+            return ColouredText(option.raw_text, self._parser)  # type: ignore
         except AttributeError:
             return ColouredText(option, self._parser)
 

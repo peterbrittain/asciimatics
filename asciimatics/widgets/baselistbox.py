@@ -1,10 +1,13 @@
 """This is the baseclass for list box types"""
 from datetime import datetime, timedelta
 from abc import ABCMeta, abstractmethod
-from asciimatics.event import KeyboardEvent, MouseEvent
+from typing import Any, Callable, List, Optional, Tuple, Union
+from asciimatics.event import KeyboardEvent, MouseEvent, Event
 from asciimatics.screen import Screen
 from asciimatics.widgets.widget import Widget
 from asciimatics.widgets.scrollbar import _ScrollBar
+from asciimatics.parsers import Parser
+from asciimatics.strings import ColouredText
 
 
 class _BaseListBox(Widget, metaclass=ABCMeta):
@@ -12,12 +15,32 @@ class _BaseListBox(Widget, metaclass=ABCMeta):
     An Internal class to contain common function between list box types.
     """
 
-    __slots__ = ["_options", "_titles", "_line", "_start_line", "_start_char", "_required_height",
-                 "_on_change", "_on_select", "_validator", "_search", "_last_search", "_scroll_bar",
-                 "_parser"]
+    __slots__ = [
+        "_options",
+        "_titles",
+        "_line",
+        "_start_line",
+        "_start_char",
+        "_required_height",
+        "_on_change",
+        "_on_select",
+        "_validator",
+        "_search",
+        "_last_search",
+        "_scroll_bar",
+        "_parser"
+    ]
 
-    def __init__(self, height, options, titles=None, label=None, name=None, parser=None,
-                 on_change=None, on_select=None, validator=None):
+    def __init__(self,
+                 height: int,
+                 options: Union[List[Tuple[str, int]], List[Tuple[List[str], int]]],
+                 titles: Optional[List[Union[ColouredText, str]]] = None,
+                 label: Optional[str] = None,
+                 name: Optional[str] = None,
+                 parser: Optional[Parser] = None,
+                 on_change: Optional[Callable] = None,
+                 on_select: Optional[Callable] = None,
+                 validator: Optional[Callable] = None):
         """
         :param height: The required number of input lines for this widget.
         :param options: The options for each row in the widget.
@@ -44,12 +67,12 @@ class _BaseListBox(Widget, metaclass=ABCMeta):
         self._validator = validator
         self._search = ""
         self._last_search = datetime.now()
-        self._scroll_bar = None
+        self._scroll_bar: Optional[_ScrollBar] = None
 
     def reset(self):
         pass
 
-    def process_event(self, event):
+    def process_event(self, event: Optional[Event]) -> Optional[Event]:
         if isinstance(event, KeyboardEvent):
             if len(self._options) > 0 and event.key_code == Screen.KEY_UP:
                 # Move up one line in text - use value to trigger on_select.
@@ -77,8 +100,7 @@ class _BaseListBox(Widget, metaclass=ABCMeta):
                 self.value = self._options[self._line][1]
             elif len(self._options) > 0 and event.key_code == Screen.KEY_PAGE_DOWN:
                 # Move down one page.
-                self._line = min(
-                    len(self._options) - 1, self._line + self._h - (1 if self._titles else 0))
+                self._line = min(len(self._options) - 1, self._line + self._h - (1 if self._titles else 0))
                 self.value = self._options[self._line][1]
             elif event.key_code in [Screen.ctrl("m"), Screen.ctrl("j")]:
                 # Fire select callback.
@@ -102,9 +124,8 @@ class _BaseListBox(Widget, metaclass=ABCMeta):
             # Mouse event - adjust for scroll bar as needed.
             if event.buttons != 0:
                 # Check for normal widget.
-                if (len(self._options) > 0 and
-                        self.is_mouse_over(event, include_label=False,
-                                           width_modifier=1 if self._scroll_bar else 0)):
+                if (len(self._options) > 0 and self.is_mouse_over(
+                        event, include_label=False, width_modifier=1 if self._scroll_bar else 0)):
                     # Figure out selected line
                     new_line = event.y - self._y + self._start_line
                     if self._titles:
@@ -133,7 +154,7 @@ class _BaseListBox(Widget, metaclass=ABCMeta):
         # If we got here, we processed the event - swallow it.
         return None
 
-    def _add_or_remove_scrollbar(self, width, height, dy):
+    def _add_or_remove_scrollbar(self, width: int, height: int, dy: int):
         """
         Add or remove a scrollbar from this listbox based on height and available options.
 
@@ -141,14 +162,19 @@ class _BaseListBox(Widget, metaclass=ABCMeta):
         :param height: Height of the Listbox.
         :param dy: Vertical offset from top of widget.
         """
+        assert self._frame is not None
         if self._scroll_bar is None and len(self._options) > height:
-            self._scroll_bar = _ScrollBar(
-                self._frame.canvas, self._frame.palette, self._x + width - 1, self._y + dy,
-                height, self._get_pos, self._set_pos)
+            self._scroll_bar = _ScrollBar(self._frame.canvas,
+                                          self._frame.palette,
+                                          self._x + width - 1,
+                                          self._y + dy,
+                                          height,
+                                          self._get_pos,
+                                          self._set_pos)
         elif self._scroll_bar is not None and len(self._options) <= height:
             self._scroll_bar = None
 
-    def _get_pos(self):
+    def _get_pos(self) -> float:
         """
         Get current position for scroll bar.
         """
@@ -156,7 +182,7 @@ class _BaseListBox(Widget, metaclass=ABCMeta):
             return 0
         return self._start_line / (len(self._options) - self._h)
 
-    def _set_pos(self, pos):
+    def _set_pos(self, pos: float):
         """
         Set current position for scroll bar.
         """
@@ -174,7 +200,7 @@ class _BaseListBox(Widget, metaclass=ABCMeta):
         :return: The value of the matching option (or None if nothing matches).
         """
 
-    def required_height(self, offset, width):
+    def required_height(self, offset: int, width: int) -> int:
         return self._required_height
 
     @property
@@ -221,7 +247,7 @@ class _BaseListBox(Widget, metaclass=ABCMeta):
         # Fix up the start line now that we've explicitly set a new value.
         self._start_line = max(0, self._line - self._h + 1, min(self._start_line, self._line))
 
-    def _parse_options(self, options):
+    def _parse_options(self, options: Union[List[Tuple[str, int]], List[Tuple[List[str], int]]]) -> List[Any]:
         """
         Parse a the options list for ColouredText.
 

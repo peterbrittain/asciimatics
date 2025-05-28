@@ -1,12 +1,17 @@
 """This module implements a Pop up dialog message box"""
+from __future__ import annotations
 from inspect import isfunction
 from functools import partial
+from typing import TYPE_CHECKING, Callable, List, Optional
 from wcwidth import wcswidth
 from asciimatics.widgets.button import Button
 from asciimatics.widgets.frame import Frame
 from asciimatics.widgets.layout import Layout
 from asciimatics.widgets.textbox import TextBox
 from asciimatics.widgets.utilities import _split_text
+if TYPE_CHECKING:
+    from asciimatics.scene import Scene
+    from asciimatics.screen import Screen
 
 
 class PopUpDialog(Frame):
@@ -14,7 +19,13 @@ class PopUpDialog(Frame):
     A fixed implementation Frame that provides a standard message box dialog.
     """
 
-    def __init__(self, screen, text, buttons, on_close=None, has_shadow=False, theme="warning"):
+    def __init__(self,
+                 screen: Screen,
+                 text: str,
+                 buttons: List[str],
+                 on_close: Optional[Callable] = None,
+                 has_shadow: bool = False,
+                 theme: str = "warning"):
         """
         :param screen: The Screen that owns this dialog.
         :param text: The message text to display.
@@ -38,8 +49,7 @@ class PopUpDialog(Frame):
         # Decide on optimum width of the dialog.  Limit to 2/3 the screen width.
         string_len = wcswidth if screen.unicode_aware else len
         width = max(string_len(x) for x in text.split("\n"))
-        width = max(width + 2,
-                    sum(string_len(x) + 4 for x in buttons) + len(buttons) + 5)
+        width = max(width + 2, sum(string_len(x) + 4 for x in buttons) + len(buttons) + 5)
         width = min(width, screen.width * 2 // 3)
 
         # Figure out the necessary message and allow for buttons and borders
@@ -50,8 +60,7 @@ class PopUpDialog(Frame):
 
         # Construct the Frame
         self._data = {"message": self._message}
-        super().__init__(
-            screen, height, width, self._data, has_shadow=has_shadow, is_modal=True)
+        super().__init__(screen, height, width, self._data, has_shadow=has_shadow, is_modal=True)
 
         # Build up the message box
         layout = Layout([width - 2], fill_frame=True)
@@ -69,12 +78,13 @@ class PopUpDialog(Frame):
         # Ensure that we have the right palette in place
         self.set_theme(theme)
 
-    def _destroy(self, selected):
-        self._scene.remove_effect(self)
+    def _destroy(self, selected: int):
+        if self._scene:
+            self._scene.remove_effect(self)
         if self._on_close:
             self._on_close(selected)
 
-    def clone(self, screen, scene):
+    def clone(self, screen: Screen, scene: Scene):
         """
         Create a clone of this Dialog into a new Screen.
 

@@ -1,21 +1,28 @@
 """This module defines a class to display widgets"""
+from __future__ import annotations
 from copy import copy, deepcopy
 from logging import getLogger
+from typing import TYPE_CHECKING, Callable, Optional, Tuple, Union, Any
 from wcwidth import wcswidth
 from asciimatics.effects import Effect
-from asciimatics.event import KeyboardEvent, MouseEvent
+from asciimatics.event import KeyboardEvent, MouseEvent, Event
 from asciimatics.exceptions import Highlander, InvalidFields
 from asciimatics.screen import Screen, Canvas
 from asciimatics.utilities import BoxTool
 from asciimatics.widgets.scrollbar import _ScrollBar
 from asciimatics.widgets.utilities import THEMES
+if TYPE_CHECKING:
+    from asciimatics.scene import Scene
+    from asciimatics.widgets.layout import Layout
+    from asciimatics.widgets.widget import Widget
 
 # Logging
 logger = getLogger(__name__)
 
 
 class _BorderManager:
-    def __init__(self, frame, has_border, can_scroll):
+
+    def __init__(self, frame: "Frame", has_border: bool, can_scroll: bool):
         """
         Helper class to manage the border and scroll bar attached to a frame.
         Allows for different character to be used in the border and the
@@ -37,19 +44,23 @@ class _BorderManager:
                 scroll_height = frame.canvas.height - 2
                 scroll_y = 1
 
-            self.scroll_bar = _ScrollBar(
-                frame.canvas, frame.palette, frame.canvas.width - 1, scroll_y, scroll_height,
-                frame.get_scroll_pos, frame.set_scroll_pos, absolute=True
-            )
+            self.scroll_bar = _ScrollBar(frame.canvas,
+                                         frame.palette,
+                                         frame.canvas.width - 1,
+                                         scroll_y,
+                                         scroll_height,
+                                         frame.get_scroll_pos,
+                                         frame.set_scroll_pos,
+                                         absolute=True)
 
         # Optimization for non-unicode displays to avoid slow unicode calls.
         self.string_len = wcswidth if frame._canvas.unicode_aware else len
 
     @property
-    def can_scroll(self):
+    def can_scroll(self) -> bool:
         return self.scroll_bar is not None
 
-    def get_rectangle(self):
+    def get_rectangle(self) -> Tuple[int, int, int, int]:
         """
         Returns the bounding box defined by the usable space left after
         borders and/or scroll bars are accounted for.
@@ -86,13 +97,9 @@ class _BorderManager:
             for dy in range(frame.canvas.height):
                 y = frame.canvas.start_line + dy
                 if dy == 0:
-                    frame.canvas.print_at(
-                        self.box.box_top(frame.canvas.width), 0, y, colour, attr, bg
-                    )
+                    frame.canvas.print_at(self.box.box_top(frame.canvas.width), 0, y, colour, attr, bg)
                 elif dy == frame.canvas.height - 1:
-                    frame.canvas.print_at(
-                        self.box.box_bottom(frame.canvas.width), 0, y, colour, attr, bg
-                    )
+                    frame.canvas.print_at(self.box.box_bottom(frame.canvas.width), 0, y, colour, attr, bg)
                 else:
                     frame.canvas.print_at(self.box.v, 0, y, colour, attr, bg)
                     frame.canvas.print_at(self.box.v, frame.canvas.width - 1, y, colour, attr, bg)
@@ -100,12 +107,13 @@ class _BorderManager:
             # Now the title
             (colour, attr, bg) = frame.palette["title"]
             title_width = self.string_len(frame.title)
-            frame.canvas.print_at(
-                frame.title, (frame.canvas.width - title_width) // 2, frame.canvas.start_line,
-                colour, attr, bg
-            )
+            frame.canvas.print_at(frame.title, (frame.canvas.width - title_width) // 2,
+                                  frame.canvas.start_line,
+                                  colour,
+                                  attr,
+                                  bg)
 
-        if self.can_scroll and frame.canvas.height > 5:
+        if self.can_scroll and self.scroll_bar and frame.canvas.height > 5:
             self.scroll_bar.update()
 
 
@@ -119,12 +127,24 @@ class Frame(Effect):
 
     #: Colour palette for the widgets within the Frame.  Each entry should be
     #: a 3-tuple of (foreground colour, attribute, background colour).
-    palette: dict[str, tuple[int, int, int]] = {}
+    palette: dict[str, tuple[Optional[int], Optional[int], Optional[int]]] = {}
 
-    def __init__(self, screen, height, width, data=None, on_load=None,
-                 has_border=True, hover_focus=False, name=None, title=None,
-                 x=None, y=None, has_shadow=False, reduce_cpu=False, is_modal=False,
-                 can_scroll=True):
+    def __init__(self,
+                 screen: Screen,
+                 height: int,
+                 width: int,
+                 data: Optional[Any] = None,
+                 on_load: Optional[Callable] = None,
+                 has_border: bool = True,
+                 hover_focus: bool = False,
+                 name: Optional[str] = None,
+                 title: Optional[str] = None,
+                 x: Optional[int] = None,
+                 y: Optional[int] = None,
+                 has_shadow: bool = False,
+                 reduce_cpu: bool = False,
+                 is_modal: bool = False,
+                 can_scroll: bool = True):
         """
         :param screen: The Screen that owns this Frame.
         :param width: The desired width of the Frame.
@@ -149,10 +169,10 @@ class Frame(Effect):
         super().__init__(screen)
         self._focus = 0
         self._max_height = 0
-        self._layouts = []
-        self._effects = []
+        self._layouts: list[Layout] = []
+        self._effects: list[Effect] = []
         self._canvas = Canvas(screen, height, width, x, y)
-        self._data = None
+        self._data: dict[str, Any] = {}
         self._on_load = on_load
         self._hover_focus = hover_focus
         self._initial_data = data if data else {}
@@ -176,10 +196,10 @@ class Frame(Effect):
         self.data = deepcopy(self._initial_data)
 
         # Ensure that we have the default palette in place
-        self._theme = None
+        self._theme = ""
         self.set_theme("default")
 
-    def get_scroll_pos(self):
+    def get_scroll_pos(self) -> float:
         """
         Get current position for scroll bar.
         """
@@ -187,7 +207,7 @@ class Frame(Effect):
             return 0
         return self._canvas.start_line / (self._max_height - self._canvas.height + 1)
 
-    def set_scroll_pos(self, pos):
+    def set_scroll_pos(self, pos: float):
         """
         Set current position for scroll bar.
         """
@@ -196,7 +216,7 @@ class Frame(Effect):
             pos = int(round(max(0, pos), 0))
             self._canvas.scroll_to(pos)
 
-    def add_layout(self, layout):
+    def add_layout(self, layout: Layout):
         """
         Add a Layout to the Frame.
 
@@ -205,12 +225,13 @@ class Frame(Effect):
         layout.register_frame(self)
         self._layouts.append(layout)
 
-    def add_effect(self, effect):
+    def add_effect(self, effect: Effect):
         """
         Add an Effect to the Frame.
 
         :param effect: The Effect to be added.
         """
+        assert self._scene is not None
         effect.register_scene(self._scene)
         self._effects.append(effect)
 
@@ -282,7 +303,7 @@ class Frame(Effect):
         (colour, attr, bg) = self.palette["background"]
         self._canvas.clear_buffer(colour, attr, bg)
 
-    def _update(self, frame_no):
+    def _update(self, frame_no: int):
         # TODO: Should really be in a separate Desktop Manager class - wait for v2.0
         if self.scene and self.scene.effects[-1] != self:
             if self._focus < len(self._layouts):
@@ -309,20 +330,22 @@ class Frame(Effect):
         # And finally - draw the shadow
         if self._has_shadow:
             (colour, _, bg) = self.palette["shadow"]
-            self._screen.highlight(
-                self._canvas.origin[0] + 1,
-                self._canvas.origin[1] + self._canvas.height,
-                self._canvas.width - 1,
-                1,
-                fg=colour, bg=bg, blend=50)
-            self._screen.highlight(
-                self._canvas.origin[0] + self._canvas.width,
-                self._canvas.origin[1] + 1,
-                1,
-                self._canvas.height,
-                fg=colour, bg=bg, blend=50)
+            self._screen.highlight(self._canvas.origin[0] + 1,
+                                   self._canvas.origin[1] + self._canvas.height,
+                                   self._canvas.width - 1,
+                                   1,
+                                   fg=colour,
+                                   bg=bg,
+                                   blend=50)
+            self._screen.highlight(self._canvas.origin[0] + self._canvas.width,
+                                   self._canvas.origin[1] + 1,
+                                   1,
+                                   self._canvas.height,
+                                   fg=colour,
+                                   bg=bg,
+                                   blend=50)
 
-    def set_theme(self, theme):
+    def set_theme(self, theme: str):
         """
         Pick a palette from the list of supported THEMES.
 
@@ -332,6 +355,7 @@ class Frame(Effect):
             self._theme = theme
             self.palette = THEMES[theme]
             if self._border_mgr.can_scroll:
+                assert self._border_mgr.scroll_bar is not None
                 self._border_mgr.scroll_bar.palette = self.palette
 
     @property
@@ -385,14 +409,14 @@ class Frame(Effect):
         return False
 
     @property
-    def canvas(self):
+    def canvas(self) -> Canvas:
         """
         The Canvas that backs this Frame.
         """
         return self._canvas
 
     @property
-    def focussed_widget(self):
+    def focussed_widget(self) -> Optional[Widget]:
         """
         The widget that currently has the focus within this Frame.
         """
@@ -408,7 +432,7 @@ class Frame(Effect):
             return None
 
     @property
-    def frame_update_count(self):
+    def frame_update_count(self) -> int:
         """
         The number of frames before this Effect should be updated.
         """
@@ -422,7 +446,7 @@ class Frame(Effect):
         return result
 
     @property
-    def reduce_cpu(self):
+    def reduce_cpu(self) -> bool:
         """
         Whether this Frame should try to optimize refreshes to reduce CPU.
         """
@@ -439,7 +463,7 @@ class Frame(Effect):
         """
         return self._border_mgr.box
 
-    def find_widget(self, name):
+    def find_widget(self, name: str) -> Optional[Widget]:
         """
         Look for a widget with a specified name.
 
@@ -454,7 +478,7 @@ class Frame(Effect):
                 break
         return result
 
-    def clone(self, _, scene):
+    def clone(self, _: Screen, scene: Scene):
         """
         Create a clone of this Frame into a new Screen.
 
@@ -502,7 +526,7 @@ class Frame(Effect):
         if self._on_load is not None:
             self._on_load()
 
-    def save(self, validate=False):
+    def save(self, validate: bool = False):
         """
         Save the current values in all the widgets back to the persistent data storage.
 
@@ -544,7 +568,7 @@ class Frame(Effect):
         self._has_focus = False
         logger.debug("Blurred frame: %s", self)
 
-    def switch_focus(self, layout, column, widget):
+    def switch_focus(self, layout: Optional[Layout], column: int, widget: int):
         """
         Switch focus to the specified widget.
 
@@ -562,10 +586,9 @@ class Frame(Effect):
 
         self._layouts[self._focus].blur()
         self._focus = i
-        self._layouts[self._focus].focus(force_column=column,
-                                         force_widget=widget)
+        self._layouts[self._focus].focus(force_column=column, force_widget=widget)
 
-    def move_to(self, x, y, h):
+    def move_to(self, x: int, y: int, h: int):
         """
         Make the specified location visible.  This is typically used by a widget to scroll the
         canvas such that it is visible.
@@ -586,7 +609,7 @@ class Frame(Effect):
             line = y + h - self._canvas.height + (1 if self._border_mgr.has_border else 0)
             self._canvas.scroll_to(max(0, line))
 
-    def rebase_event(self, event):
+    def rebase_event(self, event: Optional[Event]) -> Optional[Event]:
         """
         Rebase the coordinates of the passed event to frame-relative coordinates.
 
@@ -601,14 +624,14 @@ class Frame(Effect):
         logger.debug("New event: %s", new_event)
         return new_event
 
-    def _outside_frame(self, event):
+    def _outside_frame(self, event: MouseEvent):
         origin = self._canvas.origin
-        if (event.y < origin[1] or event.y >= origin[1] + self._canvas.height or
-                event.x < origin[0] or event.x >= origin[0] + self._canvas.width):
+        if (event.y < origin[1] or event.y >= origin[1] + self._canvas.height or event.x < origin[0]
+                or event.x >= origin[0] + self._canvas.width):
             return True
         return False
 
-    def _find_next_tab_stop(self, direction):
+    def _find_next_tab_stop(self, direction: int):
         old_focus = self._focus
         self._focus += direction
         while self._focus != old_focus:
@@ -631,7 +654,7 @@ class Frame(Effect):
         else:
             self._layouts[self._focus].focus(force_last=True)
 
-    def _switch_to_nearest_vertical_widget(self, direction):
+    def _switch_to_nearest_vertical_widget(self, direction: int):
         """
         Find the nearest widget above or below the current widget with the focus.
 
@@ -661,13 +684,14 @@ class Frame(Effect):
                 return
             focus += direction
 
-    def _handle_desktop_ordering(self, event):
+    def _handle_desktop_ordering(self, event: Optional[Event]) -> Tuple[bool, bool]:
+        assert self._scene is not None
         claimed_focus = False
         if isinstance(event, MouseEvent) and event.buttons > 0:
             # TODO: Should have Desktop Manager handling this - wait for v2.0
             # Claim focus if mouse click is inside the Frame.
-            if (0 <= event.x < self._canvas.width and
-                    self._canvas.start_line <= event.y < self._canvas.start_line + self._canvas.height):
+            if (0 <= event.x < self._canvas.width
+                    and self._canvas.start_line <= event.y < self._canvas.start_line + self._canvas.height):
                 self._scene.remove_effect(self)
                 self._scene.add_effect(self, reset=False)
                 if not self._has_focus and self._focus < len(self._layouts):
@@ -693,9 +717,9 @@ class Frame(Effect):
 
         return claimed_focus, False
 
-    def process_event(self, event):
+    def process_event(self, event: Optional[Event]) -> Optional[Event]:
         # Rebase any mouse events into Frame coordinates now.
-        old_event = event
+        old_event: Optional[Event] = event
         event = self.rebase_event(event)
 
         # Should we change z-order or quit now?
@@ -708,8 +732,7 @@ class Frame(Effect):
         #
         # Also don't bother trying to process widgets if there is no defined
         # focus.  This means there is no enabled widget in the Frame.
-        if (self._focus < 0 or self._focus >= len(self._layouts) or
-                not self._layouts):
+        if (self._focus < 0 or self._focus >= len(self._layouts) or not self._layouts):
             if event is not None and isinstance(event, KeyboardEvent):
                 return None
             else:
@@ -753,6 +776,7 @@ class Frame(Effect):
 
                 # If no joy, check whether the scroll bar was clicked.
                 if self._border_mgr.can_scroll:
+                    assert self._border_mgr.scroll_bar is not None
                     if self._border_mgr.scroll_bar.process_event(event):
                         return None
 

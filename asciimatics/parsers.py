@@ -5,7 +5,7 @@ This module provides parsers to create ColouredText objects from embedded contro
 import re
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
-from typing import Any, Iterator, Optional, Tuple, List
+from typing import Any, Iterator, Optional, Tuple, List, Iterable
 from dataclasses import dataclass
 from asciimatics import constants
 
@@ -62,7 +62,7 @@ class Parser(metaclass=ABCMeta):
         """
         self._state = _State()
 
-    def reset(self, text: str, colours: Optional[Tuple[Optional[int], Optional[int], Optional[int]]]):
+    def reset(self, text: str, colours: Optional[Iterable[Optional[int]]]):
         """
         Reset the parser to analyze the supplied raw text.
 
@@ -171,7 +171,7 @@ class AnsiTerminalParser(Parser):
     _colour_sequence = re.compile(r"^(\x1B\[([^@-~]*)([@-~]))(.*)")
     _os_cmd = re.compile(r"^(\x1B].*\x07)(.*)")
 
-    def reset(self, text: str, colours: Optional[Tuple[Optional[int], Optional[int], Optional[int]]]):
+    def reset(self, text: str, colours: Optional[Iterable[Optional[int]]]):
         """
         Reset the parser to analyze the supplied raw text.
 

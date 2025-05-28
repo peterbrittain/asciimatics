@@ -48,9 +48,9 @@ class _DoubleBuffer():
         self.clear(Screen.COLOUR_WHITE, 0, 0)
 
     def clear(self,
-              fg: int,
-              attr: int,
-              bg: int,
+              fg: Optional[int],
+              attr: Optional[int],
+              bg: Optional[int],
               x: int = 0,
               y: int = 0,
               w: Optional[int] = None,
@@ -544,9 +544,9 @@ class _AbstractCanvas(metaclass=ABCMeta):
         self.reset()
 
     def clear_buffer(self,
-                     fg: int,
-                     attr: int,
-                     bg: int,
+                     fg: Optional[int],
+                     attr: Optional[int],
+                     bg: Optional[int],
                      x: int = 0,
                      y: int = 0,
                      w: Optional[int] = None,
@@ -777,9 +777,9 @@ class _AbstractCanvas(metaclass=ABCMeta):
               text: str,
               x: int,
               y: int,
-              colour: int = 7,
-              attr: int = 0,
-              bg: int = 0,
+              colour: Optional[int] = 7,
+              attr: Optional[int] = 0,
+              bg: Optional[int] = 0,
               transparent: bool = False,
               colour_map: Optional[List[Tuple[Optional[int], Optional[int], Optional[int]]]] = None):
         """

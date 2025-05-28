@@ -1,10 +1,15 @@
 """This module defines commonly used pieces for widgets"""
+from __future__ import annotations
 from logging import getLogger
 from math import sqrt
 from collections import defaultdict
 from functools import lru_cache
+from typing import TYPE_CHECKING, List, Tuple, Optional, Union
 from wcwidth import wcswidth, wcwidth
 from asciimatics.screen import Screen
+if TYPE_CHECKING:
+    from asciimatics.widgets.widget import Widget
+    from asciimatics.strings import ColouredText
 
 # Logging
 logger = getLogger(__name__)
@@ -14,7 +19,7 @@ logger = getLogger(__name__)
 #: Each colour palette is a dictionary mapping a colour key to a 3-tuple of
 #: (foreground colour, attribute, background colour).
 #: The "default" theme defines all the required keys for a palette.
-THEMES = {
+THEMES: dict[str, dict[str, tuple[Optional[int], Optional[int], Optional[int]]]] = {
     "default": {
         "background": (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLUE),
         "shadow": (Screen.COLOUR_BLACK, None, Screen.COLOUR_BLACK),
@@ -50,8 +55,7 @@ THEMES = {
             "focus_button": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLACK),
             "selected_focus_control": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLACK),
             "disabled": (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLACK),
-        }
-    ),
+        }),
     "green": defaultdict(
         lambda: (Screen.COLOUR_GREEN, Screen.A_NORMAL, Screen.COLOUR_BLACK),
         {
@@ -63,8 +67,7 @@ THEMES = {
             "focus_button": (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLACK),
             "selected_focus_control": (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLACK),
             "disabled": (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLACK),
-        }
-    ),
+        }),
     "bright": defaultdict(
         lambda: (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLACK),
         {
@@ -78,8 +81,7 @@ THEMES = {
             "focus_button": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK),
             "focus_edit_text": (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK),
             "disabled": (Screen.COLOUR_BLACK, Screen.A_BOLD, Screen.COLOUR_BLACK),
-        }
-    ),
+        }),
     "tlj256": defaultdict(
         lambda: (16, 0, 15),
         {
@@ -91,8 +93,7 @@ THEMES = {
             "focus_button": (15, 0, 88),
             "selected_focus_control": (15, 0, 88),
             "disabled": (8, 0, 15),
-        }
-    ),
+        }),
     "warning": defaultdict(
         lambda: (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_RED),
         {
@@ -104,12 +105,14 @@ THEMES = {
             "focus_control": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_RED),
             "disabled": (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_RED),
             "shadow": (Screen.COLOUR_BLACK, None, Screen.COLOUR_BLACK),
-        }
-    ),
+        }),
 }
 
 
-def _enforce_width(text, width, unicode_aware=True, split_on_words=False):
+def _enforce_width(text: Union[str, ColouredText],
+                   width: int,
+                   unicode_aware: bool = True,
+                   split_on_words: bool = False) -> Union[str, ColouredText]:
     """
     Enforce a displayed piece of text to be a certain number of cells wide.  This takes into
     account double-width characters used in CJK languages.
@@ -120,11 +123,13 @@ def _enforce_width(text, width, unicode_aware=True, split_on_words=False):
     :param split_on_words: Whether to respect word boundaries when splitting.
     :return: The resulting truncated text
     """
-    return _enforce_width_ext(
-        text, width, unicode_aware=unicode_aware, split_on_words=split_on_words)[0]
+    return _enforce_width_ext(text, width, unicode_aware=unicode_aware, split_on_words=split_on_words)[0]
 
 
-def _enforce_width_ext(text, width, unicode_aware=True, split_on_words=False):
+def _enforce_width_ext(text: Union[str, ColouredText],
+                       width: int,
+                       unicode_aware: bool = True,
+                       split_on_words: bool = False) -> Tuple[Union[str, ColouredText], bool]:
     """
     Enforce a displayed piece of text to be a certain number of cells wide.  This takes into
     account double-width characters used in CJK languages.
@@ -156,7 +161,7 @@ def _enforce_width_ext(text, width, unicode_aware=True, split_on_words=False):
     return text, False
 
 
-def _find_min_start(text, max_width, unicode_aware=True, at_end=False):
+def _find_min_start(text: str, max_width: int, unicode_aware: bool = True, at_end: bool = False) -> int:
     """
     Find the starting point in the string that will reduce it to be less than or equal to the
     specified width when displayed on screen.
@@ -185,7 +190,7 @@ def _find_min_start(text, max_width, unicode_aware=True, at_end=False):
     return result
 
 
-def _get_offset(text, visible_width, unicode_aware=True):
+def _get_offset(text: str, visible_width: int, unicode_aware: bool = True) -> int:
     """
     Find the character offset within some text for a given visible offset (taking into account the
     fact that some character glyphs are double width).
@@ -210,7 +215,7 @@ def _get_offset(text, visible_width, unicode_aware=True):
 
 
 @lru_cache(256)
-def _split_text(text, width, height, unicode_aware=True):
+def _split_text(text: str, width: int, height: int, unicode_aware: bool = True) -> List[str]:
     """
     Split text to required dimensions.
 
@@ -244,7 +249,7 @@ def _split_text(text, width, height, unicode_aware=True):
     # Either way, break this last line up as best we can.
     current_line = current_line.rstrip()
     while string_len(current_line) > 0:
-        new_line = _enforce_width(current_line, width, unicode_aware)
+        new_line = str(_enforce_width(current_line, width, unicode_aware))
         result.append(new_line)
         current_line = current_line[len(new_line):]
 
@@ -261,7 +266,7 @@ def _split_text(text, width, height, unicode_aware=True):
     return result
 
 
-def _euclidian_distance(widget1, widget2):
+def _euclidian_distance(widget1: Widget, widget2: Widget) -> float:
     """
     Find the Euclidian distance between 2 widgets.
 
@@ -270,4 +275,4 @@ def _euclidian_distance(widget1, widget2):
     """
     point1 = widget1.get_location()
     point2 = widget2.get_location()
-    return sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
+    return sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)

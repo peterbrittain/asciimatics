@@ -93,6 +93,7 @@ class _BarChartBase(DynamicRenderer, metaclass=ABCMeta):
 
         Note that your canvas must support UNICODE style characters to use them
         """
+        assert self._border_lines
         return self._border_lines.style
 
     @border_style.setter

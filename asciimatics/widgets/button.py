@@ -1,5 +1,7 @@
 """This module defines a button widget"""
-from asciimatics.event import KeyboardEvent, MouseEvent
+from __future__ import annotations
+from typing import Callable, Optional
+from asciimatics.event import KeyboardEvent, MouseEvent, Event
 from asciimatics.widgets.widget import Widget
 
 
@@ -13,7 +15,13 @@ class Button(Widget):
 
     __slots__ = ["_text", "_text_raw", "_add_box", "_on_click"]
 
-    def __init__(self, text, on_click, label=None, add_box=True, name=None, **kwargs):
+    def __init__(self,
+                 text: str,
+                 on_click: Callable,
+                 label: Optional[str] = None,
+                 add_box: bool = True,
+                 name: Optional[str] = None,
+                 **kwargs):
         """
         :param text: The text for the button.
         :param on_click: The function to invoke when the button is clicked.
@@ -29,7 +37,7 @@ class Button(Widget):
         self._on_click = on_click
         self._label = label
 
-    def set_layout(self, x, y, offset, w, h):
+    def set_layout(self, x: int, y: int, offset: int, w: int, h: int):
         # Do the usual layout work. then recalculate exact x/w values for the
         # rendered button.
         super().set_layout(x, y, offset, w, h)
@@ -43,20 +51,17 @@ class Button(Widget):
             # Maximize text to make for a consistent colouring when used in menus.
             self._text += " " * (self._w - text_width)
 
-    def update(self, frame_no):
+    def update(self, frame_no: int):
         self._draw_label()
 
+        assert self._frame
         (colour, attr, bg) = self._pick_colours("button")
-        self._frame.canvas.print_at(
-            self._text,
-            self._x + self._offset,
-            self._y,
-            colour, attr, bg)
+        self._frame.canvas.print_at(self._text, self._x + self._offset, self._y, colour, attr, bg)
 
     def reset(self):
         self._value = False
 
-    def process_event(self, event):
+    def process_event(self, event: Optional[Event]) -> Optional[Event]:
         if isinstance(event, KeyboardEvent):
             if event.key_code in [ord(" "), 10, 13]:
                 self._on_click()
@@ -70,7 +75,7 @@ class Button(Widget):
         # Ignore other events
         return event
 
-    def required_height(self, offset, width):
+    def required_height(self, offset: int, width: int):
         return 1
 
     @property

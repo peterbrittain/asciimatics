@@ -1,5 +1,8 @@
 """This module implements a vertical division between widgets"""
+from __future__ import annotations
+from typing import Optional
 from asciimatics.widgets.widget import Widget
+from asciimatics.event import Event
 
 
 class VerticalDivider(Widget):
@@ -11,17 +14,18 @@ class VerticalDivider(Widget):
 
     __slots__ = ["_required_height"]
 
-    def __init__(self, height=Widget.FILL_COLUMN):
+    def __init__(self, height: int = Widget.FILL_COLUMN):
         """
         :param height: The required height for this divider.
         """
         super().__init__(None, tab_stop=False)
         self._required_height = height
 
-    def process_event(self, event):
+    def process_event(self, event: Optional[Event]) -> Optional[Event]:
         return event
 
-    def update(self, frame_no):
+    def update(self, frame_no: int):
+        assert self._frame
         (color, attr, background) = self._frame.palette["borders"]
         vert = "│" if self._frame.canvas.unicode_aware else "|"
         for i in range(self._h):
@@ -30,12 +34,16 @@ class VerticalDivider(Widget):
     def reset(self):
         pass
 
-    def required_height(self, offset, width):
+    def required_height(self, offset: int, width: int) -> int:
         return self._required_height
 
     @property
-    def value(self):
+    def value(self) -> None:
         """
         The current value for this VerticalDivider.
         """
-        return self._value
+        return None
+
+    @value.setter
+    def value(self, new_value):
+        self._value = new_value

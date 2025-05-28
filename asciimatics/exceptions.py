@@ -86,7 +86,7 @@ class InvalidFields(Exception):
     is found.
     """
 
-    def __init__(self, fields: List[str]):
+    def __init__(self, fields: List[Optional[str]]):
         """
         :param fields: The list of the fields that are invalid.
         """
@@ -94,7 +94,7 @@ class InvalidFields(Exception):
         self._fields = fields
 
     @property
-    def fields(self) -> List[str]:
+    def fields(self) -> List[Optional[str]]:
         """
         The list of fields that are invalid.
         """

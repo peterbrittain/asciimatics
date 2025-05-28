@@ -1,12 +1,16 @@
 """This module implements the displaying of widgets appropriately"""
+from __future__ import annotations
 from logging import getLogger
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, List, Optional, Tuple, Any
 from wcwidth import wcswidth
-from asciimatics.event import KeyboardEvent, MouseEvent
+from asciimatics.event import KeyboardEvent, MouseEvent, Event
 from asciimatics.exceptions import Highlander, InvalidFields
 from asciimatics.screen import Screen
-from asciimatics.utilities import _DotDict
 from asciimatics.widgets.utilities import _euclidian_distance
 from asciimatics.widgets.widget import Widget
+if TYPE_CHECKING:
+    from asciimatics.widgets.frame import Frame
 
 # Logging
 logger = getLogger(__name__)
@@ -29,10 +33,18 @@ class Layout():
         Widget best fit the canvas as constrained by the above.
     """
 
-    __slots__ = ["_column_sizes", "_columns", "_frame", "_has_focus", "_live_col", "_live_widget",
-                 "_fill_frame", "_gutter"]
+    __slots__ = [
+        "_column_sizes",
+        "_columns",
+        "_frame",
+        "_has_focus",
+        "_live_col",
+        "_live_widget",
+        "_fill_frame",
+        "_gutter"
+    ]
 
-    def __init__(self, columns, fill_frame=False, gutter=0):
+    def __init__(self, columns: List[int], fill_frame: bool = False, gutter: int = 0):
         """
         :param columns: A list of numbers specifying the width of each column in this layout.
         :param fill_frame: Whether this Layout should attempt to fill the rest of the Frame.
@@ -44,8 +56,8 @@ class Layout():
         """
         total_size = sum(columns)
         self._column_sizes = [x / total_size for x in columns]
-        self._columns = [[] for _ in columns]
-        self._frame = None
+        self._columns: list[list[Widget]] = [[] for _ in columns]
+        self._frame: Optional[Frame] = None
         self._has_focus = False
         self._live_col = 0
         self._live_widget = -1
@@ -53,14 +65,14 @@ class Layout():
         self._gutter = gutter
 
     @property
-    def fill_frame(self):
+    def fill_frame(self) -> bool:
         """
         Whether this Layout is variable height or not.
         """
         return self._fill_frame
 
     @property
-    def frame_update_count(self):
+    def frame_update_count(self) -> int:
         """
         The number of frames before this Layout should be updated.
         """
@@ -71,7 +83,7 @@ class Layout():
                     result = min(result, widget.frame_update_count)
         return result
 
-    def register_frame(self, frame):
+    def register_frame(self, frame: Frame):
         """
         Register the Frame that owns this Widget.
 
@@ -82,7 +94,7 @@ class Layout():
             for widget in column:
                 widget.register_frame(self._frame)
 
-    def add_widget(self, widget, column=0):
+    def add_widget(self, widget: Widget, column: int = 0) -> Widget:
         """
         Add a widget to this Layout.
 
@@ -119,8 +131,11 @@ class Layout():
         self._live_col = 0
         self._live_widget = -1
 
-    def focus(self, force_first=False, force_last=False, force_column=None,
-              force_widget=None):
+    def focus(self,
+              force_first: bool = False,
+              force_last: bool = False,
+              force_column: Optional[int] = None,
+              force_widget: Optional[int] = None):
         """
         Call this to give this Layout the input focus.
 
@@ -168,7 +183,7 @@ class Layout():
                 # don't worry if there are no active widgets in the Layout
                 pass
 
-    def fix(self, start_x, start_y, max_width, max_height):
+    def fix(self, start_x: int, start_y: int, max_width: int, max_height: int) -> int:
         """
         Fix the location and size of all the Widgets in this Layout.
 
@@ -178,13 +193,20 @@ class Layout():
         :param max_height: Max height to allow this layout.
         :returns: The next line to be used for any further Layouts.
         """
+        @dataclass
+        class Dimensions:
+            parameters: list[list[Any]] = field(default_factory=lambda: [[]])
+            offset = 0
+            height = 0
+
         total_gutter = self._gutter * (len(self._columns) - 1)
         x = start_x
         width = max_width - total_gutter
         y = w = 0
         max_y = start_y
+        assert self._frame is not None
         string_len = wcswidth if self._frame.canvas.unicode_aware else len
-        dimensions = []
+        dimensions: list[Dimensions] = []
         for i, column in enumerate(self._columns):
             # For each column determine if we need a tab offset for labels.
             # Only allow labels to take up 1/3 of the column.
@@ -192,11 +214,10 @@ class Layout():
                 offset = max(0 if c.label is None else string_len(c.label) + 1 for c in column)
             else:
                 offset = 0
-            offset = int(min(offset,
-                         width * self._column_sizes[i] // 3))
+            offset = int(min(offset, width * self._column_sizes[i] // 3))
 
             # Start tracking new column
-            dimensions.append(_DotDict())
+            dimensions.append(Dimensions())
             dimensions[i].parameters = []
             dimensions[i].offset = offset
 
@@ -237,25 +258,25 @@ class Layout():
             max_y = max(max_y, start_y + max_height)
 
         # Now apply calculated sizes, updating any widgets that need to fill space.
-        for column in dimensions:
+        for col in dimensions:
             y = start_y
-            for widget, x, w, h in column.parameters:
+            for widget, x, w, h in col.parameters:
                 if h == Widget.FILL_FRAME:
-                    h = max(1, start_y + max_height - column.height)
+                    h = max(1, start_y + max_height - col.height)
                 elif h == Widget.FILL_COLUMN:
-                    h = max_y - column.height
-                widget.set_layout(x, y, column.offset, w, h)
+                    h = max_y - col.height
+                widget.set_layout(x, y, col.offset, w, h)
                 y += h
 
         return max_y
 
-    def get_current_widget(self):
+    def get_current_widget(self) -> Optional[Widget]:
         """
         Return the current widget with the focus, or None if there isn't one.
         """
         return self._columns[self._live_col][self._live_widget] if self._has_focus else None
 
-    def get_nearest_widget(self, target_widget, direction):
+    def get_nearest_widget(self, target_widget: Widget, direction: int) -> Optional[Tuple[Widget, int, int]]:
         """
         Find the nearest enabled widget to the specified target widget, bearing in mind direction of travel.
 
@@ -268,12 +289,12 @@ class Layout():
         :param target_widget: the target widget to match.
         :param direction: The direction of travel across Layouts.
         """
-        best_distance = 999999999
+        best_distance = 999999999.0
         match = None
         for i, column in enumerate(self._columns):
             indexed_column = list(enumerate(column))
             if direction < 0:
-                indexed_column = reversed(indexed_column)
+                indexed_column = list(reversed(indexed_column))
             # Force this to be a list for python 2/3 compatibility.
             live_widgets = list(filter(lambda x: x[1].is_tab_stop and not x[1].disabled, indexed_column))
             try:
@@ -286,7 +307,7 @@ class Layout():
                 pass
         return match
 
-    def _find_nearest_horizontal_widget(self, direction):
+    def _find_nearest_horizontal_widget(self, direction: int):
         """
         Find the nearest widget to the left or right of the current widget with the focus.
 
@@ -307,7 +328,7 @@ class Layout():
             # OK - we're still looking.  FInd the closest live widget.
             live_widgets = filter(lambda x: x[1].is_tab_stop and not x[1].disabled,
                                   enumerate(self._columns[current_col]))
-            best_distance = 999999999
+            best_distance = 999999999.0
             best_index = -1
             for index, widget in live_widgets:
                 self._live_col = current_col
@@ -326,7 +347,7 @@ class Layout():
                 self._live_widget = best_index
                 return
 
-    def _find_next_widget(self, direction, stay_in_col=False):
+    def _find_next_widget(self, direction: int, stay_in_col: bool = False):
         """
         Find the next widget to get the focus, following TAB logic
 
@@ -356,7 +377,7 @@ class Layout():
         # We've exhausted our search - give up and stay where we were.
         self._live_widget = current_widget
 
-    def _update_focus(self, column, widget, set_focus=True):
+    def _update_focus(self, column: int, widget: int, set_focus: bool = True):
         """
         Helper function to move focus if new state matches the passed in state.
 
@@ -369,7 +390,7 @@ class Layout():
             if set_focus:
                 self._columns[self._live_col][self._live_widget].focus()
 
-    def process_event(self, event, hover_focus):
+    def process_event(self, event: Optional[Event], hover_focus: bool) -> Optional[Event]:
         """
         Process any input event.
 
@@ -446,18 +467,18 @@ class Layout():
                     event = None
             elif isinstance(event, MouseEvent):
                 logger.debug("Check layout: %d, %d", event.x, event.y)
-                if ((hover_focus and event.buttons >= 0) or
-                        event.buttons > 0):
+                if ((hover_focus and event.buttons >= 0) or event.buttons > 0):
                     # Mouse click - look to move focus.
                     for i, column in enumerate(self._columns):
                         for j, widget in enumerate(column):
                             if widget.is_mouse_over(event):
+                                assert self._frame is not None
                                 self._frame.switch_focus(self, i, j)
                                 widget.process_event(event)
                                 return None
         return event
 
-    def update(self, frame_no):
+    def update(self, frame_no: int):
         """
         Redraw the widgets inside this Layout.
 
@@ -469,7 +490,7 @@ class Layout():
                 if widget.is_visible:
                     widget.update(frame_no)
 
-    def save(self, validate):
+    def save(self, validate: bool):
         """
         Save the current values in all the widgets back to the persistent data storage.
 
@@ -484,13 +505,14 @@ class Layout():
                         # This relies on the fact that we are passed the actual
                         # dict and so can edit it directly.  In this case, that
                         # is all we want - no need to update the widgets.
+                        assert self._frame is not None
                         self._frame.data[widget.name] = widget.value
                 else:
                     invalid.append(widget.name)
         if len(invalid) > 0:
             raise InvalidFields(invalid)
 
-    def find_widget(self, name):
+    def find_widget(self, name: str) -> Optional[Widget]:
         """
         Look for a widget with a specified name.
 
@@ -506,12 +528,13 @@ class Layout():
                     break
         return result
 
-    def update_widgets(self, new_frame=None):
+    def update_widgets(self, new_frame: Optional[Frame] = None):
         """
         Reset the values for any Widgets in this Layout based on the current Frame data store.
 
         :param new_frame: optional old Frame - used when cloning scenes.
         """
+        assert self._frame is not None
         for column in self._columns:
             for widget in column:
                 logger.debug("Updating: %s", widget.name)
@@ -528,7 +551,7 @@ class Layout():
                 # from the previous view.  If there is no clone function, ignore the error.
                 if new_frame:
                     try:
-                        widget.clone(new_frame.find_widget(widget.name))
+                        widget.clone(new_frame.find_widget(widget.name))  # type: ignore
                     except AttributeError:
                         pass
 
@@ -549,7 +572,7 @@ class Layout():
         self._live_widget = -1
         self._find_next_widget(1)
 
-    def enable(self, columns=None):
+    def enable(self, columns: Optional[List[int]] = None):
         """
         Enable all widgets in the specified columns of  this Layout.
 
@@ -560,7 +583,7 @@ class Layout():
             for widget in self._columns[column]:
                 widget.disabled = False
 
-    def disable(self, columns=None):
+    def disable(self, columns: Optional[List[int]] = None):
         """
         Disable all widgets in the specified columns of  this Layout.
 

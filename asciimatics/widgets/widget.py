@@ -3,11 +3,13 @@ This module allows you to create interactive text user interfaces.  For more det
 http://asciimatics.readthedocs.io/en/latest/widgets.html
 """
 from abc import ABCMeta, abstractmethod
-
+from typing import Callable, Optional, Tuple, Any, List
 from logging import getLogger
 from wcwidth import wcswidth
 from asciimatics.screen import Screen
 from asciimatics.widgets.utilities import _split_text
+from asciimatics.event import MouseEvent, Event
+from asciimatics.widgets.frame import Frame
 
 # Logging
 logger = getLogger(__name__)
@@ -26,12 +28,34 @@ class Widget(metaclass=ABCMeta):
     #: fit the maximum space used by any other column in the Layout.
     FILL_COLUMN = -135792467
 
-    __slots__ = ["_name", "_label", "_frame", "_value", "_has_focus", "_x",
-                 "_y", "_h", "_w", "_offset", "_display_label", "_is_tab_stop",
-                 "_is_disabled", "_is_valid", "_custom_colour", "_on_focus",
-                 "_on_blur", "string_len", "_readonly"]
+    __slots__ = [
+        "_name",
+        "_label",
+        "_frame",
+        "_value",
+        "_has_focus",
+        "_x",
+        "_y",
+        "_h",
+        "_w",
+        "_offset",
+        "_display_label",
+        "_is_tab_stop",
+        "_is_disabled",
+        "_is_valid",
+        "_custom_colour",
+        "_on_focus",
+        "_on_blur",
+        "string_len",
+        "_readonly"
+    ]
 
-    def __init__(self, name, tab_stop=True, disabled=False, on_focus=None, on_blur=None):
+    def __init__(self,
+                 name: Optional[str],
+                 tab_stop: bool = True,
+                 disabled: bool = False,
+                 on_focus: Optional[Callable] = None,
+                 on_blur: Optional[Callable] = None):
         """
         :param name: The name of this Widget.
         :param tab_stop: Whether this widget should take focus or not when tabbing around the Frame.
@@ -42,18 +66,18 @@ class Widget(metaclass=ABCMeta):
         super().__init__()
         # Internal properties
         self._name = name
-        self._label = None
-        self._frame = None
-        self._value = None
+        self._label: Optional[str] = None
+        self._frame: Optional[Frame] = None
+        self._value: Any = None
         self._has_focus = False
         self._x = self._y = 0
         self._w = self._h = 0
         self._offset = 0
-        self._display_label = None
+        self._display_label: Optional[List[str]] = None
         self._is_tab_stop = tab_stop
         self._is_disabled = disabled
         self._is_valid = True
-        self._custom_colour = None
+        self._custom_colour: Optional[str] = None
         self._on_focus = on_focus
         self._on_blur = on_blur
         self._readonly = False
@@ -63,47 +87,48 @@ class Widget(metaclass=ABCMeta):
         self.string_len = wcswidth
 
     @property
-    def frame(self):
+    def frame(self) -> Optional[Frame]:
         """
         The Frame that contains this Widget.
         """
         return self._frame
 
     @property
-    def is_valid(self):
+    def is_valid(self) -> bool:
         """
         Whether this widget has passed its data validation or not.
         """
         return self._is_valid
 
     @property
-    def is_tab_stop(self):
+    def is_tab_stop(self) -> bool:
         """
         Whether this widget is a valid tab stop for keyboard navigation.
         """
         return self._is_tab_stop
 
     @property
-    def is_visible(self):
+    def is_visible(self) -> bool:
         """
         Whether this widget is visible on the Canvas or not.
         """
-        return not (self._y + self._h <= self._frame.canvas.start_line or
-                    self._y >= self._frame.canvas.start_line + self._frame.canvas.height)
+        assert self._frame is not None
+        return not (self._y + self._h <= self._frame.canvas.start_line
+                    or self._y >= self._frame.canvas.start_line + self._frame.canvas.height)
 
     @property
-    def disabled(self):
+    def disabled(self) -> bool:
         """
         Whether this widget is disabled or not.
         """
         return self._is_disabled
 
     @disabled.setter
-    def disabled(self, new_value):
+    def disabled(self, new_value: bool):
         self._is_disabled = new_value
 
     @property
-    def custom_colour(self):
+    def custom_colour(self) -> Optional[str]:
         """
         A custom colour to use instead of the normal calculated one when drawing this widget.
 
@@ -112,18 +137,18 @@ class Widget(metaclass=ABCMeta):
         return self._custom_colour
 
     @custom_colour.setter
-    def custom_colour(self, new_value):
+    def custom_colour(self, new_value: Optional[str]):
         self._custom_colour = new_value
 
     @property
-    def frame_update_count(self):
+    def frame_update_count(self) -> int:
         """
         The number of frames before this Widget should be updated.
         """
         return 0
 
     @property
-    def width(self):
+    def width(self) -> int:
         """
         The width of this Widget (excluding any labels).
 
@@ -131,7 +156,7 @@ class Widget(metaclass=ABCMeta):
         """
         return self._w - self._offset
 
-    def register_frame(self, frame):
+    def register_frame(self, frame: Frame):
         """
         Register the Frame that owns this Widget.
 
@@ -140,7 +165,7 @@ class Widget(metaclass=ABCMeta):
         self._frame = frame
         self.string_len = wcswidth if self._frame.canvas.unicode_aware else len
 
-    def set_layout(self, x, y, offset, w, h):
+    def set_layout(self, x: int, y: int, offset: int, w: int, h: int):
         """
         Set the size and position of the Widget.
 
@@ -159,28 +184,29 @@ class Widget(metaclass=ABCMeta):
         self._w = w
         self._h = h
 
-    def get_location(self):
+    def get_location(self) -> Tuple[int, int]:
         """
         Return the absolute location of this widget on the Screen, taking into account the
         current state of the Frame that is displaying it and any label offsets of the Widget.
 
         :returns: A tuple of the form (<X coordinate>, <Y coordinate>).
         """
+        assert self._frame is not None
         origin = self._frame.canvas.origin
-        return (self._x + origin[0] + self._offset,
-                self._y + origin[1] - self._frame.canvas.start_line)
+        return (self._x + origin[0] + self._offset, self._y + origin[1] - self._frame.canvas.start_line)
 
     def focus(self):
         """
         Call this to give this Widget the input focus.
         """
         logger.debug("Widget focus: %s", self)
+        assert self._frame
         self._has_focus = True
         self._frame.move_to(self._x, self._y, self._h)
         if self._on_focus is not None:
             self._on_focus()
 
-    def is_mouse_over(self, event, include_label=True, width_modifier=0):
+    def is_mouse_over(self, event: MouseEvent, include_label: bool = True, width_modifier: int = 0):
         """
         Check if the specified mouse event is over this widget.
 
@@ -195,14 +221,15 @@ class Widget(metaclass=ABCMeta):
             return False
 
         # Check this part of the canvas is visible - can't be clicked if not visible.
-        if (event.y < self._frame.canvas.start_line or
-                event.y >= self._frame.canvas.start_line + self._frame.canvas.height):
+        assert self._frame is not None
+        if (event.y < self._frame.canvas.start_line
+                or event.y >= self._frame.canvas.start_line + self._frame.canvas.height):
             return False
 
         # Check for any overlap
         if self._y <= event.y < self._y + self._h:
-            if ((include_label and self._x <= event.x < self._x + self._w - width_modifier) or
-                    (self._x + self._offset <= event.x < self._x + self._w - width_modifier)):
+            if ((include_label and self._x <= event.x < self._x + self._w - width_modifier)
+                    or (self._x + self._offset <= event.x < self._x + self._w - width_modifier)):
                 return True
 
         return False
@@ -222,18 +249,20 @@ class Widget(metaclass=ABCMeta):
         """
         if self._label is not None:
             # Break the label up as required.
+            assert self._frame
             if self._display_label is None:
                 # noinspection PyTypeChecker
-                self._display_label = _split_text(
-                    self._label, self._offset, self._h, self._frame.canvas.unicode_aware)
+                self._display_label = _split_text(self._label,
+                                                  self._offset,
+                                                  self._h,
+                                                  self._frame.canvas.unicode_aware)
 
             # Draw the  display label.
             (colour, attr, background) = self._frame.palette["label"]
             for i, text in enumerate(self._display_label):
-                self._frame.canvas.paint(
-                    text, self._x, self._y + i, colour, attr, background)
+                self._frame.canvas.paint(text, self._x, self._y + i, colour, attr, background)
 
-    def _draw_cursor(self, char, frame_no, x, y):
+    def _draw_cursor(self, char: str, frame_no: int, x: int, y: int):
         """
         Draw a flashing cursor for this widget.
 
@@ -242,12 +271,16 @@ class Widget(metaclass=ABCMeta):
         :param x: The x coordinate for the cursor.
         :param y: The y coordinate for the cursor.
         """
+        assert self._frame is not None
         (colour, attr, background) = self._pick_colours("readonly" if self._readonly else "edit_text")
-        if frame_no % 10 < 5 or self._frame.reduce_cpu:
+        if attr and (frame_no % 10 < 5 or self._frame.reduce_cpu):
             attr |= Screen.A_REVERSE
         self._frame.canvas.print_at(char, x, y, colour, attr, background)
 
-    def _pick_palette_key(self, palette_name, selected=False, allow_input_state=True):
+    def _pick_palette_key(self,
+                          palette_name: str,
+                          selected: Optional[bool] = False,
+                          allow_input_state: bool = True) -> str:
         """
         Pick the rendering colour for a widget based on the current state.
 
@@ -270,7 +303,9 @@ class Widget(metaclass=ABCMeta):
                 key = "selected_" + key
         return key
 
-    def _pick_colours(self, palette_name, selected=False):
+    def _pick_colours(self,
+                      palette_name: str,
+                      selected: Optional[bool] = False) -> Tuple[Optional[int], Optional[int], Optional[int]]:
         """
         Pick the rendering colour for a widget based on the current state.
 
@@ -278,10 +313,11 @@ class Widget(metaclass=ABCMeta):
         :param selected: Whether this item is selected or not.
         :returns: A colour tuple (fg, attr, background) to be used.
         """
+        assert self._frame is not None
         return self._frame.palette[self._pick_palette_key(palette_name, selected)]
 
     @abstractmethod
-    def update(self, frame_no):
+    def update(self, frame_no: int):
         """
         The update method is called whenever this widget needs to redraw itself.
 
@@ -296,7 +332,7 @@ class Widget(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def process_event(self, event):
+    def process_event(self, event: Optional[Event]) -> Optional[Event]:
         """
         Process any input event.
 
@@ -305,14 +341,14 @@ class Widget(metaclass=ABCMeta):
         """
 
     @property
-    def label(self):
+    def label(self) -> Optional[str]:
         """
         The label for this widget.  Can be `None`.
         """
         return self._label
 
     @property
-    def name(self):
+    def name(self) -> Optional[str]:
         """
         The name for this widget (for reference in the persistent data).  Can
         be `None`.
@@ -321,7 +357,14 @@ class Widget(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def value(self):
+    def value(self) -> Any:
+        """
+        The value to return for this widget based on the user's input.
+        """
+
+    @value.setter
+    @abstractmethod
+    def value(self, new_value: Any):
         """
         The value to return for this widget based on the user's input.
         """

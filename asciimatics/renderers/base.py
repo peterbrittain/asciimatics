@@ -117,7 +117,7 @@ class StaticRenderer(Renderer):
             new_image = []
             for line in image.split("\n"):
                 new_line = ""
-                attributes = (None, None, None)
+                attributes: tuple[Optional[int], Optional[int], Optional[int]] = (None, None, None)
                 colours = []
                 while len(line) > 0:
                     match = self._colour_sequence.match(line)

@@ -162,7 +162,9 @@ class ParticleEmitter():
         self._blend = blend
 
     @staticmethod
-    def _find_colour(particle: Particle, start_index: int, screen_data: Tuple[int, int, int, int]) -> int:
+    def _find_colour(particle: Particle,
+                     start_index: int,
+                     screen_data: Tuple[int, Optional[int], Optional[int], Optional[int]]) -> int:
         """
         Helper function to find an existing colour in the particle palette.
         """
@@ -591,7 +593,7 @@ class ShotEmitter(ParticleEmitter):
     a given location.
     """
 
-    def __init__(self, screen: Screen, x: int, y: int, diameter: int, life_time: int):
+    def __init__(self, screen: Screen, x: int, y: int, diameter: Optional[int], life_time: int):
         """
         :param screen: The Screen being used for this particle system.
         :param x: The x position of the origin of the explosion.
@@ -639,6 +641,7 @@ class ShotEmitter(ParticleEmitter):
         return (dx * dx / 4.0) + (dy * dy)
 
     def _filter(self, data: Tuple[int, int, int, Optional[int], Optional[int], Optional[int]]) -> bool:
+        assert self._diameter
         dx = data[0] - self._x
         dy = data[1] - self._y
         return dx**2 / 4.0 + dy**2 < self._diameter**2 / 4.0

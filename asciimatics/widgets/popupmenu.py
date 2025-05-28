@@ -1,7 +1,9 @@
 """This module implements a pop up menu widget"""
+from __future__ import annotations
 from collections import defaultdict
 from functools import partial
-from asciimatics.event import KeyboardEvent, MouseEvent
+from typing import Callable, List, Optional, Tuple
+from asciimatics.event import KeyboardEvent, MouseEvent, Event
 from asciimatics.screen import Screen
 from asciimatics.widgets.button import Button
 from asciimatics.widgets.frame import Frame
@@ -16,7 +18,12 @@ class PopupMenu(Frame):
     palette = defaultdict(lambda: (Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_CYAN))
     palette["focus_button"] = (Screen.COLOUR_CYAN, Screen.A_NORMAL, Screen.COLOUR_WHITE)
 
-    def __init__(self, screen, menu_items, x, y, has_border=False):
+    def __init__(self,
+                 screen: Screen,
+                 menu_items: List[Tuple[str, Callable]],
+                 x: int,
+                 y: int,
+                 has_border: bool = False):
         """
         :param screen: The Screen being used for this pop-up.
         :param menu_items: a list of items to be displayed in the menu.
@@ -42,8 +49,15 @@ class PopupMenu(Frame):
             y -= h - 1
 
         # Construct the Frame
-        super().__init__(
-            screen, h, w, x=x, y=y, has_border=has_border, can_scroll=False, is_modal=True, hover_focus=True)
+        super().__init__(screen,
+                         h,
+                         w,
+                         x=x,
+                         y=y,
+                         has_border=has_border,
+                         can_scroll=False,
+                         is_modal=True,
+                         hover_focus=True)
 
         # Build the widget to display the time selection.
         layout = Layout([1], fill_frame=True)
@@ -53,12 +67,13 @@ class PopupMenu(Frame):
             layout.add_widget(Button(item[0], func, add_box=False), 0)
         self.fix()
 
-    def _destroy(self, callback=None):
-        self._scene.remove_effect(self)
+    def _destroy(self, callback: Optional[Callable] = None):
+        if self._scene:
+            self._scene.remove_effect(self)
         if callback is not None:
             callback()
 
-    def process_event(self, event):
+    def process_event(self, event: Optional[Event]) -> Optional[Event]:
         # Look for events that will close the pop-up - e.g. clicking outside the Frame or ESC key.
         if event is not None:
             if isinstance(event, KeyboardEvent):

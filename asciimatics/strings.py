@@ -1,7 +1,7 @@
 """
 This module provides classes to handle embedded control strings for widgets.
 """
-from typing import List, Optional, Tuple, Union, Any
+from typing import List, Optional, Tuple, Union, Any, Iterable
 from asciimatics.parsers import Parser
 
 
@@ -143,14 +143,14 @@ class ColouredText():
         """
         return False if self._text is None else self._text.startswith(str(text))
 
-    def join(self, others: List[Any]) -> "ColouredText":
+    def join(self, others: Iterable[str]) -> "ColouredText":
         """
         Join the list of ColouredObjects using this ColouredObject.
 
         :param others: the list of other objects to join.
         """
         try:
-            return ColouredText(self._raw_text.join([x.raw_text for x in others]),
+            return ColouredText(self._raw_text.join([x.raw_text for x in others]),  # type: ignore
                                 parser=self._parser,
                                 colour=self._init_colour)
         except AttributeError:

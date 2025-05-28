@@ -1,5 +1,7 @@
 """This module defines a checkbox widget"""
-from asciimatics.event import KeyboardEvent, MouseEvent
+from __future__ import annotations
+from typing import Callable, Optional
+from asciimatics.event import KeyboardEvent, MouseEvent, Event
 from asciimatics.widgets.widget import Widget
 
 
@@ -13,7 +15,12 @@ class CheckBox(Widget):
 
     __slots__ = ["_text", "_on_change"]
 
-    def __init__(self, text, label=None, name=None, on_change=None, **kwargs):
+    def __init__(self,
+                 text: str,
+                 label: Optional[str] = None,
+                 name: Optional[str] = None,
+                 on_change: Optional[Callable] = None,
+                 **kwargs):
         """
         :param text: The text to explain this specific field to the user.
         :param label: An optional label for the widget.
@@ -27,28 +34,26 @@ class CheckBox(Widget):
         self._label = label
         self._on_change = on_change
 
-    def update(self, frame_no):
+    def update(self, frame_no: int):
         self._draw_label()
 
         # Render this checkbox.
+        assert self._frame
         check_char = "✓" if self._frame.canvas.unicode_aware else "X"
         (colour, attr, bg) = self._pick_colours("control", self._has_focus or self._value)
-        self._frame.canvas.print_at(
-            f"[{check_char if self._value else ' '}] ",
-            self._x + self._offset,
-            self._y,
-            colour, attr, bg)
+        self._frame.canvas.print_at(f"[{check_char if self._value else ' '}] ",
+                                    self._x + self._offset,
+                                    self._y,
+                                    colour,
+                                    attr,
+                                    bg)
         (colour, attr, bg) = self._pick_colours("field", self._has_focus or self._value)
-        self._frame.canvas.print_at(
-            self._text,
-            self._x + self._offset + 4,
-            self._y,
-            colour, attr, bg)
+        self._frame.canvas.print_at(self._text, self._x + self._offset + 4, self._y, colour, attr, bg)
 
     def reset(self):
         pass
 
-    def process_event(self, event):
+    def process_event(self, event: Optional[Event]) -> Optional[Event]:
         if isinstance(event, KeyboardEvent):
             if event.key_code in [ord(" "), 10, 13]:
                 # Use property to trigger events.
@@ -72,7 +77,7 @@ class CheckBox(Widget):
         # If we got here, we processed the event - swallow it.
         return None
 
-    def required_height(self, offset, width):
+    def required_height(self, offset: int, width: int):
         return 1
 
     @property

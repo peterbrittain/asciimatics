@@ -433,8 +433,8 @@ class _Star():
         """
         self._screen = screen
         self._star_chars = pattern
-        self._cycle = None
-        self._old_char = None
+        self._cycle = 0
+        self._old_char = ""
         self._respawn()
 
     def _respawn(self):
@@ -447,7 +447,8 @@ class _Star():
         while True:
             self._x = randint(0, width - 1)
             self._y = self._screen.start_line + randint(0, height - 1)
-            if self._screen.get_from(self._x, self._y)[0] == 32:
+            c = self._screen.get_from(self._x, self._y)
+            if c is not None and c[0] == 32:
                 break
         self._old_char = " "
 
@@ -458,8 +459,8 @@ class _Star():
         if not self._screen.is_visible(self._x, self._y):
             self._respawn()
 
-        cur_char, _, _, _ = self._screen.get_from(self._x, self._y)
-        if cur_char not in (ord(self._old_char), 32):
+        c = self._screen.get_from(self._x, self._y)
+        if c is not None and c[0] not in (ord(self._old_char), 32):
             self._respawn()
 
         self._cycle += 1
@@ -666,16 +667,16 @@ class Sprite(Effect):
         self._dir_count = 0
         self._dir_x = 0
         self._dir_y = 0
-        self._old_direction = ""
+        self._old_direction: Optional[str] = ""
         self._speed = speed
         self.reset()
 
     def reset(self):
         self._dir_count = 0
-        self._dir_x = None
-        self._dir_y = None
-        self._old_x = None
-        self._old_y = None
+        self._dir_x = 0
+        self._dir_y = 0
+        self._old_x = 0
+        self._old_y = 0
         self._old_direction = None
         self._path.reset()
         for _, renderer in self._renderer_dict.items():
@@ -724,7 +725,7 @@ class Sprite(Effect):
             (x, y) = self._path.next_pos()
             if self._dir_count % 3 == 0:
                 direction = None
-                if self._dir_x is not None:
+                if self._old_direction is not None:
                     dx = (x - self._dir_x) // 2
                     dy = y - self._dir_y
                     if dx * dx > dy * dy:

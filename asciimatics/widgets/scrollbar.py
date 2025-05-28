@@ -1,4 +1,9 @@
 """This module implements a scroll bar capability for widgets"""
+from __future__ import annotations
+from typing import TYPE_CHECKING, Callable, Dict, Optional
+if TYPE_CHECKING:
+    from asciimatics.event import MouseEvent
+    from asciimatics.screen import Canvas
 
 
 class _ScrollBar():
@@ -6,7 +11,15 @@ class _ScrollBar():
     Internal object to provide vertical scroll bars for widgets.
     """
 
-    def __init__(self, canvas, palette, x, y, height, get_pos, set_pos, absolute=False):
+    def __init__(self,
+                 canvas: Canvas,
+                 palette: Dict[str, tuple[Optional[int], Optional[int], Optional[int]]],
+                 x: int,
+                 y: int,
+                 height: int,
+                 get_pos: Callable,
+                 set_pos: Callable,
+                 absolute: bool = False):
         """
         :param canvas: The canvas on which to draw the scroll bar.
         :param palette: The palette of the parent Frame.
@@ -55,10 +68,13 @@ class _ScrollBar():
         y = self._canvas.start_line if self._absolute else 0
         for dy in range(self._height):
             self._canvas.print_at(cursor if dy == sb_pos else back,
-                                  self._x, y + self._y + dy,
-                                  colour, attr, bg)
+                                  self._x,
+                                  y + self._y + dy,
+                                  colour,
+                                  attr,
+                                  bg)
 
-    def is_mouse_over(self, event):
+    def is_mouse_over(self, event: MouseEvent) -> bool:
         """
         Check whether a MouseEvent is over thus scroll bar.
 
@@ -68,7 +84,7 @@ class _ScrollBar():
         """
         return event.x == self._x and self._y <= event.y < self._y + self._height
 
-    def process_event(self, event):
+    def process_event(self, event: MouseEvent) -> bool:
         """
         Handle input on the scroll bar.
 

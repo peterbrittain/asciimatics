@@ -25,7 +25,7 @@ class AbstractScreenPlayer(DynamicRenderer):
         self._file = file
         self._parser: Parser = AnsiTerminalParser()
         self._current_colours = [Screen.COLOUR_WHITE, Screen.A_NORMAL, Screen.COLOUR_BLACK]
-        self._show_cursor = None
+        self._show_cursor = False
         self._cursor_x = 0
         self._cursor_y = 0
         self._save_cursor_x = 0

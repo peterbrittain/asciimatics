@@ -1,6 +1,7 @@
 """This module implements a time picker widget"""
+from __future__ import annotations
 from datetime import datetime
-
+from typing import Callable, Optional
 from asciimatics.widgets.basepicker import _BasePicker
 from asciimatics.widgets.label import Label
 from asciimatics.widgets.layout import Layout
@@ -13,18 +14,22 @@ class _TimePickerPopup(_TempPopup):
     An internal Frame for editing the currently selected time.
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent: "TimePicker"):
         """
         :param parent: The widget that spawned this pop-up.
         """
         # Construct the Frame
+        assert parent.frame
         location = parent.get_location()
         super().__init__(parent.frame.screen,
                          parent,
-                         location[0] - 1, location[1] - 2,
-                         10 if parent.include_seconds else 7, 5)
+                         location[0] - 1,
+                         location[1] - 2,
+                         10 if parent.include_seconds else 7,
+                         5)
 
         # Build the widget to display the time selection.
+        assert isinstance(self._parent, TimePicker)
         self._hours = ListBox(3, [(f"{x:02}", x) for x in range(24)], centre=True)
         self._minutes = ListBox(3, [(f"{x:02}", x) for x in range(60)], centre=True)
         self._seconds = ListBox(3, [(f"{x:02}", x) for x in range(60)], centre=True)
@@ -46,7 +51,7 @@ class _TimePickerPopup(_TempPopup):
         self._minutes.value = parent.value.minute
         self._seconds.value = parent.value.second
 
-    def _on_close(self, cancelled):
+    def _on_close(self, cancelled: bool):
         if not cancelled:
             self._parent.value = self._parent.value.replace(hour=self._hours.value,
                                                             minute=self._minutes.value,
@@ -60,7 +65,12 @@ class TimePicker(_BasePicker):
 
     __slots__ = ["include_seconds"]
 
-    def __init__(self, label=None, name=None, seconds=False, on_change=None, **kwargs):
+    def __init__(self,
+                 label: Optional[str] = None,
+                 name: Optional[str] = None,
+                 seconds: bool = False,
+                 on_change: Optional[Callable] = None,
+                 **kwargs):
         """
         :param label: An optional label for the widget.
         :param name: The name for the widget.
@@ -73,14 +83,16 @@ class TimePicker(_BasePicker):
         self._value = datetime.now().time()
         self.include_seconds = seconds
 
-    def update(self, frame_no):
+    def update(self, frame_no: int):
         self._draw_label()
 
         # This widget only ever needs display the current selection - the separate Frame does all
         # the clever stuff when it has the focus.
+        assert self._frame
         (colour, attr, background) = self._pick_colours("edit_text")
-        self._frame.canvas.print_at(
-            self._value.strftime("%H:%M:%S" if self.include_seconds else "%H:%M"),
-            self._x + self._offset,
-            self._y,
-            colour, attr, background)
+        self._frame.canvas.print_at(self._value.strftime("%H:%M:%S" if self.include_seconds else "%H:%M"),
+                                    self._x + self._offset,
+                                    self._y,
+                                    colour,
+                                    attr,
+                                    background)

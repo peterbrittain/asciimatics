@@ -1,5 +1,7 @@
 """This module implements the widget for radio buttons"""
-from asciimatics.event import KeyboardEvent, MouseEvent
+from __future__ import annotations
+from typing import Callable, List, Optional, Tuple
+from asciimatics.event import KeyboardEvent, MouseEvent, Event
 from asciimatics.screen import Screen
 from asciimatics.widgets.widget import Widget
 
@@ -13,7 +15,12 @@ class RadioButtons(Widget):
 
     __slots__ = ["_options", "_selection", "_start_column", "_on_change"]
 
-    def __init__(self, options, label=None, name=None, on_change=None, **kwargs):
+    def __init__(self,
+                 options: List[Tuple[str, int]],
+                 label: Optional[str] = None,
+                 name: Optional[str] = None,
+                 on_change: Optional[Callable] = None,
+                 **kwargs):
         """
         :param options: A list of (text, value) tuples for each radio button.
         :param label: An optional label for the widget.
@@ -29,10 +36,11 @@ class RadioButtons(Widget):
         self._start_column = 0
         self._on_change = on_change
 
-    def update(self, frame_no):
+    def update(self, frame_no: int):
         self._draw_label()
 
         # Decide on check char
+        assert self._frame
         check_char = "•" if self._frame.canvas.unicode_aware else "X"
 
         # Render the list of radio buttons.
@@ -40,21 +48,13 @@ class RadioButtons(Widget):
             fg, attr, bg = self._pick_colours("control", i == self._selection)
             fg2, attr2, bg2 = self._pick_colours("field", i == self._selection)
             check = check_char if i == self._selection else " "
-            self._frame.canvas.print_at(
-                f"({check}) ",
-                self._x + self._offset,
-                self._y + i,
-                fg, attr, bg)
-            self._frame.canvas.print_at(
-                text,
-                self._x + self._offset + 4,
-                self._y + i,
-                fg2, attr2, bg2)
+            self._frame.canvas.print_at(f"({check}) ", self._x + self._offset, self._y + i, fg, attr, bg)
+            self._frame.canvas.print_at(text, self._x + self._offset + 4, self._y + i, fg2, attr2, bg2)
 
     def reset(self):
         pass
 
-    def process_event(self, event):
+    def process_event(self, event: Optional[Event]) -> Optional[Event]:
         if isinstance(event, KeyboardEvent):
             if event.key_code == Screen.KEY_UP:
                 # Use property to trigger events.
@@ -62,8 +62,7 @@ class RadioButtons(Widget):
                 self.value = self._options[self._selection][1]
             elif event.key_code == Screen.KEY_DOWN:
                 # Use property to trigger events.
-                self._selection = min(self._selection + 1,
-                                      len(self._options) - 1)
+                self._selection = min(self._selection + 1, len(self._options) - 1)
                 self.value = self._options[self._selection][1]
             else:
                 # Ignore any other key press.
@@ -85,7 +84,7 @@ class RadioButtons(Widget):
         # If we got here, we processed the event - swallow it.
         return None
 
-    def required_height(self, offset, width):
+    def required_height(self, offset: int, width: int) -> int:
         return len(self._options)
 
     @property
