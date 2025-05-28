@@ -2381,7 +2381,7 @@ else:
         }
 
         def __init__(self,
-                     win: curses.window,
+                     win: Any,  # Pypy uses different curses definitions
                      height: Optional[int] = None,
                      catch_interrupt: bool = False,
                      unicode_aware: Optional[bool] = False):
