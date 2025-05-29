@@ -26,6 +26,7 @@ jobs:
           setup_method: install
           reporter: github-check
           level: warning
+          filter_mode: nofilter
           fail_level: error
           fail_on_error: true
           install_types: false

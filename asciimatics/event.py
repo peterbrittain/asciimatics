@@ -57,7 +57,7 @@ class MouseEvent(Event):
         self.y = y
         self.buttons = buttons
 
-    def __repr__(self) -> None:
+    def __repr__(self) -> str:
         """
         :returns: a string representation of the mouse event.
         """
