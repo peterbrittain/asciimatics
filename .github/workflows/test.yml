@@ -26,6 +26,7 @@ jobs:
           setup_method: install
           reporter: github-check
           level: warning
+          install_types: false
           workdir: .
 
   test:
