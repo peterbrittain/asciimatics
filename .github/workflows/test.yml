@@ -19,6 +19,7 @@ jobs:
         uses: tsuyoshicho/action-mypy@v4
         with:
           github_token: ${{ secrets.github_token }}
+          setup_method: install
           reporter: github-check
           level: warning
           workdir: .
