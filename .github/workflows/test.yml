@@ -27,6 +27,7 @@ jobs:
           reporter: github-check
           level: warning
           fail_level: error
+          fail_on_error: true
           install_types: false
           target: asciimatics
           workdir: .
