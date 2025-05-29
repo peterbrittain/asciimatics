@@ -2,7 +2,7 @@
 from __future__ import annotations
 from copy import copy, deepcopy
 from logging import getLogger
-from typing import TYPE_CHECKING, Callable, Optional, Tuple, Union, Any
+from typing import TYPE_CHECKING, Callable, Optional, Tuple, Any
 from wcwidth import wcswidth
 from asciimatics.effects import Effect
 from asciimatics.event import KeyboardEvent, MouseEvent, Event
@@ -176,8 +176,8 @@ class Frame(Effect):
         self._on_load = on_load
         self._hover_focus = hover_focus
         self._initial_data = data if data else {}
-        self._title = None
-        self.title = title  # Use property to re-format text as required.
+        self._title = ""
+        self.title = title if title is not None else ""  # Use property to re-format text as required.
         self._has_shadow = has_shadow
         self._reduce_cpu = reduce_cpu
         self._is_modal = is_modal
@@ -359,14 +359,14 @@ class Frame(Effect):
                 self._border_mgr.scroll_bar.palette = self.palette
 
     @property
-    def title(self):
+    def title(self) -> str:
         """
         Title for this Frame.
         """
         return self._title
 
     @title.setter
-    def title(self, new_value):
+    def title(self, new_value: str):
         self._title = " " + new_value[0:self._canvas.width - 4] + " " if new_value else ""
 
     @property

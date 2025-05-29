@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools", 'setuptools_scm']
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+version_file = "asciimatics/version.py"
+local_scheme = "no-local-version"
+
+[project]
+dynamic = ['version', 'readme']
+name = 'asciimatics'
+description = 'A cross-platform package to create text UIs and ASCII animations'
+maintainers = [
+	{name = 'Peter Brittain', email = 'peter.brittain.os@gmail.com'},
+]
+license = 'Apache-2.0'
+license-files = ['LICENSE']
+classifiers = [
+        'Development Status :: 5 - Production/Stable',
+        'Environment :: Console',
+        'Environment :: Console :: Curses',
+        'Intended Audience :: Developers',
+        'Topic :: Text Processing :: General',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: Implementation :: CPython',
+        'Programming Language :: Python :: Implementation :: PyPy',
+        'Topic :: Software Development :: User Interfaces',
+        'Topic :: Terminals',
+]
+keywords = [
+	'ascii',
+	'ansi',
+	'art',
+	'titles',
+	'animation',
+	'curses',
+        'ncurses',
+	'windows',
+	'xterm',
+	'mouse',
+	'keyboard',
+	'terminal',
+	'tty',
+        'color',
+	'colour',
+	'crossplatform',
+	'console',
+]
+dependencies = [
+        'pyfiglet >= 0.7.2',
+        'Pillow >= 2.7.0',
+        'wcwidth',
+	"pywin32 >= 1.0; platform_system=='Windows'",
+]
+requires-python = ">= 3.8"
+
+[project.urls]
+Repository = 'https://github.com/peterbrittain/asciimatics'
+
+[flake8]
+max-line-length = 110
+
+[yapf]
+COLUMN_LIMIT = 110
+SPLIT_ALL_TOP_LEVEL_COMMA_SEPARATED_VALUES = true
+INDENT_DICTIONARY_VALUE = true
+ALLOW_SPLIT_BEFORE_DICT_VALUE = false
