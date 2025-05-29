@@ -62,10 +62,7 @@ requires-python = ">= 3.8"
 [project.urls]
 Repository = 'https://github.com/peterbrittain/asciimatics'
 
-[flake8]
-max-line-length = 110
-
-[yapf]
+[tool.yapf]
 COLUMN_LIMIT = 110
 SPLIT_ALL_TOP_LEVEL_COMMA_SEPARATED_VALUES = true
 INDENT_DICTIONARY_VALUE = true

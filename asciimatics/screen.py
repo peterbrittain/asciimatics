@@ -2047,8 +2047,8 @@ if sys.platform == "win32":
 
         # Foreground colour lookup table.
         _COLOURS = {
-            Screen.COLOUR_DEFAULT:
-                (win32console.FOREGROUND_RED | win32console.FOREGROUND_GREEN | win32console.FOREGROUND_BLUE),
+            Screen.COLOUR_DEFAULT: (win32console.FOREGROUND_RED | win32console.FOREGROUND_GREEN
+                                    | win32console.FOREGROUND_BLUE),
             Screen.COLOUR_BLACK: 0,
             Screen.COLOUR_RED: win32console.FOREGROUND_RED,
             Screen.COLOUR_GREEN: win32console.FOREGROUND_GREEN,
@@ -2056,8 +2056,8 @@ if sys.platform == "win32":
             Screen.COLOUR_BLUE: win32console.FOREGROUND_BLUE,
             Screen.COLOUR_MAGENTA: (win32console.FOREGROUND_RED | win32console.FOREGROUND_BLUE),
             Screen.COLOUR_CYAN: (win32console.FOREGROUND_BLUE | win32console.FOREGROUND_GREEN),
-            Screen.COLOUR_WHITE:
-                (win32console.FOREGROUND_RED | win32console.FOREGROUND_GREEN | win32console.FOREGROUND_BLUE)
+            Screen.COLOUR_WHITE: (win32console.FOREGROUND_RED | win32console.FOREGROUND_GREEN
+                                  | win32console.FOREGROUND_BLUE)
         }
 
         # Background colour lookup table.
@@ -2070,8 +2070,8 @@ if sys.platform == "win32":
             Screen.COLOUR_BLUE: win32console.BACKGROUND_BLUE,
             Screen.COLOUR_MAGENTA: (win32console.BACKGROUND_RED | win32console.BACKGROUND_BLUE),
             Screen.COLOUR_CYAN: (win32console.BACKGROUND_BLUE | win32console.BACKGROUND_GREEN),
-            Screen.COLOUR_WHITE:
-                (win32console.BACKGROUND_RED | win32console.BACKGROUND_GREEN | win32console.BACKGROUND_BLUE)
+            Screen.COLOUR_WHITE: (win32console.BACKGROUND_RED | win32console.BACKGROUND_GREEN
+                                  | win32console.BACKGROUND_BLUE)
         }
 
         # Attribute lookup table
@@ -2188,8 +2188,8 @@ if sys.platform == "win32":
                         if (self._map_all and event.VirtualKeyCode in self._EXTRA_KEY_MAP):
                             key_code = self._EXTRA_KEY_MAP[event.VirtualKeyCode]
                         else:
-                            if (event.VirtualKeyCode == win32con.VK_TAB
-                                    and event.ControlKeyState & win32con.SHIFT_PRESSED):
+                            if (event.VirtualKeyCode == win32con.VK_TAB and event.ControlKeyState
+                                    & win32con.SHIFT_PRESSED):
                                 key_code = Screen.KEY_BACK_TAB
 
                         # Don't return anything if we didn't have a valid
@@ -2380,11 +2380,12 @@ else:
             # there's no translation for them either.
         }
 
-        def __init__(self,
-                     win: Any,  # Pypy uses different curses definitions
-                     height: Optional[int] = None,
-                     catch_interrupt: bool = False,
-                     unicode_aware: Optional[bool] = False):
+        def __init__(
+                self,
+                win: Any,  # Pypy uses different curses definitions
+                height: Optional[int] = None,
+                catch_interrupt: bool = False,
+                unicode_aware: Optional[bool] = False):
             """
             :param win: The window object as returned by the curses wrapper method.
             :param height: The height of the screen buffer to be used (for teesting only).
