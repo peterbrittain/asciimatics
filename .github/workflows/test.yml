@@ -25,6 +25,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    needs: lint
     strategy:
       matrix:
         python-version: ['3.10', '3.12', 'pypy3.11']
@@ -53,6 +54,7 @@ jobs:
 
   testwindows:
     runs-on: windows-latest
+    needs: lint
     strategy:
       matrix:
         python-version: ['3.9']
