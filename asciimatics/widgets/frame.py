@@ -231,8 +231,8 @@ class Frame(Effect):
 
         :param effect: The Effect to be added.
         """
-        assert self._scene is not None
-        effect.register_scene(self._scene)
+        if self._scene:
+            effect.register_scene(self._scene)
         self._effects.append(effect)
 
     def fix(self):
