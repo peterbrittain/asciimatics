@@ -7,6 +7,7 @@ LATEST
 - Added border option to PopupMenu.
 - Added scrolling of truncated text to ListBox and MulticolumnListBox.
 - Added ability for StaticRenderers to use DynamicRenders as input.
+- Added mouse scroll wheel support.
 - Added reset() to Renderers.
 - Added type hints to source code.
 - Fixed double-width alignment issues on DropdownList.
