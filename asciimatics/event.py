@@ -46,6 +46,8 @@ class MouseEvent(Event):
     LEFT_CLICK = 1
     RIGHT_CLICK = 2
     DOUBLE_CLICK = 4
+    SCROLL_UP = 8
+    SCROLL_DOWN = 16
 
     def __init__(self, x: int, y: int, buttons: int):
         """

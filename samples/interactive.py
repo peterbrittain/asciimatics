@@ -55,6 +55,12 @@ class MouseController(DynamicPath):
             elif event.buttons & MouseEvent.RIGHT_CLICK != 0:
                 # Try to whack the other sprites when mouse is clicked
                 self._sprite.whack("CRASH!")
+            elif event.buttons & MouseEvent.SCROLL_UP != 0:
+                # Try to whack the other sprites when mouse is clicked
+                self._sprite.whack("OOOOH!")
+            elif event.buttons & MouseEvent.SCROLL_DOWN != 0:
+                # Try to whack the other sprites when mouse is clicked
+                self._sprite.whack("AAAAH!")
         else:
             return event
 
