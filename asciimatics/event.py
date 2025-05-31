@@ -46,6 +46,7 @@ class MouseEvent(Event):
     LEFT_CLICK = 1
     RIGHT_CLICK = 2
     DOUBLE_CLICK = 4
+    # Note: older versions of curses (e.g. in pypy) do not support up/down
     SCROLL_UP = 8
     SCROLL_DOWN = 16
 

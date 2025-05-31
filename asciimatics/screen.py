@@ -2599,10 +2599,11 @@ else:
                         buttons |= MouseEvent.LEFT_CLICK
                     if (bstate & curses.BUTTON3_PRESSED != 0 or bstate & curses.BUTTON3_CLICKED != 0):
                         buttons |= MouseEvent.RIGHT_CLICK
-                    if (bstate & curses.BUTTON4_PRESSED != 0 or bstate & curses.BUTTON4_CLICKED != 0):
-                        buttons |= MouseEvent.SCROLL_UP
-                    if (bstate & curses.BUTTON5_PRESSED != 0 or bstate & curses.BUTTON5_CLICKED != 0):
-                        buttons |= MouseEvent.SCROLL_DOWN
+                    if hasattr(curses, "BUTTON5_PRESSED"):
+                        if (bstate & curses.BUTTON4_PRESSED != 0 or bstate & curses.BUTTON4_CLICKED != 0):
+                            buttons |= MouseEvent.SCROLL_UP
+                        if (bstate & curses.BUTTON5_PRESSED != 0 or bstate & curses.BUTTON5_CLICKED != 0):
+                            buttons |= MouseEvent.SCROLL_DOWN
                     if bstate & curses.BUTTON1_DOUBLE_CLICKED != 0:
                         buttons |= MouseEvent.DOUBLE_CLICK
                     return MouseEvent(x, y, buttons)
