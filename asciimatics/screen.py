@@ -2213,8 +2213,15 @@ if sys.platform == "win32":
                             button |= MouseEvent.LEFT_CLICK
                         if event.ButtonState & win32con.RIGHTMOST_BUTTON_PRESSED != 0:
                             button |= MouseEvent.RIGHT_CLICK
-                    elif event.EventFlags & win32con.DOUBLE_CLICK != 0:
-                        button |= MouseEvent.DOUBLE_CLICK
+                    else:
+                        if event.EventFlags & win32con.MOUSE_WHEELED:
+                            direction = (event.ButtonState & 0xFFFF0000) // 0x10000
+                            if direction & 0x8000 == 0:
+                                button |= MouseEvent.SCROLL_UP
+                            else:
+                                button |= MouseEvent.SCROLL_DOWN
+                        if event.EventFlags & win32con.DOUBLE_CLICK != 0:
+                            button |= MouseEvent.DOUBLE_CLICK
 
                     return MouseEvent(event.MousePosition.X, event.MousePosition.Y, button)
 

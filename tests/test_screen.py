@@ -698,6 +698,12 @@ class TestScreen(unittest.TestCase):
                 event.ButtonState |= win32con.FROM_LEFT_1ST_BUTTON_PRESSED
             if button & MouseEvent.RIGHT_CLICK != 0:
                 event.ButtonState |= win32con.RIGHTMOST_BUTTON_PRESSED
+            if button & MouseEvent.SCROLL_UP != 0:
+                event.EventFlags |= win32con.MOUSE_WHEELED
+                event.ButtonState = 120
+            if button & MouseEvent.SCROLL_DOWN != 0:
+                event.EventFlags |= win32con.MOUSE_WHEELED
+                event.ButtonState = -120
             if button & MouseEvent.DOUBLE_CLICK != 0:
                 event.EventFlags |= win32con.DOUBLE_CLICK
             screen._stdin.WriteConsoleInput([event])
@@ -711,7 +717,7 @@ class TestScreen(unittest.TestCase):
                 bstate |= curses.BUTTON3_CLICKED
             if button & MouseEvent.DOUBLE_CLICK != 0:
                 bstate |= curses.BUTTON1_DOUBLE_CLICKED
-            if hasattr(curses, "BUTTON5_PRESSED"):
+            if sys.platform != "win32" and hasattr(curses, "BUTTON5_PRESSED"):
                 if button & MouseEvent.SCROLL_UP != 0:
                     bstate |= curses.BUTTON4_CLICKED
                 if button & MouseEvent.SCROLL_DOWN != 0:
@@ -793,7 +799,7 @@ class TestScreen(unittest.TestCase):
             self.assertIsNone(screen.get_event())
 
             # Not all curses versions support scrolling...
-            if hasattr(curses, "BUTTON5_PRESSED"):
+            if sys.platform == "win32" or hasattr(curses, "BUTTON5_PRESSED"):
                 # Check scroll up
                 self._inject_mouse(screen, 1, 1, MouseEvent.SCROLL_UP)
                 ev = screen.get_event()
