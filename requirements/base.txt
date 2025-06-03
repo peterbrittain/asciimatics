@@ -1,3 +1,4 @@
 wcwidth
+wrapt
 pyfiglet >= 0.7.2
 setuptools_scm

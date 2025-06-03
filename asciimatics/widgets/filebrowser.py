@@ -145,11 +145,9 @@ class FileBrowser(MultiColumnListBox):
                     name = f"|-- {my_file} -> {real_path}"
 
             # Normalize names for MacOS and then add to the list.
-            tree.append(([
-                unicodedata.normalize("NFC", name),
-                readable_mem(details.st_size),
-                readable_timestamp(details.st_mtime)
-            ],
+            tree.append(([unicodedata.normalize("NFC", name),
+                          readable_mem(details.st_size),
+                          readable_timestamp(details.st_mtime)],
                          full_path))
 
         tree_view.extend(sorted(tree_dirs))

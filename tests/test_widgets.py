@@ -3764,6 +3764,48 @@ class TestWidgets(unittest.TestCase):
             "|                                      |\n" +
             "+--------------------------------------+\n")
 
+    def test_textbox_proxy(self):
+        """
+        Check the list property supports normal list operators.
+        """
+        def _on_change():
+            self._new_value = [x for x in self._test_widget.value]
+
+        # Now set up the Frame ready for testing
+        self._new_value = None
+        screen = MagicMock(spec=Screen, colours=8, unicode_aware=False)
+        scene = Scene([], duration=-1)
+        canvas = Canvas(screen, 10, 40, 0, 0)
+        form = Frame(canvas, canvas.height, canvas.width)
+        layout = Layout([100])
+        form.add_layout(layout)
+        self._test_widget = textbox = TextBox(4, label="TB", on_change=_on_change)
+        textbox.value = ["Foo"]
+        layout.add_widget(textbox)
+        form.fix()
+        scene.add_effect(form)
+        scene.reset()
+
+        # Check returned list proxies updates to the form.
+        textbox.value.append("Bar")
+        self.assertEqual(textbox.value, ["Foo", "Bar"])
+        self.assertEqual(textbox.value, self._new_value)
+        textbox.value.insert(1, "World")
+        self.assertEqual(textbox.value, ["Foo", "World", "Bar"])
+        self.assertEqual(textbox.value, self._new_value)
+        textbox.value[0] = "Hello"
+        self.assertEqual(textbox.value, ["Hello", "World", "Bar"])
+        self.assertEqual(textbox.value, self._new_value)
+        del textbox.value[2]
+        self.assertEqual(textbox.value, ["Hello", "World"])
+        self.assertEqual(textbox.value, self._new_value)
+        textbox.value.extend(["Foo", "Bar"])
+        self.assertEqual(textbox.value, ["Hello", "World", "Foo", "Bar"])
+        self.assertEqual(textbox.value, self._new_value)
+        textbox.value.clear()
+        self.assertEqual(textbox.value, [])
+        self.assertEqual(textbox.value, self._new_value)
+
     def test_layout_gutters(self):
         """
         Validate that the gutters parameter works for Layouts

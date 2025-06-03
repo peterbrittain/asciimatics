@@ -1,8 +1,10 @@
 """This module implements a multi line editing text box"""
 from __future__ import annotations
 from copy import copy
+from functools import partial
 from logging import getLogger
 from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Union
+from wrapt import ObjectProxy
 from asciimatics.event import KeyboardEvent, MouseEvent, Event
 from asciimatics.screen import Screen
 from asciimatics.strings import ColouredText
@@ -13,6 +15,37 @@ if TYPE_CHECKING:
 
 # Logging
 logger = getLogger(__name__)
+
+
+class _ListWrapper(ObjectProxy):  # pylint: disable=abstract-method
+    """
+    A proxy for list objects.
+
+    This class can be returned by the `value` property, allowing the caller to modify it via standard
+    list modifications.  For example, `textbox.value.append("foo")` will now update the value of the textbox.
+    """
+
+    def __init__(self, lst: List, parent: TextBox):
+        super().__init__(lst)
+        self._self_parent = parent
+
+    def append(self, stuff):
+        self._self_parent.proxy_update(partial(self.__wrapped__.append, stuff))
+
+    def extend(self, stuff):
+        self._self_parent.proxy_update(partial(self.__wrapped__.extend, stuff))
+
+    def insert(self, key, value):
+        self._self_parent.proxy_update(partial(self.__wrapped__.insert, key, value))
+
+    def __setitem__(self, key, value):
+        self._self_parent.proxy_update(partial(self.__wrapped__.__setitem__, key, value))
+
+    def __delitem__(self, key):
+        self._self_parent.proxy_update(partial(self.__wrapped__.__delitem__, key))
+
+    def clear(self):
+        self._self_parent.proxy_update(self.__wrapped__.clear)
 
 
 class TextBox(Widget):
@@ -146,8 +179,10 @@ class TextBox(Widget):
         self._start_column = 0
         if self._auto_scroll or self._line > len(self._value) - 1:
             self._line = len(self._value) - 1
-
-        self._column = 0 if self._is_disabled else len(self._value[self._line])
+        try:
+            self._column = 0 if self._is_disabled else len(self._value[self._line])
+        except IndexError:
+            self._column = 0
         self._reflowed_text_cache = None
 
     def _change_line(self, delta: int):
@@ -347,10 +382,13 @@ class TextBox(Widget):
     def value(self):
         """
         The current value for this TextBox.
+
+        NOTE: this now uses a proxy to allow insertion and other modifications.
         """
         if self._value is None:
             self._value = [""]
-        return "\n".join([str(x) for x in self._value]) if self._as_string else self._value
+        return "\n".join([str(x)
+                          for x in self._value]) if self._as_string else _ListWrapper(self._value, self)
 
     @value.setter
     def value(self, new_value):
@@ -360,8 +398,23 @@ class TextBox(Widget):
             new_value = [""]
         elif self._as_string:
             new_value = new_value.split("\n")
+        elif isinstance(new_value, _ListWrapper):
+            new_value = new_value.__wrapped__
         self._value = new_value
+        self._handle_changes(old_value)
 
+    def proxy_update(self, make_update):
+        """
+        Handle an update from the proxy value property object.
+
+        This is an internal method that processes potential updates to the value of the TextBox.  It
+        should never be called directly by an application.
+        """
+        old_value = list(self._value)
+        make_update()
+        self._handle_changes(old_value)
+
+    def _handle_changes(self, old_value):
         # TODO: Sort out speed of this code
         if self._parser:
             new_value = []

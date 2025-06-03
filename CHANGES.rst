@@ -10,6 +10,7 @@ LATEST
 - Added mouse scroll wheel support.
 - Added reset() to Renderers.
 - Added type hints to source code.
+- Textbox value now supports list methods - e.g. `TextBox.value.append("foo")` will change the value.
 - Fixed double-width alignment issues on DropdownList.
 - Improved TextBox line wrapping to break on word boundaries.
 - Fixed logic for highlighting selected widget controls without focus.
