@@ -5,7 +5,7 @@ from math import sqrt
 from collections import defaultdict
 from functools import lru_cache
 from typing import TYPE_CHECKING, List, Tuple, Optional, Union
-from wcwidth import wcswidth, wcwidth
+from wcwidth import wcswidth, iter_graphemes, wrap as wcwidth_wrap
 from asciimatics.screen import Screen
 if TYPE_CHECKING:
     from asciimatics.widgets.widget import Widget
@@ -123,7 +123,8 @@ def _enforce_width(text: Union[str, ColouredText],
     :param split_on_words: Whether to respect word boundaries when splitting.
     :return: The resulting truncated text
     """
-    return _enforce_width_ext(text, width, unicode_aware=unicode_aware, split_on_words=split_on_words)[0]
+    return _enforce_width_ext(
+        text, width, unicode_aware=unicode_aware, split_on_words=split_on_words)[0]
 
 
 def _enforce_width_ext(text: Union[str, ColouredText],
@@ -132,7 +133,7 @@ def _enforce_width_ext(text: Union[str, ColouredText],
                        split_on_words: bool = False) -> Tuple[Union[str, ColouredText], bool]:
     """
     Enforce a displayed piece of text to be a certain number of cells wide.  This takes into
-    account double-width characters used in CJK languages.
+    account double-width characters used in CJK languages and grapheme clusters.
 
     :param text: The text to be truncated
     :param width: The screen cell width to enforce
@@ -148,20 +149,24 @@ def _enforce_width_ext(text: Union[str, ColouredText],
     # Can still optimize performance if we are not handling unicode characters.
     if unicode_aware or split_on_words:
         size = 0
-        last_space = 9999999999
-        for i, char in enumerate(str(text)):
-            c_width = wcwidth(char) if ord(char) >= 256 else 1
-            if split_on_words and char in (" ", "\t"):
-                last_space = i + 1
-            if size + c_width > width:
-                return text[0:min(i, last_space)], True
-            size += c_width
+        pos = 0
+        last_space_pos = 9999999999
+        text_str = str(text)
+        for grapheme in iter_graphemes(text_str):
+            g_width = wcswidth(grapheme)
+            if split_on_words and grapheme in (" ", "\t"):
+                last_space_pos = pos + len(grapheme)
+            if size + g_width > width:
+                return text[0:min(pos, last_space_pos)], True
+            size += g_width
+            pos += len(grapheme)
     elif len(text) + 1 > width:
         return text[0:width], True
     return text, False
 
 
-def _find_min_start(text: str, max_width: int, unicode_aware: bool = True, at_end: bool = False) -> int:
+def _find_min_start(text: str, max_width: int, unicode_aware: bool = True,
+                    at_end: bool = False) -> int:
     """
     Find the starting point in the string that will reduce it to be less than or equal to the
     specified width when displayed on screen.
@@ -176,24 +181,29 @@ def _find_min_start(text: str, max_width: int, unicode_aware: bool = True, at_en
     if 2 * len(text) < max_width:
         return 0
 
-    # OK - do it the hard way...
+    # OK - do it the hard way, iterating by grapheme cluster to avoid splitting them...
     result = 0
-    string_len = wcswidth if unicode_aware else len
-    char_len = wcwidth if unicode_aware else lambda x: 1
-    display_end = string_len(text)
-    while display_end > max_width:
-        result += 1
-        display_end -= char_len(text[0])
-        text = text[1:]
+    if unicode_aware:
+        display_end = wcswidth(text)
+        for grapheme in iter_graphemes(text):
+            if display_end <= max_width:
+                break
+            display_end -= wcswidth(grapheme)
+            result += len(grapheme)
+    else:
+        display_end = len(text)
+        while display_end > max_width:
+            result += 1
+            display_end -= 1
     if at_end and display_end == max_width:
-        result += 1
+        result += len(next(iter_graphemes(text[result:]), "")) if unicode_aware else 1
     return result
 
 
 def _get_offset(text: str, visible_width: int, unicode_aware: bool = True) -> int:
     """
     Find the character offset within some text for a given visible offset (taking into account the
-    fact that some character glyphs are double width).
+    fact that some character glyphs are double width and grapheme clusters).
 
     :param text: The text to analyze
     :param visible_width: The required location within that text (as seen on screen).
@@ -202,13 +212,12 @@ def _get_offset(text: str, visible_width: int, unicode_aware: bool = True) -> in
     result = 0
     width = 0
     if unicode_aware:
-        for char in text:
-            if visible_width - width <= 0:
+        for grapheme in iter_graphemes(text):
+            g_width = wcswidth(grapheme)
+            if width + g_width > visible_width:
                 break
-            result += 1
-            width += wcwidth(char)
-        if visible_width - width < 0:
-            result -= 1
+            result += len(grapheme)
+            width += g_width
     else:
         result = min(len(text), visible_width)
     return result
@@ -227,42 +236,51 @@ def _split_text(text: str, width: int, height: int, unicode_aware: bool = True) 
     :param height: The maximum height for the resulting text.
     :return: A list of strings of the broken up text.
     """
-    # At a high level, just try to split on whitespace for the best results.
-    tokens = text.split(" ")
-    result = []
-    current_line = ""
     string_len = wcswidth if unicode_aware else len
-    for token in tokens:
-        for i, line_token in enumerate(token.split("\n")):
-            if string_len(current_line + line_token) > width or i > 0:
-                # Don't bother inserting completely blank lines
-                # which should only happen on the very first
-                # line (as the rest will inject whitespace/newlines)
-                if len(current_line) > 0:
-                    result.append(current_line.rstrip())
-                current_line = line_token + " "
+
+    if unicode_aware:
+        # Use wcwidth.wrap() for grapheme, east-asian, emoji, and terminal sequence-aware word
+        # wrapping, modeled after standard python textwrap.wrap().  We split on newlines first to
+        # preserve newlines, as documented at bottom of API document of wcwidth.wrap(), its what
+        # most people prefer, like the html classic '<br><br><br>' sometimes you want them.
+        result = []
+        for paragraph in text.split("\n"):
+            if paragraph:
+                result.extend(wcwidth_wrap(paragraph, width, break_long_words=True))
             else:
-                current_line += line_token + " "
+                result.append("")
+    else:
+        # Legacy non-unicode path
+        tokens = text.split(" ")
+        result = []
+        current_line = ""
+        for token in tokens:
+            for i, line_token in enumerate(token.split("\n")):
+                if len(current_line + line_token) > width or i > 0:
+                    if len(current_line) > 0:
+                        result.append(current_line.rstrip())
+                    current_line = line_token + " "
+                else:
+                    current_line += line_token + " "
+        current_line = current_line.rstrip()
+        while len(current_line) > 0:
+            new_line = current_line[:width]
+            result.append(new_line)
+            current_line = current_line[len(new_line):]
 
-    # At this point we've either split nicely or have a hugely long unbroken string
-    # (e.g. because the language doesn't use whitespace.
-    # Either way, break this last line up as best we can.
-    current_line = current_line.rstrip()
-    while string_len(current_line) > 0:
-        new_line = str(_enforce_width(current_line, width, unicode_aware))
-        result.append(new_line)
-        current_line = current_line[len(new_line):]
-
-    # Check for a height overrun and truncate.
+    # Check for a height overrun and truncate with ellipsis.
     if len(result) > height:
         result = result[:height]
-        result[height - 1] = result[height - 1][:width - 3] + "..."
+        last_line = result[height - 1]
+        truncated = _enforce_width(last_line, width - 3, unicode_aware)
+        result[height - 1] = str(truncated) + "..."
 
     # Very small columns could be shorter than individual words - truncate
     # each line if necessary.
     for i, line in enumerate(result):
-        if len(line) > width:
-            result[i] = line[:width - 3] + "..."
+        if string_len(line) > width:
+            truncated = _enforce_width(line, width - 3, unicode_aware)
+            result[i] = str(truncated) + "..."
     return result
 
 

@@ -1,3 +1,3 @@
-wcwidth
+wcwidth >= 0.5
 pyfiglet >= 0.7.2
 setuptools_scm

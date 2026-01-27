@@ -5,9 +5,14 @@ This module provides common code for all Renderers.
 from abc import ABCMeta, abstractmethod
 import re
 from typing import Callable, List, Optional, Tuple, Iterable
-from wcwidth.wcwidth import wcswidth
+from wcwidth import wcswidth
 from asciimatics.screen import Screen, TemporaryCanvas
 from asciimatics.constants import COLOUR_REGEX
+
+#: Type alias for colour tuples (foreground, attribute, background)
+Colour = Tuple[Optional[int], Optional[int], Optional[int]]
+#: Type alias for rendered text return type (text lines, colour map)
+RenderedText = Tuple[List[str], List[List[Colour]]]
 
 #: Attribute conversion table for the ${c,a} form of attributes for
 #: :py:obj:`~.Screen.paint`.
@@ -47,7 +52,7 @@ class Renderer(metaclass=ABCMeta):
     @property
     @abstractmethod
     def rendered_text(
-            self) -> Tuple[List[str], List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]]:
+            self) -> RenderedText:
         """
         :return: The next image and colour map in the sequence as a tuple.
         """
@@ -156,7 +161,7 @@ class StaticRenderer(Renderer):
 
     @property
     def rendered_text(
-            self) -> Tuple[List[str], List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]]:
+            self) -> RenderedText:
         """
         :return: The next image and colour map in the sequence as a tuple.
         """
@@ -253,7 +258,7 @@ class DynamicRenderer(Renderer, metaclass=ABCMeta):
         return self._canvas.colour_map
 
     @abstractmethod
-    def _render_now(self) -> Tuple[List[str], List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]]:
+    def _render_now(self) -> RenderedText:
         """
         Common method to render the latest image.
 
@@ -264,7 +269,7 @@ class DynamicRenderer(Renderer, metaclass=ABCMeta):
     @abstractmethod
     def _render_all(
             self
-    ) -> Iterable[Tuple[List[str], List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]]]:
+    ) -> Iterable[RenderedText]:
         """
         Generate all output.
 
@@ -276,12 +281,13 @@ class DynamicRenderer(Renderer, metaclass=ABCMeta):
 
     @property
     def images(self) -> Iterable[List[str]]:
-        # Attempt to get all images.  Note that many are genuinely dynamic and so will only return one.
+        # Attempt to get all images.  Note that many are genuinely dynamic
+        # and so will only return one.
         return [x[0] for x in self._render_all()]
 
     @property
     def rendered_text(
-            self) -> Tuple[List[str], List[List[Tuple[Optional[int], Optional[int], Optional[int]]]]]:
+            self) -> RenderedText:
         if self._must_clear:
             self._clear()
         return self._render_now()

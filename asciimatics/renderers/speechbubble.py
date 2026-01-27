@@ -2,7 +2,7 @@
 This module implements a speech-bubble effect renderer.
 """
 from typing import Optional, Union
-from wcwidth.wcwidth import wcswidth
+from wcwidth import wcswidth, ljust
 from asciimatics.renderers.base import StaticRenderer, Renderer
 
 
@@ -25,14 +25,12 @@ class SpeechBubble(StaticRenderer):
             if uni:
                 bubble = "╭─" + "─" * max_len + "─╮\n"
                 for line in text_list:
-                    filler = " " * (max_len - len(line))
-                    bubble += "│ " + line + filler + " │\n"
+                    bubble += "│ " + ljust(line, max_len) + " │\n"
                 bubble += "╰─" + "─" * max_len + "─╯"
             else:
                 bubble = ".-" + "-" * max_len + "-.\n"
                 for line in text_list:
-                    filler = " " * (max_len - len(line))
-                    bubble += "| " + line + filler + " |\n"
+                    bubble += "| " + ljust(line, max_len) + " |\n"
                 bubble += "`-" + "-" * max_len + "-`"
             if tail == "L":
                 bubble += "\n"
