@@ -3,6 +3,10 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple, Type
 
+from .compat import ensure_compatibility
+
+ensure_compatibility()
+
 from asciimatics.renderers.base import Renderer, StaticRenderer, DynamicRenderer
 from asciimatics.screen import TemporaryCanvas
 from asciimatics.scene import Scene
@@ -17,7 +21,6 @@ from asciimatics.renderers import (
     Kaleidoscope,
     Box,
     SpeechBubble,
-    FigletText,
     Scale,
     RotatedDuplicate,
     Chart,

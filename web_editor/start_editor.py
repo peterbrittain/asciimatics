@@ -16,6 +16,9 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
+from web_editor.core.compat import ensure_compatibility
+ensure_compatibility()
+
 def check_dependencies():
     missing = []
     
@@ -41,8 +44,11 @@ def check_dependencies():
     
     try:
         import asciimatics
-    except ImportError:
-        missing.append("asciimatics (本项目内置)")
+    except ImportError as e:
+        if "win32console" in str(e) or "pywintypes" in str(e):
+            pass
+        else:
+            missing.append("asciimatics (本项目内置)")
     
     if missing:
         print("❌ 缺少依赖包:")

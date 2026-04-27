@@ -2,6 +2,15 @@ import os
 from contextlib import asynccontextmanager
 from typing import Any, Dict, List, Optional
 
+import sys
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+web_editor_root = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, project_root)
+sys.path.insert(0, web_editor_root)
+
+from web_editor.core.compat import ensure_compatibility
+ensure_compatibility()
+
 from fastapi import FastAPI, HTTPException, Query, Depends
 from fastapi.responses import (
     HTMLResponse,
@@ -12,12 +21,6 @@ from fastapi.responses import (
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
-
-import sys
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-web_editor_root = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, project_root)
-sys.path.insert(0, web_editor_root)
 
 from web_editor.core.renderer import (
     AnimationRenderer,
