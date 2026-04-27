@@ -1,7 +1,8 @@
+import inspect
 import json
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 from .compat import ensure_compatibility
 
@@ -157,6 +158,16 @@ class VirtualScreen(TemporaryCanvas):
         self._scene_index = 0
         self._frame = 0
         self._forced_update = False
+        self._colours_override = colours
+        self.colours = colours
+    
+    @property
+    def colours(self) -> int:
+        return self._colours_override
+    
+    @colours.setter
+    def colours(self, value: int):
+        self._colours_override = value
     
     @property
     def unicode_aware(self) -> bool:
@@ -221,6 +232,36 @@ class VirtualScreen(TemporaryCanvas):
         )
 
 
+class RendererCreationError(Exception):
+    """渲染器创建错误"""
+    pass
+
+
+class EffectCreationError(Exception):
+    """效果创建错误"""
+    pass
+
+
+class SafeStaticRenderer(StaticRenderer):
+    """
+    安全的备用渲染器，当其他渲染器创建失败时使用。
+    """
+    
+    def __init__(self, text: str = "Renderer Error", width: int = 80):
+        super().__init__()
+        centered = text.center(min(len(text) + 4, width))
+        border = "+" + "-" * (len(centered) + 2) + "+"
+        empty = "|" + " " * (len(centered) + 2) + "|"
+        message = "| " + centered + " |"
+        self._images = [
+            border,
+            empty,
+            message,
+            empty,
+            border,
+        ]
+
+
 class EffectRegistry:
     """
     Effect注册器，用于管理可用的Effect类型和它们的配置。
@@ -265,6 +306,22 @@ class EffectRegistry:
         "AsciinemaPlayer": AsciinemaPlayer,
     }
     
+    _RENDERER_SPECIAL_PARAMS: Dict[str, List[str]] = {
+        "Rainbow": ["renderer"],
+        "Kaleidoscope": ["cell"],
+        "Typewriter": ["source"],
+        "RotatedDuplicate": ["renderer"],
+        "SpeechBubble": ["text"],
+    }
+    
+    _EFFECT_SPECIAL_PARAMS: Dict[str, List[str]] = {
+        "Cycle": ["renderer"],
+        "Print": ["renderer"],
+        "BannerText": ["renderer"],
+        "Mirage": ["renderer"],
+        "RandomNoise": ["signal"],
+    }
+    
     @classmethod
     def list_effects(cls) -> List[str]:
         return list(cls.EFFECT_TYPES.keys())
@@ -272,6 +329,212 @@ class EffectRegistry:
     @classmethod
     def list_renderers(cls) -> List[str]:
         return list(cls.RENDERER_TYPES.keys())
+    
+    @classmethod
+    def get_renderer_special_params(cls, renderer_type: str) -> List[str]:
+        return cls._RENDERER_SPECIAL_PARAMS.get(renderer_type, [])
+    
+    @classmethod
+    def get_effect_special_params(cls, effect_type: str) -> List[str]:
+        return cls._EFFECT_SPECIAL_PARAMS.get(effect_type, [])
+
+
+def get_class_init_params(cls: Type[Any]) -> Dict[str, Tuple[Any, Any]]:
+    """
+    获取类的__init__方法参数信息（不包括self）。
+    
+    返回格式: {参数名: (类型注解, 默认值)}
+    如果没有默认值，默认值为inspect.Parameter.empty
+    """
+    try:
+        sig = inspect.signature(cls.__init__)
+        params = {}
+        for name, param in sig.parameters.items():
+            if name == "self":
+                continue
+            params[name] = (param.annotation, param.default)
+        return params
+    except (ValueError, TypeError):
+        return {}
+
+
+def filter_kwargs_for_class(
+    cls: Type[Any], 
+    kwargs: Dict[str, Any],
+    exclude_params: Optional[List[str]] = None
+) -> Dict[str, Any]:
+    """
+    过滤kwargs，只保留类__init__方法接受的参数。
+    
+    :param cls: 目标类
+    :param kwargs: 参数字典
+    :param exclude_params: 需要排除的参数列表（用于特殊处理的参数）
+    :return: 过滤后的参数字典
+    """
+    valid_params = get_class_init_params(cls)
+    exclude = set(exclude_params or [])
+    
+    filtered = {}
+    for key, value in kwargs.items():
+        if key in valid_params and key not in exclude:
+            filtered[key] = value
+    
+    return filtered
+
+
+def get_missing_required_params(
+    cls: Type[Any],
+    provided_kwargs: Dict[str, Any],
+    exclude_params: Optional[List[str]] = None
+) -> List[str]:
+    """
+    获取缺失的必需参数（没有默认值的参数）。
+    
+    :param cls: 目标类
+    :param provided_kwargs: 已提供的参数
+    :param exclude_params: 需要排除的参数列表
+    :return: 缺失的必需参数名列表
+    """
+    valid_params = get_class_init_params(cls)
+    exclude = set(exclude_params or [])
+    provided = set(provided_kwargs.keys())
+    
+    missing = []
+    for name, (annotation, default) in valid_params.items():
+        if name in exclude:
+            continue
+        if default is inspect.Parameter.empty and name not in provided:
+            missing.append(name)
+    
+    return missing
+
+
+def create_safe_figlet_text(
+    text: Optional[str] = None,
+    font: Optional[str] = None,
+    width: int = 80,
+    **kwargs
+) -> FigletText:
+    """
+    安全创建FigletText渲染器，提供默认值。
+    """
+    from pyfiglet import DEFAULT_FONT
+    
+    safe_text = text if text is not None else "Hello"
+    safe_font = font if font is not None else DEFAULT_FONT
+    safe_width = max(20, width)
+    
+    return FigletText(text=safe_text, font=safe_font, width=safe_width)
+
+
+def create_safe_fire(
+    height: int = 24,
+    width: int = 80,
+    emitter: Optional[str] = None,
+    intensity: float = 0.8,
+    spot: int = 40,
+    colours: int = 256,
+    bg: bool = False,
+    **kwargs
+) -> Fire:
+    """
+    安全创建Fire渲染器，提供默认值。
+    """
+    safe_emitter = emitter if emitter is not None else (
+        "   *   *   *   \n"
+        "  *** *** ***  \n"
+        " ************* \n"
+        "***************"
+    )
+    safe_height = max(5, height)
+    safe_width = max(10, width)
+    safe_intensity = max(0.1, min(1.0, intensity))
+    safe_spot = max(1, spot)
+    
+    return Fire(
+        height=safe_height,
+        width=safe_width,
+        emitter=safe_emitter,
+        intensity=safe_intensity,
+        spot=safe_spot,
+        colours=colours,
+        bg=bg,
+    )
+
+
+def create_safe_plasma(
+    height: int = 24,
+    width: int = 80,
+    colours: int = 256,
+    **kwargs
+) -> Plasma:
+    """
+    安全创建Plasma渲染器，提供默认值。
+    """
+    safe_height = max(5, height)
+    safe_width = max(10, width)
+    
+    return Plasma(height=safe_height, width=safe_width, colours=colours)
+
+
+def create_safe_box(
+    width: int = 40,
+    height: int = 10,
+    uni: bool = False,
+    style: int = 0,
+    **kwargs
+) -> Box:
+    """
+    安全创建Box渲染器，提供默认值。
+    """
+    from asciimatics.constants import SINGLE_LINE
+    
+    safe_width = max(3, width)
+    safe_height = max(3, height)
+    safe_style = style if style in [0, 1, 2] else SINGLE_LINE
+    
+    return Box(width=safe_width, height=safe_height, uni=uni, style=safe_style)
+
+
+def create_safe_scale(width: int = 80, **kwargs) -> Scale:
+    """安全创建Scale渲染器"""
+    safe_width = max(1, width)
+    return Scale(width=safe_width)
+
+
+def create_safe_vscale(height: int = 24, **kwargs) -> VScale:
+    """安全创建VScale渲染器"""
+    safe_height = max(1, height)
+    return VScale(height=safe_height)
+
+
+def create_safe_speech_bubble(
+    text: Optional[Union[str, Renderer]] = None,
+    tail: Optional[str] = None,
+    uni: bool = False,
+    **kwargs
+) -> SpeechBubble:
+    """
+    安全创建SpeechBubble渲染器。
+    注意：text参数可以是字符串或Renderer实例。
+    """
+    safe_text = text if text is not None else "Hello!"
+    
+    if tail not in [None, "L", "R"]:
+        tail = None
+    
+    return SpeechBubble(text=safe_text, tail=tail, uni=uni)
+
+
+_SAFE_RENDERER_CREATORS: Dict[str, Callable] = {
+    "FigletText": create_safe_figlet_text,
+    "Fire": create_safe_fire,
+    "Plasma": create_safe_plasma,
+    "Box": create_safe_box,
+    "Scale": create_safe_scale,
+    "VScale": create_safe_vscale,
+    "SpeechBubble": create_safe_speech_bubble,
+}
 
 
 @dataclass
@@ -319,28 +582,321 @@ class AnimationRenderer:
             colours=self.config.colours,
         )
     
-    def _create_renderer(self, renderer_type: str, config: Dict[str, Any], screen: VirtualScreen) -> Renderer:
+    def _create_nested_renderer(
+        self,
+        param_name: str,
+        config: Any,
+        screen: VirtualScreen
+    ) -> Optional[Renderer]:
+        """
+        创建嵌套的Renderer实例（用于链式渲染器）。
+        
+        config可以是：
+        - 字典: {"type": "RendererType", "config": {...}}
+        - 字符串: 已创建的渲染器标识（暂不支持）
+        - Renderer实例: 直接返回
+        """
+        if isinstance(config, Renderer):
+            return config
+        
+        if isinstance(config, dict):
+            renderer_type = config.get("type")
+            renderer_config = config.get("config", {})
+            
+            if renderer_type:
+                try:
+                    return self._create_renderer_safe(renderer_type, renderer_config, screen)
+                except Exception:
+                    pass
+        
+        return None
+    
+    def _create_renderer_safe(
+        self,
+        renderer_type: str,
+        config: Dict[str, Any],
+        screen: VirtualScreen
+    ) -> Renderer:
+        """
+        安全创建Renderer实例，兼容所有内置渲染器。
+        
+        策略：
+        1. 首先检查是否有特殊的安全创建器
+        2. 否则过滤参数并尝试直接创建
+        3. 处理需要嵌套Renderer的链式渲染器
+        4. 失败时返回安全的备用渲染器
+        """
         renderer_class = EffectRegistry.RENDERER_TYPES.get(renderer_type)
         if not renderer_class:
-            raise ValueError(f"Unknown renderer type: {renderer_type}")
+            raise RendererCreationError(f"Unknown renderer type: {renderer_type}")
         
-        if renderer_type in ["ColourImageFile"]:
-            return renderer_class(screen=screen, **config)
+        special_params = EffectRegistry.get_renderer_special_params(renderer_type)
         
-        return renderer_class(**config)
+        if renderer_type in _SAFE_RENDERER_CREATORS:
+            try:
+                creator = _SAFE_RENDERER_CREATORS[renderer_type]
+                return creator(**config)
+            except Exception as e:
+                raise RendererCreationError(f"Failed to create {renderer_type}: {e}")
+        
+        nested_renderers = {}
+        remaining_config = {}
+        
+        for key, value in config.items():
+            if key in special_params:
+                nested = self._create_nested_renderer(key, value, screen)
+                if nested is not None:
+                    nested_renderers[key] = nested
+            else:
+                remaining_config[key] = value
+        
+        if renderer_type == "ColourImageFile":
+            try:
+                filtered = filter_kwargs_for_class(
+                    renderer_class, 
+                    remaining_config,
+                    exclude_params=["screen"]
+                )
+                return renderer_class(screen=screen, **filtered)
+            except Exception as e:
+                raise RendererCreationError(f"Failed to create ColourImageFile: {e}")
+        
+        if renderer_type == "Rainbow":
+            try:
+                inner_renderer = nested_renderers.get("renderer")
+                if inner_renderer is None:
+                    inner_renderer = SafeStaticRenderer("Rainbow", width=screen.width)
+                return Rainbow(screen=screen, renderer=inner_renderer)
+            except Exception as e:
+                raise RendererCreationError(f"Failed to create Rainbow: {e}")
+        
+        if renderer_type == "Kaleidoscope":
+            try:
+                cell = nested_renderers.get("cell")
+                if cell is None:
+                    cell = SafeStaticRenderer("Kaleidoscope", width=min(screen.width // 2, 20))
+                
+                filtered = filter_kwargs_for_class(
+                    renderer_class,
+                    remaining_config,
+                    exclude_params=["cell"]
+                )
+                
+                height = filtered.get("height", screen.height)
+                width = filtered.get("width", screen.width)
+                symmetry = filtered.get("symmetry", 6)
+                
+                return Kaleidoscope(height=height, width=width, cell=cell, symmetry=symmetry)
+            except Exception as e:
+                raise RendererCreationError(f"Failed to create Kaleidoscope: {e}")
+        
+        if renderer_type == "Typewriter":
+            try:
+                source = nested_renderers.get("source")
+                if source is None:
+                    source = SafeStaticRenderer("Typewriter", width=screen.width)
+                return Typewriter(source=source)
+            except Exception as e:
+                raise RendererCreationError(f"Failed to create Typewriter: {e}")
+        
+        if renderer_type == "RotatedDuplicate":
+            try:
+                inner_renderer = nested_renderers.get("renderer")
+                if inner_renderer is None:
+                    inner_renderer = SafeStaticRenderer("Rotated", width=min(screen.width // 2, 20))
+                
+                filtered = filter_kwargs_for_class(
+                    renderer_class,
+                    remaining_config,
+                    exclude_params=["renderer"]
+                )
+                
+                width = filtered.get("width", screen.width)
+                height = filtered.get("height", screen.height)
+                
+                return RotatedDuplicate(width=width, height=height, renderer=inner_renderer)
+            except Exception as e:
+                raise RendererCreationError(f"Failed to create RotatedDuplicate: {e}")
+        
+        if renderer_type in ["BarChart", "VBarChart"]:
+            try:
+                filtered = filter_kwargs_for_class(renderer_class, remaining_config)
+                
+                if "functions" not in filtered:
+                    filtered["functions"] = [lambda: 0.5, lambda: 0.3]
+                
+                height = filtered.get("height", screen.height)
+                width = filtered.get("width", screen.width)
+                functions = filtered.get("functions", [lambda: 0.5])
+                
+                other_kwargs = {k: v for k, v in filtered.items() 
+                               if k not in ["height", "width", "functions"]}
+                
+                return renderer_class(height=height, width=width, functions=functions, **other_kwargs)
+            except Exception as e:
+                raise RendererCreationError(f"Failed to create {renderer_type}: {e}")
+        
+        if renderer_type in ["ImageFile", "AnsiArtPlayer", "AsciinemaPlayer", "AbstractScreenPlayer"]:
+            try:
+                filtered = filter_kwargs_for_class(renderer_class, remaining_config)
+                
+                if "filename" in filtered:
+                    return renderer_class(**filtered)
+                else:
+                    raise RendererCreationError(
+                        f"{renderer_type} requires a filename parameter which was not provided"
+                    )
+            except RendererCreationError:
+                raise
+            except Exception as e:
+                raise RendererCreationError(f"Failed to create {renderer_type}: {e}")
+        
+        try:
+            filtered = filter_kwargs_for_class(renderer_class, remaining_config)
+            return renderer_class(**filtered)
+        except Exception as e:
+            raise RendererCreationError(f"Failed to create {renderer_type}: {e}")
     
-    def _create_effect(self, config: EffectConfig, screen: VirtualScreen) -> Effect:
+    def _create_renderer(
+        self,
+        renderer_type: str,
+        config: Dict[str, Any],
+        screen: VirtualScreen
+    ) -> Renderer:
+        """
+        创建Renderer实例，包含错误处理和回退机制。
+        """
+        try:
+            return self._create_renderer_safe(renderer_type, config, screen)
+        except RendererCreationError:
+            return SafeStaticRenderer(
+                text=f"Renderer: {renderer_type}",
+                width=screen.width
+            )
+    
+    def _create_effect_safe(
+        self,
+        config: EffectConfig,
+        screen: VirtualScreen
+    ) -> Effect:
+        """
+        安全创建Effect实例。
+        """
         effect_class = EffectRegistry.EFFECT_TYPES.get(config.effect_type)
         if not effect_class:
-            raise ValueError(f"Unknown effect type: {config.effect_type}")
+            raise EffectCreationError(f"Unknown effect type: {config.effect_type}")
+        
+        special_params = EffectRegistry.get_effect_special_params(config.effect_type)
         
         effect_kwargs = config.effect_config.copy()
         
+        renderer = None
         if config.renderer_type:
             renderer = self._create_renderer(config.renderer_type, config.renderer_config, screen)
-            effect_kwargs["renderer"] = renderer
         
-        return effect_class(screen, **effect_kwargs)
+        if config.effect_type in ["Cycle", "Print", "BannerText", "Mirage"]:
+            if renderer is not None:
+                effect_kwargs["renderer"] = renderer
+            elif "renderer" not in effect_kwargs:
+                effect_kwargs["renderer"] = SafeStaticRenderer(
+                    text=f"Effect: {config.effect_type}",
+                    width=screen.width
+                )
+        
+        if config.effect_type == "RandomNoise":
+            if "signal" in effect_kwargs:
+                signal_config = effect_kwargs["signal"]
+                signal = self._create_nested_renderer("signal", signal_config, screen)
+                if signal:
+                    effect_kwargs["signal"] = signal
+                else:
+                    effect_kwargs.pop("signal", None)
+        
+        if config.effect_type == "Print":
+            if "y" not in effect_kwargs:
+                effect_kwargs["y"] = screen.height // 4
+            effect_kwargs["y"] = min(effect_kwargs["y"], screen.height - 1)
+        
+        if config.effect_type == "Cycle":
+            if "y" not in effect_kwargs:
+                effect_kwargs["y"] = screen.height // 4
+            effect_kwargs["y"] = min(effect_kwargs["y"], screen.height - 1)
+        
+        if config.effect_type == "BannerText":
+            if "y" not in effect_kwargs:
+                effect_kwargs["y"] = screen.height // 4
+            if "colour" not in effect_kwargs:
+                effect_kwargs["colour"] = 7
+            effect_kwargs["y"] = min(effect_kwargs["y"], screen.height - 1)
+        
+        if config.effect_type == "Mirage":
+            if "y" not in effect_kwargs:
+                effect_kwargs["y"] = screen.height // 4
+            if "colour" not in effect_kwargs:
+                effect_kwargs["colour"] = 7
+            effect_kwargs["y"] = min(effect_kwargs["y"], screen.height - 1)
+        
+        if config.effect_type == "Stars":
+            if "count" not in effect_kwargs:
+                effect_kwargs["count"] = max(10, screen.width * screen.height // 40)
+        
+        if config.effect_type == "Scroll":
+            if "rate" not in effect_kwargs:
+                effect_kwargs["rate"] = 5
+        
+        if config.effect_type == "Clock":
+            if "x" not in effect_kwargs:
+                effect_kwargs["x"] = screen.width // 2
+            if "y" not in effect_kwargs:
+                effect_kwargs["y"] = screen.height // 2
+            if "r" not in effect_kwargs:
+                effect_kwargs["r"] = min(screen.width // 4, screen.height // 3)
+            effect_kwargs["x"] = min(effect_kwargs["x"], screen.width - 1)
+            effect_kwargs["y"] = min(effect_kwargs["y"], screen.height - 1)
+        
+        if config.effect_type == "Cog":
+            if "x" not in effect_kwargs:
+                effect_kwargs["x"] = screen.width // 2
+            if "y" not in effect_kwargs:
+                effect_kwargs["y"] = screen.height // 2
+            if "radius" not in effect_kwargs:
+                effect_kwargs["radius"] = min(screen.width // 4, screen.height // 3)
+            effect_kwargs["x"] = min(effect_kwargs["x"], screen.width - 1)
+            effect_kwargs["y"] = min(effect_kwargs["y"], screen.height - 1)
+        
+        if config.effect_type == "Background":
+            if "bg" not in effect_kwargs:
+                effect_kwargs["bg"] = 0
+        
+        if config.effect_type == "Wipe":
+            if "bg" not in effect_kwargs:
+                effect_kwargs["bg"] = 0
+        
+        try:
+            filtered = filter_kwargs_for_class(
+                effect_class,
+                effect_kwargs,
+                exclude_params=["screen"]
+            )
+            return effect_class(screen, **filtered)
+        except Exception as e:
+            raise EffectCreationError(f"Failed to create {config.effect_type}: {e}")
+    
+    def _create_effect(
+        self,
+        config: EffectConfig,
+        screen: VirtualScreen
+    ) -> Effect:
+        """
+        创建Effect实例，包含错误处理和回退机制。
+        """
+        try:
+            return self._create_effect_safe(config, screen)
+        except EffectCreationError:
+            return Stars(
+                screen,
+                count=max(10, screen.width * screen.height // 40)
+            )
     
     def set_effects(self, effect_configs: List[EffectConfig]):
         self._effect_configs = effect_configs

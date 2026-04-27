@@ -1,0 +1,87 @@
+{
+  "project_id": "proj_1777254156_6c4a154a",
+  "name": "幻影文字 (副本)",
+  "description": "基于模板: 幻影文字\n文字渐显渐隐效果",
+  "created_at": "2026-04-27T09:42:36.585202",
+  "updated_at": "2026-04-27T09:44:16.686608",
+  "status": "draft",
+  "render_config": {
+    "width": 80,
+    "height": 24,
+    "colours": 256,
+    "fps": 20,
+    "duration": 150
+  },
+  "effect_configs": [
+    {
+      "effect_type": "Mirage",
+      "renderer_type": "FigletText",
+      "renderer_config": {
+        "text": "MAGIC",
+        "font": "big"
+      },
+      "effect_config": {
+        "y": 8,
+        "colour": 5
+      }
+    },
+    {
+      "effect_type": "BannerText",
+      "renderer_type": "Fire",
+      "renderer_config": {
+        "text": "HELLO"
+      },
+      "effect_config": {
+        "y": 8,
+        "colour": 2
+      }
+    }
+  ],
+  "versions": [
+    {
+      "version_id": "proj_1777254156_6c4a154a_v1_1777254254",
+      "version_number": 1,
+      "created_at": "2026-04-27T09:44:14.018450",
+      "description": "",
+      "effect_configs": [
+        {
+          "effect_type": "Mirage",
+          "renderer_type": "FigletText",
+          "renderer_config": {
+            "text": "MAGIC",
+            "font": "big"
+          },
+          "effect_config": {
+            "y": 8,
+            "colour": 5
+          }
+        },
+        {
+          "effect_type": "BannerText",
+          "renderer_type": "Fire",
+          "renderer_config": {
+            "text": "HELLO"
+          },
+          "effect_config": {
+            "y": 8,
+            "colour": 2
+          }
+        }
+      ],
+      "render_config": {
+        "width": 80,
+        "height": 24,
+        "colours": 256,
+        "fps": 20,
+        "duration": 150
+      }
+    }
+  ],
+  "current_version": 1,
+  "tags": [
+    "text",
+    "fade",
+    "magic"
+  ],
+  "metadata": {}
+}
