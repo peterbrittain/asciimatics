@@ -10,7 +10,23 @@ ensure_compatibility()
 from asciimatics.renderers.base import Renderer, StaticRenderer, DynamicRenderer
 from asciimatics.screen import TemporaryCanvas
 from asciimatics.scene import Scene
-from asciimatics.effects import Effect, Cycle, Stars, Print, BannerText, Mirage, Scroll
+from asciimatics.effects import (
+    Effect,
+    Cycle,
+    Stars,
+    Print,
+    BannerText,
+    Mirage,
+    Scroll,
+    Matrix,
+    Wipe,
+    Snow,
+    Clock,
+    Cog,
+    RandomNoise,
+    Julia,
+    Background,
+)
 from asciimatics.renderers import (
     FigletText,
     ImageFile,
@@ -22,11 +38,14 @@ from asciimatics.renderers import (
     Box,
     SpeechBubble,
     Scale,
+    VScale,
     RotatedDuplicate,
-    Chart,
     BarChart,
-    Player,
+    VBarChart,
     Typewriter,
+    AbstractScreenPlayer,
+    AnsiArtPlayer,
+    AsciinemaPlayer,
 )
 
 
@@ -92,9 +111,47 @@ class VirtualScreen(TemporaryCanvas):
     A_REVERSE = 3
     A_UNDERLINE = 4
     
+    _8_palette = [
+        0x00, 0x00, 0x00,
+        0x80, 0x00, 0x00,
+        0x00, 0x80, 0x00,
+        0x80, 0x80, 0x00,
+        0x00, 0x00, 0x80,
+        0x80, 0x00, 0x80,
+        0x00, 0x80, 0x80,
+        0xc0, 0xc0, 0xc0,
+    ] + [0x00 for _ in range(248 * 3)]
+    
+    _256_palette = [
+        0x00, 0x00, 0x00,
+        0x80, 0x00, 0x00,
+        0x00, 0x80, 0x00,
+        0x80, 0x80, 0x00,
+        0x00, 0x00, 0x80,
+        0x80, 0x00, 0x80,
+        0x00, 0x80, 0x80,
+        0xc0, 0xc0, 0xc0,
+        0x80, 0x80, 0x80,
+        0xff, 0x00, 0x00,
+        0x00, 0xff, 0x00,
+        0xff, 0xff, 0x00,
+        0x00, 0x00, 0xff,
+        0xff, 0x00, 0xff,
+        0x00, 0xff, 0xff,
+        0xff, 0xff, 0xff,
+    ] + [
+        (r // 5 * 40 + 55 if r > 0 else 0,
+         g // 5 * 40 + 55 if g > 0 else 0,
+         b // 5 * 40 + 55 if b > 0 else 0)
+        for r in range(6) for g in range(6) for b in range(6)
+        for _ in range(3)
+    ] + [
+        c for i in range(24)
+        for c in [8 + i * 10, 8 + i * 10, 8 + i * 10]
+    ]
+    
     def __init__(self, height: int, width: int, colours: int = 256):
         super().__init__(height, width)
-        self._colours = colours
         self._start_line = 0
         self._scenes: List[Scene] = []
         self._scene_index = 0
@@ -102,16 +159,12 @@ class VirtualScreen(TemporaryCanvas):
         self._forced_update = False
     
     @property
-    def colours(self) -> int:
-        return self._colours
-    
-    @property
     def unicode_aware(self) -> bool:
         return True
     
     @property
     def palette(self) -> List[int]:
-        if self._colours >= 256:
+        if self.colours >= 256:
             return self._256_palette
         return self._8_palette
     
@@ -171,6 +224,7 @@ class VirtualScreen(TemporaryCanvas):
 class EffectRegistry:
     """
     Effect注册器，用于管理可用的Effect类型和它们的配置。
+    严格按照asciimatics 1.15.1的真实导出结构。
     """
     
     EFFECT_TYPES: Dict[str, Type[Effect]] = {
@@ -180,6 +234,14 @@ class EffectRegistry:
         "BannerText": BannerText,
         "Mirage": Mirage,
         "Scroll": Scroll,
+        "Matrix": Matrix,
+        "Wipe": Wipe,
+        "Snow": Snow,
+        "Clock": Clock,
+        "Cog": Cog,
+        "RandomNoise": RandomNoise,
+        "Julia": Julia,
+        "Background": Background,
     }
     
     RENDERER_TYPES: Dict[str, Type[Renderer]] = {
@@ -193,11 +255,14 @@ class EffectRegistry:
         "Box": Box,
         "SpeechBubble": SpeechBubble,
         "Scale": Scale,
+        "VScale": VScale,
         "RotatedDuplicate": RotatedDuplicate,
-        "Chart": Chart,
         "BarChart": BarChart,
-        "Player": Player,
+        "VBarChart": VBarChart,
         "Typewriter": Typewriter,
+        "AbstractScreenPlayer": AbstractScreenPlayer,
+        "AnsiArtPlayer": AnsiArtPlayer,
+        "AsciinemaPlayer": AsciinemaPlayer,
     }
     
     @classmethod
@@ -274,9 +339,6 @@ class AnimationRenderer:
         if config.renderer_type:
             renderer = self._create_renderer(config.renderer_type, config.renderer_config, screen)
             effect_kwargs["renderer"] = renderer
-        
-        if "y" not in effect_kwargs:
-            effect_kwargs["y"] = screen.height // 2 - 4
         
         return effect_class(screen, **effect_kwargs)
     

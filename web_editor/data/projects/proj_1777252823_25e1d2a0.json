@@ -1,0 +1,20 @@
+{
+  "project_id": "proj_1777252823_25e1d2a0",
+  "name": "测试",
+  "description": "",
+  "created_at": "2026-04-27T09:20:23.762812",
+  "updated_at": "2026-04-27T09:20:23.763796",
+  "status": "draft",
+  "render_config": {
+    "width": 80,
+    "height": 24,
+    "colours": 256,
+    "fps": 20,
+    "duration": 100
+  },
+  "effect_configs": [],
+  "versions": [],
+  "current_version": null,
+  "tags": [],
+  "metadata": {}
+}

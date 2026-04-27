@@ -1,0 +1,37 @@
+{
+  "project_id": "proj_1777252979_337c14d8",
+  "name": "滚动横幅 (副本)",
+  "description": "基于模板: 滚动横幅\n水平滚动的文字横幅模板",
+  "created_at": "2026-04-27T09:22:59.229358",
+  "updated_at": "2026-04-27T09:22:59.230260",
+  "status": "draft",
+  "render_config": {
+    "width": 80,
+    "height": 24,
+    "colours": 256,
+    "fps": 20,
+    "duration": 300
+  },
+  "effect_configs": [
+    {
+      "effect_type": "BannerText",
+      "renderer_type": "FigletText",
+      "renderer_config": {
+        "text": "WELCOME TO ASCIIMATICS ",
+        "font": "slant"
+      },
+      "effect_config": {
+        "y": 10,
+        "colour": 2
+      }
+    }
+  ],
+  "versions": [],
+  "current_version": null,
+  "tags": [
+    "banner",
+    "scroll",
+    "text"
+  ],
+  "metadata": {}
+}

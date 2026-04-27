@@ -190,13 +190,25 @@ def get_effect_classes():
         BannerText,
         Mirage,
         Scroll,
+        Matrix,
+        Wipe,
+        Snow,
+        Clock,
+        Cog,
+        RandomNoise,
+        Julia,
+        Background,
     )
-    return Effect, Cycle, Stars, Print, BannerText, Mirage, Scroll
+    return (
+        Effect, Cycle, Stars, Print, BannerText, Mirage, Scroll,
+        Matrix, Wipe, Snow, Clock, Cog, RandomNoise, Julia, Background
+    )
 
 
 def get_all_renderers():
     """
     获取所有可用的Renderer类型。
+    严格按照asciimatics 1.15.1的真实导出结构。
     """
     ensure_compatibility()
     from asciimatics.renderers import (
@@ -210,11 +222,14 @@ def get_all_renderers():
         Box,
         SpeechBubble,
         Scale,
+        VScale,
         RotatedDuplicate,
-        Chart,
         BarChart,
-        Player,
+        VBarChart,
         Typewriter,
+        AbstractScreenPlayer,
+        AnsiArtPlayer,
+        AsciinemaPlayer,
     )
     return {
         "FigletText": FigletText,
@@ -227,11 +242,14 @@ def get_all_renderers():
         "Box": Box,
         "SpeechBubble": SpeechBubble,
         "Scale": Scale,
+        "VScale": VScale,
         "RotatedDuplicate": RotatedDuplicate,
-        "Chart": Chart,
         "BarChart": BarChart,
-        "Player": Player,
+        "VBarChart": VBarChart,
         "Typewriter": Typewriter,
+        "AbstractScreenPlayer": AbstractScreenPlayer,
+        "AnsiArtPlayer": AnsiArtPlayer,
+        "AsciinemaPlayer": AsciinemaPlayer,
     }
 
 

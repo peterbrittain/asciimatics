@@ -1,0 +1,33 @@
+{
+  "project_id": "proj_1777252950_e2396222",
+  "name": "星空效果 (副本)",
+  "description": "基于模板: 星空效果\n闪烁的星空背景模板",
+  "created_at": "2026-04-27T09:22:30.005159",
+  "updated_at": "2026-04-27T09:22:30.007269",
+  "status": "draft",
+  "render_config": {
+    "width": 80,
+    "height": 24,
+    "colours": 256,
+    "fps": 20,
+    "duration": 200
+  },
+  "effect_configs": [
+    {
+      "effect_type": "Stars",
+      "renderer_type": null,
+      "renderer_config": {},
+      "effect_config": {
+        "count": 50
+      }
+    }
+  ],
+  "versions": [],
+  "current_version": null,
+  "tags": [
+    "animation",
+    "background",
+    "stars"
+  ],
+  "metadata": {}
+}

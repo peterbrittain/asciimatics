@@ -1,0 +1,47 @@
+{
+  "project_id": "proj_1777252940_8cc4f52f",
+  "name": "Hello World (副本)",
+  "description": "基于模板: Hello World\n一个简单的文字动画模板，展示彩色文字效果",
+  "created_at": "2026-04-27T09:22:20.105951",
+  "updated_at": "2026-04-27T09:22:20.106949",
+  "status": "draft",
+  "render_config": {
+    "width": 80,
+    "height": 24,
+    "colours": 256,
+    "fps": 20,
+    "duration": 100
+  },
+  "effect_configs": [
+    {
+      "effect_type": "Cycle",
+      "renderer_type": "FigletText",
+      "renderer_config": {
+        "text": "HELLO",
+        "font": "big"
+      },
+      "effect_config": {
+        "y": 4
+      }
+    },
+    {
+      "effect_type": "Cycle",
+      "renderer_type": "FigletText",
+      "renderer_config": {
+        "text": "WORLD",
+        "font": "big"
+      },
+      "effect_config": {
+        "y": 14
+      }
+    }
+  ],
+  "versions": [],
+  "current_version": null,
+  "tags": [
+    "simple",
+    "text",
+    "colours"
+  ],
+  "metadata": {}
+}
