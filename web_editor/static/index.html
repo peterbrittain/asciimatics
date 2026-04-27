@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asciimatics Web Editor</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-tertiary: #0f3460;
+            --text-primary: #e8e8e8;
+            --text-secondary: #a0a0a0;
+            --accent: #4ade80;
+            --accent-hover: #22c55e;
+            --error: #f87171;
+            --warning: #fbbf24;
+            --info: #60a5fa;
+            --border: #2d3748;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            color: var(--accent);
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        main {
+            flex: 1;
+            padding: 1rem;
+        }
+
+        .main-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 1rem;
+            height: calc(100vh - 100px);
+        }
+
+        .panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            background: var(--bg-tertiary);
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .center-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-area {
+            flex: 1;
+            background: #000;
+            padding: 1rem;
+            overflow: auto;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        .preview-content {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.2;
+            white-space: pre;
+            color: #fff;
+        }
+
+        .controls-bar {
+            background: var(--bg-tertiary);
+            padding: 0.75rem;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-primary);
+        }
+
+        .btn-danger {
+            background: var(--error);
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: #ef4444;
+        }
+
+        .btn-small {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.25rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .project-list {
+            list-style: none;
+        }
+
+        .project-item {
+            padding: 0.75rem;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .project-item:hover {
+            border-color: var(--accent);
+        }
+
+        .project-item.active {
+            border-color: var(--accent);
+            background: var(--bg-tertiary);
+        }
+
+        .project-name {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .project-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .effect-list {
+            list-style: none;
+        }
+
+        .effect-item {
+            padding: 0.75rem;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .effect-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .effect-type {
+            font-weight: bold;
+            color: var(--info);
+        }
+
+        .effect-actions {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .config-section {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .config-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .config-title {
+            font-size: 0.9rem;
+            color: var(--accent);
+            margin-bottom: 0.75rem;
+            font-weight: bold;
+        }
+
+        .frame-info {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .slider {
+            flex: 1;
+        }
+
+        input[type="range"] {
+            width: 100%;
+        }
+
+        .export-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .export-btn {
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 1rem;
+        }
+
+        .modal-footer {
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+
+        .template-item {
+            padding: 0.75rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .template-item:hover {
+            border-color: var(--accent);
+        }
+
+        .template-name {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .template-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1rem;
+        }
+
+        .tab {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: var(--accent);
+        }
+
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: #000;
+            font-weight: bold;
+            z-index: 2000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: var(--accent);
+        }
+
+        .toast.error {
+            background: var(--error);
+            color: #fff;
+        }
+
+        .toast.info {
+            background: var(--info);
+        }
+
+        .version-list {
+            list-style: none;
+        }
+
+        .version-item {
+            padding: 0.5rem;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .version-info {
+            flex: 1;
+        }
+
+        .version-number {
+            font-weight: bold;
+            color: var(--info);
+        }
+
+        .version-date {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="header-content">
+                <h1>
+                    <span>⌨️</span>
+                    ASCIIMATICS Web Editor
+                </h1>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="openCreateProjectModal()">新建项目</button>
+                    <button class="btn btn-secondary" onclick="openTemplateModal()">使用模板</button>
+                    <button class="btn btn-secondary" onclick="refreshProjects()">刷新</button>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="main-content">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">📁 项目列表</span>
+                    </div>
+                    <div class="panel-content">
+                        <ul class="project-list" id="projectList">
+                            <li class="empty-state">加载中...</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="panel center-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">👁️ 预览</span>
+                        <span id="currentProjectName" style="color: var(--text-secondary);">未选择项目</span>
+                    </div>
+                    <div class="preview-area" id="previewArea">
+                        <div class="preview-content" id="previewContent">
+选择一个项目或创建新项目来开始编辑
+                        </div>
+                    </div>
+                    <div class="controls-bar">
+                        <div class="frame-info" style="flex: 1;">
+                            <button class="btn btn-primary btn-small" onclick="playAnimation()">▶️ 播放</button>
+                            <button class="btn btn-secondary btn-small" onclick="renderFrame()">📷 渲染</button>
+                            <input type="range" class="slider" id="frameSlider" min="0" max="100" value="0" onchange="onFrameChange(this.value)">
+                            <span id="frameDisplay">帧: 0</span>
+                        </div>
+                        <div class="export-options">
+                            <button class="btn btn-secondary btn-small export-btn" onclick="exportProject('text')">文本</button>
+                            <button class="btn btn-secondary btn-small export-btn" onclick="exportProject('gif')">GIF</button>
+                            <button class="btn btn-secondary btn-small export-btn" onclick="exportProject('python')">脚本</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="tabs">
+                        <div class="tab active" onclick="switchTab('config')">配置</div>
+                        <div class="tab" onclick="switchTab('effects')">效果</div>
+                        <div class="tab" onclick="switchTab('versions')">版本</div>
+                    </div>
+
+                    <div class="panel-content" id="tabConfig">
+                        <div class="config-section">
+                            <div class="config-title">项目设置</div>
+                            <div class="form-group">
+                                <label class="form-label">项目名称</label>
+                                <input type="text" class="form-input" id="projectName" placeholder="输入项目名称">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">描述</label>
+                                <textarea class="form-textarea" id="projectDesc" placeholder="输入项目描述"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">标签 (逗号分隔)</label>
+                                <input type="text" class="form-input" id="projectTags" placeholder="例如: animation, text, effects">
+                            </div>
+                        </div>
+
+                        <div class="config-section">
+                            <div class="config-title">渲染设置</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">宽度</label>
+                                    <input type="number" class="form-input" id="renderWidth" value="80" min="20" max="200">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">高度</label>
+                                    <input type="number" class="form-input" id="renderHeight" value="24" min="10" max="100">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">颜色数</label>
+                                    <select class="form-select" id="renderColours">
+                                        <option value="8">8色</option>
+                                        <option value="16">16色</option>
+                                        <option value="256" selected>256色</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">FPS</label>
+                                    <input type="number" class="form-input" id="renderFps" value="20" min="1" max="60">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">帧数</label>
+                                <input type="number" class="form-input" id="renderDuration" value="100" min="1" max="10000">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <button class="btn btn-primary" onclick="saveProject()" style="width: 100%;">💾 保存项目</button>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-danger" onclick="deleteCurrentProject()" style="width: 100%;">🗑️ 删除项目</button>
+                        </div>
+                    </div>
+
+                    <div class="panel-content hidden" id="tabEffects">
+                        <div class="config-section">
+                            <div class="config-title">添加效果</div>
+                            <div class="form-group">
+                                <label class="form-label">效果类型</label>
+                                <select class="form-select" id="effectType">
+                                    <option value="Cycle">Cycle - 颜色循环</option>
+                                    <option value="Stars">Stars - 星空</option>
+                                    <option value="Print">Print - 静态打印</option>
+                                    <option value="BannerText">BannerText - 滚动横幅</option>
+                                    <option value="Mirage">Mirage - 幻影</option>
+                                    <option value="Scroll">Scroll - 滚动</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="rendererSelectGroup">
+                                <label class="form-label">渲染器类型</label>
+                                <select class="form-select" id="rendererType">
+                                    <option value="">无</option>
+                                    <option value="FigletText">FigletText - 艺术字</option>
+                                    <option value="ImageFile">ImageFile - 灰度图像</option>
+                                    <option value="ColourImageFile">ColourImageFile - 彩色图像</option>
+                                    <option value="Fire">Fire - 火焰</option>
+                                    <option value="Plasma">Plasma - 等离子</option>
+                                    <option value="Rainbow">Rainbow - 彩虹</option>
+                                    <option value="Box">Box - 盒子</option>
+                                    <option value="SpeechBubble">SpeechBubble - 气泡</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="rendererTextGroup">
+                                <label class="form-label">文字内容</label>
+                                <input type="text" class="form-input" id="rendererText" placeholder="输入文字" value="HELLO">
+                            </div>
+                            <div class="form-group" id="rendererFontGroup">
+                                <label class="form-label">字体</label>
+                                <select class="form-select" id="rendererFont">
+                                    <option value="big">Big</option>
+                                    <option value="slant">Slant</option>
+                                    <option value="block">Block</option>
+                                    <option value="bubble">Bubble</option>
+                                    <option value="digital">Digital</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Y位置</label>
+                                    <input type="number" class="form-input" id="effectY" value="8">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">颜色</label>
+                                    <input type="number" class="form-input" id="effectColour" value="2">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <button class="btn btn-primary" onclick="addEffect()" style="width: 100%;">➕ 添加效果</button>
+                            </div>
+                        </div>
+
+                        <div class="config-section">
+                            <div class="config-title">已添加的效果</div>
+                            <ul class="effect-list" id="effectList">
+                                <li class="empty-state">暂无效果</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="panel-content hidden" id="tabVersions">
+                        <div class="form-group">
+                            <button class="btn btn-primary" onclick="createVersion()" style="width: 100%;">📌 创建新版本</button>
+                        </div>
+                        <div class="config-section">
+                            <div class="config-title">历史版本</div>
+                            <ul class="version-list" id="versionList">
+                                <li class="empty-state">暂无版本</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="createProjectModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>新建项目</h3>
+                <button class="btn btn-secondary btn-small" onclick="closeModal('createProjectModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">项目名称</label>
+                    <input type="text" class="form-input" id="newProjectName" placeholder="输入项目名称">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">描述</label>
+                    <textarea class="form-textarea" id="newProjectDesc" placeholder="输入项目描述"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">宽度</label>
+                        <input type="number" class="form-input" id="newProjectWidth" value="80">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">高度</label>
+                        <input type="number" class="form-input" id="newProjectHeight" value="24">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('createProjectModal')">取消</button>
+                <button class="btn btn-primary" onclick="createProject()">创建</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="templateModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>使用模板</h3>
+                <button class="btn btn-secondary btn-small" onclick="closeModal('templateModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <input type="text" class="form-input" id="templateSearch" placeholder="搜索模板..." oninput="searchTemplates()">
+                </div>
+                <div class="template-grid" id="templateGrid">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('templateModal')">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="versionModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>创建版本</h3>
+                <button class="btn btn-secondary btn-small" onclick="closeModal('versionModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">版本描述</label>
+                    <textarea class="form-textarea" id="versionDesc" placeholder="描述这个版本的修改..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('versionModal')">取消</button>
+                <button class="btn btn-primary" onclick="confirmCreateVersion()">创建</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API_BASE = '';
+        let currentProject = null;
+        let isPlaying = false;
+        let playInterval = null;
+        let currentFrame = 0;
+        let allFrames = null;
+
+        async function apiFetch(endpoint, options = {}) {
+            const url = API_BASE + endpoint;
+            const response = await fetch(url, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                },
+            });
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}));
+                throw new Error(error.detail || `HTTP ${response.status}`);
+            }
+            return response.json();
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        async function refreshProjects() {
+            try {
+                const data = await apiFetch('/api/projects');
+                renderProjectList(data.projects);
+            } catch (error) {
+                showToast('加载项目列表失败: ' + error.message, 'error');
+            }
+        }
+
+        function renderProjectList(projects) {
+            const list = document.getElementById('projectList');
+            if (projects.length === 0) {
+                list.innerHTML = '<li class="empty-state">暂无项目，点击"新建项目"开始</li>';
+                return;
+            }
+            
+            list.innerHTML = projects.map(p => `
+                <li class="project-item ${currentProject && currentProject.project_id === p.project_id ? 'active' : ''}" 
+                    onclick="selectProject('${p.project_id}')">
+                    <div class="project-name">${p.name}</div>
+                    <div class="project-meta">
+                        ${p.render_config.width}x${p.render_config.height} | 
+                        ${p.versions ? p.versions.length : 0} 版本
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        async function selectProject(projectId) {
+            try {
+                const project = await apiFetch(`/api/projects/${projectId}`);
+                currentProject = project;
+                allFrames = null;
+                currentFrame = 0;
+                updateUIWithProject();
+                refreshProjects();
+                renderFrame();
+            } catch (error) {
+                showToast('加载项目失败: ' + error.message, 'error');
+            }
+        }
+
+        function updateUIWithProject() {
+            if (!currentProject) return;
+
+            document.getElementById('currentProjectName').textContent = currentProject.name;
+            document.getElementById('projectName').value = currentProject.name;
+            document.getElementById('projectDesc').value = currentProject.description;
+            document.getElementById('projectTags').value = (currentProject.tags || []).join(', ');
+            
+            const rc = currentProject.render_config;
+            document.getElementById('renderWidth').value = rc.width;
+            document.getElementById('renderHeight').value = rc.height;
+            document.getElementById('renderColours').value = rc.colours;
+            document.getElementById('renderFps').value = rc.fps;
+            document.getElementById('renderDuration').value = rc.duration;
+
+            document.getElementById('frameSlider').max = rc.duration - 1;
+            document.getElementById('frameDisplay').textContent = `帧: 0/${rc.duration - 1}`;
+
+            renderEffectList();
+            renderVersionList();
+        }
+
+        function renderEffectList() {
+            const list = document.getElementById('effectList');
+            const effects = currentProject?.effect_configs || [];
+            
+            if (effects.length === 0) {
+                list.innerHTML = '<li class="empty-state">暂无效果</li>';
+                return;
+            }
+
+            list.innerHTML = effects.map((e, i) => `
+                <li class="effect-item">
+                    <div class="effect-header">
+                        <span class="effect-type">${e.effect_type}</span>
+                        <div class="effect-actions">
+                            <button class="btn btn-secondary btn-small" onclick="moveEffect(${i}, -1)">⬆️</button>
+                            <button class="btn btn-secondary btn-small" onclick="moveEffect(${i}, 1)">⬇️</button>
+                            <button class="btn btn-danger btn-small" onclick="removeEffect(${i})">🗑️</button>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                        ${e.renderer_type ? `渲染器: ${e.renderer_type}` : ''}
+                        ${e.renderer_config?.text ? ` | 文字: ${e.renderer_config.text}` : ''}
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        function renderVersionList() {
+            const list = document.getElementById('versionList');
+            const versions = currentProject?.versions || [];
+            
+            if (versions.length === 0) {
+                list.innerHTML = '<li class="empty-state">暂无版本</li>';
+                return;
+            }
+
+            list.innerHTML = versions.map(v => `
+                <li class="version-item">
+                    <div class="version-info">
+                        <div class="version-number">版本 ${v.version_number}</div>
+                        <div class="version-date">${new Date(v.created_at).toLocaleString('zh-CN')}</div>
+                        ${v.description ? `<div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">${v.description}</div>` : ''}
+                    </div>
+                    <button class="btn btn-secondary btn-small" onclick="restoreVersion(${v.version_number})">恢复</button>
+                </li>
+            `).join('');
+        }
+
+        function openCreateProjectModal() {
+            document.getElementById('createProjectModal').classList.add('active');
+        }
+
+        function openTemplateModal() {
+            loadTemplates();
+            document.getElementById('templateModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        async function createProject() {
+            const name = document.getElementById('newProjectName').value.trim();
+            if (!name) {
+                showToast('请输入项目名称', 'error');
+                return;
+            }
+
+            try {
+                const project = await apiFetch('/api/projects', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name,
+                        description: document.getElementById('newProjectDesc').value,
+                        render_config: {
+                            width: parseInt(document.getElementById('newProjectWidth').value),
+                            height: parseInt(document.getElementById('newProjectHeight').value),
+                            colours: 256,
+                            fps: 20,
+                            duration: 100,
+                        },
+                        effect_configs: [],
+                        tags: [],
+                    }),
+                });
+                
+                closeModal('createProjectModal');
+                showToast('项目创建成功');
+                await selectProject(project.project_id);
+            } catch (error) {
+                showToast('创建项目失败: ' + error.message, 'error');
+            }
+        }
+
+        async function loadTemplates() {
+            try {
+                const data = await apiFetch('/api/templates');
+                renderTemplateGrid(data.templates);
+            } catch (error) {
+                showToast('加载模板失败: ' + error.message, 'error');
+            }
+        }
+
+        function renderTemplateGrid(templates) {
+            const grid = document.getElementById('templateGrid');
+            grid.innerHTML = templates.map(t => `
+                <div class="template-item" onclick="useTemplate('${t.template_id}', '${t.name}')">
+                    <div class="template-name">${t.name}</div>
+                    <div class="template-desc">${t.description || '无描述'}</div>
+                </div>
+            `).join('');
+        }
+
+        async function searchTemplates() {
+            const query = document.getElementById('templateSearch').value;
+            if (!query) {
+                loadTemplates();
+                return;
+            }
+
+            try {
+                const data = await apiFetch(`/api/templates/search?query=${encodeURIComponent(query)}`);
+                renderTemplateGrid(data.templates);
+            } catch (error) {
+                console.error('Search failed:', error);
+            }
+        }
+
+        async function useTemplate(templateId, templateName) {
+            try {
+                const template = await apiFetch(`/api/templates/${templateId}`);
+                
+                const project = await apiFetch('/api/projects', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name: `${templateName} (副本)`,
+                        description: `基于模板: ${templateName}\n${template.description}`,
+                        render_config: template.render_config,
+                        effect_configs: template.effect_configs,
+                        tags: template.tags,
+                    }),
+                });
+                
+                closeModal('templateModal');
+                showToast('模板应用成功');
+                await selectProject(project.project_id);
+            } catch (error) {
+                showToast('应用模板失败: ' + error.message, 'error');
+            }
+        }
+
+        async function saveProject() {
+            if (!currentProject) {
+                showToast('请先选择或创建项目', 'error');
+                return;
+            }
+
+            try {
+                const updated = await apiFetch(`/api/projects/${currentProject.project_id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        name: document.getElementById('projectName').value,
+                        description: document.getElementById('projectDesc').value,
+                        tags: document.getElementById('projectTags').value.split(',').map(t => t.trim()).filter(Boolean),
+                        render_config: {
+                            width: parseInt(document.getElementById('renderWidth').value),
+                            height: parseInt(document.getElementById('renderHeight').value),
+                            colours: parseInt(document.getElementById('renderColours').value),
+                            fps: parseInt(document.getElementById('renderFps').value),
+                            duration: parseInt(document.getElementById('renderDuration').value),
+                        },
+                        effect_configs: currentProject.effect_configs,
+                    }),
+                });
+                
+                currentProject = updated;
+                allFrames = null;
+                document.getElementById('frameSlider').max = updated.render_config.duration - 1;
+                showToast('项目保存成功');
+                refreshProjects();
+            } catch (error) {
+                showToast('保存项目失败: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteCurrentProject() {
+            if (!currentProject) return;
+            
+            if (!confirm(`确定要删除项目 "${currentProject.name}" 吗？`)) {
+                return;
+            }
+
+            try {
+                await apiFetch(`/api/projects/${currentProject.project_id}`, {
+                    method: 'DELETE',
+                });
+                
+                currentProject = null;
+                allFrames = null;
+                document.getElementById('currentProjectName').textContent = '未选择项目';
+                document.getElementById('previewContent').textContent = '选择一个项目或创建新项目来开始编辑';
+                showToast('项目已删除');
+                refreshProjects();
+            } catch (error) {
+                showToast('删除项目失败: ' + error.message, 'error');
+            }
+        }
+
+        function addEffect() {
+            if (!currentProject) {
+                showToast('请先选择或创建项目', 'error');
+                return;
+            }
+
+            const effectType = document.getElementById('effectType').value;
+            const rendererType = document.getElementById('rendererType').value;
+            
+            const effectConfig = {
+                effect_type: effectType,
+                renderer_type: rendererType || null,
+                renderer_config: {},
+                effect_config: {},
+            };
+
+            if (rendererType === 'FigletText') {
+                effectConfig.renderer_config = {
+                    text: document.getElementById('rendererText').value,
+                    font: document.getElementById('rendererFont').value,
+                };
+            } else if (rendererType) {
+                effectConfig.renderer_config = {
+                    text: document.getElementById('rendererText').value,
+                };
+            }
+
+            effectConfig.effect_config = {
+                y: parseInt(document.getElementById('effectY').value),
+                colour: parseInt(document.getElementById('effectColour').value),
+            };
+
+            if (effectType === 'Stars') {
+                effectConfig.effect_config = { count: 50 };
+            }
+
+            currentProject.effect_configs.push(effectConfig);
+            allFrames = null;
+            renderEffectList();
+            showToast('效果已添加');
+        }
+
+        function removeEffect(index) {
+            if (!currentProject) return;
+            currentProject.effect_configs.splice(index, 1);
+            allFrames = null;
+            renderEffectList();
+        }
+
+        function moveEffect(index, direction) {
+            if (!currentProject) return;
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= currentProject.effect_configs.length) return;
+            
+            [currentProject.effect_configs[index], currentProject.effect_configs[newIndex]] = 
+            [currentProject.effect_configs[newIndex], currentProject.effect_configs[index]];
+            
+            allFrames = null;
+            renderEffectList();
+        }
+
+        async function renderFrame() {
+            if (!currentProject) {
+                showToast('请先选择项目', 'error');
+                return;
+            }
+
+            try {
+                const frameData = await apiFetch('/api/render/frame', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        render_config: currentProject.render_config,
+                        effect_configs: currentProject.effect_configs,
+                        frame_number: currentFrame,
+                    }),
+                });
+
+                displayFrame(frameData);
+            } catch (error) {
+                showToast('渲染失败: ' + error.message, 'error');
+            }
+        }
+
+        function displayFrame(frameData) {
+            const plainImage = frameData.plain_image;
+            if (plainImage && plainImage.length > 0) {
+                document.getElementById('previewContent').textContent = plainImage.join('\n');
+            } else {
+                document.getElementById('previewContent').textContent = '（空帧）';
+            }
+            document.getElementById('frameDisplay').textContent = `帧: ${currentFrame}/${currentProject?.render_config?.duration - 1 || 99}`;
+        }
+
+        function onFrameChange(value) {
+            currentFrame = parseInt(value);
+            if (isPlaying) {
+                stopPlay();
+            }
+            renderFrame();
+        }
+
+        async function playAnimation() {
+            if (!currentProject) {
+                showToast('请先选择项目', 'error');
+                return;
+            }
+
+            if (isPlaying) {
+                stopPlay();
+                return;
+            }
+
+            if (!allFrames) {
+                try {
+                    showToast('加载动画帧...', 'info');
+                    const data = await apiFetch('/api/render/animation', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            render_config: currentProject.render_config,
+                            effect_configs: currentProject.effect_configs,
+                        }),
+                    });
+                    allFrames = data.frames;
+                } catch (error) {
+                    showToast('加载动画失败: ' + error.message, 'error');
+                    return;
+                }
+            }
+
+            isPlaying = true;
+            currentFrame = 0;
+            
+            playInterval = setInterval(() => {
+                if (currentFrame >= allFrames.length) {
+                    currentFrame = 0;
+                }
+                
+                displayFrame(allFrames[currentFrame]);
+                document.getElementById('frameSlider').value = currentFrame;
+                currentFrame++;
+            }, 1000 / currentProject.render_config.fps);
+
+            showToast('动画播放中...');
+        }
+
+        function stopPlay() {
+            isPlaying = false;
+            if (playInterval) {
+                clearInterval(playInterval);
+                playInterval = null;
+            }
+            showToast('动画已停止');
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            document.getElementById('tabConfig').classList.add('hidden');
+            document.getElementById('tabEffects').classList.add('hidden');
+            document.getElementById('tabVersions').classList.add('hidden');
+
+            document.getElementById(`tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`).classList.remove('hidden');
+        }
+
+        function createVersion() {
+            if (!currentProject) {
+                showToast('请先选择项目', 'error');
+                return;
+            }
+            document.getElementById('versionModal').classList.add('active');
+        }
+
+        async function confirmCreateVersion() {
+            const description = document.getElementById('versionDesc').value;
+            
+            try {
+                await apiFetch(`/api/projects/${currentProject.project_id}/versions?description=${encodeURIComponent(description)}`, {
+                    method: 'POST',
+                });
+                
+                closeModal('versionModal');
+                document.getElementById('versionDesc').value = '';
+                showToast('版本创建成功');
+                
+                const updated = await apiFetch(`/api/projects/${currentProject.project_id}`);
+                currentProject = updated;
+                renderVersionList();
+            } catch (error) {
+                showToast('创建版本失败: ' + error.message, 'error');
+            }
+        }
+
+        async function restoreVersion(versionNumber) {
+            if (!confirm(`确定要恢复到版本 ${versionNumber} 吗？当前未保存的修改将丢失。`)) {
+                return;
+            }
+
+            try {
+                const result = await apiFetch(`/api/projects/${currentProject.project_id}/versions/${versionNumber}/restore`, {
+                    method: 'POST',
+                });
+                
+                currentProject = result.project;
+                allFrames = null;
+                updateUIWithProject();
+                showToast(`已恢复到版本 ${versionNumber}`);
+            } catch (error) {
+                showToast('恢复版本失败: ' + error.message, 'error');
+            }
+        }
+
+        async function exportProject(format) {
+            if (!currentProject) {
+                showToast('请先选择项目', 'error');
+                return;
+            }
+
+            try {
+                showToast(`导出为 ${format.toUpperCase()} 中...`, 'info');
+                
+                if (format === 'gif' || format === 'png') {
+                    const result = await apiFetch(`/api/export/project/${currentProject.project_id}/${format}?project_name=${encodeURIComponent(currentProject.name)}`, {
+                        method: 'POST',
+                        body: JSON.stringify({}),
+                    });
+                    
+                    window.open(result.download_url, '_blank');
+                    showToast(`导出成功，正在下载...`);
+                } else {
+                    const result = await apiFetch(`/api/export/project/${currentProject.project_id}/${format}?project_name=${encodeURIComponent(currentProject.name)}`, {
+                        method: 'POST',
+                        body: JSON.stringify({}),
+                    });
+                    
+                    const blob = new Blob([result.content], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${currentProject.name}.${format === 'python' ? 'py' : format}`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    showToast(`导出成功`);
+                }
+            } catch (error) {
+                showToast('导出失败: ' + error.message, 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshProjects();
+        });
+    </script>
+</body>
+</html>

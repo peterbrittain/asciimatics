@@ -1,0 +1,8 @@
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+pillow>=10.0.0
+aiofiles>=23.0.0
+python-multipart>=0.0.6
+wcwidth>=0.2.0
+pyfiglet>=0.7.2
