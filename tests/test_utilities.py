@@ -1,7 +1,7 @@
 from datetime import datetime
 import time
 import unittest
-from asciimatics.constants import ASCII_LINE, SINGLE_LINE, DOUBLE_LINE
+from asciimatics.constants import SINGLE_LINE, DOUBLE_LINE
 from asciimatics.utilities import readable_mem, readable_timestamp, BoxTool
 
 

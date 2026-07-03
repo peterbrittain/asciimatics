@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
-from asciimatics.constants import SINGLE_LINE, DOUBLE_LINE, ASCII_LINE
+from asciimatics.constants import SINGLE_LINE, ASCII_LINE
 from asciimatics.effects import Print
 from asciimatics.exceptions import ResizeScreenError
 from asciimatics.renderers import BarChart, VBarChart, FigletText
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
-from asciimatics.utilities import BoxTool
 import sys
 import math
 import time

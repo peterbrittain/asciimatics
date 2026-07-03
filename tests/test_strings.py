@@ -1,5 +1,3 @@
-from datetime import datetime
-import time
 import unittest
 from asciimatics.strings import ColouredText
 from asciimatics.parsers import AsciimaticsParser

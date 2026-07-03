@@ -2,7 +2,7 @@ import unittest
 import os
 from unittest.mock import MagicMock
 from asciimatics.renderers import ImageFile, ColourImageFile
-from asciimatics.screen import Screen, Canvas
+from asciimatics.screen import Screen
 
 
 class TestRendererImages(unittest.TestCase):

@@ -6,7 +6,6 @@ from asciimatics.effects import Background
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, StopApplication
-from asciimatics.utilities import BoxTool
 
 
 class TopFrame(Frame):
