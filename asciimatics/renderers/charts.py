@@ -287,7 +287,7 @@ class BarChart(_BarChartBase):
 
         # Now add the bars...
         for i, fn in enumerate(self._functions):
-            bar_len = int(fn() * int_w / scale)
+            bar_len = min(int(fn() * int_w / scale), int_w)
             y = start_y + (i * bar_size) + int(i * gap)
 
             # First draw the key if supplied
