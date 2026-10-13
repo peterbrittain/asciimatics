@@ -23,6 +23,39 @@ class TestBarChart(unittest.TestCase):
         self.assertEqual(str(renderer), expected)
         self.assertEqual("\n".join(renderer.images[0]), expected)
 
+    def test_values_above_scale(self):
+        """Values beyond the scale stop at the plot edge, not the canvas edge."""
+        options = [
+            {},
+            {"axes": BarChart.BOTH, "labels": True, "intervals": 2},
+            {"keys": ["first", "second"]},
+            {"gradient": [(5, Screen.COLOUR_GREEN), (10, Screen.COLOUR_RED)]},
+            {"border": False, "axes": BarChart.NO_AXIS},
+        ]
+        for height in (7, 12):
+            for extra in options:
+                with self.subTest(height=height, options=extra):
+                    expected = BarChart(height, 30, [fn(10), fn(5)], scale=10,
+                                        colour=[Screen.COLOUR_RED, Screen.COLOUR_BLUE],
+                                        bg=Screen.COLOUR_YELLOW, **extra)
+                    actual = BarChart(height, 30, [fn(100), fn(5)], scale=10,
+                                      colour=[Screen.COLOUR_RED, Screen.COLOUR_BLUE],
+                                      bg=Screen.COLOUR_YELLOW, **extra)
+                    self.assertEqual(actual.rendered_text, expected.rendered_text)
+
+    def test_above_default_scale(self):
+        renderer = BarChart(7, 17, [fn(100), fn(5)])
+        expected = BarChart(7, 17, [fn(10), fn(5)])
+        self.assertEqual(renderer.rendered_text, expected.rendered_text)
+
+    def test_clipped_bar_animation(self):
+        """A clipped frame must not change later frames or sample a value twice."""
+        values = iter([100, 5, 0, -1, 10])
+        renderer = BarChart(7, 17, [lambda: next(values)], scale=10)
+        for value in (10, 5, 0, -1, 10):
+            expected = BarChart(7, 17, [fn(value)], scale=10)
+            self.assertEqual(renderer.rendered_text, expected.rendered_text)
+
     def test_styles(self):
         renderer = BarChart(7, 17, [fn(10), fn(5)])
         renderer.border_style = SINGLE_LINE
