@@ -139,7 +139,10 @@ class MultiColumnListBox(_BaseListBox):
             paint_text, truncated = _enforce_width_ext(
                 text[self._start_char:], width, self._frame.canvas.unicode_aware)
             if truncated:
-                paint_text = paint_text[:-3] + "..."
+                ellipsis = "." * min(3, max(0, width))
+                paint_text, _ = _enforce_width_ext(
+                    paint_text, max(0, width - len(ellipsis)), self._frame.canvas.unicode_aware)
+                paint_text += ellipsis
 
         text_size = self.string_len(str(paint_text))
         if text_size < width:

@@ -3,6 +3,7 @@ CHANGE HISTORY
 
 LATEST
 ------
+- Fixed table-cell truncation for narrow columns and Unicode text.
 - Added Typewriter renderer.
 - Added border option to PopupMenu.
 - Added scrolling of truncated text to ListBox and MulticolumnListBox.

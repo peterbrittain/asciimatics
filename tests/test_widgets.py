@@ -1184,6 +1184,38 @@ class TestWidgets(unittest.TestCase):
         scene.reset()
         self.assertEqual(self._did_load, True)
 
+    def test_multi_column_truncation_fits_column_width(self):
+        """Truncated headers and values stay within their terminal-cell columns."""
+        cases = [
+            (False, "abcdef", 1, "."),
+            (False, "abcdef", 2, ".."),
+            (False, "abcdef", 5, "ab..."),
+            (True, "你好世界", 5, "你你..."),
+            (True, ColouredText("${1}你好世界", AsciimaticsParser()), 5, "你你..."),
+            (True, "ae\u0301bcdef", 4, "a..."),
+        ]
+        for unicode_aware, text, width, expected in cases:
+            with self.subTest(unicode_aware=unicode_aware, text=text, width=width):
+                screen = MagicMock(spec=Screen, colours=8, unicode_aware=unicode_aware)
+                scene = Scene([], -1)
+                canvas = Canvas(screen, 3, 20, 0, 0)
+                form = Frame(canvas, canvas.height, canvas.width,
+                             has_border=False, can_scroll=False)
+                layout = Layout([100])
+                form.add_layout(layout)
+                layout.add_widget(MultiColumnListBox(
+                    2, [width], [([text], 1)], titles=[text]))
+                form.fix()
+                scene.add_effect(form)
+                form.reset()
+                form.update(0)
+
+                expected_line = expected.ljust(canvas.width) + "\n"
+                self.assert_canvas_equals(
+                    canvas, expected_line * 2 + " " * canvas.width + "\n")
+                if isinstance(text, ColouredText):
+                    self.assertEqual(canvas.get_from(0, 0)[1], Screen.COLOUR_RED)
+
     def test_multi_column_list_box(self):
         """
         Check MultiColumnListBox works as expected.
