@@ -3,6 +3,7 @@ CHANGE HISTORY
 
 LATEST
 ------
+- Fixed negative indexing losing the final character of ColouredText raw strings (#407).
 - Added Typewriter renderer.
 - Added border option to PopupMenu.
 - Added scrolling of truncated text to ListBox and MulticolumnListBox.

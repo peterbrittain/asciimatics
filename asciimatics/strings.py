@@ -72,6 +72,8 @@ class ColouredText():
         start: Optional[int]
         if isinstance(item, int):
             start = self._raw_offsets[item]
+            if item < 0:
+                item += len(self._raw_offsets)
             stop = None if item == len(self._raw_offsets) - 1 else self._raw_offsets[item + 1]
             step = 1
             colour_index = max(0, item - 1)

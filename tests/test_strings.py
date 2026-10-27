@@ -1,6 +1,6 @@
 import unittest
 from asciimatics.strings import ColouredText
-from asciimatics.parsers import AsciimaticsParser
+from asciimatics.parsers import AsciimaticsParser, AnsiTerminalParser
 
 
 class TestUtilities(unittest.TestCase):
@@ -51,3 +51,38 @@ class TestUtilities(unittest.TestCase):
 
         # Startswith
         self.assertTrue(ct.startswith("Some"))
+
+
+    def test_negative_coloured_text_indices(self):
+        """Negative indices preserve the same raw text and colours as positive ones."""
+        cases = [
+            ("plain", AsciimaticsParser),
+            ("${1}abc", AsciimaticsParser),
+            ("a${1}b${2}c", AsciimaticsParser),
+            ("${1}x", AsciimaticsParser),
+            ("\x1b[31mabc", AnsiTerminalParser),
+            ("a\x1b[31mb\x1b[32mc", AnsiTerminalParser),
+        ]
+        for raw, parser in cases:
+            text = ColouredText(raw, parser())
+            for index in range(1, len(text) + 1):
+                with self.subTest(raw=raw, index=-index):
+                    actual = text[-index]
+                    expected = text[len(text) - index]
+                    self.assertEqual(actual.raw_text, expected.raw_text)
+                    self.assertEqual(str(actual), str(expected))
+                    self.assertEqual(actual.colour_map, expected.colour_map)
+                    self.assertEqual(actual.first_colour, expected.first_colour)
+                    self.assertEqual(actual.last_colour, expected.last_colour)
+                    self.assertEqual((actual + "!").raw_text,
+                                     (expected + "!").raw_text)
+                    self.assertEqual(str(actual + "!"), str(expected) + "!")
+
+    def test_coloured_text_index_bounds(self):
+        """Normalizing negative indices does not wrap out-of-range values."""
+        for raw in ("", "${1}abc"):
+            text = ColouredText(raw, AsciimaticsParser())
+            for index in (len(text), -len(text) - 1):
+                with self.subTest(raw=raw, index=index):
+                    with self.assertRaises(IndexError):
+                        text[index]
