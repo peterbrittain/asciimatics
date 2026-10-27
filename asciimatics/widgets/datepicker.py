@@ -23,7 +23,11 @@ class _DatePickerPopup(_TempPopup):
         # Create the lists for each entry.
         now = parent.value if parent.value else date.today()
         if year_range is None:
+            year_range = parent._year_range
+        if year_range is None:
             year_range = range(now.year - 50, now.year + 50)
+        if not year_range:
+            raise ValueError("year_range must contain at least one year")
         self._days = ListBox(3, [(f"{x:02}", x) for x in range(1, 32)],
                              centre=True,
                              validator=self._check_date)
@@ -50,7 +54,7 @@ class _DatePickerPopup(_TempPopup):
         self.fix()
 
         # Set up the correct time.
-        self._years.value = parent.value.year
+        self._years.value = min(year_range, key=lambda year: abs(year - now.year))
         self._months.value = parent.value.month
         self._days.value = parent.value.day
 
@@ -90,6 +94,7 @@ class DatePicker(_BasePicker):
         """
         :param label: An optional label for the widget.
         :param name: The name for the widget.
+        :param year_range: Optional range limiting the selectable years.
         :param on_change: Optional function to call when the selected time changes.
 
         Also see the common keyword arguments in :py:obj:`.Widget`.
