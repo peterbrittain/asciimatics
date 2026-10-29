@@ -62,6 +62,50 @@ class TestPaths(unittest.TestCase):
              (40, 10), (35, 12), (30, 16), (25, 18), (20, 20),  (15, 18),
              (10, 15), (5, 12), (0, 10)])
 
+    def test_spline_preserves_control_points(self):
+        """Building a spline must leave the caller's control points unchanged."""
+        points = [(0, 10), (20, 0), (40, 10), (20, 20)]
+        original = list(points)
+        path = Path()
+        path.jump_to(0, 10)
+        path.move_round_to(points, 24)
+        self.assertEqual(points, original)
+
+    def test_spline_reuses_control_points(self):
+        """The same points must produce the same animation when used again."""
+        points = [(0, 10), (20, 0), (40, 10), (20, 20)]
+        first = Path()
+        first.jump_to(0, 10)
+        first.move_round_to(points, 24)
+        positions = []
+        while not first.is_finished():
+            positions.append(first.next_pos())
+
+        second = Path()
+        second.jump_to(0, 10)
+        second.move_round_to(points, 24)
+        self.assert_path_equals(second, positions)
+
+    def test_spline_shares_control_points_between_starts(self):
+        """Another path's starting position must not leak into shared control points."""
+        points = [(0, 10), (20, 0), (40, 10), (20, 20)]
+        original = list(points)
+        first = Path()
+        first.jump_to(-20, 5)
+        first.move_round_to(points, 24)
+
+        reference = Path()
+        reference.jump_to(15, -10)
+        reference.move_round_to(original, 24)
+        positions = []
+        while not reference.is_finished():
+            positions.append(reference.next_pos())
+
+        second = Path()
+        second.jump_to(15, -10)
+        second.move_round_to(points, 24)
+        self.assert_path_equals(second, positions)
+
     def test_dynamic_path(self):
         """
         Check a dynamic path works as expected.
