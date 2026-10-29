@@ -155,9 +155,12 @@ class Path(_AbstractPath):
         Follow a path pre-defined by a set of at least 4 points.  This Path will
         interpolate the points into a curve and follow that curve.
 
-        :param points: The list of points that defines the path.
+        :param points: The list of points that defines the path. This list is not modified.
         :param steps: The number of steps to take to follow the path.
         """
+        # Keep the interpolation endpoints local to this path.
+        points = list(points)
+
         # Spline interpolation needs a before and after point for the curve.
         # Duplicate the first and last points to handle this.  We also need
         # to move from the current position to the first specified point.

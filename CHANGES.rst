@@ -3,6 +3,7 @@ CHANGE HISTORY
 
 LATEST
 ------
+- Preserve caller-owned spline control points when recording Path animations.
 - Added Typewriter renderer.
 - Added border option to PopupMenu.
 - Added scrolling of truncated text to ListBox and MulticolumnListBox.
