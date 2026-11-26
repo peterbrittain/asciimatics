@@ -17,7 +17,7 @@ class TestUtilities(unittest.TestCase):
         self.assertEqual(ct.first_colour, None)
         self.assertEqual(ct.last_colour, (1, 0, None))
         self.assertEqual(ct.colour_map[0], (None, None, None))
-        
+
         # Specified start colour
         ct = ColouredText("Some ${1}text", AsciimaticsParser(), colour=(2, 1, 0))
         self.assertEqual(str(ct), "Some text")
@@ -44,6 +44,24 @@ class TestUtilities(unittest.TestCase):
             ColouredText("Hello", AsciimaticsParser()),
             ColouredText("${3}World", AsciimaticsParser())]),
             ColouredText("Hello ${3}World", AsciimaticsParser()))
+        sep_space = ColouredText(" ", AsciimaticsParser(), colour=(2, 1, 0))
+        ct_joined = sep_space.join(
+            iter([
+                ColouredText("Hello", AsciimaticsParser()),
+                ColouredText("${3}World", AsciimaticsParser())]))
+        self.assertEqual(ct_joined.raw_text, "Hello ${3}World")
+        self.assertEqual(ct_joined.first_colour, (2, 1, 0))
+        self.assertEqual(ct_joined.last_colour, (3, 0, None))
+        sep_dash = ColouredText("-", AsciimaticsParser(), colour=(2, 1, 0))
+        list_joined = sep_dash.join(["a", "b", "c"])
+        self.assertEqual(list_joined.raw_text, "a-b-c")
+        self.assertEqual(list_joined.colour_map, [(2, 1, 0)] * 5)
+        iter_joined = sep_dash.join(x for x in ["a", "b", "c"])
+        self.assertEqual(iter_joined.raw_text, "a-b-c")
+        self.assertEqual(iter_joined.colour_map, [(2, 1, 0)] * 5)
+        empty_joined = sep_dash.join(iter([]))
+        self.assertEqual(empty_joined.raw_text, "")
+        self.assertEqual(empty_joined.colour_map, [])
 
         # Bad data comparisons
         self.assertNotEqual(ct, 1)
