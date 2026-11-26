@@ -149,12 +149,13 @@ class ColouredText():
 
         :param others: the list of other objects to join.
         """
+        items = list(others)
         try:
-            return ColouredText(self._raw_text.join([x.raw_text for x in others]),  # type: ignore
+            return ColouredText(self._raw_text.join([x.raw_text for x in items]),  # type: ignore
                                 parser=self._parser,
                                 colour=self._init_colour)
         except AttributeError:
-            return ColouredText(self._raw_text.join(others), parser=self._parser, colour=self._init_colour)
+            return ColouredText(self._raw_text.join(items), parser=self._parser, colour=self._init_colour)
 
     @property
     def colour_map(self) -> Optional[List[Tuple[Optional[int], Optional[int], Optional[int]]]]:
